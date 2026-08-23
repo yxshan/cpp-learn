@@ -90,8 +90,8 @@ export function App() {
           <a className="nav-item" href="#current">
             <AppIcon>▶</AppIcon>当前课程
           </a>
-          <a className="nav-item" href="#path">
-            <AppIcon>◇</AppIcon>知识路径
+          <a className="nav-item" href="#principles">
+            <AppIcon>◇</AppIcon>设计边界
           </a>
           <button className="nav-item" disabled>
             <AppIcon>↻</AppIcon>复习队列<span className="nav-badge">稍后</span>
@@ -259,36 +259,36 @@ export function App() {
             </div>
           </article>
 
-          <article id="path" className="path-card">
-            <p className="eyebrow">YOUR PATH</p>
-            <h2>现代 C++ 工程路线</h2>
+          <article id="principles" className="path-card">
+            <p className="eyebrow">DESIGN BOUNDARIES</p>
+            <h2>平台不会替你假装学会</h2>
             <div className="path-list">
               <div className="path-item active">
                 <i>1</i>
                 <div>
-                  <strong>工程基线</strong>
-                  <span>进行中</span>
+                  <strong>数据归你所有</strong>
+                  <span>默认只保存在本地</span>
                 </div>
               </div>
               <div className="path-item">
                 <i>2</i>
                 <div>
-                  <strong>语言与内存模型</strong>
-                  <span>下一阶段</span>
+                  <strong>判题保持客观</strong>
+                  <span>编译与测试决定结果</span>
                 </div>
               </div>
               <div className="path-item">
                 <i>3</i>
                 <div>
-                  <strong>STL 与工程化</strong>
-                  <span>尚未解锁</span>
+                  <strong>AI 负责辅助</strong>
+                  <span>提示不等于掌握证据</span>
                 </div>
               </div>
               <div className="path-item">
                 <i>4</i>
                 <div>
-                  <strong>服务端专项</strong>
-                  <span>方向待选择</span>
+                  <strong>方向稍后选择</strong>
+                  <span>共同基础不会浪费</span>
                 </div>
               </div>
             </div>

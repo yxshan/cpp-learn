@@ -4,7 +4,12 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { resolveEditablePath, validateEditablePath } from "./index.js";
+import {
+  createInMemoryWorkspace,
+  resolveEditablePath,
+  validateEditablePath,
+  type Workspace,
+} from "./index.js";
 
 const temporaryRoots: string[] = [];
 
@@ -56,5 +61,49 @@ describe("[T-SEC-001] Workspace editable path contract", () => {
         editablePaths: ["src/linked/main.cpp"],
       }),
     ).resolves.toEqual({ ok: false, code: "invalid_path" });
+  });
+});
+
+describe("[T-MODULE-001] Workspace Interface", () => {
+  it("saves through an optimistic revision without overwriting a conflict", async () => {
+    const workspace: Workspace = createInMemoryWorkspace([
+      {
+        activityId: "first-program",
+        editablePaths: ["main.cpp"],
+        starterFiles: { "main.cpp": "int main() {}\n" },
+      },
+    ]);
+
+    await expect(workspace.open("first-program")).resolves.toMatchObject({
+      revision: 0,
+      files: { "main.cpp": "int main() {}\n" },
+    });
+    const starterSnapshot = await workspace.snapshot("first-program");
+    await expect(
+      workspace.save({
+        activityId: "first-program",
+        baseRevision: 0,
+        changes: [{ path: "main.cpp", content: "int main() { return 0; }\n" }],
+      }),
+    ).resolves.toEqual({ ok: true, revision: 1 });
+    await expect(
+      workspace.save({
+        activityId: "first-program",
+        baseRevision: 0,
+        changes: [{ path: "main.cpp", content: "stale\n" }],
+      }),
+    ).resolves.toEqual({ ok: false, code: "revision_conflict" });
+    await expect(workspace.open("first-program")).resolves.toMatchObject({
+      revision: 1,
+      files: { "main.cpp": "int main() { return 0; }\n" },
+    });
+    const savedSnapshot = await workspace.snapshot("first-program");
+    await expect(
+      workspace.diff(starterSnapshot.id, savedSnapshot.id),
+    ).resolves.toEqual({
+      from: starterSnapshot.id,
+      to: savedSnapshot.id,
+      changedPaths: ["main.cpp"],
+    });
   });
 });

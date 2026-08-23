@@ -42,4 +42,17 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
       "Bootstrap response violates the transport contract",
     );
   });
+
+  it("rejects a bootstrap timestamp without an ISO 8601 timezone", async () => {
+    const request = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ...bootstrap, generatedAt: "yesterday" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await expect(getBootstrap(request)).rejects.toThrow(
+      "Bootstrap response violates the transport contract",
+    );
+  });
 });

@@ -35,6 +35,29 @@ export interface JudgeStage {
   execute(context: JudgeStageContext): Promise<JudgeStageResult>;
 }
 
+export interface ToolchainCheckStageDependencies {
+  readonly clock: () => number;
+  readonly probe: () => Promise<ToolchainReadiness>;
+}
+
+export function createToolchainCheckStage(
+  dependencies: ToolchainCheckStageDependencies,
+): JudgeStage {
+  return {
+    kind: "prepare",
+    async execute() {
+      const startedAt = dependencies.clock();
+      const readiness = await dependencies.probe();
+      const durationMs = Math.max(0, dependencies.clock() - startedAt);
+      return {
+        kind: "prepare",
+        outcome: readiness.ready ? "pass" : "system_error",
+        durationMs,
+      };
+    },
+  };
+}
+
 export const executeProcess: ProcessExecutor = async (executable, args) =>
   new Promise((resolve, reject) => {
     const child = spawn(executable, args, {
