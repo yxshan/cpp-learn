@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "id": "sqlite-transactions",
+  "version": 1,
+  "kind": "lesson",
+  "title": "SQLite 事务与本地持久化",
+  "estimatedMinutes": 40,
+  "conceptIds": [
+    "database-sqlite",
+    "database-transactions",
+    "resource-cleanup"
+  ],
+  "prerequisiteIds": ["posix-files-processes", "classes-and-raii"],
+  "objectives": ["在隔离数据库文件中提交事务并用预编译语句验证结果。"],
+  "victoryConditions": [
+    "事务提交后查询得到 rows=1，连接、语句和临时文件均被清理。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "SQLite transaction language",
+      "url": "https://www.sqlite.org/lang_transaction.html"
+    },
+    {
+      "kind": "reference",
+      "title": "SQLite C interface",
+      "url": "https://www.sqlite.org/cintro.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/sqlite-transactions/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <cstdio>\n#include <iostream>\n#include <sqlite3.h>\nint main(){sqlite3* db=nullptr;if(sqlite3_open(\"lab.db\",&db)!=SQLITE_OK)return 2;sqlite3_exec(db,\"BEGIN; CREATE TABLE records(value INTEGER);\",nullptr,nullptr,nullptr);/* TODO: insert and commit */sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT count(*) FROM records\",-1,&statement,nullptr);sqlite3_step(statement);std::cout<<\"rows=\"<<sqlite3_column_int(statement,0)<<'\\n';sqlite3_finalize(statement);sqlite3_close(db);std::remove(\"lab.db\");}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "rows=1\n",
+    "timeoutMs": 4000,
+    "buildProfile": { "kind": "direct", "libraries": ["sqlite3"] },
+    "publicTests": [
+      { "name": "committed row", "stdin": "", "expectedStdout": "rows=1\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "isolated database",
+        "stdin": "",
+        "expectedStdout": "rows=1\n",
+        "failureCategory": "each Grade must create and query one committed row in its own database"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "insert-row",
+        "title": "在事务内插入",
+        "kind": "nudge",
+        "content": "对 records 执行一条 INSERT 语句。"
+      },
+      {
+        "id": "commit-boundary",
+        "title": "明确提交边界",
+        "kind": "concept",
+        "content": "插入完成后执行 COMMIT，再准备只读查询。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "调用 sqlite3_exec 执行 INSERT INTO records VALUES(42); COMMIT;，再保留 prepare/step/finalize/close 顺序。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "transaction-lifecycle",
+        "prompt": "statement finalize、connection close 与 Judge 目录清理分别解决哪一层资源问题？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["sqlite-transactions-review"],
+    "teacherRubric": {
+      "id": "sqlite-lifecycle-rubric",
+      "prompt": "回答应区分语句、连接、事务持久性与 fixture 文件隔离。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <cstdio>\n#include <iostream>\n#include <sqlite3.h>\nint main(){sqlite3* db=nullptr;if(sqlite3_open(\"lab.db\",&db)!=SQLITE_OK)return 2;sqlite3_exec(db,\"BEGIN; CREATE TABLE records(value INTEGER); INSERT INTO records VALUES(42); COMMIT;\",nullptr,nullptr,nullptr);sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT count(*) FROM records\",-1,&statement,nullptr);sqlite3_step(statement);std::cout<<\"rows=\"<<sqlite3_column_int(statement,0)<<'\\n';sqlite3_finalize(statement);sqlite3_close(db);std::remove(\"lab.db\");}\n"
+    },
+    "mutations": [
+      {
+        "id": "rolls-back-row",
+        "files": {
+          "main.cpp": "#include <cstdio>\n#include <iostream>\n#include <sqlite3.h>\nint main(){sqlite3* db=nullptr;sqlite3_open(\"lab.db\",&db);sqlite3_exec(db,\"BEGIN; CREATE TABLE records(value INTEGER); INSERT INTO records VALUES(42); ROLLBACK; CREATE TABLE records(value INTEGER);\",nullptr,nullptr,nullptr);sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT count(*) FROM records\",-1,&statement,nullptr);sqlite3_step(statement);std::cout<<\"rows=\"<<sqlite3_column_int(statement,0)<<'\\n';sqlite3_finalize(statement);sqlite3_close(db);std::remove(\"lab.db\");}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "sqlite-transaction",
+        "type": "lifetime-timeline",
+        "fallback": "open connection -> BEGIN -> create and insert -> COMMIT -> prepare -> step -> finalize -> close -> remove fixture"
+      }
+    ],
+    "printFallback": "画出事务、statement、connection 与数据库文件四层生命周期。"
+  }
+}

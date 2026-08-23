@@ -140,6 +140,43 @@ export interface PrivateJudgeTest extends PublicJudgeTest {
   readonly failureCategory: string;
 }
 
+export interface GeneratedPropertyTest {
+  readonly name: string;
+  readonly seed: number;
+  readonly cases: number;
+  readonly generator: {
+    readonly kind: "integer-vector";
+    readonly minLength: number;
+    readonly maxLength: number;
+    readonly minValue: number;
+    readonly maxValue: number;
+  };
+  readonly oracle: "sort-ascending";
+  readonly failureCategory: string;
+}
+
+export interface RelativePerformanceCheck {
+  readonly name: string;
+  readonly baselineStdin: string;
+  readonly scaledStdin: string;
+  readonly repetitions: number;
+  readonly maxMedianRatio: number;
+  readonly failureCategory: string;
+}
+
+export type JudgeBuildProfile =
+  | {
+      readonly kind: "direct";
+      readonly threadSupport?: boolean;
+      readonly libraries?: readonly "sqlite3"[];
+    }
+  | {
+      readonly kind: "cmake";
+      readonly target: string;
+      readonly testTarget?: string;
+      readonly ctest: boolean;
+    };
+
 export interface JudgeSpec {
   readonly activityId: string;
   readonly activityVersion: number;
@@ -148,6 +185,9 @@ export interface JudgeSpec {
   readonly timeoutMs: number;
   readonly publicTests?: readonly PublicJudgeTest[];
   readonly privateTests?: readonly PrivateJudgeTest[];
+  readonly propertyTests?: readonly GeneratedPropertyTest[];
+  readonly performanceCheck?: RelativePerformanceCheck;
+  readonly buildProfile?: JudgeBuildProfile;
   readonly sanitizers?: readonly ("address" | "undefined")[];
 }
 
@@ -158,6 +198,8 @@ export type JudgeVerdict =
   | "timeout"
   | "output_limit"
   | "private_failure"
+  | "property_failure"
+  | "performance_failure"
   | "sanitizer_failure"
   | "cancelled"
   | "automated_pass"
@@ -165,13 +207,29 @@ export type JudgeVerdict =
 
 export interface JudgeReportStage {
   readonly kind:
-    "compile" | "test" | "public_test" | "private_test" | "asan" | "ubsan";
+    | "compile"
+    | "configure"
+    | "build"
+    | "ctest"
+    | "test"
+    | "public_test"
+    | "private_test"
+    | "property_test"
+    | "performance"
+    | "asan"
+    | "ubsan";
   readonly outcome: "pass" | "fail" | "system_error";
   readonly durationMs: number;
   readonly stdout?: string;
   readonly stderr?: string;
   readonly testName?: string;
   readonly feedback?: string;
+  readonly seed?: number;
+  readonly caseIndex?: number;
+  readonly counterexample?: string;
+  readonly baselineDurationMs?: number;
+  readonly scaledDurationMs?: number;
+  readonly ratio?: number;
   readonly diagnostics?: readonly JudgeDiagnostic[];
 }
 
@@ -194,8 +252,13 @@ export interface JudgeReport {
     readonly judgeVersion: number;
   };
   readonly source: { readonly snapshotId: string; readonly digest: string };
-  readonly toolchain: { readonly compiler: string; readonly standard: "c++20" };
+  readonly toolchain: {
+    readonly compiler: string;
+    readonly standard: "c++20";
+    readonly buildSystem?: "cmake/ctest";
+  };
   readonly buildFlags?: readonly string[];
+  readonly seeds?: readonly number[];
   readonly verdict: JudgeVerdict;
   readonly stages: readonly JudgeReportStage[];
   readonly startedAt: string;

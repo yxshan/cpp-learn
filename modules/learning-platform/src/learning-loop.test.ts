@@ -72,6 +72,7 @@ function platformFixture(
   now = "2026-08-23T08:00:00.000Z",
   teacherReviewRequired = false,
   forcedVerdict: JudgeReport["verdict"] = "automated_pass",
+  verificationStageKind: "private_test" | "property_test" = "private_test",
 ) {
   const events: LearningRecordEvent[] = [];
   const batches: (readonly LearningRecordEvent[])[] = [];
@@ -161,6 +162,11 @@ function platformFixture(
       execute: async ({ jobId, activity: selectedActivity }) => ({
         ...passingReport(jobId, selectedActivity),
         verdict: forcedVerdict,
+        stages: [
+          { kind: "compile", outcome: "pass", durationMs: 1 },
+          { kind: "public_test", outcome: "pass", durationMs: 1 },
+          { kind: verificationStageKind, outcome: "pass", durationMs: 1 },
+        ],
       }),
     },
     record: {
@@ -344,6 +350,47 @@ describe("[T-LEARN-003] explainable Concept transitions", () => {
       "concept.state.changed",
       "review.scheduled",
     ]);
+  });
+
+  it("[T-LEARN-009] accepts generated-property evidence as strong independent verification", async () => {
+    const { platform } = platformFixture(
+      "2026-08-23T08:00:00.000Z",
+      false,
+      "automated_pass",
+      "property_test",
+    );
+    await platform.dispatch({
+      type: "reflection.submit",
+      commandId: "cmd_property_reflection",
+      attemptId: "attempt_property",
+      activityId: activity.id,
+      answers: [
+        {
+          promptId: "explain",
+          answer: "The generated cases exercise an invariant beyond examples.",
+        },
+      ],
+    });
+    await platform.dispatch({
+      type: "activity.grade",
+      commandId: "cmd_property_grade",
+      attemptId: "attempt_property",
+      activityId: activity.id,
+    });
+
+    await expect(
+      platform.query({ type: "progress.get" }),
+    ).resolves.toMatchObject({
+      concepts: [
+        {
+          conceptId: "compile-link-run",
+          state: "demonstrated",
+          supportingEvidenceIds: [
+            "evidence_cmd_property_grade_compile-link-run",
+          ],
+        },
+      ],
+    });
   });
 
   it("[T-LEARN-007] caps a solution-exposed passing attempt at practiced and schedules a compensating Review", async () => {

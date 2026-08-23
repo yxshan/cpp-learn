@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "threads-atomics",
+  "version": 1,
+  "kind": "lesson",
+  "title": "线程、共享状态与原子操作",
+  "estimatedMinutes": 35,
+  "conceptIds": ["system-threads", "concurrency-atomics", "cpp-raii"],
+  "prerequisiteIds": ["copy-move-ownership", "posix-files-processes"],
+  "objectives": ["用 thread、join 与 atomic 表达线程生命周期和同步计数。"],
+  "victoryConditions": ["四个线程结束后稳定输出 count=4000。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: thread",
+      "url": "https://en.cppreference.com/w/cpp/thread/thread"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines CP.2",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rconc-races"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/threads-atomics/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <atomic>\n#include <iostream>\n#include <thread>\n#include <vector>\nint main(){std::atomic<int> count{0};std::vector<std::thread> workers;for(int i=0;i<4;++i)workers.emplace_back([&]{/* TODO */});for(auto& worker:workers)worker.join();std::cout<<\"count=\"<<count.load()<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "count=4000\n",
+    "timeoutMs": 3000,
+    "buildProfile": { "kind": "direct", "threadSupport": true },
+    "publicTests": [
+      {
+        "name": "joined workers",
+        "stdin": "",
+        "expectedStdout": "count=4000\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "repeatable atomic count",
+        "stdin": "",
+        "expectedStdout": "count=4000\n",
+        "failureCategory": "all worker increments must be synchronized before observation"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "worker-loop",
+        "title": "每个线程执行固定次数",
+        "kind": "nudge",
+        "content": "在线程函数中循环一千次更新共享计数。"
+      },
+      {
+        "id": "atomic-operation",
+        "title": "使用原子读改写",
+        "kind": "concept",
+        "content": "fetch_add 或前置 ++ 都能表达 atomic 的原子递增。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "线程 lambda 中执行 for(int j=0;j<1000;++j) count.fetch_add(1);，随后逐个 join 再输出。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "race-versus-result",
+        "prompt": "为什么一次输出 4000 不能证明普通 int 版本没有数据竞争？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["systems-runtime-review"],
+    "teacherRubric": {
+      "id": "atomic-lifecycle-rubric",
+      "prompt": "回答应区分结果偶然正确、语言层数据竞争、原子操作与显式 join 生命周期。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <atomic>\n#include <iostream>\n#include <thread>\n#include <vector>\nint main(){std::atomic<int> count{0};std::vector<std::thread> workers;for(int i=0;i<4;++i)workers.emplace_back([&]{for(int j=0;j<1000;++j)count.fetch_add(1);});for(auto& worker:workers)worker.join();std::cout<<\"count=\"<<count.load()<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "local-only-count",
+        "files": {
+          "main.cpp": "#include <atomic>\n#include <iostream>\n#include <thread>\n#include <vector>\nint main(){std::atomic<int> count{0};std::vector<std::thread> workers;for(int i=0;i<4;++i)workers.emplace_back([&]{int local=0;for(int j=0;j<1000;++j)++local;});for(auto& worker:workers)worker.join();std::cout<<\"count=\"<<count.load()<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "thread-join-timeline",
+        "type": "lifetime-timeline",
+        "fallback": "create atomic -> launch four threads -> atomic increments interleave -> parent joins every thread -> parent loads count"
+      }
+    ],
+    "printFallback": "画出四个工作线程、共享 atomic 和显式 join 的 happens-before 边界。"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "id": "sqlite-transactions-review",
+  "version": 1,
+  "kind": "review",
+  "title": "Review：验证 SQLite 回滚",
+  "estimatedMinutes": 25,
+  "conceptIds": [
+    "database-sqlite",
+    "database-transactions",
+    "resource-cleanup"
+  ],
+  "prerequisiteIds": ["sqlite-transactions"],
+  "objectives": ["在延迟任务中验证 ROLLBACK 不保留事务内插入。"],
+  "victoryConditions": ["回滚后查询稳定输出 rows=0。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "SQLite ROLLBACK",
+      "url": "https://www.sqlite.org/lang_transaction.html"
+    },
+    {
+      "kind": "reference",
+      "title": "SQLite prepared statements",
+      "url": "https://www.sqlite.org/c3ref/stmt.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/sqlite-transactions-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <cstdio>\n#include <iostream>\n#include <sqlite3.h>\nint main(){sqlite3* db=nullptr;sqlite3_open(\"review.db\",&db);sqlite3_exec(db,\"CREATE TABLE records(value INTEGER); BEGIN; INSERT INTO records VALUES(7); COMMIT;\",nullptr,nullptr,nullptr);sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT count(*) FROM records\",-1,&statement,nullptr);sqlite3_step(statement);std::cout<<\"rows=\"<<sqlite3_column_int(statement,0)<<'\\n';sqlite3_finalize(statement);sqlite3_close(db);std::remove(\"review.db\");}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "rows=0\n",
+    "timeoutMs": 4000,
+    "buildProfile": { "kind": "direct", "libraries": ["sqlite3"] },
+    "publicTests": [
+      { "name": "rolled back row", "stdin": "", "expectedStdout": "rows=0\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "rollback state verification",
+        "stdin": "",
+        "expectedStdout": "rows=0\n",
+        "failureCategory": "transaction-state"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "transaction-ending",
+        "title": "替换事务结束方式",
+        "kind": "nudge",
+        "content": "需要撤销本次 BEGIN 之后的写入。"
+      },
+      {
+        "id": "rollback-command",
+        "title": "使用 ROLLBACK",
+        "kind": "concept",
+        "content": "把提交命令替换为回滚命令，随后再查询同一连接。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "把 SQL 字符串末尾的 COMMIT 改成 ROLLBACK，其他资源清理顺序保持不变。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "rollback-versus-cleanup",
+        "prompt": "ROLLBACK、finalize、close 和删除 fixture 文件为何不能互相替代？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "sqlite-transactions",
+    "teacherRubric": {
+      "id": "sqlite-review-rubric",
+      "prompt": "回答应分别解释事务状态、语句资源、连接资源与测试文件隔离。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <cstdio>\n#include <iostream>\n#include <sqlite3.h>\nint main(){sqlite3* db=nullptr;sqlite3_open(\"review.db\",&db);sqlite3_exec(db,\"CREATE TABLE records(value INTEGER); BEGIN; INSERT INTO records VALUES(7); ROLLBACK;\",nullptr,nullptr,nullptr);sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT count(*) FROM records\",-1,&statement,nullptr);sqlite3_step(statement);std::cout<<\"rows=\"<<sqlite3_column_int(statement,0)<<'\\n';sqlite3_finalize(statement);sqlite3_close(db);std::remove(\"review.db\");}\n"
+    },
+    "mutations": [
+      {
+        "id": "commits-review-row",
+        "files": {
+          "main.cpp": "#include <cstdio>\n#include <iostream>\n#include <sqlite3.h>\nint main(){sqlite3* db=nullptr;sqlite3_open(\"review.db\",&db);sqlite3_exec(db,\"CREATE TABLE records(value INTEGER); BEGIN; INSERT INTO records VALUES(7); COMMIT;\",nullptr,nullptr,nullptr);sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT count(*) FROM records\",-1,&statement,nullptr);sqlite3_step(statement);std::cout<<\"rows=\"<<sqlite3_column_int(statement,0)<<'\\n';sqlite3_finalize(statement);sqlite3_close(db);std::remove(\"review.db\");}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "rollback-boundary",
+        "type": "lifetime-timeline",
+        "fallback": "BEGIN -> INSERT visible inside transaction -> ROLLBACK -> row absent -> finalize -> close"
+      }
+    ],
+    "printFallback": "比较 COMMIT 与 ROLLBACK 后同一 SELECT 的可见结果。"
+  }
+}

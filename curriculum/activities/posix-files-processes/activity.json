@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "posix-files-processes",
+  "version": 1,
+  "kind": "lesson",
+  "title": "文件与子进程生命周期",
+  "estimatedMinutes": 35,
+  "conceptIds": ["system-files", "system-processes", "resource-cleanup"],
+  "prerequisiteIds": ["classes-and-raii", "cmake-testing-debugging"],
+  "objectives": ["用明确的创建、等待与删除边界管理文件和子进程资源。"],
+  "victoryConditions": ["子进程读取 9 字节，父进程回收它并删除临时文件。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "POSIX wait",
+      "url": "https://pubs.opengroup.org/onlinepubs/9699919799/functions/wait.html"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: basic_ifstream",
+      "url": "https://en.cppreference.com/w/cpp/io/basic_ifstream"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/posix-files-processes/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n#include <sys/wait.h>\n#include <unistd.h>\nint inspect_file(){/* TODO: return byte count from payload.txt */return 0;}\nint main(){std::ofstream(\"payload.txt\")<<\"cpp-learn\";pid_t child=fork();if(child<0)return 2;if(child==0)_exit(inspect_file());int status{};if(waitpid(child,&status,0)<0)return 3;std::remove(\"payload.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "bytes=9\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      { "name": "managed child", "stdin": "", "expectedStdout": "bytes=9\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "repeatable cleanup",
+        "stdin": "",
+        "expectedStdout": "bytes=9\n",
+        "failureCategory": "file and child lifecycle must be deterministic"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "open-binary",
+        "title": "读取整个文件",
+        "kind": "nudge",
+        "content": "ifstream 与 istreambuf_iterator 可以构造完整字符串。"
+      },
+      {
+        "id": "child-status",
+        "title": "退出状态是窄通道",
+        "kind": "concept",
+        "content": "子进程只返回小整数；父进程必须 waitpid 后再读取退出状态。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "打开 payload.txt，用 istreambuf_iterator<char> 构造字符串并返回 size；保留 waitpid 与 remove。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "resource-owners",
+        "prompt": "本实验中谁负责关闭流、回收子进程和删除临时文件？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["systems-runtime-review"],
+    "teacherRubric": {
+      "id": "process-resource-rubric",
+      "prompt": "回答应明确流对象、父进程 waitpid、文件删除和 Judge 临时根目录四层责任。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n#include <string>\n#include <sys/wait.h>\n#include <unistd.h>\nint inspect_file(){std::ifstream input(\"payload.txt\",std::ios::binary);std::string data((std::istreambuf_iterator<char>(input)),{});return static_cast<int>(data.size());}\nint main(){std::ofstream(\"payload.txt\")<<\"cpp-learn\";pid_t child=fork();if(child<0)return 2;if(child==0)_exit(inspect_file());int status{};if(waitpid(child,&status,0)<0)return 3;std::remove(\"payload.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "wrong-byte-count",
+        "files": {
+          "main.cpp": "#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <sys/wait.h>\n#include <unistd.h>\nint inspect_file(){return 1;}int main(){std::ofstream(\"payload.txt\")<<\"cpp-learn\";pid_t child=fork();if(child==0)_exit(inspect_file());int status{};waitpid(child,&status,0);std::remove(\"payload.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "process-resource-lifecycle",
+        "type": "lifetime-timeline",
+        "fallback": "Judge temp root -> parent creates file -> fork child reads -> parent waitpid -> remove file -> Judge removes root"
+      }
+    ],
+    "printFallback": "画出父子进程与临时文件的创建、使用、回收和兜底清理顺序。"
+  }
+}

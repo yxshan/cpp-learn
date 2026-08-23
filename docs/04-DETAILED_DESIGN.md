@@ -171,6 +171,17 @@ Stages return data; they do not append learning events. The pipeline stops after
 
 Reports include source digest, activity/judge version, toolchain fingerprint, build flags, deterministic seeds, stage results, and redacted feedback. Same inputs under the same toolchain should produce semantically equivalent results.
 
+Generated integer-vector properties use an Activity-owned 32-bit seed. A failed case records the seed, zero-based case index, and generated stdin so the Learner can replay it. The public Activity response omits the generator and oracle configuration.
+
+Relative performance checks alternate baseline and scaled inputs against the same executable and temporary environment, then compare median durations. They never use a cross-machine absolute millisecond threshold.
+
+The fixed build profiles are:
+
+- `direct`: C++20 compilation with optional `-pthread` and allowlisted `sqlite3` linkage.
+- `cmake`: clean configure, named application and test targets, optional CTest, then the normal Judge tests.
+
+System labs receive a unique temporary root through `cwd` and `TMPDIR`. Child process groups are killed on timeout/cancellation, and the root is recursively removed after every terminal report.
+
 ## 6. Learning Record Module
 
 ### Append protocol
@@ -239,4 +250,3 @@ Configuration precedence:
 4. safe default.
 
 Paths are resolved once by the composition root and passed as explicit dependencies.
-

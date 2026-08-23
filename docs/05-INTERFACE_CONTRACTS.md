@@ -177,6 +177,8 @@ interface JudgeReport {
     | "timeout"
     | "output_limit"
     | "private_failure"
+    | "property_failure"
+    | "performance_failure"
     | "sanitizer_failure"
     | "cancelled"
     | "automated_pass"
@@ -186,6 +188,8 @@ interface JudgeReport {
   completedAt: string;
 }
 ```
+
+Stage kinds additionally include `property_test`, `performance`, `configure`, `build`, and `ctest`. Generated-property stages may expose `seed`, `caseIndex`, and a reproducible generated counterexample. Performance stages expose baseline/scaled median durations and their ratio. CMake reports identify `cmake/ctest` as the build system. Private fixed-test inputs and expected outputs remain forbidden.
 
 ## 5. Error response
 

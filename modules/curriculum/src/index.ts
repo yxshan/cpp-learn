@@ -6,11 +6,14 @@ import type { CurriculumReadiness } from "@cpp-learn/contracts";
 import type {
   ActivityDetail,
   ActivitySource,
+  GeneratedPropertyTest,
   HintKind,
   InteractiveLessonBlock,
+  JudgeBuildProfile,
   JudgeVerdict,
   PrivateJudgeTest,
   PublicJudgeTest,
+  RelativePerformanceCheck,
   ReflectionPrompt,
 } from "@cpp-learn/contracts";
 import { readFile } from "node:fs/promises";
@@ -44,6 +47,9 @@ export interface Activity {
     readonly timeoutMs: number;
     readonly publicTests?: readonly PublicJudgeTest[];
     readonly privateTests?: readonly PrivateJudgeTest[];
+    readonly propertyTests?: readonly GeneratedPropertyTest[];
+    readonly performanceCheck?: RelativePerformanceCheck;
+    readonly buildProfile?: JudgeBuildProfile;
     readonly sanitizers?: readonly ("address" | "undefined")[];
   };
   readonly evidencePolicy: EvidencePolicyDefinition;
@@ -137,6 +143,9 @@ export interface JudgeDefinition {
   readonly timeoutMs: number;
   readonly publicTests?: readonly PublicJudgeTest[];
   readonly privateTests?: readonly PrivateJudgeTest[];
+  readonly propertyTests?: readonly GeneratedPropertyTest[];
+  readonly performanceCheck?: RelativePerformanceCheck;
+  readonly buildProfile?: JudgeBuildProfile;
   readonly sanitizers?: readonly ("address" | "undefined")[];
 }
 
@@ -321,6 +330,14 @@ export function validateCatalog(
       );
       const privateValues = (activity.judge.privateTests ?? [])
         .flatMap((test) => [test.stdin, test.expectedStdout])
+        .concat(
+          activity.judge.performanceCheck
+            ? [
+                activity.judge.performanceCheck.baselineStdin,
+                activity.judge.performanceCheck.scaledStdin,
+              ]
+            : [],
+        )
         .map(normalizeDisclosure)
         .filter((value) => value.length > 0 && !publicValues.has(value));
       for (const [hintIndex, hint] of activity.learning.hints.entries()) {
@@ -332,6 +349,20 @@ export function validateCatalog(
             keyword: "hint-private-leak",
           });
         }
+      }
+    }
+    for (const [propertyIndex, property] of (
+      activity.judge.propertyTests ?? []
+    ).entries()) {
+      if (
+        property.generator.minLength > property.generator.maxLength ||
+        property.generator.minValue > property.generator.maxValue
+      ) {
+        issues.push({
+          path: `/${index}/judge/propertyTests/${propertyIndex}/generator`,
+          message: "generated-property minimums cannot exceed maximums",
+          keyword: "property-range",
+        });
       }
     }
   }
@@ -486,6 +517,15 @@ export function createFilesystemCurriculum(
       : {}),
     ...(activity.judge.privateTests
       ? { privateTests: activity.judge.privateTests }
+      : {}),
+    ...(activity.judge.propertyTests
+      ? { propertyTests: activity.judge.propertyTests }
+      : {}),
+    ...(activity.judge.performanceCheck
+      ? { performanceCheck: activity.judge.performanceCheck }
+      : {}),
+    ...(activity.judge.buildProfile
+      ? { buildProfile: activity.judge.buildProfile }
       : {}),
     ...(activity.judge.sanitizers
       ? { sanitizers: activity.judge.sanitizers }

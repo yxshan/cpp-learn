@@ -148,6 +148,14 @@ function stateRank(state: ConceptState): number {
   ].indexOf(state);
 }
 
+function hasStrongVerification(report: JudgeReport): boolean {
+  return report.stages.some(
+    (stage) =>
+      (stage.kind === "private_test" || stage.kind === "property_test") &&
+      stage.outcome === "pass",
+  );
+}
+
 export function createLearningPlatform(
   dependencies: LearningPlatformDependencies,
 ): LearningPlatform {
@@ -296,9 +304,7 @@ export function createLearningPlatform(
     const reflectionSatisfied = requiredPrompts.every((promptId) =>
       answeredPrompts.has(promptId),
     );
-    const privatePass = report.stages.some(
-      (stage) => stage.kind === "private_test" && stage.outcome === "pass",
-    );
+    const strongVerificationPass = hasStrongVerification(report);
     const automatedPass = report.verdict === "automated_pass";
     const now = dependencies.clock();
     const concepts = await conceptProjection();
@@ -374,18 +380,18 @@ export function createLearningPlatform(
           stateRank(previous) >= stateRank("demonstrated") &&
           independentEnough &&
           reflectedEnough &&
-          privatePass
+          strongVerificationPass
         ) {
           target = "retained";
           explanation =
-            "An independent delayed Review passed private checks with the required reflection.";
+            "An independent delayed Review passed strong verification with the required reflection.";
         } else {
           target = previous;
           explanation =
             "The Review passed, but delayed independent-retention requirements were not all satisfied.";
         }
       } else if (
-        privatePass &&
+        strongVerificationPass &&
         independentEnough &&
         reflectedEnough &&
         independence !== "solution_exposed" &&
@@ -393,7 +399,7 @@ export function createLearningPlatform(
       ) {
         target = "demonstrated";
         explanation =
-          "An independent Grade passed public and private checks with the required reflection.";
+          "An independent Grade passed strong verification with the required reflection.";
       }
 
       if (stateRank(target) < stateRank(previous)) target = previous;
@@ -621,11 +627,10 @@ export function createLearningPlatform(
               const reflectionSatisfied = learning.reflections
                 .filter((prompt) => prompt.required)
                 .every((prompt) => answered.has(prompt.id));
-              const privatePass = attempt.report.stages.some(
-                (stage) =>
-                  stage.kind === "private_test" && stage.outcome === "pass",
+              const strongVerificationPass = hasStrongVerification(
+                attempt.report,
               );
-              if (activity && reflectionSatisfied && privatePass) {
+              if (activity && reflectionSatisfied && strongVerificationPass) {
                 const concepts = await conceptProjection();
                 const now = dependencies.clock();
                 for (const conceptId of activity.conceptIds) {

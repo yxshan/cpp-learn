@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "id": "deterministic-sort-properties",
+  "version": 1,
+  "kind": "lesson",
+  "title": "用性质验证排序",
+  "estimatedMinutes": 30,
+  "conceptIds": ["algorithm-properties", "algorithm-sorting"],
+  "prerequisiteIds": ["stl-containers-algorithms"],
+  "objectives": ["用确定性生成用例验证排序结果的顺序与多重集语义。"],
+  "victoryConditions": [
+    "参考实现通过公开样例及 seed=20260823 的 16 个生成用例。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: std::sort",
+      "url": "https://en.cppreference.com/w/cpp/algorithm/sort"
+    },
+    {
+      "kind": "reference",
+      "title": "QuickCheck: a lightweight tool for random testing",
+      "url": "https://www.cs.tufts.edu/~nr/cs257/archive/john-hughes/quick.pdf"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/deterministic-sort-properties/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(n);for(int& value:values)std::cin>>value;/* TODO: sort ascending */for(int i=0;i<n;++i){if(i)std::cout<<' ';std::cout<<values[i];}std::cout<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "1 2 3\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "visible permutation",
+        "stdin": "3\n3 1 2\n",
+        "expectedStdout": "1 2 3\n"
+      }
+    ],
+    "propertyTests": [
+      {
+        "name": "sorted multiset",
+        "seed": 20260823,
+        "cases": 16,
+        "generator": {
+          "kind": "integer-vector",
+          "minLength": 8,
+          "maxLength": 16,
+          "minValue": -4,
+          "maxValue": 4
+        },
+        "oracle": "sort-ascending",
+        "failureCategory": "output must preserve duplicates and sort every generated value"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "range-boundary",
+        "title": "定位排序范围",
+        "kind": "nudge",
+        "content": "排序算法接收一个左闭右开的迭代器范围。"
+      },
+      {
+        "id": "preserve-multiset",
+        "title": "保留多重集",
+        "kind": "concept",
+        "content": "不要去重；重复元素的次数也是排序契约的一部分。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "在输出前调用 std::sort(values.begin(), values.end())，并包含 <algorithm>。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "property-versus-example",
+        "prompt": "为什么一个通过的样例不能替代‘有序且保留多重集’这组性质？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["deterministic-sort-properties-review"],
+    "teacherRubric": {
+      "id": "sorting-property-rubric",
+      "prompt": "回答应区分具体样例与对输入空间成立的性质，并说明重复次数。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(n);for(int& value:values)std::cin>>value;std::sort(values.begin(),values.end());for(int i=0;i<n;++i){if(i)std::cout<<' ';std::cout<<values[i];}std::cout<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "drops-duplicates",
+        "files": {
+          "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(n);for(int& value:values)std::cin>>value;std::sort(values.begin(),values.end());values.erase(std::unique(values.begin(),values.end()),values.end());for(std::size_t i=0;i<values.size();++i){if(i)std::cout<<' ';std::cout<<values[i];}std::cout<<'\\n';}\n"
+        },
+        "expectedVerdict": "property_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "property-pipeline",
+        "type": "algorithm-trace",
+        "fallback": "seed -> generated vector -> learner program -> sorted oracle -> reproducible counterexample"
+      }
+    ],
+    "printFallback": "写出排序的顺序性质与多重集性质，并标注 seed 如何复现失败。"
+  }
+}

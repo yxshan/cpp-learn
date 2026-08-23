@@ -68,8 +68,11 @@ Golden fixtures cover every verdict category. For each judge profile:
 - Private failure output must not disclose exact hidden data.
 - Timeout and cancellation must terminate child processes.
 - Deterministic property failures must reproduce from seed.
+- Generated-property reports must retain seed, case index, and replayable stdin without exposing fixed private tests.
 - ASan/UBSan fixtures must classify representative reports.
-- Performance fixtures use same-machine ratios and tolerate noise.
+- Performance fixtures alternate baseline/scaled runs, compare medians on the same machine, and avoid absolute-time claims.
+- CMake fixtures configure a clean directory, build named application/test targets, execute CTest, and then run integration tests.
+- System fixtures use per-Grade files, child processes, joined threads, dynamic loopback ports, and isolated SQLite databases; the Judge root must be absent afterward.
 
 Passing stress tests or TSan does not prove absence of data races; reports and lessons must preserve that limitation.
 
@@ -137,4 +140,3 @@ S1 blocks all releases; S2 blocks the affected milestone release.
 ## 10. Evidence and reporting
 
 CI preserves test reports, coverage summaries, judge fixture reports, content-lint reports, and migration/rebuild checks. Coverage percentage is advisory; requirement and risk coverage are the release criteria.
-

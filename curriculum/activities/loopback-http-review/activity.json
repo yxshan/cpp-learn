@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "loopback-http-review",
+  "version": 1,
+  "kind": "review",
+  "title": "Review：恢复 HTTP 响应边界",
+  "estimatedMinutes": 25,
+  "conceptIds": ["network-loopback", "network-sockets", "protocol-http"],
+  "prerequisiteIds": ["loopback-http"],
+  "objectives": ["闭卷恢复最小 HTTP 成功响应和 loopback 资源顺序。"],
+  "victoryConditions": ["客户端再次收到成功状态，且测试无需外网和固定端口。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "HTTP/1.1 RFC 9112",
+      "url": "https://www.rfc-editor.org/rfc/rfc9112"
+    },
+    {
+      "kind": "reference",
+      "title": "POSIX bind",
+      "url": "https://pubs.opengroup.org/onlinepubs/9699919799/functions/bind.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/loopback-http-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::string response=\"TODO\";std::cout<<(response.starts_with(\"HTTP/1.1 200\")?\"status=200\\n\":\"status=other\\n\");}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "status=200\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "response status",
+        "stdin": "",
+        "expectedStdout": "status=200\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "response boundary verification",
+        "stdin": "",
+        "expectedStdout": "status=200\n",
+        "failureCategory": "protocol-boundary"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "protocol-version",
+        "title": "先写协议版本",
+        "kind": "nudge",
+        "content": "状态行从 HTTP 版本和三位状态码开始。"
+      },
+      {
+        "id": "success-code",
+        "title": "恢复成功状态",
+        "kind": "concept",
+        "content": "本复习只需构造能被 starts_with 判定的成功状态行。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "把 response 初始化为 HTTP/1.1 200 OK 后跟 CRLF。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "http-message-boundary",
+        "prompt": "完整 HTTP 响应为什么不能只有响应体 OK？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "loopback-http",
+    "teacherRubric": {
+      "id": "http-review-rubric",
+      "prompt": "回答应提到状态行、首部终止空行和响应体边界。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::string response=\"HTTP/1.1 200 OK\\r\\n\";std::cout<<(response.starts_with(\"HTTP/1.1 200\")?\"status=200\\n\":\"status=other\\n\");}\n"
+    },
+    "mutations": [
+      {
+        "id": "not-found-status",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::string response=\"HTTP/1.1 404 Not Found\\r\\n\";std::cout<<(response.starts_with(\"HTTP/1.1 200\")?\"status=200\\n\":\"status=other\\n\");}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "http-message",
+        "type": "network-flow",
+        "fallback": "status line -> headers -> empty line -> body"
+      }
+    ],
+    "printFallback": "写出最小成功响应的四个结构部分。"
+  }
+}

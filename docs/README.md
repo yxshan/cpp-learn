@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -33,13 +33,16 @@ Read in this order:
 15. [Stage 2 Implementation Report](15-STAGE-2-IMPLEMENTATION-REPORT.md)
 16. [Stage 3 Implementation Report](16-STAGE-3-IMPLEMENTATION-REPORT.md)
 17. [Stage 4 Implementation Report](17-STAGE-4-IMPLEMENTATION-REPORT.md)
-18. [Domain Context](CONTEXT.md)
+18. [Stage 5 Implementation Report](18-STAGE-5-IMPLEMENTATION-REPORT.md)
+19. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
 - [Modern C++ Mental Model](reference/MODERN_CPP_MENTAL_MODEL.md)
 - [Ownership and Lifetime](reference/OWNERSHIP_AND_LIFETIME.md)
 - [Build, Test, and Debug](reference/BUILD_TEST_DEBUG.md)
+- [Deterministic Algorithm Testing](reference/DETERMINISTIC_ALGORITHM_TESTING.md)
+- [Local System Labs](reference/LOCAL_SYSTEM_LABS.md)
 
 ## Architecture decisions
 

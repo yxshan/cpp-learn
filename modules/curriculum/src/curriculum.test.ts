@@ -402,24 +402,68 @@ describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
 });
 
 describe("[T-CONTENT-006] Stage 4 initial Modern C++ release", () => {
-  it("publishes 10 Lessons, 15 Exercises/Reviews, and one two-Milestone Project", async () => {
+  it("keeps the initial 10 Lessons, 15 Exercises/Reviews, and two Project Milestones available", async () => {
     const curriculum = createFilesystemCurriculum({
       catalogPath: resolve("curriculum", "catalog.json"),
     });
 
     const activities = await curriculum.listActivities();
     expect(
-      activities.filter((activity) => activity.kind === "lesson"),
-    ).toHaveLength(10);
+      activities.filter((activity) => activity.kind === "lesson").length,
+    ).toBeGreaterThanOrEqual(10);
     expect(
       activities.filter(
         (activity) =>
           activity.kind === "exercise" || activity.kind === "review",
-      ),
-    ).toHaveLength(15);
+      ).length,
+    ).toBeGreaterThanOrEqual(15);
     expect(
-      activities.filter((activity) => activity.kind === "project-milestone"),
-    ).toHaveLength(2);
+      activities.filter((activity) => activity.kind === "project-milestone")
+        .length,
+    ).toBeGreaterThanOrEqual(2);
     expect(JSON.stringify(activities)).not.toContain("referenceFiles");
+  });
+});
+
+describe("[T-CONTENT-007] Stage 5 algorithms and systems release", () => {
+  it("keeps generated, performance, CMake, and Project persistence details behind Curriculum interfaces", async () => {
+    const curriculum = createFilesystemCurriculum({
+      catalogPath: resolve("curriculum", "catalog.json"),
+    });
+
+    await expect(
+      curriculum.getJudge("deterministic-sort-properties"),
+    ).resolves.toMatchObject({
+      propertyTests: [{ seed: 20_260_823, cases: 16 }],
+    });
+    await expect(
+      curriculum.getJudge("complexity-growth-check"),
+    ).resolves.toMatchObject({
+      performanceCheck: { repetitions: 3, maxMedianRatio: 3.2 },
+    });
+    await expect(
+      curriculum.getJudge("cli-data-manager-m3"),
+    ).resolves.toMatchObject({
+      buildProfile: {
+        kind: "cmake",
+        target: "cli-data-manager",
+        testTarget: "record_store_tests",
+        ctest: true,
+      },
+    });
+
+    const projectWorkspaces = (
+      await curriculum.listWorkspaceActivities()
+    ).filter(({ activityId }) => activityId.startsWith("cli-data-manager-m"));
+    expect(projectWorkspaces).toHaveLength(3);
+    expect(
+      projectWorkspaces.every(
+        ({ persistenceId }) => persistenceId === "cli-data-manager",
+      ),
+    ).toBe(true);
+    const publicActivities = JSON.stringify(await curriculum.listActivities());
+    expect(publicActivities).not.toContain("propertyTests");
+    expect(publicActivities).not.toContain("performanceCheck");
+    expect(publicActivities).not.toContain("buildProfile");
   });
 });

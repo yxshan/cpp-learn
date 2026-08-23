@@ -117,6 +117,13 @@
           "type": "array",
           "items": { "$ref": "#/$defs/privateTest" }
         },
+        "propertyTests": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/propertyTest" }
+        },
+        "performanceCheck": { "$ref": "#/$defs/performanceCheck" },
+        "buildProfile": { "$ref": "#/$defs/buildProfile" },
         "sanitizers": {
           "type": "array",
           "uniqueItems": true,
@@ -245,6 +252,8 @@
             "timeout",
             "output_limit",
             "private_failure",
+            "property_failure",
+            "performance_failure",
             "sanitizer_failure"
           ]
         }
@@ -296,6 +305,116 @@
           "maxLength": 120
         }
       }
+    },
+    "propertyTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "seed",
+        "cases",
+        "generator",
+        "oracle",
+        "failureCategory"
+      ],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "cases": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "minLength",
+            "maxLength",
+            "minValue",
+            "maxValue"
+          ],
+          "properties": {
+            "kind": { "const": "integer-vector" },
+            "minLength": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "maxLength": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "minValue": {
+              "type": "integer",
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            },
+            "maxValue": {
+              "type": "integer",
+              "minimum": -2147483648,
+              "maximum": 2147483647
+            }
+          }
+        },
+        "oracle": { "const": "sort-ascending" },
+        "failureCategory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
+    },
+    "performanceCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "baselineStdin",
+        "scaledStdin",
+        "repetitions",
+        "maxMedianRatio",
+        "failureCategory"
+      ],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "baselineStdin": { "type": "string", "maxLength": 65536 },
+        "scaledStdin": { "type": "string", "maxLength": 65536 },
+        "repetitions": { "type": "integer", "minimum": 1, "maximum": 9 },
+        "maxMedianRatio": { "type": "number", "minimum": 1, "maximum": 100 },
+        "failureCategory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
+    },
+    "buildProfile": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "direct" },
+            "threadSupport": { "type": "boolean" },
+            "libraries": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "enum": ["sqlite3"] }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "target", "testTarget", "ctest"],
+          "properties": {
+            "kind": { "const": "cmake" },
+            "target": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.+-]+$",
+              "maxLength": 120
+            },
+            "testTarget": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.+-]+$",
+              "maxLength": 120
+            },
+            "ctest": { "type": "boolean" }
+          }
+        }
+      ]
     },
     "hint": {
       "type": "object",

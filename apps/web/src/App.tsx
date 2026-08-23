@@ -172,6 +172,20 @@ export function App() {
   const practiced = Object.values(dashboard?.conceptStates ?? {}).filter(
     (state) => state === "practiced",
   ).length;
+  const catalogCounts = {
+    lessons:
+      catalog?.activities.filter((activity) => activity.kind === "lesson")
+        .length ?? 0,
+    exercisesAndReviews:
+      catalog?.activities.filter(
+        (activity) =>
+          activity.kind === "exercise" || activity.kind === "review",
+      ).length ?? 0,
+    milestones:
+      catalog?.activities.filter(
+        (activity) => activity.kind === "project-milestone",
+      ).length ?? 0,
+  };
 
   return (
     <div className="app-shell">
@@ -238,13 +252,13 @@ export function App() {
 
         <section className="stage-banner" aria-labelledby="stage-title">
           <div className="stage-copy">
-            <span className="stage-chip">STAGE 4 · MODERN C++ CURRICULUM</span>
+            <span className="stage-chip">STAGE 5 · ALGORITHMS & SYSTEMS</span>
             <h2 id="stage-title">
               从语言心智模型走向可验证的现代 C++ 工程能力。
             </h2>
             <p>
-              10 个 Lesson、15 个 Exercise/Review 与首个渐进式 Project
-              共用一套可解释 Evidence、真实 Clang Judge 和本地学习记录。
+              从现代 C++ 主干继续进入算法性质、复杂度、进程线程、Loopback
+              HTTP、SQLite 与 CMake/CTest 工程实践。
             </p>
             <div className="stage-actions">
               <button
@@ -300,7 +314,9 @@ export function App() {
               <h2>课程目录</h2>
             </div>
             <span className="last-check">
-              10 Lessons · 15 Exercises/Reviews · 1 Project
+              {catalogCounts.lessons} Lessons ·{" "}
+              {catalogCounts.exercisesAndReviews} Exercises/Reviews ·{" "}
+              {catalogCounts.milestones} Project Milestones
             </span>
           </div>
           <div className="activity-grid">
@@ -509,7 +525,7 @@ export function App() {
           </article>
         </section>
         <footer>
-          <span>cpp-learn · Stage 3</span>
+          <span>cpp-learn · Stage 5</span>
           <span>Local-first · C++20 · React</span>
         </footer>
       </main>

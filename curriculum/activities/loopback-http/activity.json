@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "loopback-http",
+  "version": 1,
+  "kind": "lesson",
+  "title": "Loopback Socket 与最小 HTTP 往返",
+  "estimatedMinutes": 45,
+  "conceptIds": ["network-loopback", "network-sockets", "protocol-http"],
+  "prerequisiteIds": ["threads-atomics"],
+  "objectives": ["用动态 loopback 端口完成一次进程内 HTTP 请求与响应。"],
+  "victoryConditions": [
+    "客户端收到 HTTP/1.1 200 响应，所有 socket 与线程均被回收。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "POSIX socket",
+      "url": "https://pubs.opengroup.org/onlinepubs/9699919799/functions/socket.html"
+    },
+    {
+      "kind": "reference",
+      "title": "HTTP Semantics RFC 9110",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/loopback-http/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <arpa/inet.h>\n#include <iostream>\n#include <string>\n#include <sys/socket.h>\n#include <thread>\n#include <unistd.h>\nstd::string response(){return \"HTTP/1.1 500 TODO\\r\\nContent-Length: 2\\r\\n\\r\\nNO\";}int main(){int server=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;if(bind(server,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0)return 2;socklen_t size=sizeof(address);getsockname(server,reinterpret_cast<sockaddr*>(&address),&size);listen(server,1);std::thread worker([&]{int peer=accept(server,nullptr,nullptr);char request[128]{};read(peer,request,sizeof(request));std::string out=response();write(peer,out.data(),out.size());close(peer);});int client=socket(AF_INET,SOCK_STREAM,0);connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address));std::string request=\"GET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n\";write(client,request.data(),request.size());char buffer[256]{};read(client,buffer,sizeof(buffer));close(client);worker.join();close(server);std::string received=buffer;std::cout<<(received.starts_with(\"HTTP/1.1 200\")?\"status=200\\n\":\"status=other\\n\");}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "status=200\n",
+    "timeoutMs": 5000,
+    "buildProfile": { "kind": "direct", "threadSupport": true },
+    "publicTests": [
+      { "name": "local HTTP", "stdin": "", "expectedStdout": "status=200\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "repeatable dynamic port",
+        "stdin": "",
+        "expectedStdout": "status=200\n",
+        "failureCategory": "loopback request must succeed without a fixed port"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "status-line",
+        "title": "先修正状态行",
+        "kind": "nudge",
+        "content": "客户端只把以成功状态行开头的响应视为通过。"
+      },
+      {
+        "id": "content-length",
+        "title": "响应边界必须自描述",
+        "kind": "concept",
+        "content": "Content-Length 应与响应体的字节数保持一致。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "response 返回成功状态行、Content-Length: 2、空行和两字节 OK 响应体。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "loopback-isolation",
+        "prompt": "为什么 loopback + 动态端口比外网服务或固定端口更适合作为确定性测试 fixture？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["loopback-http-review"],
+    "teacherRubric": {
+      "id": "loopback-http-rubric",
+      "prompt": "回答应涉及离线性、端口冲突、进程内所有权、协议边界与清理。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <arpa/inet.h>\n#include <iostream>\n#include <string>\n#include <sys/socket.h>\n#include <thread>\n#include <unistd.h>\nstd::string response(){return \"HTTP/1.1 200 OK\\r\\nContent-Length: 2\\r\\n\\r\\nOK\";}int main(){int server=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;if(bind(server,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0)return 2;socklen_t size=sizeof(address);getsockname(server,reinterpret_cast<sockaddr*>(&address),&size);listen(server,1);std::thread worker([&]{int peer=accept(server,nullptr,nullptr);char request[128]{};read(peer,request,sizeof(request));std::string out=response();write(peer,out.data(),out.size());close(peer);});int client=socket(AF_INET,SOCK_STREAM,0);connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address));std::string request=\"GET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n\";write(client,request.data(),request.size());char buffer[256]{};read(client,buffer,sizeof(buffer));close(client);worker.join();close(server);std::string received=buffer;std::cout<<(received.starts_with(\"HTTP/1.1 200\")?\"status=200\\n\":\"status=other\\n\");}\n"
+    },
+    "mutations": [
+      {
+        "id": "server-error-status",
+        "files": {
+          "main.cpp": "#include <arpa/inet.h>\n#include <iostream>\n#include <string>\n#include <sys/socket.h>\n#include <thread>\n#include <unistd.h>\nstd::string response(){return \"HTTP/1.1 500 Error\\r\\nContent-Length: 2\\r\\n\\r\\nNO\";}int main(){int server=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;bind(server,reinterpret_cast<sockaddr*>(&address),sizeof(address));socklen_t size=sizeof(address);getsockname(server,reinterpret_cast<sockaddr*>(&address),&size);listen(server,1);std::thread worker([&]{int peer=accept(server,nullptr,nullptr);char request[128]{};read(peer,request,sizeof(request));auto out=response();write(peer,out.data(),out.size());close(peer);});int client=socket(AF_INET,SOCK_STREAM,0);connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address));std::string request=\"GET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n\";write(client,request.data(),request.size());char buffer[256]{};read(client,buffer,sizeof(buffer));close(client);worker.join();close(server);std::string received=buffer;std::cout<<(received.starts_with(\"HTTP/1.1 200\")?\"status=200\\n\":\"status=other\\n\");}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "loopback-flow",
+        "type": "network-flow",
+        "fallback": "bind 127.0.0.1:0 -> discover assigned port -> listen -> client connect -> HTTP request -> response -> close and join"
+      }
+    ],
+    "printFallback": "画出动态端口从 bind 到 connect 的传播路径以及每个 socket 的关闭责任。"
+  }
+}

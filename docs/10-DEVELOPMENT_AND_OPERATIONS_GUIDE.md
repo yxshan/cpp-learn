@@ -14,6 +14,7 @@
 - Node.js and npm versions compatible with the locked toolchain.
 - Apple Clang with C++20 support.
 - CMake and Git.
+- SQLite development headers/library supplied by the reference macOS SDK.
 - Modern Chromium/WebKit browser for development.
 
 Exact versions will be recorded by `cpplearn doctor` and release manifests.
@@ -34,6 +35,8 @@ npm run test:e2e
 ```
 
 These commands are executable. `npm run test:e2e` starts loopback API and Vite services for the controlled Chromium flow.
+
+`npm run check:content` executes the system-lab references. It therefore needs normal local permission to create temporary files/processes, bind `127.0.0.1` on a dynamic port, link SQLite, and invoke CMake/CTest. It never requires external network access.
 
 ## 3. Local startup
 

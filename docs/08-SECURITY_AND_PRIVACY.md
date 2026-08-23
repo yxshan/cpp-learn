@@ -72,7 +72,7 @@ Native macOS mode cannot reliably prevent every fork bomb or host read. Only tru
 
 Controls:
 
-- Judge temporary directory and minimal environment.
+- Judge temporary directory and minimal environment; `HOME` and `TMPDIR` both point at the per-Grade root.
 - No secrets in inherited environment variables.
 - Network Activities use loopback and dynamic ports.
 - A future container Adapter denies external network and mounts only required files.
@@ -155,4 +155,3 @@ On suspected corruption or unsafe execution:
 4. Restore from a known backup or rebuild projections.
 5. Document root cause and add a regression test.
 6. Create or supersede an ADR if the threat changes a hard-to-reverse architecture decision.
-

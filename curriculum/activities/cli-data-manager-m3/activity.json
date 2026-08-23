@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "id": "cli-data-manager-m3",
+  "version": 3,
+  "kind": "project-milestone",
+  "title": "Project：CLI 数据管理器 Milestone 3",
+  "estimatedMinutes": 75,
+  "conceptIds": [
+    "cpp-cmake",
+    "cpp-ctest",
+    "cpp-multi-file",
+    "project-evolution"
+  ],
+  "prerequisiteIds": ["cli-data-manager-m2", "systems-runtime-review"],
+  "objectives": [
+    "把持续演进的多文件 Project 组织成可复现的 CMake/CTest 目标图。"
+  ],
+  "victoryConditions": [
+    "clean configure、cli-data-manager target、CTest 和最终 CLI 集成测试全部通过。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake tutorial",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html"
+    },
+    {
+      "kind": "reference",
+      "title": "CTest manual",
+      "url": "https://cmake.org/cmake/help/latest/manual/ctest.1.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cli-data-manager-m3/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "cli-data-manager",
+    "editablePaths": [
+      "CMakeLists.txt",
+      "main.cpp",
+      "record.cpp",
+      "record.hpp",
+      "store.cpp",
+      "store.hpp",
+      "tests.cpp"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_learn_cli LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(record_model record.cpp store.cpp)\ntarget_include_directories(record_model PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})\nadd_executable(cli-data-manager main.cpp)\ntarget_link_libraries(cli-data-manager PRIVATE record_model)\nenable_testing()\nadd_executable(record_store_tests tests.cpp)\ntarget_link_libraries(record_store_tests PRIVATE record_model)\nadd_test(NAME record-store COMMAND record_store_tests --todo)\n",
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(){std::string name;int score{};std::cin>>name>>score;RecordStore store;store.add(Record{name,score});std::cout<<\"size=\"<<store.size()<<'\\n';}\n",
+      "record.hpp": "#pragma once\n#include <string>\nstruct Record{std::string name;int score;};\nstd::string format_record(const Record& record);\n",
+      "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& record){return record.name+\"=\"+std::to_string(record.score);}\n",
+      "store.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\n#include \"record.hpp\"\nclass RecordStore{std::vector<Record> records_;public:void add(Record record);std::size_t size()const;};\n",
+      "store.cpp": "#include <utility>\n#include \"store.hpp\"\nvoid RecordStore::add(Record record){records_.push_back(std::move(record));}\nstd::size_t RecordStore::size()const{return records_.size();}\n",
+      "tests.cpp": "#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(int argc,char**){if(argc>1)return 2;RecordStore store;store.add(Record{\"test\",1});return store.size()==1?0:1;}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "size=1\n",
+    "timeoutMs": 10000,
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "cli-data-manager",
+      "testTarget": "record_store_tests",
+      "ctest": true
+    },
+    "publicTests": [
+      {
+        "name": "built CLI",
+        "stdin": "alice 42\n",
+        "expectedStdout": "size=1\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "repeatable clean build",
+        "stdin": "bob -3\n",
+        "expectedStdout": "size=1\n",
+        "failureCategory": "the named CMake target must remain usable after CTest"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 10,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "read-ctest-command",
+        "title": "先读测试注册",
+        "kind": "nudge",
+        "content": "add_test 决定 CTest 启动哪个程序以及传入哪些参数。"
+      },
+      {
+        "id": "remove-failing-argument",
+        "title": "测试不需要额外参数",
+        "kind": "concept",
+        "content": "tests.cpp 把任何额外参数视为失败；测试注册只应调用目标本身。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "把 add_test 改为 NAME record-store COMMAND record_store_tests，不传入额外参数。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "target-boundaries",
+        "prompt": "为什么数据库、CLI 和测试应是不同 target，并由依赖图连接？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["cmake-testing-debugging-review"],
+    "teacherRubric": {
+      "id": "cmake-project-rubric",
+      "prompt": "回答应涉及复用 library target、生产入口与测试入口分离、clean build 和回归可复现性。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_learn_cli LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(record_model record.cpp store.cpp)\ntarget_include_directories(record_model PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})\nadd_executable(cli-data-manager main.cpp)\ntarget_link_libraries(cli-data-manager PRIVATE record_model)\nenable_testing()\nadd_executable(record_store_tests tests.cpp)\ntarget_link_libraries(record_store_tests PRIVATE record_model)\nadd_test(NAME record-store COMMAND record_store_tests)\n",
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(){std::string name;int score{};std::cin>>name>>score;RecordStore store;store.add(Record{name,score});std::cout<<\"size=\"<<store.size()<<'\\n';}\n",
+      "record.hpp": "#pragma once\n#include <string>\nstruct Record{std::string name;int score;};\nstd::string format_record(const Record& record);\n",
+      "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& record){return record.name+\"=\"+std::to_string(record.score);}\n",
+      "store.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\n#include \"record.hpp\"\nclass RecordStore{std::vector<Record> records_;public:void add(Record record);std::size_t size()const;};\n",
+      "store.cpp": "#include <utility>\n#include \"store.hpp\"\nvoid RecordStore::add(Record record){records_.push_back(std::move(record));}\nstd::size_t RecordStore::size()const{return records_.size();}\n",
+      "tests.cpp": "#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(int argc,char**){if(argc>1)return 2;RecordStore store;store.add(Record{\"test\",1});return store.size()==1?0:1;}\n"
+    },
+    "mutations": [
+      {
+        "id": "ctest-extra-argument",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_learn_cli LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(record_model record.cpp store.cpp)\ntarget_include_directories(record_model PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})\nadd_executable(cli-data-manager main.cpp)\ntarget_link_libraries(cli-data-manager PRIVATE record_model)\nenable_testing()\nadd_executable(record_store_tests tests.cpp)\ntarget_link_libraries(record_store_tests PRIVATE record_model)\nadd_test(NAME record-store COMMAND record_store_tests --broken)\n",
+          "main.cpp": "#include <iostream>\n#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(){std::string name;int score{};std::cin>>name>>score;RecordStore store;store.add(Record{name,score});std::cout<<\"size=\"<<store.size()<<'\\n';}\n",
+          "record.hpp": "#pragma once\n#include <string>\nstruct Record{std::string name;int score;};\nstd::string format_record(const Record& record);\n",
+          "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& record){return record.name+\"=\"+std::to_string(record.score);}\n",
+          "store.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\n#include \"record.hpp\"\nclass RecordStore{std::vector<Record> records_;public:void add(Record record);std::size_t size()const;};\n",
+          "store.cpp": "#include <utility>\n#include \"store.hpp\"\nvoid RecordStore::add(Record record){records_.push_back(std::move(record));}\nstd::size_t RecordStore::size()const{return records_.size();}\n",
+          "tests.cpp": "#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(int argc,char**){if(argc>1)return 2;RecordStore store;store.add(Record{\"test\",1});return store.size()==1?0:1;}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "cmake-target-graph",
+        "type": "algorithm-trace",
+        "fallback": "record.cpp + store.cpp -> record_model -> CLI and test targets -> CTest -> Grade integration run"
+      }
+    ],
+    "printFallback": "画出 record_model、cli-data-manager、record_store_tests 与 CTest 的依赖图。"
+  }
+}

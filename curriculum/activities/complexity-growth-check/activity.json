@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "complexity-growth-check",
+  "version": 1,
+  "kind": "exercise",
+  "title": "用增长比观察复杂度",
+  "estimatedMinutes": 35,
+  "conceptIds": ["algorithm-complexity", "performance-measurement"],
+  "prerequisiteIds": ["deterministic-sort-properties"],
+  "objectives": ["用同机中位耗时增长比区分线性与平方级实现。"],
+  "victoryConditions": ["功能测试正确，输入规模翻倍时的中位耗时比不超过 3.2。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ Core Guidelines: performance",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-per"
+    },
+    {
+      "kind": "reference",
+      "title": "Google Benchmark: reducing variance",
+      "url": "https://google.github.io/benchmark/reducing_variance.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/complexity-growth-check/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <cstdint>\n#include <iostream>\nint main(){std::uint64_t n{};std::cin>>n;/* TODO: produce the arithmetic-series result */std::cout<<0<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "45\n",
+    "timeoutMs": 5000,
+    "publicTests": [
+      { "name": "small sum", "stdin": "10\n", "expectedStdout": "45\n" }
+    ],
+    "performanceCheck": {
+      "name": "doubling input growth",
+      "baselineStdin": "8000\n",
+      "scaledStdin": "16000\n",
+      "repetitions": 3,
+      "maxMedianRatio": 3.2,
+      "failureCategory": "same-machine median runtime grows faster than the declared linear boundary"
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "separate-contracts",
+        "title": "分开功能与成本",
+        "kind": "nudge",
+        "content": "先保证输出契约，再检查主要循环随 n 增长多少次。"
+      },
+      {
+        "id": "linear-work",
+        "title": "保持每个元素固定工作量",
+        "kind": "concept",
+        "content": "外层遍历 n 次时，内层应是与 n 无关的固定次数。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "用一个 n 次外层循环累加答案；固定次数的额外循环可以稳定测量，但不能再嵌套 n 次循环。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "relative-measurement",
+        "prompt": "为什么同机、同程序、多次中位数增长比比绝对毫秒阈值更可信？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["deterministic-sort-properties-review"],
+    "teacherRubric": {
+      "id": "complexity-measurement-rubric",
+      "prompt": "回答应涉及环境控制、输入缩放、重复测量、中位数与增长阶。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <cstdint>\n#include <iostream>\nint main(){std::uint64_t n{};std::cin>>n;std::uint64_t answer=0;volatile std::uint64_t sink=0;for(std::uint64_t i=0;i<n;++i){answer+=i;for(int repeat=0;repeat<2000;++repeat)sink+=(i+repeat)&1U;}if(sink==UINT64_MAX)std::cerr<<sink;std::cout<<answer<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "quadratic-work",
+        "files": {
+          "main.cpp": "#include <cstdint>\n#include <iostream>\nint main(){std::uint64_t n{};std::cin>>n;std::uint64_t answer=n*(n-1)/2;volatile std::uint64_t sink=0;for(std::uint64_t i=0;i<n;++i)for(std::uint64_t j=0;j<n;++j)sink+=(i+j)&1U;if(sink==UINT64_MAX)std::cerr<<sink;std::cout<<answer<<'\\n';}\n"
+        },
+        "expectedVerdict": "performance_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "growth-ratio",
+        "type": "algorithm-trace",
+        "fallback": "same executable -> baseline median -> doubled-input median -> growth ratio -> complexity verdict"
+      }
+    ],
+    "printFallback": "画出 O(n) 与 O(n²) 在输入翻倍时的理想增长比，并标出测量噪声。"
+  }
+}

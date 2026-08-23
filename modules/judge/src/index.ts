@@ -234,6 +234,8 @@ export interface NativeJudgeDependencies {
   readonly monotonicClock?: () => number;
   readonly compiler?: string;
   readonly compilerFingerprint?: string;
+  readonly cmake?: string;
+  readonly ctest?: string;
   readonly maxOutputBytes?: number;
 }
 
@@ -256,6 +258,12 @@ function reportStage(
   details: {
     readonly testName?: string;
     readonly feedback?: string;
+    readonly seed?: number;
+    readonly caseIndex?: number;
+    readonly counterexample?: string;
+    readonly baselineDurationMs?: number;
+    readonly scaledDurationMs?: number;
+    readonly ratio?: number;
     readonly diagnostics?: readonly JudgeDiagnostic[];
   } = {},
 ): JudgeReportStage {
@@ -267,10 +275,65 @@ function reportStage(
     ...(result?.stderr ? { stderr: result.stderr } : {}),
     ...(details.testName ? { testName: details.testName } : {}),
     ...(details.feedback ? { feedback: details.feedback } : {}),
+    ...(details.seed !== undefined ? { seed: details.seed } : {}),
+    ...(details.caseIndex !== undefined
+      ? { caseIndex: details.caseIndex }
+      : {}),
+    ...(details.counterexample !== undefined
+      ? { counterexample: details.counterexample }
+      : {}),
+    ...(details.baselineDurationMs !== undefined
+      ? { baselineDurationMs: details.baselineDurationMs }
+      : {}),
+    ...(details.scaledDurationMs !== undefined
+      ? { scaledDurationMs: details.scaledDurationMs }
+      : {}),
+    ...(details.ratio !== undefined ? { ratio: details.ratio } : {}),
     ...(details.diagnostics && details.diagnostics.length > 0
       ? { diagnostics: details.diagnostics }
       : {}),
   };
+}
+
+function deterministicRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
+  };
+}
+
+function randomInteger(random: () => number, minimum: number, maximum: number) {
+  return minimum + Math.floor(random() * (maximum - minimum + 1));
+}
+
+function generatePropertyCase(
+  property: NonNullable<JudgeSpec["propertyTests"]>[number],
+  random: () => number,
+): { readonly stdin: string; readonly expectedStdout: string } {
+  const { generator } = property;
+  const length = randomInteger(
+    random,
+    generator.minLength,
+    generator.maxLength,
+  );
+  const values = Array.from({ length }, () =>
+    randomInteger(random, generator.minValue, generator.maxValue),
+  );
+  return {
+    stdin: `${length}\n${values.join(" ")}\n`,
+    expectedStdout: `${[...values].sort((left, right) => left - right).join(" ")}\n`,
+  };
+}
+
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) return sorted[middle] ?? 0;
+  return ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2;
 }
 
 function compilerDiagnostics(stderr: string): readonly JudgeDiagnostic[] {
@@ -299,6 +362,21 @@ function sanitizerDiagnostics(stderr: string): readonly JudgeDiagnostic[] {
   return message ? [{ category: "sanitizer", message }] : [];
 }
 
+function failedProcessVerdict(
+  result: BoundedProcessResult,
+  fallback: JudgeReport["verdict"],
+): JudgeReport["verdict"] | undefined {
+  return result.cancelled
+    ? "cancelled"
+    : result.outputLimitExceeded
+      ? "output_limit"
+      : result.timedOut
+        ? "timeout"
+        : result.exitCode !== 0
+          ? fallback
+          : undefined;
+}
+
 export function createNativeJudge(
   dependencies: NativeJudgeDependencies = {},
 ): Judge {
@@ -307,13 +385,15 @@ export function createNativeJudge(
   const monotonicClock = dependencies.monotonicClock ?? (() => Date.now());
   const compiler = dependencies.compiler ?? "/usr/bin/clang++";
   const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
+  const cmake = dependencies.cmake ?? "cmake";
+  const ctest = dependencies.ctest ?? "ctest";
   const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
 
   return {
     async execute(request) {
       const startedAt = clock().toISOString();
       const stages: JudgeReportStage[] = [];
-      let verdict: JudgeReport["verdict"];
+      let verdict: JudgeReport["verdict"] = "judge_system_error";
       let activeStageKind: JudgeReportStage["kind"] = "compile";
       let executionRoot: string | undefined;
       try {
@@ -338,53 +418,156 @@ export function createNativeJudge(
           .sort();
         if (sources.length === 0)
           throw new Error("Snapshot has no C++ source files");
-        const executablePath = join(executionRoot, "program");
+        let executablePath = join(executionRoot, "program");
         const environment = {
-          PATH: "/usr/bin:/bin",
+          PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
           LANG: "C",
           LC_ALL: "C",
+          HOME: executionRoot,
           TMPDIR: executionRoot,
         };
         const cancellation = request.signal
           ? { signal: request.signal }
           : ({} as const);
-        const compileStarted = monotonicClock();
-        const compile = await run({
-          executable: compiler,
-          args: [
-            "-std=c++20",
-            "-Wall",
-            "-Wextra",
-            "-Wpedantic",
-            ...sources,
-            "-o",
-            executablePath,
-          ],
-          cwd: executionRoot,
-          timeoutMs: request.spec.timeoutMs,
-          maxOutputBytes,
-          environment,
-          ...cancellation,
-        });
-        const compileDuration = monotonicClock() - compileStarted;
-        if (compile.cancelled) {
-          stages.push(reportStage("compile", "fail", compileDuration, compile));
-          verdict = "cancelled";
-        } else if (compile.outputLimitExceeded) {
-          stages.push(reportStage("compile", "fail", compileDuration, compile));
-          verdict = "output_limit";
-        } else if (compile.timedOut) {
-          stages.push(reportStage("compile", "fail", compileDuration, compile));
-          verdict = "timeout";
-        } else if (compile.exitCode !== 0) {
-          stages.push(
-            reportStage("compile", "fail", compileDuration, compile, {
-              diagnostics: compilerDiagnostics(compile.stderr),
-            }),
+        let buildPassed = false;
+        if (request.spec.buildProfile?.kind === "cmake") {
+          activeStageKind = "configure";
+          const configureStarted = monotonicClock();
+          const configure = await run({
+            executable: cmake,
+            args: ["-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Release"],
+            cwd: executionRoot,
+            timeoutMs: request.spec.timeoutMs,
+            maxOutputBytes,
+            environment,
+            ...cancellation,
+          });
+          const configureFailure = failedProcessVerdict(
+            configure,
+            "compile_error",
           );
-          verdict = "compile_error";
+          stages.push(
+            reportStage(
+              "configure",
+              configureFailure ? "fail" : "pass",
+              monotonicClock() - configureStarted,
+              configure,
+            ),
+          );
+          if (configureFailure) {
+            verdict = configureFailure;
+          } else {
+            activeStageKind = "build";
+            const buildStarted = monotonicClock();
+            const build = await run({
+              executable: cmake,
+              args: [
+                "--build",
+                "build",
+                "--target",
+                request.spec.buildProfile.target,
+                ...(request.spec.buildProfile.testTarget
+                  ? [request.spec.buildProfile.testTarget]
+                  : []),
+              ],
+              cwd: executionRoot,
+              timeoutMs: request.spec.timeoutMs,
+              maxOutputBytes,
+              environment,
+              ...cancellation,
+            });
+            const buildFailure = failedProcessVerdict(build, "compile_error");
+            stages.push(
+              reportStage(
+                "build",
+                buildFailure ? "fail" : "pass",
+                monotonicClock() - buildStarted,
+                build,
+              ),
+            );
+            if (buildFailure) {
+              verdict = buildFailure;
+            } else if (
+              request.mode === "grade" &&
+              request.spec.buildProfile.ctest
+            ) {
+              activeStageKind = "ctest";
+              const ctestStarted = monotonicClock();
+              const tested = await run({
+                executable: ctest,
+                args: ["--test-dir", "build", "--output-on-failure"],
+                cwd: executionRoot,
+                timeoutMs: request.spec.timeoutMs,
+                maxOutputBytes,
+                environment,
+                ...cancellation,
+              });
+              const ctestFailure = failedProcessVerdict(
+                tested,
+                "public_failure",
+              );
+              stages.push(
+                reportStage(
+                  "ctest",
+                  ctestFailure ? "fail" : "pass",
+                  monotonicClock() - ctestStarted,
+                  tested,
+                ),
+              );
+              if (ctestFailure) verdict = ctestFailure;
+              else buildPassed = true;
+            } else {
+              buildPassed = true;
+            }
+            executablePath = join(
+              executionRoot,
+              "build",
+              request.spec.buildProfile.target,
+            );
+          }
         } else {
-          stages.push(reportStage("compile", "pass", compileDuration, compile));
+          activeStageKind = "compile";
+          const direct =
+            request.spec.buildProfile?.kind === "direct"
+              ? request.spec.buildProfile
+              : undefined;
+          const compileStarted = monotonicClock();
+          const compile = await run({
+            executable: compiler,
+            args: [
+              "-std=c++20",
+              "-Wall",
+              "-Wextra",
+              "-Wpedantic",
+              ...(direct?.threadSupport ? ["-pthread"] : []),
+              ...sources,
+              ...(direct?.libraries ?? []).map((library) => `-l${library}`),
+              "-o",
+              executablePath,
+            ],
+            cwd: executionRoot,
+            timeoutMs: request.spec.timeoutMs,
+            maxOutputBytes,
+            environment,
+            ...cancellation,
+          });
+          const compileDuration = monotonicClock() - compileStarted;
+          const compileFailure = failedProcessVerdict(compile, "compile_error");
+          stages.push(
+            reportStage(
+              "compile",
+              compileFailure ? "fail" : "pass",
+              compileDuration,
+              compile,
+              compile.exitCode === 0
+                ? {}
+                : { diagnostics: compilerDiagnostics(compile.stderr) },
+            ),
+          );
+          if (compileFailure) verdict = compileFailure;
+          else buildPassed = true;
+        }
+        if (buildPassed) {
           const publicTests = request.spec.publicTests ?? [
             {
               name: "expected output",
@@ -493,6 +676,158 @@ export function createNativeJudge(
                       : "private_failure";
                 break;
               }
+            }
+          }
+
+          if (
+            verdict === "automated_pass" &&
+            request.mode === "grade" &&
+            request.spec.propertyTests
+          ) {
+            for (const property of request.spec.propertyTests) {
+              activeStageKind = "property_test";
+              const propertyStarted = monotonicClock();
+              const random = deterministicRandom(property.seed);
+              let propertyPassed = true;
+              for (
+                let caseIndex = 0;
+                caseIndex < property.cases;
+                caseIndex += 1
+              ) {
+                const generated = generatePropertyCase(property, random);
+                const test = await run({
+                  executable: executablePath,
+                  args: [],
+                  cwd: executionRoot,
+                  timeoutMs: request.spec.timeoutMs,
+                  maxOutputBytes,
+                  environment,
+                  stdin: generated.stdin,
+                  ...cancellation,
+                });
+                const passed =
+                  !test.cancelled &&
+                  !test.outputLimitExceeded &&
+                  !test.timedOut &&
+                  test.exitCode === 0 &&
+                  test.stdout === generated.expectedStdout;
+                if (!passed) {
+                  propertyPassed = false;
+                  stages.push(
+                    reportStage(
+                      "property_test",
+                      "fail",
+                      monotonicClock() - propertyStarted,
+                      undefined,
+                      {
+                        testName: property.name,
+                        feedback: property.failureCategory,
+                        seed: property.seed,
+                        caseIndex,
+                        counterexample: generated.stdin,
+                      },
+                    ),
+                  );
+                  verdict = test.cancelled
+                    ? "cancelled"
+                    : test.timedOut
+                      ? "timeout"
+                      : test.outputLimitExceeded
+                        ? "output_limit"
+                        : test.exitCode !== 0
+                          ? "runtime_error"
+                          : "property_failure";
+                  break;
+                }
+              }
+              if (propertyPassed) {
+                stages.push(
+                  reportStage(
+                    "property_test",
+                    "pass",
+                    monotonicClock() - propertyStarted,
+                    undefined,
+                    { testName: property.name, seed: property.seed },
+                  ),
+                );
+              }
+              if (verdict !== "automated_pass") break;
+            }
+          }
+
+          if (
+            verdict === "automated_pass" &&
+            request.mode === "grade" &&
+            request.spec.performanceCheck
+          ) {
+            activeStageKind = "performance";
+            const performance = request.spec.performanceCheck;
+            const baselineDurations: number[] = [];
+            const scaledDurations: number[] = [];
+            let processFailure:
+              | "cancelled"
+              | "timeout"
+              | "output_limit"
+              | "runtime_error"
+              | undefined;
+            for (
+              let repetition = 0;
+              repetition < performance.repetitions;
+              repetition += 1
+            ) {
+              for (const [input, durations] of [
+                [performance.baselineStdin, baselineDurations],
+                [performance.scaledStdin, scaledDurations],
+              ] as const) {
+                const runStarted = monotonicClock();
+                const result = await run({
+                  executable: executablePath,
+                  args: [],
+                  cwd: executionRoot,
+                  timeoutMs: request.spec.timeoutMs,
+                  maxOutputBytes,
+                  environment,
+                  stdin: input,
+                  ...cancellation,
+                });
+                durations.push(Math.max(0, monotonicClock() - runStarted));
+                processFailure = result.cancelled
+                  ? "cancelled"
+                  : result.timedOut
+                    ? "timeout"
+                    : result.outputLimitExceeded
+                      ? "output_limit"
+                      : result.exitCode !== 0
+                        ? "runtime_error"
+                        : undefined;
+                if (processFailure) break;
+              }
+              if (processFailure) break;
+            }
+            const baselineDurationMs = median(baselineDurations);
+            const scaledDurationMs = median(scaledDurations);
+            const ratio = scaledDurationMs / Math.max(1, baselineDurationMs);
+            const passed =
+              processFailure === undefined &&
+              ratio <= performance.maxMedianRatio;
+            stages.push(
+              reportStage(
+                "performance",
+                passed ? "pass" : "fail",
+                baselineDurations.reduce((total, value) => total + value, 0) +
+                  scaledDurations.reduce((total, value) => total + value, 0),
+                undefined,
+                {
+                  testName: performance.name,
+                  ...(passed ? {} : { feedback: performance.failureCategory }),
+                  baselineDurationMs,
+                  scaledDurationMs,
+                  ratio,
+                },
+              ),
+            );
+            if (!passed) {
+              verdict = processFailure ?? "performance_failure";
             }
           }
 
@@ -627,8 +962,34 @@ export function createNativeJudge(
           snapshotId: request.snapshot.id,
           digest: request.snapshot.digest,
         },
-        toolchain: { compiler: compilerFingerprint, standard: "c++20" },
-        buildFlags: ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic"],
+        toolchain: {
+          compiler: compilerFingerprint,
+          standard: "c++20",
+          ...(request.spec.buildProfile?.kind === "cmake"
+            ? { buildSystem: "cmake/ctest" as const }
+            : {}),
+        },
+        buildFlags:
+          request.spec.buildProfile?.kind === "cmake"
+            ? ["CMAKE_BUILD_TYPE=Release"]
+            : [
+                "-std=c++20",
+                "-Wall",
+                "-Wextra",
+                "-Wpedantic",
+                ...(request.spec.buildProfile?.kind === "direct" &&
+                request.spec.buildProfile.threadSupport
+                  ? ["-pthread"]
+                  : []),
+                ...(request.spec.buildProfile?.kind === "direct"
+                  ? (request.spec.buildProfile.libraries ?? []).map(
+                      (library) => `-l${library}`,
+                    )
+                  : []),
+              ],
+        ...(request.spec.propertyTests
+          ? { seeds: request.spec.propertyTests.map((test) => test.seed) }
+          : {}),
         verdict,
         stages,
         startedAt,

@@ -119,3 +119,14 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-CONTENT-006 | Release scale, Activity Catalog redaction, 27 unsolved starters, 27 Clang reference solutions, and 27 mutation fixtures | Passed |
 | T-WORK-001 | Version-aware Workspace upgrade preserves Learner files and adds only missing starter paths | Passed |
 | T-E2E-001, T-E2E-005 | Expanded Track catalog plus real-browser/real-Clang learning loop | Passed |
+
+## 11. Executable Stage 5 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-JUDGE-006 | Fixed-seed generated properties record seed, case index, and reproducible counterexample | Passed |
+| T-JUDGE-007 | Same-machine baseline/scaled medians produce a relative performance verdict | Passed |
+| T-JUDGE-008 | Declarative clean CMake configure, named application/test target build, CTest, and integration run | Passed |
+| T-SYSTEM-001 | Per-Grade temporary root is removed; existing timeout/cancellation tests terminate the process group | Passed |
+| T-CONTENT-007 | 38 starters, references, and mutations exercise algorithm, POSIX, thread, loopback HTTP, SQLite, and CMake profiles | Passed |
+| T-WORK-001 | CLI Project Milestones 1–3 share one persistent Workspace identity and preserve Learner files | Passed |

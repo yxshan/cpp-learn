@@ -155,6 +155,8 @@ const judgeVerdicts = new Set([
   "timeout",
   "output_limit",
   "private_failure",
+  "property_failure",
+  "performance_failure",
   "sanitizer_failure",
   "cancelled",
   "automated_pass",
@@ -162,9 +164,14 @@ const judgeVerdicts = new Set([
 ]);
 const judgeStageKinds = new Set([
   "compile",
+  "configure",
+  "build",
+  "ctest",
   "test",
   "public_test",
   "private_test",
+  "property_test",
+  "performance",
   "asan",
   "ubsan",
 ]);
@@ -242,8 +249,13 @@ function isAttemptCompletedEvent(
     typeof report["source"]["digest"] === "string" &&
     typeof report["toolchain"]["compiler"] === "string" &&
     report["toolchain"]["standard"] === "c++20" &&
+    (report["toolchain"]["buildSystem"] === undefined ||
+      report["toolchain"]["buildSystem"] === "cmake/ctest") &&
     (report["buildFlags"] === undefined ||
       isStringArray(report["buildFlags"])) &&
+    (report["seeds"] === undefined ||
+      (Array.isArray(report["seeds"]) &&
+        report["seeds"].every((seed) => typeof seed === "number"))) &&
     typeof report["verdict"] === "string" &&
     judgeVerdicts.has(report["verdict"]) &&
     report["stages"].every(
@@ -259,6 +271,12 @@ function isAttemptCompletedEvent(
         isOptionalString(stage["stderr"]) &&
         isOptionalString(stage["testName"]) &&
         isOptionalString(stage["feedback"]) &&
+        isOptionalNumber(stage["seed"]) &&
+        isOptionalNumber(stage["caseIndex"]) &&
+        isOptionalString(stage["counterexample"]) &&
+        isOptionalNumber(stage["baselineDurationMs"]) &&
+        isOptionalNumber(stage["scaledDurationMs"]) &&
+        isOptionalNumber(stage["ratio"]) &&
         (stage["diagnostics"] === undefined ||
           (Array.isArray(stage["diagnostics"]) &&
             stage["diagnostics"].every(isJudgeDiagnostic))),

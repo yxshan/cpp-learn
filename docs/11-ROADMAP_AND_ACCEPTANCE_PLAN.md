@@ -111,6 +111,8 @@ Acceptance:
 
 ## 7. Stage 5: Algorithms and systems
 
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 5 Implementation Report](18-STAGE-5-IMPLEMENTATION-REPORT.md).
+
 Deliver:
 
 - Deterministic property tests and relative performance checks.

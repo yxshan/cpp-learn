@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it, vi } from "vitest";
@@ -165,9 +165,10 @@ describe("[T-JUDGE-001] immutable snapshot execution", () => {
         executable: "clang++",
         args: expect.arrayContaining(["-std=c++20", "-Wall", "-Wextra"]),
         environment: {
-          PATH: "/usr/bin:/bin",
+          PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
           LANG: "C",
           LC_ALL: "C",
+          HOME: expect.stringContaining("cpp-learn-judge-"),
           TMPDIR: expect.stringContaining("cpp-learn-judge-"),
         },
       }),
@@ -680,6 +681,323 @@ describe("[T-JUDGE-003] Stage 2 Judge profiles", () => {
     });
     expect(JSON.stringify(report)).not.toContain("secret-input-value");
     expect(JSON.stringify(report)).not.toContain("secret-output-value");
+  });
+});
+
+describe("[T-JUDGE-006] deterministic generated properties", () => {
+  it("records a reproducible seed and counterexample for a failed generated case", async () => {
+    const executeOnce = async (jobId: string) => {
+      const run = vi
+        .fn()
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: "",
+          stderr: "",
+          timedOut: false,
+          outputLimitExceeded: false,
+        })
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: "ok\n",
+          stderr: "",
+          timedOut: false,
+          outputLimitExceeded: false,
+        })
+        .mockResolvedValueOnce({
+          exitCode: 0,
+          stdout: "wrong\n",
+          stderr: "",
+          timedOut: false,
+          outputLimitExceeded: false,
+        });
+      const report = await createNativeJudge({ run }).execute({
+        jobId,
+        mode: "grade",
+        activity: {
+          id: "sort-property",
+          version: 1,
+          kind: "exercise",
+          title: "Sort property",
+          estimatedMinutes: 30,
+          conceptIds: ["algorithm-properties"],
+          markdown: "",
+          workspace: { editablePaths: ["main.cpp"] },
+        },
+        spec: {
+          activityId: "sort-property",
+          activityVersion: 1,
+          judgeVersion: 1,
+          expectedStdout: "ok\n",
+          timeoutMs: 2_000,
+          propertyTests: [
+            {
+              name: "sorted permutation",
+              seed: 20_260_823,
+              cases: 3,
+              generator: {
+                kind: "integer-vector",
+                minLength: 3,
+                maxLength: 6,
+                minValue: -20,
+                maxValue: 20,
+              },
+              oracle: "sort-ascending",
+              failureCategory: "output must be a sorted permutation",
+            },
+          ],
+        },
+        snapshot: {
+          id: "snap_sort_property",
+          activityId: "sort-property",
+          digest: "sort-property-digest",
+          files: { "main.cpp": "int main() {}\n" },
+        },
+      });
+      return { report, generatedStdin: run.mock.calls[2]?.[0].stdin };
+    };
+
+    const first = await executeOnce("job_property_first");
+    const replay = await executeOnce("job_property_replay");
+
+    expect(first.report).toMatchObject({
+      verdict: "property_failure",
+      seeds: [20_260_823],
+      stages: [
+        { kind: "compile", outcome: "pass" },
+        { kind: "test", outcome: "pass" },
+        {
+          kind: "property_test",
+          outcome: "fail",
+          testName: "sorted permutation",
+          feedback: "output must be a sorted permutation",
+          seed: 20_260_823,
+          caseIndex: 0,
+          counterexample: expect.any(String),
+        },
+      ],
+    });
+    expect(replay.generatedStdin).toBe(first.generatedStdin);
+    expect(replay.report.stages[2]?.counterexample).toBe(
+      first.report.stages[2]?.counterexample,
+    );
+  });
+});
+
+describe("[T-JUDGE-007] same-machine relative performance", () => {
+  it("fails only on the median scaled-to-baseline growth ratio", async () => {
+    let now = 0;
+    const run = vi.fn(async (request: { readonly stdin?: string }) => {
+      now +=
+        request.stdin === "scaled\n"
+          ? 100
+          : request.stdin === "base\n"
+            ? 10
+            : 1;
+      return {
+        exitCode: 0,
+        stdout: request.stdin === "public\n" ? "ok\n" : "",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      };
+    });
+    const report = await createNativeJudge({
+      run,
+      monotonicClock: () => now,
+    }).execute({
+      jobId: "job_relative_performance",
+      mode: "grade",
+      activity: {
+        id: "complexity-growth",
+        version: 1,
+        kind: "exercise",
+        title: "Complexity growth",
+        estimatedMinutes: 30,
+        conceptIds: ["algorithm-complexity"],
+        markdown: "",
+        workspace: { editablePaths: ["main.cpp"] },
+      },
+      spec: {
+        activityId: "complexity-growth",
+        activityVersion: 1,
+        judgeVersion: 1,
+        expectedStdout: "ok\n",
+        timeoutMs: 2_000,
+        publicTests: [
+          { name: "public", stdin: "public\n", expectedStdout: "ok\n" },
+        ],
+        performanceCheck: {
+          name: "doubling growth",
+          baselineStdin: "base\n",
+          scaledStdin: "scaled\n",
+          repetitions: 3,
+          maxMedianRatio: 3,
+          failureCategory: "runtime grows too quickly when input doubles",
+        },
+      },
+      snapshot: {
+        id: "snap_relative_performance",
+        activityId: "complexity-growth",
+        digest: "relative-performance-digest",
+        files: { "main.cpp": "int main() {}\n" },
+      },
+    });
+
+    expect(report).toMatchObject({
+      verdict: "performance_failure",
+      stages: [
+        { kind: "compile", outcome: "pass" },
+        { kind: "public_test", outcome: "pass" },
+        {
+          kind: "performance",
+          outcome: "fail",
+          testName: "doubling growth",
+          feedback: "runtime grows too quickly when input doubles",
+          baselineDurationMs: 10,
+          scaledDurationMs: 100,
+          ratio: 10,
+        },
+      ],
+    });
+  });
+});
+
+describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
+  it("configures a clean build, builds the named target, and runs CTest before Grade tests", async () => {
+    const run = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: "ok\n",
+      stderr: "",
+      timedOut: false,
+      outputLimitExceeded: false,
+    });
+    const report = await createNativeJudge({
+      run,
+      cmake: "cmake",
+      ctest: "ctest",
+    }).execute({
+      jobId: "job_cmake_ctest",
+      mode: "grade",
+      activity: {
+        id: "cmake-project",
+        version: 1,
+        kind: "project-milestone",
+        title: "CMake project",
+        estimatedMinutes: 45,
+        conceptIds: ["cmake-ctest"],
+        markdown: "",
+        workspace: {
+          editablePaths: ["CMakeLists.txt", "main.cpp", "test.cpp"],
+        },
+      },
+      spec: {
+        activityId: "cmake-project",
+        activityVersion: 1,
+        judgeVersion: 1,
+        expectedStdout: "ok\n",
+        timeoutMs: 5_000,
+        buildProfile: {
+          kind: "cmake",
+          target: "app",
+          testTarget: "app-tests",
+          ctest: true,
+        },
+      },
+      snapshot: {
+        id: "snap_cmake_ctest",
+        activityId: "cmake-project",
+        digest: "cmake-ctest-digest",
+        files: {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\n",
+          "main.cpp": "int main() {}\n",
+          "test.cpp": "int main() {}\n",
+        },
+      },
+    });
+
+    expect(run).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        executable: "cmake",
+        args: ["-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Release"],
+      }),
+    );
+    expect(run).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        executable: "cmake",
+        args: ["--build", "build", "--target", "app", "app-tests"],
+      }),
+    );
+    expect(run).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        executable: "ctest",
+        args: ["--test-dir", "build", "--output-on-failure"],
+      }),
+    );
+    expect(run).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        executable: expect.stringMatching(/build\/app$/),
+      }),
+    );
+    expect(report).toMatchObject({
+      verdict: "automated_pass",
+      toolchain: { buildSystem: "cmake/ctest" },
+      stages: [
+        { kind: "configure", outcome: "pass" },
+        { kind: "build", outcome: "pass" },
+        { kind: "ctest", outcome: "pass" },
+        { kind: "test", outcome: "pass" },
+      ],
+    });
+  });
+});
+
+describe("[T-SYSTEM-001] system-lab resource lifecycle", () => {
+  it("removes the per-Grade root after learner processes complete", async () => {
+    let executionRoot = "";
+    const run = vi.fn(async (request: { readonly cwd: string }) => {
+      executionRoot = request.cwd;
+      return {
+        exitCode: 0,
+        stdout: request.cwd.includes("cpp-learn-judge-") ? "ok\n" : "",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      };
+    });
+    await createNativeJudge({ run }).execute({
+      jobId: "job_system_cleanup",
+      mode: "grade",
+      activity: {
+        id: "system-cleanup",
+        version: 1,
+        kind: "exercise",
+        title: "System cleanup",
+        estimatedMinutes: 20,
+        conceptIds: ["system-resources"],
+        markdown: "",
+        workspace: { editablePaths: ["main.cpp"] },
+      },
+      spec: {
+        activityId: "system-cleanup",
+        activityVersion: 1,
+        judgeVersion: 1,
+        expectedStdout: "ok\n",
+        timeoutMs: 2_000,
+      },
+      snapshot: {
+        id: "snap_system_cleanup",
+        activityId: "system-cleanup",
+        digest: "system-cleanup-digest",
+        files: { "main.cpp": "int main() {}\n" },
+      },
+    });
+
+    expect(executionRoot).toContain("cpp-learn-judge-");
+    await expect(stat(executionRoot)).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
 

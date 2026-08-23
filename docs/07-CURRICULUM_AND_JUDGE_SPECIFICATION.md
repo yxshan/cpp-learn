@@ -106,24 +106,32 @@ The expected result may be compilation failure, warning removal, or diagnosis. C
 
 Uses examples, deterministic generated properties, edge cases, large inputs, and optional relative performance checks. Failed generated cases retain a reproducible seed.
 
+The initial fixed generator produces bounded integer vectors and compares learner output with a sorting oracle. Generator kind, bounds, case count, and 32-bit seed are declarative. Performance checks use Activity-owned baseline/scaled stdin, alternate repeated runs on one machine, and compare medians against a declared ratio.
+
 ### System lab
 
 Uses temporary files, child processes, threads, loopback sockets, dynamic ports, or SQLite fixtures. External network access is not required.
+
+The initial system Module is POSIX-compatible on the reference macOS environment and Linux: it does not infer Linux-only behavior. Network Activities bind `127.0.0.1:0`; SQLite links only the allowlisted local library. All artifacts live under the per-Grade temporary root.
 
 ### CMake/project
 
 Configures a clean build, builds named targets, executes CTest or integration probes, and verifies regression behavior across Milestones.
 
+The manifest names one application target and one test target. It cannot provide arbitrary configure/build commands or shell hooks.
+
 ## 7. Judge pipeline
 
 ```text
 source contract
-  → compile
+  → direct compile OR clean CMake configure/build
+  → optional CTest
   → public tests
-  → private property tests
+  → private fixed tests
+  → deterministic generated properties
   → ASan / UBSan
   → timeout / output limit
-  → optional concurrency / performance
+  → optional same-machine relative performance
   → optional teacher review
   → immutable report
 ```

@@ -419,6 +419,15 @@ export function LessonWorkspace({
                 {stage.testName ? ` · ${stage.testName}` : ""} · {stage.outcome}{" "}
                 · {stage.durationMs}ms{"\n"}
                 {stage.feedback ? `${stage.feedback}\n` : ""}
+                {stage.seed !== undefined
+                  ? `seed ${stage.seed}${stage.caseIndex !== undefined ? ` · case ${stage.caseIndex}` : ""}\n`
+                  : ""}
+                {stage.counterexample
+                  ? `可复现反例：\n${stage.counterexample}`
+                  : ""}
+                {stage.ratio !== undefined
+                  ? `增长比 ${stage.ratio.toFixed(2)}（${stage.baselineDurationMs ?? 0}ms → ${stage.scaledDurationMs ?? 0}ms）\n`
+                  : ""}
                 {stage.diagnostics
                   ?.map((diagnostic) => {
                     const location = diagnostic.file

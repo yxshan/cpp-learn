@@ -27,6 +27,17 @@
     "activities/sorted-unique/activity.json",
     "activities/generic-minimum/activity.json",
     "activities/cli-data-manager-m1/activity.json",
-    "activities/cli-data-manager-m2/activity.json"
+    "activities/cli-data-manager-m2/activity.json",
+    "activities/deterministic-sort-properties/activity.json",
+    "activities/deterministic-sort-properties-review/activity.json",
+    "activities/complexity-growth-check/activity.json",
+    "activities/posix-files-processes/activity.json",
+    "activities/threads-atomics/activity.json",
+    "activities/systems-runtime-review/activity.json",
+    "activities/loopback-http/activity.json",
+    "activities/loopback-http-review/activity.json",
+    "activities/sqlite-transactions/activity.json",
+    "activities/sqlite-transactions-review/activity.json",
+    "activities/cli-data-manager-m3/activity.json"
   ]
 }
