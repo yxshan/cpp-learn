@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -96,3 +96,18 @@ See the [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md) for
 | T-E2E-001, T-E2E-004 | `e2e/first-learning-loop.spec.ts` | Passed on reference macOS environment |
 
 See the [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md) for scope boundaries and exact reproduction commands.
+
+## 8. Executable Stage 2 evidence
+
+Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in the [Stage 2 Implementation Report](15-STAGE-2-IMPLEMENTATION-REPORT.md).
+
+## 9. Executable Stage 3 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-CONTENT-005 | Stage 3 learning metadata and Review-link validation in `modules/curriculum/src/curriculum.test.ts` | Passed |
+| T-LEARN-003, T-LEARN-004 | Ordered help, solution exposure, reflection, and explainable state tests in `modules/learning-platform/src/learning-loop.test.ts` | Passed |
+| T-LEARN-005, T-LEARN-008, BR-003–BR-006 | Delayed Review promotion, public/assistance caps, and failure interval policy in the Learning Platform suite | Passed |
+| T-RECORD-002 | Stage 3 atomic event-batch restart, regression rejection, and equivalent SQLite projection rebuild in `modules/learning-record/src/learning-record.test.ts` | Passed |
+| T-TEACH-001–T-TEACH-004 | Teacher Pack redaction, observation validation, direct-state prohibition, and pending review tests | Passed |
+| T-E2E-001, T-E2E-005 | Real browser reflection → Grade → demonstrated Evidence → Review schedule in `e2e/first-learning-loop.spec.ts` | Passed |

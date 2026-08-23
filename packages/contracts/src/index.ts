@@ -44,7 +44,34 @@ export interface ActivityDetail {
   readonly workspace: {
     readonly editablePaths: readonly string[];
   };
+  readonly learning?: ActivityLearningSummary;
 }
+
+export type HintKind = "nudge" | "concept" | "solution";
+
+export interface HintSummary {
+  readonly id: string;
+  readonly title: string;
+  readonly kind: HintKind;
+}
+
+export interface ReflectionPrompt {
+  readonly id: string;
+  readonly prompt: string;
+  readonly required: boolean;
+}
+
+export interface ActivityLearningSummary {
+  readonly hints: readonly HintSummary[];
+  readonly reflections: readonly ReflectionPrompt[];
+  readonly reviewIds: readonly string[];
+  readonly reviewOf?: string;
+}
+
+export type ConceptState =
+  "unseen" | "introduced" | "practiced" | "demonstrated" | "retained";
+export type AttemptIndependence =
+  "independent" | "assisted" | "solution_exposed";
 
 export interface ActivityResult {
   readonly schemaVersion: typeof SCHEMA_VERSION;
@@ -144,6 +171,10 @@ export interface AttemptCompletedEvent {
   readonly activityId: string;
   readonly conceptIds: readonly string[];
   readonly mode: ExecutionMode;
+  readonly attemptId?: string;
+  readonly independence?: AttemptIndependence;
+  readonly hintsUsed?: number;
+  readonly fullSolutionExposed?: boolean;
   readonly report: JudgeReport;
 }
 
@@ -156,8 +187,110 @@ export interface RecoveryPerformedEvent {
   readonly invalidBytes: number;
 }
 
+export interface HintRevealedEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "hint.revealed";
+  readonly occurredAt: string;
+  readonly commandId: string;
+  readonly attemptId: string;
+  readonly activityId: string;
+  readonly hintId: string;
+  readonly order: number;
+  readonly fullSolutionExposed: boolean;
+}
+
+export interface ReflectionSubmittedEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "reflection.submitted";
+  readonly occurredAt: string;
+  readonly commandId: string;
+  readonly attemptId: string;
+  readonly activityId: string;
+  readonly answers: readonly {
+    readonly promptId: string;
+    readonly answer: string;
+  }[];
+}
+
+export interface EvidenceRecordedEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "evidence.recorded";
+  readonly occurredAt: string;
+  readonly evidenceId: string;
+  readonly conceptId: string;
+  readonly activityId: string;
+  readonly attemptId: string;
+  readonly source: "automated_grade" | "review" | "teacher_observation";
+  readonly outcome: "pass" | "fail";
+  readonly independence: AttemptIndependence;
+  readonly supportingEventIds: readonly string[];
+}
+
+export interface ConceptStateChangedEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "concept.state.changed";
+  readonly occurredAt: string;
+  readonly conceptId: string;
+  readonly previousState: ConceptState;
+  readonly nextState: ConceptState;
+  readonly evidenceIds: readonly string[];
+  readonly explanation: string;
+}
+
+export interface ReviewScheduledEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "review.scheduled";
+  readonly occurredAt: string;
+  readonly reviewId: string;
+  readonly conceptId: string;
+  readonly sourceActivityId: string;
+  readonly dueAt: string;
+  readonly intervalDays: number;
+  readonly reason: string;
+}
+
+export interface ReviewCompletedEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "review.completed";
+  readonly occurredAt: string;
+  readonly reviewId: string;
+  readonly conceptId: string;
+  readonly attemptId: string;
+  readonly evidenceId: string;
+}
+
+export interface TeacherObservationEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type:
+    "teacher.observation.accepted" | "teacher.observation.rejected";
+  readonly occurredAt: string;
+  readonly commandId: string;
+  readonly observationId: string;
+  readonly attemptId: string;
+  readonly activityId: string;
+  readonly rubricId: string;
+  readonly outcome: "pass" | "revise";
+  readonly summary: string;
+  readonly reason?: string;
+}
+
 export type LearningRecordEvent =
-  AttemptCompletedEvent | RecoveryPerformedEvent;
+  | AttemptCompletedEvent
+  | RecoveryPerformedEvent
+  | HintRevealedEvent
+  | ReflectionSubmittedEvent
+  | EvidenceRecordedEvent
+  | ConceptStateChangedEvent
+  | ReviewScheduledEvent
+  | ReviewCompletedEvent
+  | TeacherObservationEvent;
 
 export interface DashboardResult {
   readonly schemaVersion: typeof SCHEMA_VERSION;
@@ -168,12 +301,44 @@ export interface DashboardResult {
     readonly jobId: string;
     readonly completedAt: string;
   }[];
-  readonly conceptStates: Readonly<
-    Record<
-      string,
-      "unseen" | "introduced" | "practiced" | "demonstrated" | "retained"
-    >
-  >;
+  readonly conceptStates: Readonly<Record<string, ConceptState>>;
+  readonly dueReviewCount?: number;
+}
+
+export interface ProgressResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly concepts: readonly {
+    readonly conceptId: string;
+    readonly state: ConceptState;
+    readonly explanation: string;
+    readonly supportingEvidenceIds: readonly string[];
+    readonly nextReviewAt?: string;
+  }[];
+}
+
+export interface ReviewsResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly reviews: readonly {
+    readonly activityId: string;
+    readonly conceptId: string;
+    readonly dueAt: string;
+    readonly intervalDays: number;
+    readonly reason: string;
+    readonly status: "scheduled" | "due";
+  }[];
+}
+
+export interface AttemptResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly attempt: {
+    readonly attemptId: string;
+    readonly activityId: string;
+    readonly independence: AttemptIndependence;
+    readonly completed?: AttemptCompletedEvent;
+    readonly hints: readonly HintRevealedEvent[];
+    readonly reflections: readonly ReflectionSubmittedEvent[];
+    readonly evidence: readonly EvidenceRecordedEvent[];
+  } | null;
 }
 
 export interface JobResult {
@@ -187,12 +352,19 @@ export type LearningQuery =
   | { readonly type: "activity.next"; readonly minutes?: number }
   | { readonly type: "workspace.get"; readonly activityId: string }
   | { readonly type: "dashboard.get" }
+  | { readonly type: "progress.get" }
+  | { readonly type: "reviews.get"; readonly dueOnly?: boolean }
+  | { readonly type: "concept.get"; readonly conceptId: string }
+  | { readonly type: "attempt.get"; readonly attemptId: string }
   | { readonly type: "job.get"; readonly jobId: string };
 export type QueryResult =
   | BootstrapResult
   | ActivityResult
   | WorkspaceResult
   | DashboardResult
+  | ProgressResult
+  | ReviewsResult
+  | AttemptResult
   | JobResult;
 export type QueryResultFor<Q extends LearningQuery> = Q extends {
   readonly type: "bootstrap.get";
@@ -206,9 +378,17 @@ export type QueryResultFor<Q extends LearningQuery> = Q extends {
         ? WorkspaceResult
         : Q extends { readonly type: "dashboard.get" }
           ? DashboardResult
-          : Q extends { readonly type: "job.get" }
-            ? JobResult
-            : never;
+          : Q extends { readonly type: "progress.get" }
+            ? ProgressResult
+            : Q extends { readonly type: "reviews.get" }
+              ? ReviewsResult
+              : Q extends { readonly type: "concept.get" }
+                ? ProgressResult
+                : Q extends { readonly type: "attempt.get" }
+                  ? AttemptResult
+                  : Q extends { readonly type: "job.get" }
+                    ? JobResult
+                    : never;
 
 export interface WorkspaceSaveCommand {
   readonly type: "workspace.save";
@@ -238,6 +418,7 @@ export interface ActivityExecutionCommand {
   readonly type: "activity.run" | "activity.grade";
   readonly commandId: string;
   readonly activityId: string;
+  readonly attemptId?: string;
 }
 
 export interface ActivityExecutionCommandResult {
@@ -247,6 +428,7 @@ export interface ActivityExecutionCommandResult {
   readonly snapshotId: string;
   readonly status: "completed";
   readonly report: JudgeReport;
+  readonly learningOutcome?: "recorded" | "pending_teacher_review";
 }
 
 export interface JobCancelCommand {
@@ -262,12 +444,118 @@ export interface JobCancelCommandResult {
   readonly cancelled: boolean;
 }
 
+export interface HintRevealCommand {
+  readonly type: "hint.reveal";
+  readonly commandId: string;
+  readonly attemptId: string;
+  readonly activityId: string;
+  readonly hintId: string;
+  readonly confirmFullSolution: boolean;
+}
+
+export interface HintRevealCommandResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly commandId: string;
+  readonly hint: {
+    readonly id: string;
+    readonly title: string;
+    readonly kind: HintKind;
+    readonly content: string;
+  };
+  readonly assistance: AttemptIndependence;
+}
+
+export interface ReflectionSubmitCommand {
+  readonly type: "reflection.submit";
+  readonly commandId: string;
+  readonly attemptId: string;
+  readonly activityId: string;
+  readonly answers: readonly {
+    readonly promptId: string;
+    readonly answer: string;
+  }[];
+}
+
+export interface ReflectionSubmitCommandResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly commandId: string;
+  readonly accepted: true;
+}
+
+export interface TeacherPackCreateCommand {
+  readonly type: "teacher-pack.create";
+  readonly commandId: string;
+  readonly activityId: string;
+  readonly attemptId?: string;
+}
+
+export interface TeacherPackCreateCommandResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly commandId: string;
+  readonly pack: {
+    readonly activity: {
+      readonly id: string;
+      readonly version: number;
+      readonly title: string;
+      readonly markdown: string;
+      readonly reflections: readonly ReflectionPrompt[];
+      readonly teacherRubric: { readonly id: string; readonly prompt: string };
+    };
+    readonly learnerDiff: readonly {
+      readonly path: string;
+      readonly starter: string;
+      readonly current: string;
+    }[];
+    readonly publicDiagnostics: readonly JudgeDiagnostic[];
+    readonly recentAttempts: readonly {
+      readonly attemptId?: string;
+      readonly mode: ExecutionMode;
+      readonly verdict: JudgeVerdict;
+      readonly completedAt: string;
+    }[];
+    readonly concepts: readonly {
+      readonly conceptId: string;
+      readonly state: ConceptState;
+      readonly explanation: string;
+    }[];
+  };
+}
+
+export interface TeacherObservationSubmitCommand {
+  readonly type: "teacher-observation.submit";
+  readonly commandId: string;
+  readonly observationId: string;
+  readonly activityId: string;
+  readonly attemptId: string;
+  readonly rubricId: string;
+  readonly outcome: "pass" | "revise";
+  readonly summary: string;
+}
+
+export interface TeacherObservationSubmitCommandResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly commandId: string;
+  readonly observationId: string;
+  readonly accepted: boolean;
+  readonly reason?: string;
+}
+
 export type LearningCommand =
-  WorkspaceSaveCommand | ActivityExecutionCommand | JobCancelCommand;
+  | WorkspaceSaveCommand
+  | ActivityExecutionCommand
+  | JobCancelCommand
+  | HintRevealCommand
+  | ReflectionSubmitCommand
+  | TeacherPackCreateCommand
+  | TeacherObservationSubmitCommand;
 export type CommandResult =
   | WorkspaceSaveCommandResult
   | ActivityExecutionCommandResult
-  | JobCancelCommandResult;
+  | JobCancelCommandResult
+  | HintRevealCommandResult
+  | ReflectionSubmitCommandResult
+  | TeacherPackCreateCommandResult
+  | TeacherObservationSubmitCommandResult;
 export type CommandResultFor<C extends LearningCommand> =
   C extends WorkspaceSaveCommand
     ? WorkspaceSaveCommandResult
@@ -275,7 +563,15 @@ export type CommandResultFor<C extends LearningCommand> =
       ? ActivityExecutionCommandResult
       : C extends JobCancelCommand
         ? JobCancelCommandResult
-        : never;
+        : C extends HintRevealCommand
+          ? HintRevealCommandResult
+          : C extends ReflectionSubmitCommand
+            ? ReflectionSubmitCommandResult
+            : C extends TeacherPackCreateCommand
+              ? TeacherPackCreateCommandResult
+              : C extends TeacherObservationSubmitCommand
+                ? TeacherObservationSubmitCommandResult
+                : never;
 export type JobId = string;
 
 export interface PlatformEvent {

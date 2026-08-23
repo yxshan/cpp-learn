@@ -15,10 +15,10 @@ import {
   executeActivity,
   getActivity,
   getWorkspace,
+  revealHint,
   saveWorkspace,
+  submitReflection,
 } from "./api.js";
-
-const ACTIVITY_ID = "source-to-program";
 
 self.MonacoEnvironment = { getWorker: () => new EditorWorker() };
 loader.config({ monaco });
@@ -28,11 +28,13 @@ function commandId(prefix: string): string {
 }
 
 export interface LessonWorkspaceProps {
+  readonly activityId?: string;
   readonly onBack: () => void;
   readonly onEvidenceChanged: () => Promise<void>;
 }
 
 export function LessonWorkspace({
+  activityId = "source-to-program",
   onBack,
   onEvidenceChanged,
 }: LessonWorkspaceProps) {
@@ -44,9 +46,20 @@ export function LessonWorkspace({
   const [busy, setBusy] = useState<"save" | "run" | "grade">();
   const [activeJobId, setActiveJobId] = useState<string>();
   const [message, setMessage] = useState("正在加载课程工作区…");
+  const [attemptId] = useState(() => `web_attempt_${crypto.randomUUID()}`);
+  const [revealedHints, setRevealedHints] = useState<
+    readonly {
+      readonly id: string;
+      readonly title: string;
+      readonly content: string;
+    }[]
+  >([]);
+  const [reflectionAnswers, setReflectionAnswers] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
-    void Promise.all([getActivity(ACTIVITY_ID), getWorkspace(ACTIVITY_ID)])
+    void Promise.all([getActivity(activityId), getWorkspace(activityId)])
       .then(([activityResult, workspaceResult]) => {
         if (!activityResult.activity) throw new Error("课程不存在");
         setActivity(activityResult.activity);
@@ -60,11 +73,11 @@ export function LessonWorkspace({
       .catch((error: unknown) =>
         setMessage(error instanceof Error ? error.message : "工作区加载失败"),
       );
-  }, []);
+  }, [activityId]);
 
   const persist = async (): Promise<void> => {
     if (!workspace || !activity) return;
-    const result = await saveWorkspace(ACTIVITY_ID, {
+    const result = await saveWorkspace(activityId, {
       commandId: commandId("save"),
       baseRevision: workspace.revision,
       changes: activity.workspace.editablePaths.map((path) => ({
@@ -108,9 +121,10 @@ export function LessonWorkspace({
       const jobId = `job_${executionCommandId}`;
       setActiveJobId(jobId);
       const result = await executeActivity(
-        ACTIVITY_ID,
+        activityId,
         mode,
         executionCommandId,
+        attemptId,
       );
       setReport(result.report);
       setMessage(
@@ -126,6 +140,50 @@ export function LessonWorkspace({
     } finally {
       setActiveJobId(undefined);
       setBusy(undefined);
+    }
+  };
+
+  const revealNextHint = async (): Promise<void> => {
+    const hint = activity?.learning?.hints[revealedHints.length];
+    if (!hint) return;
+    const confirmFullSolution =
+      hint.kind !== "solution" ||
+      window.confirm(
+        "完整答案会将本次尝试标记为 solution_exposed，不能形成 demonstrated 证据。仍要查看吗？",
+      );
+    if (!confirmFullSolution) return;
+    try {
+      const result = await revealHint(activityId, {
+        commandId: commandId("hint"),
+        attemptId,
+        hintId: hint.id,
+        confirmFullSolution: hint.kind === "solution",
+      });
+      setRevealedHints((current) => [...current, result.hint]);
+      setMessage(
+        result.assistance === "solution_exposed"
+          ? "已记录完整答案暴露；本次尝试最高为 practiced"
+          : "提示使用已记录",
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "提示加载失败");
+    }
+  };
+
+  const saveReflection = async (): Promise<void> => {
+    const prompts = activity?.learning?.reflections ?? [];
+    try {
+      await submitReflection(activityId, {
+        commandId: commandId("reflection"),
+        attemptId,
+        answers: prompts.map((prompt) => ({
+          promptId: prompt.id,
+          answer: reflectionAnswers[prompt.id] ?? "",
+        })),
+      });
+      setMessage("反思已记录；后续 Grade 会按本次尝试评估证据");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "反思保存失败");
     }
   };
 
@@ -188,6 +246,60 @@ export function LessonWorkspace({
               <p>{message}</p>
             )}
           </div>
+          {activity?.learning && (
+            <div className="learning-assistance">
+              <div className="assistance-heading">
+                <div>
+                  <p className="eyebrow">ORDERED ASSISTANCE</p>
+                  <h3>分级提示</h3>
+                </div>
+                <span>
+                  {revealedHints.length} / {activity.learning.hints.length}
+                </span>
+              </div>
+              {revealedHints.map((hint) => (
+                <article className="revealed-hint" key={hint.id}>
+                  <strong>{hint.title}</strong>
+                  <p>{hint.content}</p>
+                </article>
+              ))}
+              {revealedHints.length < activity.learning.hints.length && (
+                <button
+                  className="secondary-button"
+                  onClick={() => void revealNextHint()}
+                >
+                  {activity.learning.hints[revealedHints.length]?.kind ===
+                  "solution"
+                    ? "确认查看完整答案"
+                    : "显示下一条提示"}
+                </button>
+              )}
+              <div className="reflection-box">
+                <p className="eyebrow">REFLECTION</p>
+                {activity.learning.reflections.map((prompt) => (
+                  <label key={prompt.id}>
+                    <span>{prompt.prompt}</span>
+                    <textarea
+                      value={reflectionAnswers[prompt.id] ?? ""}
+                      onChange={(event) => {
+                        const answer = event.currentTarget.value;
+                        setReflectionAnswers((current) => ({
+                          ...current,
+                          [prompt.id]: answer,
+                        }));
+                      }}
+                    />
+                  </label>
+                ))}
+                <button
+                  className="secondary-button"
+                  onClick={() => void saveReflection()}
+                >
+                  保存反思
+                </button>
+              </div>
+            </div>
+          )}
         </article>
         <section className="coding-panel" aria-label="C++ 代码工作区">
           <div className="editor-titlebar">

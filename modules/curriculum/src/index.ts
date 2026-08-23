@@ -5,8 +5,10 @@ import {
 import type { CurriculumReadiness } from "@cpp-learn/contracts";
 import type {
   ActivityDetail,
+  HintKind,
   PrivateJudgeTest,
   PublicJudgeTest,
+  ReflectionPrompt,
 } from "@cpp-learn/contracts";
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
@@ -37,7 +39,44 @@ export interface Activity {
     readonly privateTests?: readonly PrivateJudgeTest[];
     readonly sanitizers?: readonly ("address" | "undefined")[];
   };
-  readonly evidencePolicy: { readonly automatedPass: boolean };
+  readonly evidencePolicy: EvidencePolicyDefinition;
+  readonly learning: {
+    readonly hints: readonly HintDefinition[];
+    readonly reflections: readonly ReflectionPrompt[];
+    readonly reviewIds: readonly string[];
+    readonly reviewOf?: string;
+    readonly teacherRubric: TeacherRubricDefinition;
+  };
+}
+
+export interface EvidencePolicyDefinition {
+  readonly automatedPass: boolean;
+  readonly demonstratedRequiresReflection: boolean;
+  readonly demonstratedRequiresIndependent: boolean;
+  readonly reviewAfterDays: number;
+  readonly teacherReviewRequired?: boolean;
+}
+
+export interface HintDefinition {
+  readonly id: string;
+  readonly title: string;
+  readonly kind: HintKind;
+  readonly content: string;
+}
+
+export interface TeacherRubricDefinition {
+  readonly id: string;
+  readonly prompt: string;
+}
+
+export interface ActivityLearningDefinition {
+  readonly hints: readonly HintDefinition[];
+  readonly reflections: readonly ReflectionPrompt[];
+  readonly reviewIds: readonly string[];
+  readonly reviewOf?: string;
+  readonly evidencePolicy: EvidencePolicyDefinition;
+  readonly teacherRubric: TeacherRubricDefinition;
+  readonly starterFiles: Readonly<Record<string, string>>;
 }
 
 export interface Curriculum {
@@ -46,6 +85,9 @@ export interface Curriculum {
   getNextActivity(minutes?: number): Promise<ActivityDetail | undefined>;
   listWorkspaceActivities(): Promise<readonly WorkspaceActivityDefinition[]>;
   getJudge(activityId: string): Promise<JudgeDefinition | undefined>;
+  getLearning(
+    activityId: string,
+  ): Promise<ActivityLearningDefinition | undefined>;
 }
 
 export interface WorkspaceActivityDefinition {
@@ -75,6 +117,9 @@ export function validateCatalog(
   }
 
   const validActivities = activities as readonly Activity[];
+  const byId = new Map(
+    validActivities.map((activity) => [activity.id, activity]),
+  );
   const activityIndexes = new Map<string, number>();
   for (const [index, activity] of validActivities.entries()) {
     for (const [testIndex, privateTest] of (
@@ -115,13 +160,51 @@ export function validateCatalog(
         });
       }
     }
+    for (const reviewId of activity.learning.reviewIds) {
+      const review = byId.get(reviewId);
+      if (!review || review.kind !== "review") {
+        issues.push({
+          path: `/${index}/learning/reviewIds`,
+          message: `unknown Review Activity: ${reviewId}`,
+          keyword: "graph",
+        });
+      }
+    }
+    if (
+      activity.kind === "review" &&
+      (!activity.learning.reviewOf || !byId.has(activity.learning.reviewOf))
+    ) {
+      issues.push({
+        path: `/${index}/learning/reviewOf`,
+        message: "Review Activity must reference an existing source Activity",
+        keyword: "graph",
+      });
+    }
+    const hintIds = activity.learning.hints.map((hint) => hint.id);
+    if (new Set(hintIds).size !== hintIds.length) {
+      issues.push({
+        path: `/${index}/learning/hints`,
+        message: "hint identifiers must be unique and ordered",
+        keyword: "unique",
+      });
+    }
+    const solutionIndex = activity.learning.hints.findIndex(
+      (hint) => hint.kind === "solution",
+    );
+    if (
+      solutionIndex >= 0 &&
+      solutionIndex !== activity.learning.hints.length - 1
+    ) {
+      issues.push({
+        path: `/${index}/learning/hints/${solutionIndex}`,
+        message: "a full solution must be the final disclosure",
+        keyword: "order",
+      });
+    }
   }
 
   const visiting = new Set<string>();
   const visited = new Set<string>();
-  const byId = new Map(
-    validActivities.map((activity) => [activity.id, activity]),
-  );
   const visit = (activityId: string): boolean => {
     if (visiting.has(activityId)) return true;
     if (visited.has(activityId)) return false;
@@ -264,6 +347,18 @@ export function createFilesystemCurriculum(
       conceptIds: activity.conceptIds,
       markdown,
       workspace: { editablePaths: activity.workspace.editablePaths },
+      learning: {
+        hints: activity.learning.hints.map(({ id, title, kind }) => ({
+          id,
+          title,
+          kind,
+        })),
+        reflections: activity.learning.reflections,
+        reviewIds: activity.learning.reviewIds,
+        ...(activity.learning.reviewOf
+          ? { reviewOf: activity.learning.reviewOf }
+          : {}),
+      },
     };
   };
 
@@ -311,6 +406,23 @@ export function createFilesystemCurriculum(
         ...(activity.judge.sanitizers
           ? { sanitizers: activity.judge.sanitizers }
           : {}),
+      };
+    },
+    async getLearning(activityId) {
+      const activity = (await loadActivities(dependencies)).find(
+        (candidate) => candidate.id === activityId,
+      );
+      if (!activity) return undefined;
+      return {
+        hints: activity.learning.hints,
+        reflections: activity.learning.reflections,
+        reviewIds: activity.learning.reviewIds,
+        ...(activity.learning.reviewOf
+          ? { reviewOf: activity.learning.reviewOf }
+          : {}),
+        evidencePolicy: activity.evidencePolicy,
+        teacherRubric: activity.learning.teacherRubric,
+        starterFiles: activity.workspace.starterFiles,
       };
     },
   };

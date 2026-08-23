@@ -9,9 +9,13 @@ import {
   getActivity,
   getBootstrap,
   getDashboard,
+  getProgress,
+  getReviews,
   getWorkspace,
+  revealHint,
   saveWorkspace,
   restoreBackup,
+  submitReflection,
 } from "./api.js";
 
 const bootstrap: BootstrapResult = {
@@ -83,6 +87,59 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
     await expect(getBootstrap(request)).rejects.toThrow(
       "Bootstrap response violates the transport contract",
     );
+  });
+});
+
+describe("[T-WEB-003] assistance and progress API Adapter", () => {
+  it("carries one Attempt ID through hints, reflections, Grade, and progress queries", async () => {
+    const request = vi.fn().mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ schemaVersion: 1, accepted: true }), {
+          status: 200,
+        }),
+    );
+
+    await revealHint(
+      "source-to-program",
+      {
+        commandId: "hint_1",
+        attemptId: "attempt_1",
+        hintId: "locate-entry",
+        confirmFullSolution: false,
+      },
+      request,
+    );
+    await submitReflection(
+      "source-to-program",
+      {
+        commandId: "reflection_1",
+        attemptId: "attempt_1",
+        answers: [
+          { promptId: "compile-versus-run", answer: "Build then run." },
+        ],
+      },
+      request,
+    );
+    await executeActivity(
+      "source-to-program",
+      "grade",
+      "grade_1",
+      "attempt_1",
+      request,
+    );
+    await getProgress(request);
+    await getReviews(false, request);
+
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      "/api/v1/activities/source-to-program/hints",
+      "/api/v1/activities/source-to-program/reflections",
+      "/api/v1/activities/source-to-program/grades",
+      "/api/v1/progress",
+      "/api/v1/reviews/due?all=true",
+    ]);
+    expect(JSON.parse(String(request.mock.calls[2]?.[1]?.body))).toMatchObject({
+      attemptId: "attempt_1",
+    });
   });
 });
 

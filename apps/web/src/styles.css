@@ -889,6 +889,108 @@ footer {
   font-weight: 500;
 }
 
+.learning-assistance {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #203047;
+}
+.assistance-heading,
+.review-list > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.assistance-heading h3 {
+  margin: 3px 0 14px;
+}
+.assistance-heading > span,
+.concept-state {
+  color: var(--green);
+  font: 10px var(--mono);
+  text-transform: uppercase;
+}
+.revealed-hint,
+.reflection-box {
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid #29405a;
+  border-radius: 8px;
+  background: #0d1722;
+}
+.revealed-hint p,
+.concept-list p {
+  margin: 7px 0 0;
+  color: #8d9caf;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.reflection-box label,
+.reflection-box label > span {
+  display: block;
+}
+.reflection-box label > span {
+  margin: 8px 0;
+  color: #b8c5d6;
+  font-size: 12px;
+}
+.reflection-box textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 92px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #29405a;
+  border-radius: 7px;
+  color: #d8e1ec;
+  background: #08111b;
+  resize: vertical;
+}
+.learning-loop-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+}
+.review-list,
+.concept-list {
+  display: grid;
+  gap: 10px;
+}
+.review-list > div,
+.concept-list > div {
+  padding: 14px;
+  border: 1px solid #203047;
+  border-radius: 9px;
+  background: #101b28;
+}
+.review-list strong,
+.review-list span,
+.review-list small,
+.concept-list strong,
+.concept-list small {
+  display: block;
+}
+.review-list span,
+.review-list small,
+.concept-list small {
+  margin-top: 5px;
+  color: #718198;
+  font-size: 10px;
+}
+.concept-state {
+  float: right;
+}
+.state-practiced {
+  color: #eabf75;
+}
+.state-demonstrated {
+  color: #69d6c4;
+}
+.state-retained {
+  color: #9da9ff;
+}
+
 @media (max-width: 1060px) {
   .stage-banner {
     grid-template-columns: 1fr;
@@ -900,6 +1002,9 @@ footer {
     grid-template-columns: 1fr;
   }
   .learning-grid {
+    grid-template-columns: 1fr;
+  }
+  .learning-loop-grid {
     grid-template-columns: 1fr;
   }
   .workspace-layout {

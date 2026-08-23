@@ -39,6 +39,43 @@
     "sanitizers": ["address", "undefined"]
   },
   "evidencePolicy": {
-    "automatedPass": true
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 1
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-entry",
+        "title": "先找程序入口",
+        "kind": "nudge",
+        "content": "从 main 函数开始检查：它是程序执行的入口，输出语句应位于函数体内。"
+      },
+      {
+        "id": "separate-build-run",
+        "title": "区分构建与运行",
+        "kind": "concept",
+        "content": "clang++ 先把源代码编译、链接成可执行文件；随后启动该文件才是运行。编译错误发生时，程序尚未开始运行。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "compile-versus-run",
+        "prompt": "用自己的话说明编译错误与运行时错误分别发生在哪个阶段。",
+        "required": true
+      }
+    ],
+    "reviewIds": ["source-to-program-review"],
+    "teacherRubric": {
+      "id": "compile-run-explanation",
+      "prompt": "解释应明确区分源代码编译/链接与可执行程序启动，并避免把编译器描述成运行时。"
+    }
   }
 }

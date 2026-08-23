@@ -62,7 +62,14 @@ export async function createProductionPlatform(
       compiler,
       compilerFingerprint: toolchain.compiler ?? "clang++ unavailable",
     }),
-    record,
+    record: {
+      append: (event) => record.append(event),
+      appendEvent: (event) => record.append(event),
+      appendBatch: (events) => record.appendBatch(events),
+      list: () => record.list(),
+      events: () => record.events(),
+      projection: () => record.projection(),
+    },
     probes: {
       curriculum: () => curriculum.readiness(),
       toolchain: toolchainProbe,

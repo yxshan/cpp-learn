@@ -87,6 +87,103 @@ describe("[T-CLI-001] status and check", () => {
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(next)}\n`);
   });
 
+  it("exposes Review Queue, progress, hints, and reflections through shared commands", async () => {
+    const platform = {
+      query: vi
+        .fn()
+        .mockResolvedValueOnce({ schemaVersion: 1, reviews: [] })
+        .mockResolvedValueOnce({ schemaVersion: 1, concepts: [] }),
+      dispatch: vi
+        .fn()
+        .mockResolvedValueOnce({
+          schemaVersion: 1,
+          commandId: "generated",
+          hint: {
+            id: "locate-entry",
+            title: "Entry",
+            kind: "nudge",
+            content: "Start at main.",
+          },
+          assistance: "assisted",
+        })
+        .mockResolvedValueOnce({
+          schemaVersion: 1,
+          commandId: "generated",
+          accepted: true,
+        }),
+      async *events() {},
+    } as unknown as LearningPlatform;
+    const stdout = vi.fn();
+
+    await expect(
+      runCli({
+        argv: ["reviews", "--json"],
+        platform,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+    await expect(
+      runCli({
+        argv: ["progress", "--json"],
+        platform,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+    await expect(
+      runCli({
+        argv: [
+          "hint",
+          "--activity",
+          "source-to-program",
+          "--attempt",
+          "attempt_cli",
+          "--hint",
+          "locate-entry",
+          "--json",
+        ],
+        platform,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+    await expect(
+      runCli({
+        argv: [
+          "reflect",
+          "--activity",
+          "source-to-program",
+          "--attempt",
+          "attempt_cli",
+          "--prompt",
+          "compile-versus-run",
+          "--answer",
+          "Build then run.",
+        ],
+        platform,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+
+    expect(platform.query).toHaveBeenNthCalledWith(1, {
+      type: "reviews.get",
+      dueOnly: false,
+    });
+    expect(platform.query).toHaveBeenNthCalledWith(2, { type: "progress.get" });
+    expect(platform.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "hint.reveal",
+        attemptId: "attempt_cli",
+        hintId: "locate-entry",
+      }),
+    );
+    expect(platform.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "reflection.submit" }),
+    );
+  });
+
   it("uses documented exit codes for invalid timeboxes and no fitting Activity", async () => {
     const platform = {
       query: vi.fn().mockResolvedValue({ schemaVersion: 1, activity: null }),

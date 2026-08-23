@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "id": "source-to-program-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：独立区分编译与运行",
+  "estimatedMinutes": 15,
+  "conceptIds": ["compile-link-run", "cpp-program-structure"],
+  "prerequisiteIds": ["source-to-program"],
+  "content": {
+    "format": "markdown",
+    "path": "activities/source-to-program-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n\nint main() {\n    // 独立完成，不要回看上一课\n}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "Build first, run second.\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "prints the review sentence",
+        "stdin": "",
+        "expectedStdout": "Build first, run second.\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "stable review execution",
+        "stdin": "",
+        "expectedStdout": "Build first, run second.\n",
+        "failureCategory": "review output is not stable"
+      }
+    ],
+    "sanitizers": ["address", "undefined"]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "recall-sequence",
+        "title": "回忆阶段顺序",
+        "kind": "nudge",
+        "content": "先判断源代码如何成为可执行文件，再思考操作系统何时启动它。"
+      },
+      {
+        "id": "output-contract",
+        "title": "检查输出契约",
+        "kind": "concept",
+        "content": "标准输出必须精确匹配目标文本，并以换行结束。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "#include <iostream>\n\nint main() {\n    std::cout << \"Build first, run second.\\n\";\n    return 0;\n}\n"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "missing-semicolon",
+        "prompt": "缺少分号时，为什么程序不会进入运行阶段？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "source-to-program",
+    "teacherRubric": {
+      "id": "compile-stage-recall",
+      "prompt": "回答应指出语法错误阻止编译成功，因此没有新的可执行程序可启动。"
+    }
+  }
+}

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -118,6 +118,12 @@ GET  /api/v1/concepts/:conceptId
 GET  /api/v1/attempts/:attemptId
 ```
 
+Hints are revealed in manifest order. A request carries one stable `attemptId`; a solution-kind hint additionally requires `confirmFullSolution: true`. The event is durably appended before hint content is returned. Revealing a full solution atomically schedules a compensating independent Review variant. Reflection answers use the same Attempt ID and are validated against the Activity's versioned prompts. Attempt IDs are Activity-scoped and cannot be reused across Activities.
+
+Any command that derives multiple Learning Record events—such as Grade, full-solution disclosure, or an accepted Teacher Observation—appends those events as one checksummed JSONL batch and one SQLite transaction. Replaying the same persisted command after process restart returns its prior result without appending a partial or duplicate derivation.
+
+`GET /api/v1/progress` returns Concept state, its human-readable explanation, supporting Evidence IDs, and the next Review time. `GET /api/v1/reviews/due?all=true` includes scheduled future Reviews; without `all=true` it returns only due work.
+
 ### Teacher collaboration
 
 ```text
@@ -126,6 +132,9 @@ POST /api/v1/teacher-observations
 ```
 
 Teacher Pack creation requires an explicit Activity or Attempt scope and applies redaction before returning a path or payload.
+The returned pack contains approved Activity text, reflection prompts and rubric, learner Workspace diff, public structured diagnostics, recent Attempt summaries, and current Concept explanations. Hint bodies, solution disclosures, private stages, private inputs, expected values, and reference solutions are excluded.
+
+A Teacher Observation references an existing Attempt and the Activity's declared rubric. Invalid observations are recorded as rejected. Valid observations remain qualitative input: only the Learning Platform rules may combine one with automated Evidence, independence, and reflection to change Concept state.
 
 ## 3. SSE contract
 

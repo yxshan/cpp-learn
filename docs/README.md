@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -31,7 +31,8 @@ Read in this order:
 13. [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md)
 14. [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md)
 15. [Stage 2 Implementation Report](15-STAGE-2-IMPLEMENTATION-REPORT.md)
-16. [Domain Context](CONTEXT.md)
+16. [Stage 3 Implementation Report](16-STAGE-3-IMPLEMENTATION-REPORT.md)
+17. [Domain Context](CONTEXT.md)
 
 ## Architecture decisions
 

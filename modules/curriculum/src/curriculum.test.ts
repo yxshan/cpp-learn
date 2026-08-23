@@ -52,7 +52,26 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
       starterFiles: { "main.cpp": "int main() {}\n" },
     },
     judge: { version: 1, expectedStdout: "", timeoutMs: 1_000 },
-    evidencePolicy: { automatedPass: true },
+    evidencePolicy: {
+      automatedPass: true,
+      demonstratedRequiresReflection: true,
+      demonstratedRequiresIndependent: true,
+      reviewAfterDays: 1,
+    },
+    learning: {
+      hints: [
+        { id: "nudge", title: "Nudge", kind: "nudge", content: "Think." },
+        {
+          id: "concept",
+          title: "Concept",
+          kind: "concept",
+          content: "Recall.",
+        },
+      ],
+      reflections: [{ id: "explain", prompt: "Explain.", required: true }],
+      reviewIds: [],
+      teacherRubric: { id: "rubric", prompt: "Check the explanation." },
+    },
   });
 
   it("rejects a cyclic required prerequisite graph", () => {
@@ -103,6 +122,114 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
     expect(result).toMatchObject({
       ok: false,
       issues: [expect.objectContaining({ keyword: "privacy" })],
+    });
+  });
+});
+
+describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
+  const completeActivity = {
+    schemaVersion: 1,
+    id: "learning-loop",
+    version: 1,
+    kind: "exercise",
+    title: "Learning loop",
+    estimatedMinutes: 20,
+    conceptIds: ["learning-loop-concept"],
+    prerequisiteIds: [],
+    content: { format: "markdown", path: "activities/learning-loop/lesson.md" },
+    workspace: {
+      editablePaths: ["main.cpp"],
+      starterFiles: { "main.cpp": "int main() {}\n" },
+    },
+    judge: { version: 1, expectedStdout: "", timeoutMs: 1_000 },
+    evidencePolicy: {
+      automatedPass: true,
+      demonstratedRequiresReflection: true,
+      demonstratedRequiresIndependent: true,
+      reviewAfterDays: 1,
+    },
+    learning: {
+      hints: [
+        { id: "nudge", title: "Nudge", kind: "nudge", content: "Read main." },
+        {
+          id: "concept",
+          title: "Concept",
+          kind: "concept",
+          content: "Compilation happens first.",
+        },
+        {
+          id: "solution",
+          title: "Solution",
+          kind: "solution",
+          content: "int main() { return 0; }",
+        },
+      ],
+      reflections: [
+        {
+          id: "explain",
+          prompt: "Explain compile versus run.",
+          required: true,
+        },
+      ],
+      reviewIds: ["learning-loop-review"],
+      teacherRubric: {
+        id: "explanation-v1",
+        prompt:
+          "Check that the explanation distinguishes compiler and process.",
+      },
+    },
+  } as const;
+
+  it("accepts ordered hints, reflection, evidence policy, and a linked Review variant", () => {
+    const review = {
+      ...completeActivity,
+      id: "learning-loop-review",
+      kind: "review",
+      prerequisiteIds: ["learning-loop"],
+      learning: {
+        ...completeActivity.learning,
+        reviewIds: [],
+        reviewOf: "learning-loop",
+      },
+    } as const;
+
+    expect(validateCatalog([completeActivity, review])).toEqual({
+      ok: true,
+      activityCount: 2,
+    });
+  });
+
+  it("rejects insufficient hints and a missing Review link", () => {
+    const invalidHints = validateCatalog([
+      {
+        ...completeActivity,
+        learning: {
+          ...completeActivity.learning,
+          hints: [completeActivity.learning.hints[0]],
+          reviewIds: [],
+        },
+      },
+    ]);
+    expect(invalidHints).toMatchObject({
+      ok: false,
+      issues: [
+        expect.objectContaining({ path: expect.stringContaining("hints") }),
+      ],
+    });
+
+    expect(
+      validateCatalog([
+        {
+          ...completeActivity,
+          learning: {
+            ...completeActivity.learning,
+            reviewIds: ["missing-review"],
+          },
+        },
+      ]),
+    ).toMatchObject({
+      ok: false,
+      issues: [expect.objectContaining({ keyword: "graph" })],
     });
   });
 });

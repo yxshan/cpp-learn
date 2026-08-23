@@ -16,9 +16,12 @@ import { DatabaseSync } from "node:sqlite";
 import {
   SCHEMA_VERSION,
   type AttemptCompletedEvent,
+  type ConceptState,
+  type EvidenceRecordedEvent,
   type LearningRecordEvent,
   type RecordReadiness,
   type RecoveryPerformedEvent,
+  type ReviewScheduledEvent,
 } from "@cpp-learn/contracts";
 
 export interface JsonlRecordProbeDependencies {
@@ -33,11 +36,24 @@ export interface LearningRecordLifecycle {
 
 export interface LearningProjection {
   readonly attempts: readonly AttemptCompletedEvent[];
-  readonly conceptStates: Readonly<Record<string, "practiced">>;
+  readonly conceptStates: Readonly<Record<string, ConceptState>>;
+  readonly concepts: Readonly<
+    Record<
+      string,
+      {
+        readonly state: ConceptState;
+        readonly explanation: string;
+        readonly supportingEvidenceIds: readonly string[];
+      }
+    >
+  >;
+  readonly evidence?: readonly EvidenceRecordedEvent[];
+  readonly reviews?: readonly ReviewScheduledEvent[];
 }
 
 export interface LearningRecord extends LearningRecordLifecycle {
-  append(event: AttemptCompletedEvent): Promise<void>;
+  append(event: LearningRecordEvent): Promise<void>;
+  appendBatch(events: readonly LearningRecordEvent[]): Promise<void>;
   list(): Promise<readonly AttemptCompletedEvent[]>;
   events(): Promise<readonly LearningRecordEvent[]>;
   projection(): Promise<LearningProjection>;
@@ -82,6 +98,12 @@ type ArchiveManifest = Omit<ArchiveDocument, "manifestChecksum">;
 interface StoredEvent {
   readonly schemaVersion: 1;
   readonly event: LearningRecordEvent;
+  readonly checksum: string;
+}
+
+interface StoredEventBatch {
+  readonly schemaVersion: 1;
+  readonly events: readonly LearningRecordEvent[];
   readonly checksum: string;
 }
 
@@ -200,6 +222,15 @@ function isAttemptCompletedEvent(
     typeof value["activityId"] === "string" &&
     isStringArray(value["conceptIds"]) &&
     (value["mode"] === "run" || value["mode"] === "grade") &&
+    isOptionalString(value["attemptId"]) &&
+    (value["independence"] === undefined ||
+      value["independence"] === "independent" ||
+      value["independence"] === "assisted" ||
+      value["independence"] === "solution_exposed") &&
+    (value["hintsUsed"] === undefined ||
+      typeof value["hintsUsed"] === "number") &&
+    (value["fullSolutionExposed"] === undefined ||
+      typeof value["fullSolutionExposed"] === "boolean") &&
     report["schemaVersion"] === 1 &&
     typeof report["reportId"] === "string" &&
     typeof report["jobId"] === "string" &&
@@ -251,10 +282,143 @@ function isRecoveryPerformedEvent(
   );
 }
 
-function parseStoredEvent(
+const conceptStateValues = new Set([
+  "unseen",
+  "introduced",
+  "practiced",
+  "demonstrated",
+  "retained",
+]);
+
+function conceptStateRank(state: ConceptState): number {
+  return [
+    "unseen",
+    "introduced",
+    "practiced",
+    "demonstrated",
+    "retained",
+  ].indexOf(state);
+}
+const independenceValues = new Set([
+  "independent",
+  "assisted",
+  "solution_exposed",
+]);
+
+function hasEventEnvelope(
+  value: unknown,
+  type: string,
+): value is Record<string, unknown> {
+  return (
+    isRecordObject(value) &&
+    value["schemaVersion"] === 1 &&
+    value["type"] === type &&
+    typeof value["eventId"] === "string" &&
+    typeof value["occurredAt"] === "string"
+  );
+}
+
+function isStage3Event(value: unknown): value is LearningRecordEvent {
+  if (!isRecordObject(value)) return false;
+  switch (value["type"]) {
+    case "hint.revealed":
+      return (
+        hasEventEnvelope(value, "hint.revealed") &&
+        typeof value["commandId"] === "string" &&
+        typeof value["attemptId"] === "string" &&
+        typeof value["activityId"] === "string" &&
+        typeof value["hintId"] === "string" &&
+        typeof value["order"] === "number" &&
+        typeof value["fullSolutionExposed"] === "boolean"
+      );
+    case "reflection.submitted":
+      return (
+        hasEventEnvelope(value, "reflection.submitted") &&
+        typeof value["commandId"] === "string" &&
+        typeof value["attemptId"] === "string" &&
+        typeof value["activityId"] === "string" &&
+        Array.isArray(value["answers"]) &&
+        value["answers"].every(
+          (answer) =>
+            isRecordObject(answer) &&
+            typeof answer["promptId"] === "string" &&
+            typeof answer["answer"] === "string",
+        )
+      );
+    case "evidence.recorded":
+      return (
+        hasEventEnvelope(value, "evidence.recorded") &&
+        typeof value["evidenceId"] === "string" &&
+        typeof value["conceptId"] === "string" &&
+        typeof value["activityId"] === "string" &&
+        typeof value["attemptId"] === "string" &&
+        (value["source"] === "automated_grade" ||
+          value["source"] === "review" ||
+          value["source"] === "teacher_observation") &&
+        (value["outcome"] === "pass" || value["outcome"] === "fail") &&
+        typeof value["independence"] === "string" &&
+        independenceValues.has(value["independence"]) &&
+        isStringArray(value["supportingEventIds"])
+      );
+    case "concept.state.changed":
+      return (
+        hasEventEnvelope(value, "concept.state.changed") &&
+        typeof value["conceptId"] === "string" &&
+        typeof value["previousState"] === "string" &&
+        conceptStateValues.has(value["previousState"]) &&
+        typeof value["nextState"] === "string" &&
+        conceptStateValues.has(value["nextState"]) &&
+        isStringArray(value["evidenceIds"]) &&
+        typeof value["explanation"] === "string"
+      );
+    case "review.scheduled":
+      return (
+        hasEventEnvelope(value, "review.scheduled") &&
+        typeof value["reviewId"] === "string" &&
+        typeof value["conceptId"] === "string" &&
+        typeof value["sourceActivityId"] === "string" &&
+        typeof value["dueAt"] === "string" &&
+        typeof value["intervalDays"] === "number" &&
+        typeof value["reason"] === "string"
+      );
+    case "review.completed":
+      return (
+        hasEventEnvelope(value, "review.completed") &&
+        typeof value["reviewId"] === "string" &&
+        typeof value["conceptId"] === "string" &&
+        typeof value["attemptId"] === "string" &&
+        typeof value["evidenceId"] === "string"
+      );
+    case "teacher.observation.accepted":
+    case "teacher.observation.rejected":
+      return (
+        hasEventEnvelope(value, value["type"]) &&
+        typeof value["commandId"] === "string" &&
+        typeof value["observationId"] === "string" &&
+        typeof value["attemptId"] === "string" &&
+        typeof value["activityId"] === "string" &&
+        typeof value["rubricId"] === "string" &&
+        (value["outcome"] === "pass" || value["outcome"] === "revise") &&
+        typeof value["summary"] === "string" &&
+        isOptionalString(value["reason"])
+      );
+    default:
+      return false;
+  }
+}
+
+function isLearningRecordEvent(value: unknown): value is LearningRecordEvent {
+  return (
+    isAttemptCompletedEvent(value) ||
+    isRecoveryPerformedEvent(value) ||
+    isStage3Event(value)
+  );
+}
+
+function parseStoredEvents(
   line: string,
   lineNumber: number,
-): LearningRecordEvent {
+): readonly LearningRecordEvent[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(line);
@@ -266,25 +430,44 @@ function parseStoredEvent(
     parsed === null ||
     !("schemaVersion" in parsed) ||
     parsed.schemaVersion !== 1 ||
-    !("event" in parsed) ||
-    typeof parsed.event !== "object" ||
-    parsed.event === null ||
     !("checksum" in parsed) ||
     typeof parsed.checksum !== "string"
   ) {
     throw new Error(`Invalid learning record envelope at line ${lineNumber}`);
   }
-  const event = parsed.event;
+  if ("event" in parsed) {
+    const event = parsed.event;
+    if (!isLearningRecordEvent(event) || parsed.checksum !== checksum(event)) {
+      throw new Error(`Corrupt learning record at line ${lineNumber}`);
+    }
+    return [event];
+  }
   if (
-    (!isAttemptCompletedEvent(event) && !isRecoveryPerformedEvent(event)) ||
-    parsed.checksum !== checksum(event)
+    !("events" in parsed) ||
+    !Array.isArray(parsed.events) ||
+    parsed.events.length === 0 ||
+    !parsed.events.every(isLearningRecordEvent) ||
+    parsed.checksum !==
+      createHash("sha256").update(JSON.stringify(parsed.events)).digest("hex")
   ) {
     throw new Error(`Corrupt learning record at line ${lineNumber}`);
   }
-  return event;
+  return parsed.events;
 }
 
-function storedLine(event: LearningRecordEvent): string {
+function storedLine(events: readonly LearningRecordEvent[]): string {
+  if (events.length > 1) {
+    const stored: StoredEventBatch = {
+      schemaVersion: SCHEMA_VERSION,
+      events,
+      checksum: createHash("sha256")
+        .update(JSON.stringify(events))
+        .digest("hex"),
+    };
+    return `${JSON.stringify(stored)}\n`;
+  }
+  const event = events[0];
+  if (!event) throw new Error("Cannot append an empty event batch");
   const stored: StoredEvent = {
     schemaVersion: SCHEMA_VERSION,
     event,
@@ -306,9 +489,29 @@ function initializeProjection(database: DatabaseSync): void {
     CREATE TABLE IF NOT EXISTS concept_states (
       concept_id TEXT PRIMARY KEY,
       state TEXT NOT NULL,
-      last_event_id TEXT NOT NULL
+      last_event_id TEXT NOT NULL,
+      explanation TEXT NOT NULL DEFAULT '',
+      evidence_ids_json TEXT NOT NULL DEFAULT '[]'
+    );
+    CREATE TABLE IF NOT EXISTS concept_evidence (
+      evidence_id TEXT PRIMARY KEY,
+      event_json TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS review_queue (
+      review_key TEXT PRIMARY KEY,
+      event_json TEXT NOT NULL
     );
   `);
+  for (const migration of [
+    "ALTER TABLE concept_states ADD COLUMN explanation TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE concept_states ADD COLUMN evidence_ids_json TEXT NOT NULL DEFAULT '[]'",
+  ]) {
+    try {
+      database.exec(migration);
+    } catch (error) {
+      if (!String(error).includes("duplicate column name")) throw error;
+    }
+  }
   database
     .prepare(
       "INSERT INTO projection_meta(schema_version) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM projection_meta)",
@@ -320,6 +523,67 @@ function projectEvent(
   database: DatabaseSync,
   event: LearningRecordEvent,
 ): void {
+  if (event.type === "evidence.recorded") {
+    database
+      .prepare(
+        "INSERT OR IGNORE INTO concept_evidence(evidence_id, event_json) VALUES (?, ?)",
+      )
+      .run(event.evidenceId, JSON.stringify(event));
+    return;
+  }
+  if (event.type === "concept.state.changed") {
+    const current = database
+      .prepare("SELECT state FROM concept_states WHERE concept_id = ?")
+      .get(event.conceptId);
+    if (
+      typeof current?.["state"] === "string" &&
+      conceptStateValues.has(current["state"]) &&
+      conceptStateRank(event.nextState) <
+        conceptStateRank(current["state"] as ConceptState)
+    ) {
+      throw new Error(
+        `Concept state cannot regress: ${event.conceptId} ${current["state"]} -> ${event.nextState}`,
+      );
+    }
+    database
+      .prepare(
+        `
+    INSERT INTO concept_states(
+      concept_id, state, last_event_id, explanation, evidence_ids_json
+    ) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(concept_id) DO UPDATE SET
+      state = excluded.state,
+      last_event_id = excluded.last_event_id,
+      explanation = excluded.explanation,
+      evidence_ids_json = excluded.evidence_ids_json
+    `,
+      )
+      .run(
+        event.conceptId,
+        event.nextState,
+        event.eventId,
+        event.explanation,
+        JSON.stringify(event.evidenceIds),
+      );
+    return;
+  }
+  if (event.type === "review.scheduled") {
+    database
+      .prepare(
+        `
+      INSERT INTO review_queue(review_key, event_json) VALUES (?, ?)
+      ON CONFLICT(review_key) DO UPDATE SET event_json = excluded.event_json
+    `,
+      )
+      .run(`${event.reviewId}:${event.conceptId}`, JSON.stringify(event));
+    return;
+  }
+  if (event.type === "review.completed") {
+    database
+      .prepare("DELETE FROM review_queue WHERE review_key = ?")
+      .run(`${event.reviewId}:${event.conceptId}`);
+    return;
+  }
   if (event.type !== "attempt.completed") return;
   const inserted = database
     .prepare(
@@ -327,21 +591,19 @@ function projectEvent(
     )
     .run(event.eventId, JSON.stringify(event));
   if (
-    inserted.changes === 0 ||
-    event.mode !== "grade" ||
-    event.report.verdict !== "automated_pass"
+    inserted.changes > 0 &&
+    event.mode === "grade" &&
+    event.report.verdict === "automated_pass"
   ) {
-    return;
-  }
-  const statement = database.prepare(`
-    INSERT INTO concept_states(concept_id, state, last_event_id)
-    VALUES (?, 'practiced', ?)
-    ON CONFLICT(concept_id) DO UPDATE SET
-      state = excluded.state,
-      last_event_id = excluded.last_event_id
-  `);
-  for (const conceptId of event.conceptIds) {
-    statement.run(conceptId, event.eventId);
+    const statement = database.prepare(`
+      INSERT INTO concept_states(
+        concept_id, state, last_event_id, explanation, evidence_ids_json
+      ) VALUES (?, 'practiced', ?, 'A passing Grade supplied automated practice evidence.', ?)
+      ON CONFLICT(concept_id) DO NOTHING
+    `);
+    for (const conceptId of event.conceptIds) {
+      statement.run(conceptId, event.eventId, JSON.stringify([event.eventId]));
+    }
   }
 }
 
@@ -352,15 +614,58 @@ function readProjection(database: DatabaseSync): LearningProjection {
     .map(
       (row) => JSON.parse(String(row["event_json"])) as AttemptCompletedEvent,
     );
-  const conceptStates: Record<string, "practiced"> = {};
+  const conceptStates: Record<string, ConceptState> = {};
+  const concepts: Record<
+    string,
+    {
+      state: ConceptState;
+      explanation: string;
+      supportingEvidenceIds: readonly string[];
+    }
+  > = {};
   for (const row of database
-    .prepare("SELECT concept_id, state FROM concept_states ORDER BY concept_id")
+    .prepare(
+      "SELECT concept_id, state, explanation, evidence_ids_json FROM concept_states ORDER BY concept_id",
+    )
     .all()) {
-    if (row["state"] === "practiced") {
-      conceptStates[String(row["concept_id"])] = "practiced";
+    if (
+      typeof row["state"] === "string" &&
+      conceptStateValues.has(row["state"])
+    ) {
+      const conceptId = String(row["concept_id"]);
+      const state = row["state"] as ConceptState;
+      const parsedEvidence = JSON.parse(String(row["evidence_ids_json"]));
+      conceptStates[conceptId] = state;
+      concepts[conceptId] = {
+        state,
+        explanation: String(row["explanation"]),
+        supportingEvidenceIds: Array.isArray(parsedEvidence)
+          ? parsedEvidence.filter(
+              (value): value is string => typeof value === "string",
+            )
+          : [],
+      };
     }
   }
-  return { attempts, conceptStates };
+  const evidence = database
+    .prepare("SELECT event_json FROM concept_evidence ORDER BY rowid")
+    .all()
+    .map(
+      (row) => JSON.parse(String(row["event_json"])) as EvidenceRecordedEvent,
+    );
+  const reviews = database
+    .prepare("SELECT event_json FROM review_queue ORDER BY rowid")
+    .all()
+    .map(
+      (row) => JSON.parse(String(row["event_json"])) as ReviewScheduledEvent,
+    );
+  return {
+    attempts,
+    conceptStates,
+    concepts,
+    ...(evidence.length > 0 ? { evidence } : {}),
+    ...(reviews.length > 0 ? { reviews } : {}),
+  };
 }
 
 function isSafeArchivePath(path: string): boolean {
@@ -459,7 +764,7 @@ function parseArchive(value: unknown): ArchiveDocument {
         .toString("utf8")
         .split(/\r?\n/)
         .filter((line) => line.length > 0);
-      eventLines.forEach((line, index) => parseStoredEvent(line, index + 1));
+      eventLines.forEach((line, index) => parseStoredEvents(line, index + 1));
     }
   }
   const document = value as ArchiveDocument;
@@ -493,12 +798,13 @@ async function rebuildStagedProjection(dataRoot: string): Promise<void> {
     .split(/\r?\n/)
     .filter((candidate) => candidate.length > 0)
     .entries()) {
-    const event = parseStoredEvent(line, index + 1);
-    const existing = uniqueEvents.get(event.eventId);
-    if (existing && checksum(existing) !== checksum(event)) {
-      throw new Error(`Conflicting event identifier: ${event.eventId}`);
+    for (const event of parseStoredEvents(line, index + 1)) {
+      const existing = uniqueEvents.get(event.eventId);
+      if (existing && checksum(existing) !== checksum(event)) {
+        throw new Error(`Conflicting event identifier: ${event.eventId}`);
+      }
+      uniqueEvents.set(event.eventId, event);
     }
-    uniqueEvents.set(event.eventId, event);
   }
   const projectionPath = join(dataRoot, "projections.sqlite");
   await rm(projectionPath, { force: true });
@@ -668,10 +974,12 @@ export function createJsonlLearningRecord(
     return result;
   };
 
-  const durableAppend = async (event: LearningRecordEvent): Promise<void> => {
+  const durableAppend = async (
+    events: readonly LearningRecordEvent[],
+  ): Promise<void> => {
     const log = await open(eventPath, "a");
     try {
-      await log.write(storedLine(event));
+      await log.write(storedLine(events));
       await log.sync();
     } finally {
       await log.close();
@@ -728,7 +1036,7 @@ export function createJsonlLearningRecord(
         let invalidIndex = -1;
         for (const [index, line] of lines.entries()) {
           try {
-            validEvents.push(parseStoredEvent(line, index + 1));
+            validEvents.push(...parseStoredEvents(line, index + 1));
           } catch {
             invalidIndex = index;
             break;
@@ -762,7 +1070,7 @@ export function createJsonlLearningRecord(
             quarantinedFile,
             invalidBytes: Buffer.byteLength(invalidTail),
           };
-          await durableAppend(recovery);
+          await durableAppend([recovery]);
           validEvents.push(recovery);
         }
 
@@ -784,20 +1092,48 @@ export function createJsonlLearningRecord(
       }),
     readiness: createJsonlRecordProbe(dependencies),
     append(event) {
+      return this.appendBatch([event]);
+    },
+    appendBatch(events) {
       return enqueue(async () => {
-        const digest = checksum(event);
-        const existingDigest = eventDigests.get(event.eventId);
-        if (existingDigest) {
-          if (existingDigest !== digest) {
+        if (events.length === 0 || !events.every(isLearningRecordEvent)) {
+          throw new Error("Invalid learning record event batch");
+        }
+        const pending: LearningRecordEvent[] = [];
+        const batchDigests = new Map<string, string>();
+        for (const event of events) {
+          const digest = checksum(event);
+          const existingDigest = eventDigests.get(event.eventId);
+          const batchDigest = batchDigests.get(event.eventId);
+          if (
+            (existingDigest && existingDigest !== digest) ||
+            (batchDigest && batchDigest !== digest)
+          ) {
             throw new Error(`Conflicting event identifier: ${event.eventId}`);
           }
-          return;
+          batchDigests.set(event.eventId, digest);
+          if (
+            !existingDigest &&
+            !pending.some((candidate) => candidate.eventId === event.eventId)
+          ) {
+            pending.push(event);
+          }
         }
-        await durableAppend(event);
-        eventDigests.set(event.eventId, digest);
-        allEvents.push(event);
+        if (pending.length === 0) return;
         if (!database) throw new Error("Learning record is not initialized");
-        projectEvent(database, event);
+        database.exec("BEGIN IMMEDIATE");
+        try {
+          for (const event of pending) projectEvent(database, event);
+          await durableAppend(pending);
+          database.exec("COMMIT");
+        } catch (error) {
+          database.exec("ROLLBACK");
+          throw error;
+        }
+        for (const event of pending) {
+          eventDigests.set(event.eventId, checksum(event));
+          allEvents.push(event);
+        }
       });
     },
     list: () =>

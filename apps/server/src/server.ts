@@ -35,12 +35,23 @@ interface SaveWorkspaceBody {
 interface ExecuteActivityBody {
   readonly schemaVersion: 1;
   readonly commandId: string;
+  readonly attemptId?: string;
 }
 
 function isExecuteActivityBody(value: unknown): value is ExecuteActivityBody {
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
-  return body["schemaVersion"] === 1 && typeof body["commandId"] === "string";
+  return (
+    body["schemaVersion"] === 1 &&
+    typeof body["commandId"] === "string" &&
+    (body["attemptId"] === undefined || typeof body["attemptId"] === "string")
+  );
+}
+
+function recordBody(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function isRestoreBody(value: unknown): value is ExecuteActivityBody & {
@@ -197,6 +208,9 @@ export function createServer(
           type,
           commandId: request.body.commandId,
           activityId: request.params.activityId,
+          ...(request.body.attemptId
+            ? { attemptId: request.body.attemptId }
+            : {}),
         });
       },
     );
@@ -205,6 +219,200 @@ export function createServer(
   registerExecutionRoute(
     "/api/v1/activities/:activityId/grades",
     "activity.grade",
+  );
+
+  server.post<{ Params: { activityId: string }; Body: unknown }>(
+    "/api/v1/activities/:activityId/hints",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      const body = recordBody(request.body);
+      if (
+        !body ||
+        body["schemaVersion"] !== 1 ||
+        typeof body["commandId"] !== "string" ||
+        typeof body["attemptId"] !== "string" ||
+        typeof body["hintId"] !== "string" ||
+        typeof body["confirmFullSolution"] !== "boolean"
+      ) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: { code: "validation_error", message: "Invalid hint request" },
+        });
+      }
+      return dependencies.platform.dispatch({
+        type: "hint.reveal",
+        commandId: body["commandId"],
+        attemptId: body["attemptId"],
+        activityId: request.params.activityId,
+        hintId: body["hintId"],
+        confirmFullSolution: body["confirmFullSolution"],
+      });
+    },
+  );
+
+  server.post<{ Params: { activityId: string }; Body: unknown }>(
+    "/api/v1/activities/:activityId/reflections",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      const body = recordBody(request.body);
+      const answers = body?.["answers"];
+      if (
+        !body ||
+        body["schemaVersion"] !== 1 ||
+        typeof body["commandId"] !== "string" ||
+        typeof body["attemptId"] !== "string" ||
+        !Array.isArray(answers) ||
+        !answers.every((answer) => {
+          const candidate = recordBody(answer);
+          return (
+            candidate &&
+            typeof candidate["promptId"] === "string" &&
+            typeof candidate["answer"] === "string"
+          );
+        })
+      ) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: {
+            code: "validation_error",
+            message: "Invalid reflection request",
+          },
+        });
+      }
+      return dependencies.platform.dispatch({
+        type: "reflection.submit",
+        commandId: body["commandId"],
+        attemptId: body["attemptId"],
+        activityId: request.params.activityId,
+        answers: answers.map((answer) => {
+          const candidate = recordBody(answer);
+          return {
+            promptId: String(candidate?.["promptId"]),
+            answer: String(candidate?.["answer"]),
+          };
+        }),
+      });
+    },
+  );
+
+  server.get<{ Querystring: { all?: string } }>(
+    "/api/v1/reviews/due",
+    async (request) =>
+      dependencies.platform.query({
+        type: "reviews.get",
+        dueOnly: request.query.all !== "true",
+      }),
+  );
+  server.get("/api/v1/progress", async () =>
+    dependencies.platform.query({ type: "progress.get" }),
+  );
+  server.get<{ Params: { conceptId: string } }>(
+    "/api/v1/concepts/:conceptId",
+    async (request) =>
+      dependencies.platform.query({
+        type: "concept.get",
+        conceptId: request.params.conceptId,
+      }),
+  );
+  server.get<{ Params: { attemptId: string } }>(
+    "/api/v1/attempts/:attemptId",
+    async (request, reply) => {
+      const result = await dependencies.platform.query({
+        type: "attempt.get",
+        attemptId: request.params.attemptId,
+      });
+      if (!result.attempt) return reply.code(404).send(result);
+      return result;
+    },
+  );
+
+  server.post<{ Body: unknown }>(
+    "/api/v1/teacher-packs",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      const body = recordBody(request.body);
+      if (
+        !body ||
+        body["schemaVersion"] !== 1 ||
+        typeof body["commandId"] !== "string" ||
+        typeof body["activityId"] !== "string" ||
+        (body["attemptId"] !== undefined &&
+          typeof body["attemptId"] !== "string")
+      ) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: {
+            code: "validation_error",
+            message: "Invalid Teacher Pack request",
+          },
+        });
+      }
+      return dependencies.platform.dispatch({
+        type: "teacher-pack.create",
+        commandId: body["commandId"],
+        activityId: body["activityId"],
+        ...(typeof body["attemptId"] === "string"
+          ? { attemptId: body["attemptId"] }
+          : {}),
+      });
+    },
+  );
+
+  server.post<{ Body: unknown }>(
+    "/api/v1/teacher-observations",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      const body = recordBody(request.body);
+      if (
+        !body ||
+        body["schemaVersion"] !== 1 ||
+        typeof body["commandId"] !== "string" ||
+        typeof body["observationId"] !== "string" ||
+        typeof body["activityId"] !== "string" ||
+        typeof body["attemptId"] !== "string" ||
+        typeof body["rubricId"] !== "string" ||
+        (body["outcome"] !== "pass" && body["outcome"] !== "revise") ||
+        typeof body["summary"] !== "string"
+      ) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: {
+            code: "validation_error",
+            message: "Invalid Teacher Observation",
+          },
+        });
+      }
+      return dependencies.platform.dispatch({
+        type: "teacher-observation.submit",
+        commandId: body["commandId"],
+        observationId: body["observationId"],
+        activityId: body["activityId"],
+        attemptId: body["attemptId"],
+        rubricId: body["rubricId"],
+        outcome: body["outcome"],
+        summary: body["summary"],
+      });
+    },
   );
 
   server.post<{ Params: { jobId: string }; Body: unknown }>(

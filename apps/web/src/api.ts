@@ -4,7 +4,11 @@ import {
   type ActivityResult,
   type BootstrapResult,
   type DashboardResult,
+  type HintRevealCommandResult,
   type JobCancelCommandResult,
+  type ProgressResult,
+  type ReflectionSubmitCommandResult,
+  type ReviewsResult,
   type WorkspaceResult,
   type WorkspaceSaveCommandResult,
 } from "@cpp-learn/contracts";
@@ -99,8 +103,13 @@ export async function executeActivity(
   activityId: string,
   mode: "run" | "grade",
   commandId: string,
+  attemptIdOrRequest?: string | Request,
   request: Request = fetch,
 ): Promise<ActivityExecutionCommandResult> {
+  const attemptId =
+    typeof attemptIdOrRequest === "string" ? attemptIdOrRequest : undefined;
+  const selectedRequest =
+    typeof attemptIdOrRequest === "function" ? attemptIdOrRequest : request;
   return requestJson(
     `/api/v1/activities/${encodeURIComponent(activityId)}/${mode === "run" ? "runs" : "grades"}`,
     {
@@ -109,8 +118,83 @@ export async function executeActivity(
         accept: "application/json",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ schemaVersion: 1, commandId }),
+      body: JSON.stringify({
+        schemaVersion: 1,
+        commandId,
+        ...(attemptId ? { attemptId } : {}),
+      }),
     },
+    selectedRequest,
+  );
+}
+
+export async function revealHint(
+  activityId: string,
+  input: {
+    readonly commandId: string;
+    readonly attemptId: string;
+    readonly hintId: string;
+    readonly confirmFullSolution: boolean;
+  },
+  request: Request = fetch,
+): Promise<HintRevealCommandResult> {
+  return requestJson(
+    `/api/v1/activities/${encodeURIComponent(activityId)}/hints`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ schemaVersion: 1, ...input }),
+    },
+    request,
+  );
+}
+
+export async function submitReflection(
+  activityId: string,
+  input: {
+    readonly commandId: string;
+    readonly attemptId: string;
+    readonly answers: readonly {
+      readonly promptId: string;
+      readonly answer: string;
+    }[];
+  },
+  request: Request = fetch,
+): Promise<ReflectionSubmitCommandResult> {
+  return requestJson(
+    `/api/v1/activities/${encodeURIComponent(activityId)}/reflections`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ schemaVersion: 1, ...input }),
+    },
+    request,
+  );
+}
+
+export async function getProgress(
+  request: Request = fetch,
+): Promise<ProgressResult> {
+  return requestJson(
+    "/api/v1/progress",
+    { headers: { accept: "application/json" } },
+    request,
+  );
+}
+
+export async function getReviews(
+  dueOnly = true,
+  request: Request = fetch,
+): Promise<ReviewsResult> {
+  return requestJson(
+    dueOnly ? "/api/v1/reviews/due" : "/api/v1/reviews/due?all=true",
+    { headers: { accept: "application/json" } },
     request,
   );
 }

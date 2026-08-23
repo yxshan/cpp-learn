@@ -7,12 +7,19 @@ import {
   type ReactNode,
 } from "react";
 
-import type { BootstrapResult, DashboardResult } from "@cpp-learn/contracts";
+import type {
+  BootstrapResult,
+  DashboardResult,
+  ProgressResult,
+  ReviewsResult,
+} from "@cpp-learn/contracts";
 
 import {
   exportBackup,
   getBootstrap,
   getDashboard,
+  getProgress,
+  getReviews,
   restoreBackup,
 } from "./api.js";
 
@@ -65,7 +72,9 @@ export function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapResult>();
   const [dashboard, setDashboard] = useState<DashboardResult>();
   const [error, setError] = useState<string>();
-  const [showWorkspace, setShowWorkspace] = useState(false);
+  const [workspaceActivityId, setWorkspaceActivityId] = useState<string>();
+  const [progress, setProgress] = useState<ProgressResult>();
+  const [reviews, setReviews] = useState<ReviewsResult>();
   const [dataMessage, setDataMessage] = useState("可导出校验后的本地备份");
 
   const downloadBackup = async (): Promise<void> => {
@@ -103,12 +112,17 @@ export function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [nextBootstrap, nextDashboard] = await Promise.all([
-        getBootstrap(),
-        getDashboard(),
-      ]);
+      const [nextBootstrap, nextDashboard, nextProgress, nextReviews] =
+        await Promise.all([
+          getBootstrap(),
+          getDashboard(),
+          getProgress(),
+          getReviews(false),
+        ]);
       setBootstrap(nextBootstrap);
       setDashboard(nextDashboard);
+      setProgress(nextProgress);
+      setReviews(nextReviews);
       setError(undefined);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "无法连接本地学习服务");
@@ -119,7 +133,7 @@ export function App() {
     void refresh();
   }, [refresh]);
 
-  if (showWorkspace) {
+  if (workspaceActivityId) {
     return (
       <Suspense
         fallback={
@@ -127,9 +141,18 @@ export function App() {
         }
       >
         <LessonWorkspace
-          onBack={() => setShowWorkspace(false)}
+          activityId={workspaceActivityId}
+          onBack={() => setWorkspaceActivityId(undefined)}
           onEvidenceChanged={async () => {
-            setDashboard(await getDashboard());
+            const [nextDashboard, nextProgress, nextReviews] =
+              await Promise.all([
+                getDashboard(),
+                getProgress(),
+                getReviews(false),
+              ]);
+            setDashboard(nextDashboard);
+            setProgress(nextProgress);
+            setReviews(nextReviews);
           }}
         />
       </Suspense>
@@ -155,7 +178,10 @@ export function App() {
           <a className="nav-item active" href="#overview">
             <span>⌁</span>总览
           </a>
-          <button className="nav-item" onClick={() => setShowWorkspace(true)}>
+          <button
+            className="nav-item"
+            onClick={() => setWorkspaceActivityId("source-to-program")}
+          >
             <span>▶</span>当前课程
           </button>
           <a className="nav-item" href="#environment">
@@ -163,6 +189,12 @@ export function App() {
           </a>
           <a className="nav-item" href="#records">
             <span>▤</span>学习记录
+          </a>
+          <a className="nav-item" href="#reviews">
+            <span>↻</span>复习队列
+          </a>
+          <a className="nav-item" href="#knowledge-map">
+            <span>◇</span>知识地图
           </a>
         </nav>
         <div className="sidebar-footer">
@@ -195,23 +227,25 @@ export function App() {
 
         <section className="stage-banner" aria-labelledby="stage-title">
           <div className="stage-copy">
-            <span className="stage-chip">STAGE 2 · RELIABLE LOCAL JUDGE</span>
+            <span className="stage-chip">
+              STAGE 3 · EXPLAINABLE LEARNING LOOP
+            </span>
             <h2 id="stage-title">
               读懂、修改、运行，再用 Grade 证明你掌握了它。
             </h2>
             <p>
-              同一份本地代码会经过 C++20 编译器与公开测试；只有 Grade
-              通过才会形成概念学习证据。
+              提示、反思、独立 Grade 与延迟复习形成一条可解释的证据链；
+              每次状态变化都能追溯原因。
             </p>
             <div className="stage-actions">
               <button
                 className="primary-button"
-                onClick={() => setShowWorkspace(true)}
+                onClick={() => setWorkspaceActivityId("source-to-program")}
               >
                 开始第一课
               </button>
               <span>
-                阶段进度 <strong>2 / 7</strong>
+                阶段进度 <strong>3 / 7</strong>
               </span>
             </div>
           </div>
@@ -309,7 +343,7 @@ export function App() {
               </div>
               <button
                 className="lesson-button enabled"
-                onClick={() => setShowWorkspace(true)}
+                onClick={() => setWorkspaceActivityId("source-to-program")}
               >
                 进入课程 <span>→</span>
               </button>
@@ -367,8 +401,73 @@ export function App() {
             </div>
           </article>
         </section>
+        <section id="reviews" className="section-block learning-loop-grid">
+          <article className="current-card">
+            <div className="section-heading compact">
+              <div>
+                <p className="eyebrow">REVIEW QUEUE</p>
+                <h2>延迟复习</h2>
+              </div>
+              <span className="time-pill">
+                {dashboard?.dueReviewCount ?? 0} DUE
+              </span>
+            </div>
+            <div className="review-list">
+              {reviews?.reviews.map((review) => (
+                <div key={`${review.activityId}-${review.conceptId}`}>
+                  <div>
+                    <strong>{review.conceptId}</strong>
+                    <span>{review.reason}</span>
+                    <small>
+                      {new Date(review.dueAt).toLocaleString("zh-CN")}
+                    </small>
+                  </div>
+                  <button
+                    className={
+                      review.status === "due"
+                        ? "primary-button"
+                        : "secondary-button"
+                    }
+                    disabled={review.status !== "due"}
+                    onClick={() => setWorkspaceActivityId(review.activityId)}
+                  >
+                    {review.status === "due" ? "开始复习" : "尚未到期"}
+                  </button>
+                </div>
+              ))}
+              {reviews?.reviews.length === 0 && (
+                <p className="muted">
+                  形成 demonstrated 证据后会自动安排延迟复习。
+                </p>
+              )}
+            </div>
+          </article>
+          <article id="knowledge-map" className="path-card">
+            <p className="eyebrow">KNOWLEDGE MAP</p>
+            <h2>概念证据地图</h2>
+            <div className="concept-list">
+              {progress?.concepts.map((concept) => (
+                <div key={concept.conceptId}>
+                  <span className={`concept-state state-${concept.state}`}>
+                    {concept.state}
+                  </span>
+                  <strong>{concept.conceptId}</strong>
+                  <p>{concept.explanation}</p>
+                  <small>
+                    {concept.supportingEvidenceIds.length} 条支持证据
+                  </small>
+                </div>
+              ))}
+              {progress?.concepts.length === 0 && (
+                <p className="muted">
+                  完成 Grade 后，这里会显示状态与支持证据。
+                </p>
+              )}
+            </div>
+          </article>
+        </section>
         <footer>
-          <span>cpp-learn · Stage 2</span>
+          <span>cpp-learn · Stage 3</span>
           <span>Local-first · C++20 · React</span>
         </footer>
       </main>

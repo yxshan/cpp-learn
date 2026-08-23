@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -45,7 +45,7 @@ After `npm run build`, `./cpplearn serve`:
 4. Starts the HTTP API and built Web assets on `127.0.0.1:4173`.
 5. Prints the local Web URL.
 
-Startup fails safely if required content or built Web assets cannot be read. The Learning Record repairs an interrupted trailing append by quarantining invalid bytes and recording `recovery.performed`; SQLite projections are rebuilt from the valid event log during initialization.
+Startup fails safely if required content or built Web assets cannot be read. The Learning Record repairs an interrupted trailing append by quarantining invalid bytes and recording `recovery.performed`; SQLite projections are rebuilt from the valid event log during initialization. A learning action may persist one event or a checksummed event batch, but each action occupies one JSONL line and is projected in one SQLite transaction.
 
 ## 4. Configuration
 
@@ -77,6 +77,18 @@ Secrets are not expected in the base product. Environment variables are allowlis
 - `doctor --json` emits toolchain, paths, schema versions, storage health, and capability probes.
 
 ## 6. Data operations
+
+### Learning-loop CLI
+
+```bash
+cpplearn progress [--json]
+cpplearn reviews [--due] [--json]
+cpplearn hint --activity ID --attempt ID --hint ID [--confirm-solution]
+cpplearn reflect --activity ID --attempt ID --prompt ID --answer TEXT
+cpplearn check --activity ID --attempt ID
+```
+
+Use one Attempt ID across hint, reflection, and check commands. Assistance and human reflections are private local Learning Records: they may enter an explicit backup or Teacher Pack preview but never normal logs.
 
 ### Backup
 

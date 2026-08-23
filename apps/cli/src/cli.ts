@@ -34,6 +34,10 @@ function formatDoctorReport(report: BootstrapResult): string {
 
 export async function runCli(dependencies: CliDependencies): Promise<number> {
   const [command, ...flags] = dependencies.argv;
+  const flagValue = (name: string): string | undefined => {
+    const index = flags.indexOf(name);
+    return index >= 0 ? flags[index + 1] : undefined;
+  };
 
   if (command === "doctor") {
     const report = await dependencies.platform.query({ type: "bootstrap.get" });
@@ -60,6 +64,95 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
         ].join("\n"),
       );
     }
+    return 0;
+  }
+
+  if (command === "reviews") {
+    const result = await dependencies.platform.query({
+      type: "reviews.get",
+      dueOnly: flags.includes("--due"),
+    });
+    dependencies.stdout(
+      flags.includes("--json")
+        ? `${JSON.stringify(result)}\n`
+        : result.reviews.length === 0
+          ? "No scheduled Reviews\n"
+          : `${result.reviews
+              .map(
+                (review) =>
+                  `${review.status.toUpperCase()} ${review.activityId} · ${review.conceptId} · ${review.dueAt}`,
+              )
+              .join("\n")}\n`,
+    );
+    return 0;
+  }
+
+  if (command === "progress") {
+    const result = await dependencies.platform.query({ type: "progress.get" });
+    dependencies.stdout(
+      flags.includes("--json")
+        ? `${JSON.stringify(result)}\n`
+        : result.concepts.length === 0
+          ? "No Concept Evidence yet\n"
+          : `${result.concepts
+              .map(
+                (concept) =>
+                  `${concept.conceptId}: ${concept.state} — ${concept.explanation}`,
+              )
+              .join("\n")}\n`,
+    );
+    return 0;
+  }
+
+  if (command === "hint") {
+    const activityId = flagValue("--activity");
+    const attemptId = flagValue("--attempt");
+    const hintId = flagValue("--hint");
+    if (!activityId || !attemptId || !hintId) {
+      dependencies.stderr(
+        "Usage: cpplearn hint --activity ID --attempt ID --hint ID [--confirm-solution] [--json]\n",
+      );
+      return 2;
+    }
+    const result = await dependencies.platform.dispatch({
+      type: "hint.reveal",
+      commandId: `cli_${randomUUID()}`,
+      activityId,
+      attemptId,
+      hintId,
+      confirmFullSolution: flags.includes("--confirm-solution"),
+    });
+    dependencies.stdout(
+      flags.includes("--json")
+        ? `${JSON.stringify(result)}\n`
+        : `${result.hint.title}\n\n${result.hint.content}\n`,
+    );
+    return 0;
+  }
+
+  if (command === "reflect") {
+    const activityId = flagValue("--activity");
+    const attemptId = flagValue("--attempt");
+    const promptId = flagValue("--prompt");
+    const answer = flagValue("--answer");
+    if (!activityId || !attemptId || !promptId || !answer) {
+      dependencies.stderr(
+        "Usage: cpplearn reflect --activity ID --attempt ID --prompt ID --answer TEXT [--json]\n",
+      );
+      return 2;
+    }
+    const result = await dependencies.platform.dispatch({
+      type: "reflection.submit",
+      commandId: `cli_${randomUUID()}`,
+      activityId,
+      attemptId,
+      answers: [{ promptId, answer }],
+    });
+    dependencies.stdout(
+      flags.includes("--json")
+        ? `${JSON.stringify(result)}\n`
+        : "Reflection recorded\n",
+    );
     return 0;
   }
 
@@ -100,10 +193,12 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
       dependencies.stderr("Usage: cpplearn check --activity <id> [--json]\n");
       return 2;
     }
+    const checkAttemptId = flagValue("--attempt");
     const result = await dependencies.platform.dispatch({
       type: "activity.grade",
       commandId: `cli_${randomUUID()}`,
       activityId,
+      ...(checkAttemptId ? { attemptId: checkAttemptId } : {}),
     });
     if (flags.includes("--json")) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
@@ -153,7 +248,7 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
   }
 
   dependencies.stderr(
-    "Usage: cpplearn <doctor [--json] | next [--minutes N] [--json] | status [--json] | check --activity <id> [--json] | export --output PATH [--json] | restore --input PATH [--json] | serve>\n",
+    "Usage: cpplearn <doctor | next | status | reviews | progress | hint | reflect | check | export | restore | serve> [options]\n",
   );
   return 2;
 }

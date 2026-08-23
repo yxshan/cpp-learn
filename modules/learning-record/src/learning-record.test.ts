@@ -21,7 +21,10 @@ import {
   initializeJsonlRecord,
 } from "./index.js";
 
-import type { AttemptCompletedEvent } from "@cpp-learn/contracts";
+import type {
+  AttemptCompletedEvent,
+  LearningRecordEvent,
+} from "@cpp-learn/contracts";
 
 const temporaryRoots: string[] = [];
 
@@ -151,6 +154,13 @@ describe("[T-RECORD-001] append-only attempt history", () => {
     expect(before).toEqual({
       attempts: [event],
       conceptStates: { "compile-link-run": "practiced" },
+      concepts: {
+        "compile-link-run": {
+          state: "practiced",
+          explanation: "A passing Grade supplied automated practice evidence.",
+          supportingEvidenceIds: [event.eventId],
+        },
+      },
     });
     expect(rebuilt).toEqual(before);
     expect(await record.projection()).toEqual(before);
@@ -175,6 +185,140 @@ describe("[T-RECORD-001] append-only attempt history", () => {
       record.append({ ...first, occurredAt: "2026-08-23T11:00:00.000Z" }),
     ).rejects.toThrow("Conflicting event identifier: evt_conflict");
     await expect(record.list()).resolves.toEqual([first]);
+  });
+});
+
+describe("[T-RECORD-002] Stage 3 Evidence projection rebuild", () => {
+  it("preserves hints, reflections, explainable Concept state, and Review schedule", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-learn-record-"));
+    temporaryRoots.push(root);
+    const record = createJsonlLearningRecord({ dataRoot: root });
+    await record.initialize();
+    const events: LearningRecordEvent[] = [
+      {
+        schemaVersion: 1,
+        eventId: "evt_hint",
+        type: "hint.revealed",
+        occurredAt: "2026-08-23T08:00:00.000Z",
+        commandId: "cmd_hint",
+        attemptId: "attempt_1",
+        activityId: "source-to-program",
+        hintId: "locate-entry",
+        order: 1,
+        fullSolutionExposed: false,
+      },
+      {
+        schemaVersion: 1,
+        eventId: "evt_reflection",
+        type: "reflection.submitted",
+        occurredAt: "2026-08-23T08:01:00.000Z",
+        commandId: "cmd_reflection",
+        attemptId: "attempt_1",
+        activityId: "source-to-program",
+        answers: [
+          { promptId: "compile-versus-run", answer: "Build then run." },
+        ],
+      },
+      {
+        schemaVersion: 1,
+        eventId: "evt_evidence",
+        type: "evidence.recorded",
+        occurredAt: "2026-08-23T08:02:00.000Z",
+        evidenceId: "evidence_1",
+        conceptId: "compile-link-run",
+        activityId: "source-to-program",
+        attemptId: "attempt_1",
+        source: "automated_grade",
+        outcome: "pass",
+        independence: "independent",
+        supportingEventIds: ["evt_grade", "evt_reflection"],
+      },
+      {
+        schemaVersion: 1,
+        eventId: "evt_state",
+        type: "concept.state.changed",
+        occurredAt: "2026-08-23T08:02:00.000Z",
+        conceptId: "compile-link-run",
+        previousState: "practiced",
+        nextState: "demonstrated",
+        evidenceIds: ["evidence_1"],
+        explanation: "Independent private Grade plus reflection.",
+      },
+      {
+        schemaVersion: 1,
+        eventId: "evt_review",
+        type: "review.scheduled",
+        occurredAt: "2026-08-23T08:02:00.000Z",
+        reviewId: "source-to-program-review",
+        conceptId: "compile-link-run",
+        sourceActivityId: "source-to-program",
+        dueAt: "2026-08-24T08:02:00.000Z",
+        intervalDays: 1,
+        reason: "Check delayed retention.",
+      },
+    ];
+    await record.appendBatch(events);
+
+    const persistedLines = (await readFile(join(root, "events.jsonl"), "utf8"))
+      .trim()
+      .split("\n");
+    expect(persistedLines).toHaveLength(1);
+    expect(JSON.parse(persistedLines[0] ?? "{}")).toMatchObject({
+      schemaVersion: 1,
+      events: events.map((event) => ({ eventId: event.eventId })),
+    });
+
+    const before = await record.projection();
+    const restarted = createJsonlLearningRecord({ dataRoot: root });
+    await restarted.initialize();
+    const rebuilt = await restarted.rebuild();
+
+    expect(await restarted.events()).toEqual(events);
+    expect(before).toEqual(rebuilt);
+    expect(rebuilt).toMatchObject({
+      conceptStates: { "compile-link-run": "demonstrated" },
+      evidence: [expect.objectContaining({ evidenceId: "evidence_1" })],
+      reviews: [
+        expect.objectContaining({
+          reviewId: "source-to-program-review",
+          dueAt: "2026-08-24T08:02:00.000Z",
+        }),
+      ],
+    });
+  });
+
+  it("rejects a Concept-state regression without changing the projection", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-learn-record-"));
+    temporaryRoots.push(root);
+    const record = createJsonlLearningRecord({ dataRoot: root });
+    await record.initialize();
+    const demonstrated: LearningRecordEvent = {
+      schemaVersion: 1,
+      eventId: "evt_demonstrated",
+      type: "concept.state.changed",
+      occurredAt: "2026-08-23T08:00:00.000Z",
+      conceptId: "compile-link-run",
+      previousState: "practiced",
+      nextState: "demonstrated",
+      evidenceIds: ["evidence_1"],
+      explanation: "Demonstrated.",
+    };
+    await record.append(demonstrated);
+    const regressed: LearningRecordEvent = {
+      ...demonstrated,
+      eventId: "evt_regressed",
+      occurredAt: "2026-08-23T09:00:00.000Z",
+      previousState: "demonstrated",
+      nextState: "practiced",
+      explanation: "Invalid regression.",
+    };
+
+    await expect(record.append(regressed)).rejects.toThrow(
+      "Concept state cannot regress",
+    );
+    await expect(record.projection()).resolves.toMatchObject({
+      conceptStates: { "compile-link-run": "demonstrated" },
+    });
   });
 });
 

@@ -232,6 +232,106 @@ describe("[T-CONTRACT-003] HTTP Workspace Adapter", () => {
   });
 });
 
+describe("[T-CONTRACT-005] HTTP learning-loop Adapters", () => {
+  it("maps hints, reflections, progress, Review Queue, and Teacher collaboration", async () => {
+    const dispatch = vi
+      .fn()
+      .mockResolvedValue({ schemaVersion: 1, accepted: true });
+    const query = vi.fn().mockResolvedValue({ schemaVersion: 1, reviews: [] });
+    const platform = {
+      dispatch,
+      query,
+      async *events() {},
+    } as unknown as LearningPlatform;
+    const server = createServer({ platform });
+
+    const hint = await server.inject({
+      method: "POST",
+      url: "/api/v1/activities/source-to-program/hints",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_hint_http",
+        attemptId: "attempt_http",
+        hintId: "locate-entry",
+        confirmFullSolution: false,
+      },
+    });
+    const reflection = await server.inject({
+      method: "POST",
+      url: "/api/v1/activities/source-to-program/reflections",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_reflection_http",
+        attemptId: "attempt_http",
+        answers: [
+          { promptId: "compile-versus-run", answer: "Build then run." },
+        ],
+      },
+    });
+    const progress = await server.inject({
+      method: "GET",
+      url: "/api/v1/progress",
+    });
+    const reviews = await server.inject({
+      method: "GET",
+      url: "/api/v1/reviews/due",
+    });
+    const teacherPack = await server.inject({
+      method: "POST",
+      url: "/api/v1/teacher-packs",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_pack_http",
+        activityId: "source-to-program",
+        attemptId: "attempt_http",
+      },
+    });
+    const observation = await server.inject({
+      method: "POST",
+      url: "/api/v1/teacher-observations",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_observation_http",
+        observationId: "observation_http",
+        activityId: "source-to-program",
+        attemptId: "attempt_http",
+        rubricId: "compile-run-explanation",
+        outcome: "pass",
+        summary: "The explanation distinguishes the two stages.",
+      },
+    });
+
+    for (const response of [
+      hint,
+      reflection,
+      progress,
+      reviews,
+      teacherPack,
+      observation,
+    ]) {
+      expect(response.statusCode).toBe(200);
+    }
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "hint.reveal",
+        attemptId: "attempt_http",
+      }),
+    );
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "reflection.submit" }),
+    );
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "teacher-pack.create" }),
+    );
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "teacher-observation.submit" }),
+    );
+    expect(query).toHaveBeenCalledWith({ type: "progress.get" });
+    expect(query).toHaveBeenCalledWith({ type: "reviews.get", dueOnly: true });
+    await server.close();
+  });
+});
+
 describe("[T-CONTRACT-004] HTTP execution and progress Adapters", () => {
   it("grades a snapshot, exposes its report, dashboard evidence, and SSE events", async () => {
     const events: AttemptCompletedEvent[] = [];
