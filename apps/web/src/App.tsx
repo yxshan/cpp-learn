@@ -3,6 +3,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -28,6 +29,11 @@ import {
 type CatalogFilter = "core" | "exercise" | "review" | "all";
 type SectionId =
   "overview" | "curriculum" | "environment" | "records" | "reviews";
+
+interface NavigationState {
+  readonly index: number;
+  readonly overviewIndex?: number | undefined;
+}
 
 const numberFormatter = new Intl.NumberFormat("zh-CN");
 const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
@@ -61,6 +67,33 @@ function initialSectionId(): SectionId {
     section === "reviews"
     ? section
     : "overview";
+}
+
+function navigationState(
+  value: unknown = window.history.state,
+): NavigationState | undefined {
+  if (typeof value !== "object" || value === null) return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record["__cppLearnIndex"] !== "number") return undefined;
+  return {
+    index: record["__cppLearnIndex"],
+    overviewIndex:
+      typeof record["__cppLearnOverviewIndex"] === "number"
+        ? record["__cppLearnOverviewIndex"]
+        : undefined,
+  };
+}
+
+function createNavigationState(
+  index: number,
+  overviewIndex?: number,
+): Record<string, number> {
+  return overviewIndex === undefined
+    ? { __cppLearnIndex: index }
+    : {
+        __cppLearnIndex: index,
+        __cppLearnOverviewIndex: overviewIndex,
+      };
 }
 
 const LessonWorkspace = lazy(async () => {
@@ -126,21 +159,81 @@ export function App() {
   const [activeSection, setActiveSection] =
     useState<SectionId>(initialSectionId);
   const [dataMessage, setDataMessage] = useState("可导出校验后的本地备份");
+  const workspaceActivityIdRef = useRef(workspaceActivityId);
+  const workspaceDirtyRef = useRef(false);
+  const historyIndexRef = useRef(navigationState()?.index ?? 0);
+  const restoringHistoryRef = useRef(false);
 
-  const openWorkspace = useCallback((activityId?: string): void => {
-    if (!activityId) return;
-    setWorkspaceActivityId(activityId);
-    const url = new URL(window.location.href);
-    url.searchParams.set("activity", activityId);
-    window.history.pushState(null, "", url);
+  const changeWorkspaceActivity = useCallback(
+    (activityId: string | undefined): void => {
+      workspaceActivityIdRef.current = activityId;
+      setWorkspaceActivityId(activityId);
+    },
+    [],
+  );
+
+  const confirmWorkspaceChange = useCallback((): boolean => {
+    if (!workspaceDirtyRef.current) return true;
+    const accepted = window.confirm(
+      "当前代码尚未保存。离开本课程会丢失这些修改，是否继续？",
+    );
+    if (accepted) workspaceDirtyRef.current = false;
+    return accepted;
   }, []);
+
+  const setWorkspaceDirty = useCallback((dirty: boolean): void => {
+    workspaceDirtyRef.current = dirty;
+  }, []);
+
+  const openWorkspace = useCallback(
+    (activityId?: string): void => {
+      if (!activityId) return;
+      const currentActivityId = workspaceActivityIdRef.current;
+      if (activityId === currentActivityId) return;
+      if (currentActivityId && !confirmWorkspaceChange()) return;
+
+      const currentState = navigationState();
+      const currentIndex = currentState?.index ?? historyIndexRef.current;
+      const overviewIndex =
+        currentState?.overviewIndex ??
+        (currentActivityId ? undefined : currentIndex);
+      const nextIndex = currentIndex + 1;
+      const url = new URL(window.location.href);
+      url.searchParams.set("activity", activityId);
+      window.history.pushState(
+        createNavigationState(nextIndex, overviewIndex),
+        "",
+        url,
+      );
+      historyIndexRef.current = nextIndex;
+      workspaceDirtyRef.current = false;
+      changeWorkspaceActivity(activityId);
+    },
+    [changeWorkspaceActivity, confirmWorkspaceChange],
+  );
 
   const closeWorkspace = useCallback((): void => {
-    setWorkspaceActivityId(undefined);
+    if (!confirmWorkspaceChange()) return;
+    const currentState = navigationState();
+    if (
+      currentState?.overviewIndex !== undefined &&
+      currentState.overviewIndex < currentState.index
+    ) {
+      window.history.go(currentState.overviewIndex - currentState.index);
+      return;
+    }
+
+    const currentIndex = currentState?.index ?? historyIndexRef.current;
     const url = new URL(window.location.href);
     url.searchParams.delete("activity");
-    window.history.replaceState(null, "", url);
-  }, []);
+    window.history.replaceState(
+      createNavigationState(currentIndex, currentIndex),
+      "",
+      url,
+    );
+    workspaceDirtyRef.current = false;
+    changeWorkspaceActivity(undefined);
+  }, [changeWorkspaceActivity, confirmWorkspaceChange]);
 
   const downloadBackup = async (): Promise<void> => {
     try {
@@ -206,12 +299,60 @@ export function App() {
   }, [refresh]);
 
   useEffect(() => {
-    const syncWorkspaceFromUrl = (): void => {
-      setWorkspaceActivityId(initialWorkspaceActivityId());
+    const existingState = navigationState();
+    if (existingState) {
+      historyIndexRef.current = existingState.index;
+    } else {
+      window.history.replaceState(
+        createNavigationState(
+          historyIndexRef.current,
+          workspaceActivityIdRef.current ? undefined : historyIndexRef.current,
+        ),
+        "",
+        window.location.href,
+      );
+    }
+
+    const syncWorkspaceFromUrl = (event: PopStateEvent): void => {
+      const targetState = navigationState(event.state);
+      if (restoringHistoryRef.current) {
+        restoringHistoryRef.current = false;
+        if (targetState) historyIndexRef.current = targetState.index;
+        return;
+      }
+
+      const targetActivityId = initialWorkspaceActivityId();
+      if (targetActivityId === workspaceActivityIdRef.current) {
+        if (targetState) historyIndexRef.current = targetState.index;
+        return;
+      }
+
+      if (!confirmWorkspaceChange()) {
+        if (targetState) {
+          restoringHistoryRef.current = true;
+          window.history.go(historyIndexRef.current - targetState.index);
+        } else {
+          const url = new URL(window.location.href);
+          const currentActivityId = workspaceActivityIdRef.current;
+          if (currentActivityId) {
+            url.searchParams.set("activity", currentActivityId);
+          } else {
+            url.searchParams.delete("activity");
+          }
+          const nextIndex = historyIndexRef.current + 1;
+          window.history.pushState(createNavigationState(nextIndex), "", url);
+          historyIndexRef.current = nextIndex;
+        }
+        return;
+      }
+
+      workspaceDirtyRef.current = false;
+      if (targetState) historyIndexRef.current = targetState.index;
+      changeWorkspaceActivity(targetActivityId);
     };
     window.addEventListener("popstate", syncWorkspaceFromUrl);
     return () => window.removeEventListener("popstate", syncWorkspaceFromUrl);
-  }, []);
+  }, [changeWorkspaceActivity, confirmWorkspaceChange]);
 
   useEffect(() => {
     const syncSectionFromHash = (): void =>
@@ -242,6 +383,7 @@ export function App() {
         }
       >
         <LessonWorkspace
+          key={workspaceActivityId}
           activityId={workspaceActivityId}
           currentPosition={
             currentActivityIndex >= 0 ? currentActivityIndex + 1 : undefined
@@ -251,6 +393,7 @@ export function App() {
           nextActivity={nextActivity}
           onBack={closeWorkspace}
           onNavigate={openWorkspace}
+          onDirtyChange={setWorkspaceDirty}
           onEvidenceChanged={async () => {
             const [nextDashboard, nextProgress, nextReviews] =
               await Promise.all([

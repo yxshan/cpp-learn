@@ -79,6 +79,7 @@ export interface LessonWorkspaceProps {
     | undefined;
   readonly onBack: () => void;
   readonly onNavigate: (activityId: string) => void;
+  readonly onDirtyChange: (dirty: boolean) => void;
   readonly onEvidenceChanged: () => Promise<void>;
 }
 
@@ -90,6 +91,7 @@ export function LessonWorkspace({
   nextActivity,
   onBack,
   onNavigate,
+  onDirtyChange,
   onEvidenceChanged,
 }: LessonWorkspaceProps) {
   const [activity, setActivity] = useState<ActivityDetail>();
@@ -116,6 +118,7 @@ export function LessonWorkspace({
   >({});
 
   useEffect(() => {
+    let cancelled = false;
     setActivity(undefined);
     setWorkspace(undefined);
     setSources({});
@@ -123,9 +126,12 @@ export function LessonWorkspace({
     setRevealedHints([]);
     setReflectionAnswers({});
     setAttemptId(`web_attempt_${crypto.randomUUID()}`);
+    setIsDirty(false);
+    onDirtyChange(false);
     setMessage("正在加载课程工作区…");
     void Promise.all([getActivity(activityId), getWorkspace(activityId)])
       .then(([activityResult, workspaceResult]) => {
+        if (cancelled) return;
         if (!activityResult.activity) throw new Error("课程不存在");
         setActivity(activityResult.activity);
         setWorkspace(workspaceResult.workspace);
@@ -136,10 +142,15 @@ export function LessonWorkspace({
         setIsDirty(false);
         setMessage("工作区已加载");
       })
-      .catch((error: unknown) =>
-        setMessage(error instanceof Error ? error.message : "工作区加载失败"),
-      );
-  }, [activityId]);
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setMessage(error instanceof Error ? error.message : "工作区加载失败");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activityId, onDirtyChange]);
 
   useEffect(() => {
     const warnBeforeUnload = (event: BeforeUnloadEvent): void => {
@@ -174,26 +185,7 @@ export function LessonWorkspace({
       files: { ...sources },
     });
     setIsDirty(false);
-  };
-
-  const returnToOverview = (): void => {
-    if (
-      isDirty &&
-      !window.confirm("当前代码尚未保存。返回总览会丢失这些修改，是否继续？")
-    ) {
-      return;
-    }
-    onBack();
-  };
-
-  const navigateToActivity = (nextActivityId: string): void => {
-    if (
-      isDirty &&
-      !window.confirm("当前代码尚未保存。切换课程会丢失这些修改，是否继续？")
-    ) {
-      return;
-    }
-    onNavigate(nextActivityId);
+    onDirtyChange(false);
   };
 
   const save = async (): Promise<void> => {
@@ -300,7 +292,8 @@ export function LessonWorkspace({
         <button
           className="text-button"
           type="button"
-          onClick={returnToOverview}
+          disabled={Boolean(busy)}
+          onClick={onBack}
         >
           ← 返回总览
         </button>
@@ -347,9 +340,9 @@ export function LessonWorkspace({
       <nav className="lesson-pager" aria-label="切换课程">
         <button
           type="button"
-          disabled={!previousActivity}
+          disabled={!previousActivity || Boolean(busy)}
           onClick={() => {
-            if (previousActivity) navigateToActivity(previousActivity.id);
+            if (previousActivity) onNavigate(previousActivity.id);
           }}
         >
           <small>← 上一节</small>
@@ -365,9 +358,9 @@ export function LessonWorkspace({
         </div>
         <button
           type="button"
-          disabled={!nextActivity}
+          disabled={!nextActivity || Boolean(busy)}
           onClick={() => {
-            if (nextActivity) navigateToActivity(nextActivity.id);
+            if (nextActivity) onNavigate(nextActivity.id);
           }}
         >
           <small>下一节 →</small>
@@ -509,6 +502,7 @@ export function LessonWorkspace({
                 [activePath]: value ?? "",
               }));
               setIsDirty(true);
+              onDirtyChange(true);
             }}
             options={{
               automaticLayout: true,

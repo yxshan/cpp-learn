@@ -137,5 +137,7 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 |---|---|---|
 | T-E2E-001 | `e2e/first-learning-loop.spec.ts` opens the Track, navigates ordered Activities, and completes the real Chromium/Clang learning loop without browser errors | Passed |
 | T-E2E-004 | Dashboard entry, Activity query state, direct Workspace URLs, and return-to-overview behavior | Passed |
-| T-A11Y-001 | Semantic navigation, skip link, labeled filters and Workspace regions, visible focus states, and keyboard-operable controls | Passed by implementation review |
+| T-A11Y-001 | Playwright verifies keyboard skip navigation and keyboard activation for catalog filtering, Activity opening, and next-Activity navigation; semantic labels and focus states remain implementation-reviewed | Passed |
 | T-UI-001 | Desktop Lesson scrolling keeps `window.scrollY` and editor position fixed; 390-pixel viewport has no document-level horizontal overflow | Passed |
+| T-UI-002 | Playwright edits source, rejects browser Back, verifies the Workspace remains, then accepts Back and returns to overview | Passed |
+| T-UI-003 | Playwright delays an obsolete Activity/Workspace response during rapid next navigation and verifies it cannot replace the current Workspace | Passed |

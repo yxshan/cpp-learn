@@ -26,7 +26,7 @@
 | Read long Lesson content without losing the editor | `.lesson-panel` owns vertical scrolling inside a viewport-bounded desktop grid | At `1440 × 900`, setting Lesson scroll to `900` left `window.scrollY` at `0` and editor top at `162` before and after |
 | Move through the Track without returning to the catalog | Ordered previous/next controls show adjacent Activity titles and the current Track position | Playwright moves first → second → first and verifies headings, URL state, and the disabled first boundary |
 | Continue on a phone-sized viewport | Workspace collapses to one column and panels may size below Monaco's intrinsic width | At `390` pixels, document, Lesson, and editor widths remain within the viewport (`scrollWidth = innerWidth = 390`) |
-| Protect in-progress edits | Leaving or changing Activity asks for confirmation when source differs from the saved Workspace | Component behavior and code review |
+| Protect in-progress edits | Buttons, browser history, and page unload share a dirty-state guard when source differs from the saved Workspace | Playwright rejects and then accepts browser Back after an edit |
 
 ## 3. Broader Web experience
 
@@ -43,7 +43,7 @@ npm run check
 npm run test:e2e
 ```
 
-The real-browser scenario verifies the catalog, direct Activity URL state, previous/next navigation, Workspace save, Run isolation, Reflection, Grade, Evidence, Review scheduling, and return to overview. Layout assertions verify independent desktop scrolling and narrow-screen overflow behavior. Unit, contract, content, type, lint, formatting, build, and documentation checks remain part of `npm run check`.
+The real-browser scenarios verify the catalog, direct Activity URL state, previous/next navigation, browser-history guards, stale-response isolation, Workspace save, Run isolation, Reflection, Grade, Evidence, Review scheduling, return to overview, keyboard navigation, independent desktop scrolling, and narrow-screen overflow behavior. Unit, contract, content, type, lint, formatting, build, and documentation checks remain part of `npm run check`.
 
 ## 5. Review and limitations
 

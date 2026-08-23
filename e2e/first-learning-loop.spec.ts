@@ -124,3 +124,90 @@ test("[T-UI-001] narrow training layout does not overflow the viewport", async (
   expect(widths.document).toBeLessThanOrEqual(widths.viewport);
   await expect(page.getByRole("button", { name: /下一节/ })).toBeVisible();
 });
+
+test("[T-UI-002] browser history protects unsaved learner code", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "开始第一课" }).click();
+  const editor = page.locator(".monaco-editor textarea").first();
+  await editor.click({ force: true });
+  await page.keyboard.insertText("// unsaved history guard\n");
+
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain("当前代码尚未保存");
+    await dialog.dismiss();
+  });
+  await page.goBack();
+  await expect(page).toHaveURL(/activity=source-to-program/);
+  await expect(
+    page.getByRole("heading", { name: "从源代码到可执行程序" }),
+  ).toBeVisible();
+
+  page.once("dialog", async (dialog) => {
+    await dialog.accept();
+  });
+  await page.goBack();
+  await expect(page).not.toHaveURL(/activity=/);
+  await expect(
+    page.getByRole("heading", { name: "从第一段 C++ 程序开始" }),
+  ).toBeVisible();
+});
+
+test("[T-UI-003] stale activity responses cannot replace the current workspace", async ({
+  page,
+}) => {
+  for (const path of [
+    "**/api/v1/activities/source-to-program-review",
+    "**/api/v1/workspaces/source-to-program-review",
+  ]) {
+    await page.route(path, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      await route.continue();
+    });
+  }
+
+  await page.goto("/?activity=source-to-program");
+  await expect(
+    page.getByRole("heading", { name: "从源代码到可执行程序" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /下一节/ }).click();
+  await page.getByRole("button", { name: /下一节/ }).click();
+  await expect(page).toHaveURL(/activity=values-and-types/);
+  await expect(
+    page.getByRole("heading", { name: "值、类型与输入输出" }),
+  ).toBeVisible();
+  await page.waitForTimeout(1_000);
+  await expect(
+    page.getByRole("heading", { name: "值、类型与输入输出" }),
+  ).toBeVisible();
+});
+
+test("[T-A11Y-001] critical catalog and lesson navigation works by keyboard", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "跳到主要内容" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#overview")).toBeFocused();
+
+  const allActivities = page.getByRole("button", { name: /^全部/ });
+  await allActivities.focus();
+  await page.keyboard.press("Space");
+  await expect(allActivities).toHaveAttribute("aria-pressed", "true");
+  await expect(page).toHaveURL(/catalog=all/);
+
+  const firstActivity = page.getByRole("button", {
+    name: /从源代码到可执行程序/,
+  });
+  await firstActivity.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/activity=source-to-program/);
+  const nextActivity = page.getByRole("button", { name: /下一节/ });
+  await nextActivity.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "延迟复习：编译与运行" }),
+  ).toBeVisible();
+});
