@@ -55,4 +55,23 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
       "Bootstrap response violates the transport contract",
     );
   });
+
+  it("rejects an impossible date that only resembles ISO 8601", async () => {
+    const request = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...bootstrap,
+          generatedAt: "2026-99-99T99:99:99+99:99",
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      ),
+    );
+
+    await expect(getBootstrap(request)).rejects.toThrow(
+      "Bootstrap response violates the transport contract",
+    );
+  });
 });

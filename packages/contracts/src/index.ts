@@ -1,4 +1,5 @@
 import Ajv from "ajv";
+import addFormats from "ajv-formats";
 
 import bootstrapResultSchema from "./bootstrap-result.schema.json" with { type: "json" };
 
@@ -51,10 +52,12 @@ export interface LearningPlatform {
   events(jobId: JobId): AsyncIterable<PlatformEvent>;
 }
 
-const validateBootstrapResult = new Ajv({
+const ajv = new Ajv({
   allErrors: true,
   strict: true,
-}).compile(bootstrapResultSchema);
+});
+addFormats(ajv);
+const validateBootstrapResult = ajv.compile(bootstrapResultSchema);
 
 export function parseBootstrapResult(value: unknown): BootstrapResult {
   if (!validateBootstrapResult(value)) {
