@@ -143,7 +143,7 @@ export interface JobResult {
 export type LearningQuery =
   | { readonly type: "bootstrap.get" }
   | { readonly type: "activity.get"; readonly activityId: string }
-  | { readonly type: "activity.next" }
+  | { readonly type: "activity.next"; readonly minutes?: number }
   | { readonly type: "workspace.get"; readonly activityId: string }
   | { readonly type: "dashboard.get" }
   | { readonly type: "job.get"; readonly jobId: string };

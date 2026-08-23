@@ -74,14 +74,47 @@ describe("[T-CLI-001] status and check", () => {
 
     await expect(
       runCli({
-        argv: ["next", "--json"],
+        argv: ["next", "--minutes", "30", "--json"],
         platform,
         stdout,
         stderr: vi.fn(),
       }),
     ).resolves.toBe(0);
-    expect(platform.query).toHaveBeenCalledWith({ type: "activity.next" });
+    expect(platform.query).toHaveBeenCalledWith({
+      type: "activity.next",
+      minutes: 30,
+    });
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(next)}\n`);
+  });
+
+  it("uses documented exit codes for invalid timeboxes and no fitting Activity", async () => {
+    const platform = {
+      query: vi.fn().mockResolvedValue({ schemaVersion: 1, activity: null }),
+      dispatch: vi.fn(),
+      async *events() {},
+    } as unknown as LearningPlatform;
+    const stderr = vi.fn();
+
+    await expect(
+      runCli({
+        argv: ["next", "--minutes", "invalid"],
+        platform,
+        stdout: vi.fn(),
+        stderr,
+      }),
+    ).resolves.toBe(2);
+    await expect(
+      runCli({
+        argv: ["next", "--minutes", "5"],
+        platform,
+        stdout: vi.fn(),
+        stderr,
+      }),
+    ).resolves.toBe(1);
+    expect(platform.query).toHaveBeenCalledWith({
+      type: "activity.next",
+      minutes: 5,
+    });
   });
 
   it("prints the shared dashboard result in JSON mode", async () => {

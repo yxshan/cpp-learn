@@ -36,7 +36,7 @@ export interface Activity {
 export interface Curriculum {
   readiness(): Promise<CurriculumReadiness>;
   getActivity(activityId: string): Promise<ActivityDetail | undefined>;
-  getNextActivity(): Promise<ActivityDetail | undefined>;
+  getNextActivity(minutes?: number): Promise<ActivityDetail | undefined>;
   listWorkspaceActivities(): Promise<readonly WorkspaceActivityDefinition[]>;
   getJudge(activityId: string): Promise<JudgeDefinition | undefined>;
 }
@@ -247,9 +247,13 @@ export function createFilesystemCurriculum(
         activities.find((candidate) => candidate.id === activityId),
       );
     },
-    async getNextActivity() {
+    async getNextActivity(minutes) {
       const activities = await loadActivities(dependencies);
-      return activityDetail(activities[0]);
+      return activityDetail(
+        minutes === undefined
+          ? activities[0]
+          : activities.find((activity) => activity.estimatedMinutes <= minutes),
+      );
     },
     async listWorkspaceActivities() {
       const activities = await loadActivities(dependencies);

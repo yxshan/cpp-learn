@@ -27,7 +27,7 @@ export interface LearningPlatformDependencies {
   readonly probes: LearningPlatformProbes;
   readonly curriculum: {
     getActivity(activityId: string): Promise<ActivityDetail | undefined>;
-    getNextActivity?(): Promise<ActivityDetail | undefined>;
+    getNextActivity?(minutes?: number): Promise<ActivityDetail | undefined>;
     getJudge(activityId: string): Promise<JudgeSpec | undefined>;
   };
   readonly workspace: {
@@ -225,7 +225,9 @@ export function createLearningPlatform(
           } as unknown as QueryResultFor<Q>;
         }
         case "activity.next": {
-          const activity = await dependencies.curriculum.getNextActivity?.();
+          const activity = await dependencies.curriculum.getNextActivity?.(
+            query.minutes,
+          );
           return {
             schemaVersion: SCHEMA_VERSION,
             activity: activity ?? null,

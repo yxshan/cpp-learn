@@ -53,10 +53,24 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
   }
 
   if (command === "next") {
-    const result = await dependencies.platform.query({ type: "activity.next" });
+    const minutesFlag = flags.indexOf("--minutes");
+    const rawMinutes = minutesFlag >= 0 ? flags[minutesFlag + 1] : undefined;
+    const minutes = rawMinutes === undefined ? undefined : Number(rawMinutes);
+    if (
+      minutesFlag >= 0 &&
+      (minutes === undefined || !Number.isInteger(minutes) || minutes < 1)
+    ) {
+      dependencies.stderr("Usage: cpplearn next [--minutes N] [--json]\n");
+      return 2;
+    }
+    const result = await dependencies.platform.query(
+      minutes === undefined
+        ? { type: "activity.next" }
+        : { type: "activity.next", minutes },
+    );
     if (!result.activity) {
       dependencies.stderr("No available Activity\n");
-      return 5;
+      return 1;
     }
     if (flags.includes("--json")) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
@@ -96,7 +110,7 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
   }
 
   dependencies.stderr(
-    "Usage: cpplearn <doctor [--json] | next [--json] | status [--json] | check --activity <id> [--json] | serve>\n",
+    "Usage: cpplearn <doctor [--json] | next [--minutes N] [--json] | status [--json] | check --activity <id> [--json] | serve>\n",
   );
   return 2;
 }
