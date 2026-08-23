@@ -36,6 +36,7 @@ export interface Activity {
 export interface Curriculum {
   readiness(): Promise<CurriculumReadiness>;
   getActivity(activityId: string): Promise<ActivityDetail | undefined>;
+  getNextActivity(): Promise<ActivityDetail | undefined>;
   listWorkspaceActivities(): Promise<readonly WorkspaceActivityDefinition[]>;
   getJudge(activityId: string): Promise<JudgeDefinition | undefined>;
 }
@@ -62,6 +63,61 @@ export function validateCatalog(
   if (issues.length > 0) {
     return { ok: false, issues };
   }
+
+  const validActivities = activities as readonly Activity[];
+  const activityIndexes = new Map<string, number>();
+  for (const [index, activity] of validActivities.entries()) {
+    if (activityIndexes.has(activity.id)) {
+      issues.push({
+        path: `/${index}/id`,
+        message: `duplicate Activity identifier: ${activity.id}`,
+        keyword: "graph",
+      });
+    } else {
+      activityIndexes.set(activity.id, index);
+    }
+  }
+  for (const [index, activity] of validActivities.entries()) {
+    for (const prerequisiteId of activity.prerequisiteIds) {
+      if (!activityIndexes.has(prerequisiteId)) {
+        issues.push({
+          path: `/${index}/prerequisiteIds`,
+          message: `unknown prerequisite Activity: ${prerequisiteId}`,
+          keyword: "graph",
+        });
+      }
+    }
+  }
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const byId = new Map(
+    validActivities.map((activity) => [activity.id, activity]),
+  );
+  const visit = (activityId: string): boolean => {
+    if (visiting.has(activityId)) return true;
+    if (visited.has(activityId)) return false;
+    visiting.add(activityId);
+    const cyclic =
+      byId
+        .get(activityId)
+        ?.prerequisiteIds.some(
+          (prerequisiteId) => byId.has(prerequisiteId) && visit(prerequisiteId),
+        ) ?? false;
+    visiting.delete(activityId);
+    visited.add(activityId);
+    return cyclic;
+  };
+  const cyclicActivity = validActivities.find((activity) => visit(activity.id));
+  if (cyclicActivity) {
+    issues.push({
+      path: `/${activityIndexes.get(cyclicActivity.id) ?? 0}/prerequisiteIds`,
+      message: `cyclic Activity prerequisites include: ${cyclicActivity.id}`,
+      keyword: "graph",
+    });
+  }
+
+  if (issues.length > 0) return { ok: false, issues };
 
   return { ok: true, activityCount: activities.length };
 }
@@ -162,29 +218,38 @@ export function createFilesystemCurriculumProbe(
 export function createFilesystemCurriculum(
   dependencies: FilesystemCurriculumProbeDependencies,
 ): Curriculum {
+  const activityDetail = async (
+    activity: Activity | undefined,
+  ): Promise<ActivityDetail | undefined> => {
+    if (!activity) return undefined;
+    const catalogRoot = dirname(dependencies.catalogPath);
+    const markdown = await readFile(
+      resolveInsideCatalogRoot(catalogRoot, activity.content.path),
+      "utf8",
+    );
+    return {
+      id: activity.id,
+      version: activity.version,
+      kind: activity.kind,
+      title: activity.title,
+      estimatedMinutes: activity.estimatedMinutes,
+      conceptIds: activity.conceptIds,
+      markdown,
+      workspace: { editablePaths: activity.workspace.editablePaths },
+    };
+  };
+
   return {
     readiness: createFilesystemCurriculumProbe(dependencies),
     async getActivity(activityId) {
       const activities = await loadActivities(dependencies);
-      const catalogRoot = dirname(dependencies.catalogPath);
-      const activity = activities.find(
-        (candidate) => candidate.id === activityId,
+      return activityDetail(
+        activities.find((candidate) => candidate.id === activityId),
       );
-      if (!activity) return undefined;
-      const markdown = await readFile(
-        resolveInsideCatalogRoot(catalogRoot, activity.content.path),
-        "utf8",
-      );
-      return {
-        id: activity.id,
-        version: activity.version,
-        kind: activity.kind,
-        title: activity.title,
-        estimatedMinutes: activity.estimatedMinutes,
-        conceptIds: activity.conceptIds,
-        markdown,
-        workspace: { editablePaths: activity.workspace.editablePaths },
-      };
+    },
+    async getNextActivity() {
+      const activities = await loadActivities(dependencies);
+      return activityDetail(activities[0]);
     },
     async listWorkspaceActivities() {
       const activities = await loadActivities(dependencies);

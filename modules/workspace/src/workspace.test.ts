@@ -152,4 +152,25 @@ describe("[T-WORK-001] filesystem Workspace", () => {
       }),
     ).resolves.toEqual({ ok: false, code: "revision_conflict" });
   });
+
+  it("rejects a snapshot store redirected through a symbolic link", async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), "cpp-learn-files-"));
+    const outsideRoot = await mkdtemp(join(tmpdir(), "cpp-learn-outside-"));
+    temporaryRoots.push(workspaceRoot, outsideRoot);
+    await symlink(outsideRoot, join(workspaceRoot, ".snapshots"));
+    const workspace = createFilesystemWorkspace({
+      workspaceRoot,
+      activities: [
+        {
+          activityId: "first-program",
+          editablePaths: ["main.cpp"],
+          starterFiles: { "main.cpp": "int main() {}\n" },
+        },
+      ],
+    });
+
+    await expect(workspace.snapshot("first-program")).rejects.toThrow(
+      "not a regular directory",
+    );
+  });
 });

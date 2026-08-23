@@ -28,6 +28,7 @@ CLI 环境检查：
 ```bash
 ./cpplearn doctor
 ./cpplearn doctor --json
+./cpplearn next --json
 ./cpplearn status --json
 ./cpplearn check --activity source-to-program --json
 ```

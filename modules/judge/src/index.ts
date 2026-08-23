@@ -30,6 +30,7 @@ export interface BoundedProcessRequest {
   readonly cwd: string;
   readonly timeoutMs: number;
   readonly maxOutputBytes: number;
+  readonly environment: Readonly<Record<string, string>>;
 }
 
 export interface BoundedProcessResult extends ProcessResult {
@@ -111,6 +112,8 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
   new Promise((resolve, reject) => {
     const child = spawn(request.executable, [...request.args], {
       cwd: request.cwd,
+      detached: true,
+      env: request.environment,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -119,6 +122,17 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
     let outputBytes = 0;
     let timedOut = false;
     let outputLimitExceeded = false;
+    const killProcessGroup = (): void => {
+      if (child.pid !== undefined) {
+        try {
+          process.kill(-child.pid, "SIGKILL");
+          return;
+        } catch {
+          // Fall back to the direct child on platforms without process groups.
+        }
+      }
+      child.kill("SIGKILL");
+    };
     const stopForOutputLimit = (chunk: Buffer, target: Buffer[]): void => {
       if (outputLimitExceeded) return;
       const remaining = Math.max(0, request.maxOutputBytes - outputBytes);
@@ -126,7 +140,7 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
       outputBytes += chunk.length;
       if (outputBytes > request.maxOutputBytes) {
         outputLimitExceeded = true;
-        child.kill("SIGKILL");
+        killProcessGroup();
       }
     };
     child.stdout.on("data", (chunk: Buffer) =>
@@ -137,7 +151,7 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
     );
     const timeout = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGKILL");
+      killProcessGroup();
     }, request.timeoutMs);
     timeout.unref();
     child.once("error", (error) => {
@@ -233,7 +247,7 @@ export function createNativeJudge(
   const run = dependencies.run ?? runBoundedProcess;
   const clock = dependencies.clock ?? (() => new Date());
   const monotonicClock = dependencies.monotonicClock ?? (() => Date.now());
-  const compiler = dependencies.compiler ?? "clang++";
+  const compiler = dependencies.compiler ?? "/usr/bin/clang++";
   const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
 
   return {
@@ -265,6 +279,12 @@ export function createNativeJudge(
         if (sources.length === 0)
           throw new Error("Snapshot has no C++ source files");
         const executablePath = join(executionRoot, "program");
+        const environment = {
+          PATH: "/usr/bin:/bin",
+          LANG: "C",
+          LC_ALL: "C",
+          TMPDIR: executionRoot,
+        };
         const compileStarted = monotonicClock();
         const compile = await run({
           executable: compiler,
@@ -280,6 +300,7 @@ export function createNativeJudge(
           cwd: executionRoot,
           timeoutMs: request.spec.timeoutMs,
           maxOutputBytes,
+          environment,
         });
         const compileDuration = monotonicClock() - compileStarted;
         if (compile.outputLimitExceeded) {
@@ -300,6 +321,7 @@ export function createNativeJudge(
             cwd: executionRoot,
             timeoutMs: request.spec.timeoutMs,
             maxOutputBytes,
+            environment,
           });
           const testDuration = monotonicClock() - testStarted;
           if (test.outputLimitExceeded) {

@@ -30,6 +30,21 @@ function isExecuteActivityBody(value: unknown): value is ExecuteActivityBody {
   return body["schemaVersion"] === 1 && typeof body["commandId"] === "string";
 }
 
+function isAllowedMutationOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "http:" &&
+      (url.hostname === "127.0.0.1" ||
+        url.hostname === "localhost" ||
+        url.hostname === "[::1]")
+    );
+  } catch {
+    return false;
+  }
+}
+
 function isSaveWorkspaceBody(value: unknown): value is SaveWorkspaceBody {
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
@@ -100,6 +115,12 @@ export function createServer(
     Params: { activityId: string };
     Body: unknown;
   }>("/api/v1/workspaces/:activityId", async (request, reply) => {
+    if (!isAllowedMutationOrigin(request.headers.origin)) {
+      return reply.code(403).send({
+        schemaVersion: 1,
+        error: { code: "origin_rejected", message: "Origin is not loopback" },
+      });
+    }
     if (!isSaveWorkspaceBody(request.body)) {
       return reply.code(400).send({
         schemaVersion: 1,
@@ -129,6 +150,15 @@ export function createServer(
     server.post<{ Params: { activityId: string }; Body: unknown }>(
       path,
       async (request, reply) => {
+        if (!isAllowedMutationOrigin(request.headers.origin)) {
+          return reply.code(403).send({
+            schemaVersion: 1,
+            error: {
+              code: "origin_rejected",
+              message: "Origin is not loopback",
+            },
+          });
+        }
         if (!isExecuteActivityBody(request.body)) {
           return reply.code(400).send({
             schemaVersion: 1,

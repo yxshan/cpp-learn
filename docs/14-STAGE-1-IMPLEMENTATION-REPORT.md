@@ -17,17 +17,18 @@
 - A checksummed append-only JSONL Learning Record whose completed Attempts survive process restart.
 - Evidence derivation that leaves Run free of Concept Evidence and marks an automated passing Grade as `practiced`.
 - Versioned HTTP Activity, Workspace, Dashboard, Run, Grade, Job Report, and SSE replay Adapters.
-- CLI `doctor`, `status`, `check`, and `serve` operations over the same `LearningPlatform` Interface.
+- CLI `doctor`, `next`, `status`, `check`, and `serve` operations over the same `LearningPlatform` Interface.
+- Catalog-wide prerequisite reference, duplicate-ID, and cycle rejection before activation.
 - Integrated loopback hosting of built Web assets and API through `cpplearn serve`.
 
 ## 2. Acceptance evidence
 
 | Acceptance statement | Evidence | Result |
 |---|---|---|
-| Web and CLI use the same Source Snapshot/Judge path | Shared `LearningPlatform.dispatch` contract tests for HTTP and CLI | Passed |
+| Web and CLI use the same Source Snapshot/Judge path | `T-CONTRACT-001` compares snapshot ID, source digest, and verdict across HTTP and CLI | Passed |
 | Run never changes Concept State | `T-LEARN-002` | Passed |
 | Passing Grade creates `practiced` Evidence | `T-LEARN-002`; `T-E2E-001` | Passed |
-| Grade history survives process restart | `T-RECORD-001` | Passed |
+| Grade history survives server/Platform restart | `T-RECORD-001` recreates Workspace, Learning Record, Platform, and HTTP Adapters, then queries Dashboard and Job Report | Passed |
 | Stale saves cannot overwrite learner code | `T-WORK-003` | Passed |
 | Source Snapshots are immutable and recoverable | `T-WORK-001` | Passed |
 | Browser completes the entire first learning loop | `e2e/first-learning-loop.spec.ts` | Passed |
@@ -52,7 +53,7 @@ npm run test:e2e
 
 ## 4. Security boundary
 
-Stage 1 is a trusted, single-user, local development product. The Judge uses argument-array process spawning, rejects unsafe snapshot paths, bounds time/output, and cleans its dedicated temporary directory. It is not an adversarial sandbox. Untrusted-code isolation, private tests, sanitizer profiles, cancellation, and worker crash containment remain Stage 2 requirements.
+Stage 1 is a trusted, single-user, local development product. The Judge uses argument-array process spawning, a minimal allowlisted environment, a dedicated process group, bounded time/output, path checks, and a dedicated temporary directory. State-changing HTTP requests reject non-loopback Origins. It is not an adversarial sandbox. Stronger Worker isolation, private tests, sanitizer profiles, cancellation, and crash containment remain Stage 2 requirements.
 
 ## 5. Known limitations
 

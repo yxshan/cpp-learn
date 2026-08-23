@@ -4,6 +4,7 @@ import {
   createNativeJudge,
   createNativeToolchainProbe,
   createToolchainCheckStage,
+  runBoundedProcess,
   type JudgeStage,
 } from "./index.js";
 
@@ -23,6 +24,34 @@ describe("[T-COMPAT-001] Native Judge toolchain probe", () => {
       compiler: "Apple clang version 15.0.0",
     });
     expect(execute).toHaveBeenCalledWith("clang++", ["--version"]);
+  });
+});
+
+describe("[T-SEC-002] bounded process isolation", () => {
+  it("terminates the dedicated learner process group on timeout", async () => {
+    const result = await runBoundedProcess({
+      executable: "/bin/sh",
+      args: ["-c", "sleep 10 & echo $!; wait"],
+      cwd: "/tmp",
+      timeoutMs: 50,
+      maxOutputBytes: 1_024,
+      environment: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" },
+    });
+    const descendantPid = Number(result.stdout.trim());
+    expect(result.timedOut).toBe(true);
+    expect(Number.isInteger(descendantPid)).toBe(true);
+
+    let descendantExists = true;
+    for (let attempt = 0; attempt < 20 && descendantExists; attempt += 1) {
+      try {
+        process.kill(descendantPid, 0);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      } catch {
+        descendantExists = false;
+      }
+    }
+    if (descendantExists) process.kill(descendantPid, "SIGKILL");
+    expect(descendantExists).toBe(false);
   });
 });
 
@@ -105,6 +134,12 @@ describe("[T-JUDGE-001] immutable snapshot execution", () => {
       expect.objectContaining({
         executable: "clang++",
         args: expect.arrayContaining(["-std=c++20", "-Wall", "-Wextra"]),
+        environment: {
+          PATH: "/usr/bin:/bin",
+          LANG: "C",
+          LC_ALL: "C",
+          TMPDIR: expect.stringContaining("cpp-learn-judge-"),
+        },
       }),
     );
   });

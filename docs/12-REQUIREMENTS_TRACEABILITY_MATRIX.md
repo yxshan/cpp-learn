@@ -84,12 +84,14 @@ See the [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md) for
 | Test ID | Executable evidence | Status |
 |---|---|---|
 | T-LEARN-001 | `modules/learning-platform/src/learning-platform.test.ts`; Activity HTTP and Web Adapter tests | Passed |
+| T-CONTENT-003 | Catalog reference and prerequisite-cycle rejection in `modules/curriculum/src/curriculum.test.ts` | Passed |
 | T-WORK-001, T-WORK-003, T-WORK-004 | Filesystem restart, conflict, and immutable snapshot tests in `modules/workspace/src/workspace.test.ts` | Passed |
 | T-JUDGE-001, T-JUDGE-002 | Native C++20 compile/run report tests and shared Platform execution tests | Passed for Stage 1 public-output scope |
 | T-RECORD-001 | JSONL append, checksum, and process-restart recovery in `modules/learning-record/src/learning-record.test.ts` | Passed |
 | T-LEARN-002, BR-001, BR-002 | Run/Grade evidence-policy test in `modules/learning-platform/src/learning-platform.test.ts` | Passed |
 | T-CONTRACT-002 | HTTP SSE replay and Job Report contract test in `apps/server/src/server.test.ts` | Passed |
-| T-CONTRACT-001, NFR-006 | HTTP, Web, and CLI Adapters dispatch through the shared `LearningPlatform` | Passed |
+| T-CONTRACT-001, NFR-006 | Web/HTTP and CLI Grade the same immutable Source Snapshot and compare digest/verdict | Passed |
+| FR-002 CLI next | `apps/cli/src/cli.test.ts` verifies next-Activity selection through `LearningPlatform` | Passed for single-Activity Stage 1 catalog |
 | T-OPS-001, NFR-001 | Integrated built-Web hosting test plus local Chromium learning-loop test | Passed |
 | T-E2E-001, T-E2E-004 | `e2e/first-learning-loop.spec.ts` | Passed on reference macOS environment |
 

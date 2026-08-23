@@ -143,6 +143,7 @@ export interface JobResult {
 export type LearningQuery =
   | { readonly type: "bootstrap.get" }
   | { readonly type: "activity.get"; readonly activityId: string }
+  | { readonly type: "activity.next" }
   | { readonly type: "workspace.get"; readonly activityId: string }
   | { readonly type: "dashboard.get" }
   | { readonly type: "job.get"; readonly jobId: string };
@@ -158,13 +159,15 @@ export type QueryResultFor<Q extends LearningQuery> = Q extends {
   ? BootstrapResult
   : Q extends { readonly type: "activity.get" }
     ? ActivityResult
-    : Q extends { readonly type: "workspace.get" }
-      ? WorkspaceResult
-      : Q extends { readonly type: "dashboard.get" }
-        ? DashboardResult
-        : Q extends { readonly type: "job.get" }
-          ? JobResult
-          : never;
+    : Q extends { readonly type: "activity.next" }
+      ? ActivityResult
+      : Q extends { readonly type: "workspace.get" }
+        ? WorkspaceResult
+        : Q extends { readonly type: "dashboard.get" }
+          ? DashboardResult
+          : Q extends { readonly type: "job.get" }
+            ? JobResult
+            : never;
 
 export interface WorkspaceSaveCommand {
   readonly type: "workspace.save";

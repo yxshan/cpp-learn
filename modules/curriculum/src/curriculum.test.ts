@@ -35,3 +35,49 @@ describe("[T-CONTENT-001] Curriculum catalog validation", () => {
     }
   });
 });
+
+describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
+  const activity = (id: string, prerequisiteIds: readonly string[]) => ({
+    schemaVersion: 1,
+    id,
+    version: 1,
+    kind: "lesson",
+    title: id,
+    estimatedMinutes: 10,
+    conceptIds: [`${id}-concept`],
+    prerequisiteIds,
+    content: { format: "markdown", path: `activities/${id}/lesson.md` },
+    workspace: {
+      editablePaths: ["main.cpp"],
+      starterFiles: { "main.cpp": "int main() {}\n" },
+    },
+    judge: { version: 1, expectedStdout: "", timeoutMs: 1_000 },
+    evidencePolicy: { automatedPass: true },
+  });
+
+  it("rejects a cyclic required prerequisite graph", () => {
+    const result = validateCatalog([
+      activity("activity-a", ["activity-b"]),
+      activity("activity-b", ["activity-a"]),
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: [expect.objectContaining({ keyword: "graph" })],
+    });
+  });
+
+  it("rejects prerequisites that do not exist in the catalog", () => {
+    expect(
+      validateCatalog([activity("activity-a", ["missing-activity"])]),
+    ).toMatchObject({
+      ok: false,
+      issues: [
+        expect.objectContaining({
+          keyword: "graph",
+          message: expect.stringContaining("unknown prerequisite"),
+        }),
+      ],
+    });
+  });
+});

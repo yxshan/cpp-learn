@@ -10,8 +10,12 @@ import type {
   JudgeReport,
   LearningPlatform,
 } from "@cpp-learn/contracts";
+import { createJsonlLearningRecord } from "@cpp-learn/learning-record";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
-import { createInMemoryWorkspace } from "@cpp-learn/workspace";
+import {
+  createFilesystemWorkspace,
+  createInMemoryWorkspace,
+} from "@cpp-learn/workspace";
 
 import { createServer } from "./server.js";
 
@@ -204,6 +208,22 @@ describe("[T-CONTRACT-003] HTTP Workspace Adapter", () => {
     expect(conflict.json()).toMatchObject({
       result: { ok: false, code: "revision_conflict" },
     });
+
+    const rejectedOrigin = await server.inject({
+      method: "PATCH",
+      url: "/api/v1/workspaces/first-program",
+      headers: { origin: "https://attacker.example" },
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_cross_origin",
+        baseRevision: 1,
+        changes: [{ path: "main.cpp", content: "attacker\n" }],
+      },
+    });
+    expect(rejectedOrigin.statusCode).toBe(403);
+    expect(rejectedOrigin.json()).toMatchObject({
+      error: { code: "origin_rejected" },
+    });
     await server.close();
   });
 });
@@ -276,6 +296,14 @@ describe("[T-CONTRACT-004] HTTP execution and progress Adapters", () => {
     });
     const server = createServer({ platform });
 
+    const rejectedOrigin = await server.inject({
+      method: "POST",
+      url: "/api/v1/activities/source-to-program/grades",
+      headers: { origin: "https://attacker.example" },
+      payload: { schemaVersion: 1, commandId: "cmd_cross_origin_grade" },
+    });
+    expect(rejectedOrigin.statusCode).toBe(403);
+
     const graded = await server.inject({
       method: "POST",
       url: "/api/v1/activities/source-to-program/grades",
@@ -312,5 +340,104 @@ describe("[T-CONTRACT-004] HTTP execution and progress Adapters", () => {
     expect(stream.body).toContain('"type":"judge.queued"');
     expect(stream.body).toContain('"type":"judge.report.ready"');
     await server.close();
+  });
+});
+
+describe("[T-RECORD-001] Grade recovery through a server restart", () => {
+  it("recreates Platform Adapters and restores dashboard and Job Report history", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-learn-restart-"));
+    const eventsRoot = join(root, "events");
+    const workspaceRoot = join(root, "workspaces");
+    const createPlatform = async () => {
+      const events = createJsonlLearningRecord({ dataRoot: eventsRoot });
+      await events.initialize();
+      const workspace = createFilesystemWorkspace({
+        workspaceRoot,
+        activities: [
+          {
+            activityId: "source-to-program",
+            editablePaths: ["main.cpp"],
+            starterFiles: { "main.cpp": "int main() {}\n" },
+          },
+        ],
+      });
+      return createLearningPlatform({
+        clock: () => new Date("2026-08-23T08:00:00.000Z"),
+        probes: {
+          curriculum: async () => ({ ready: true, activityCount: 1 }),
+          toolchain: async () => ({ ready: true, compiler: "clang" }),
+          record: () => events.readiness(),
+        },
+        curriculum: {
+          getActivity: async () => ({
+            id: "source-to-program",
+            version: 1,
+            kind: "lesson",
+            title: "First program",
+            estimatedMinutes: 20,
+            conceptIds: ["compile-link-run"],
+            markdown: "# First program\n",
+            workspace: { editablePaths: ["main.cpp"] },
+          }),
+          getJudge: async () => ({
+            activityId: "source-to-program",
+            activityVersion: 1,
+            judgeVersion: 1,
+            expectedStdout: "",
+            timeoutMs: 2_000,
+          }),
+        },
+        workspace,
+        judge: {
+          execute: async ({ jobId, mode, snapshot }): Promise<JudgeReport> => ({
+            schemaVersion: 1,
+            reportId: `report_${jobId}`,
+            jobId,
+            mode,
+            activity: {
+              id: "source-to-program",
+              version: 1,
+              judgeVersion: 1,
+            },
+            source: { snapshotId: snapshot.id, digest: snapshot.digest },
+            toolchain: { compiler: "clang", standard: "c++20" },
+            verdict: "automated_pass",
+            stages: [],
+            startedAt: "2026-08-23T08:00:00.000Z",
+            completedAt: "2026-08-23T08:00:00.001Z",
+          }),
+        },
+        record: events,
+      });
+    };
+
+    const firstServer = createServer({ platform: await createPlatform() });
+    const graded = await firstServer.inject({
+      method: "POST",
+      url: "/api/v1/activities/source-to-program/grades",
+      payload: { schemaVersion: 1, commandId: "cmd_restart_grade" },
+    });
+    expect(graded.statusCode).toBe(200);
+    const jobId = (graded.json() as { jobId: string }).jobId;
+    await firstServer.close();
+
+    const restartedServer = createServer({ platform: await createPlatform() });
+    const dashboard = await restartedServer.inject({
+      method: "GET",
+      url: "/api/v1/dashboard",
+    });
+    expect(dashboard.json()).toMatchObject({
+      attempts: [{ mode: "grade", jobId, verdict: "automated_pass" }],
+      conceptStates: { "compile-link-run": "practiced" },
+    });
+    const recoveredJob = await restartedServer.inject({
+      method: "GET",
+      url: `/api/v1/jobs/${jobId}`,
+    });
+    expect(recoveredJob.json()).toMatchObject({
+      report: { jobId, verdict: "automated_pass" },
+    });
+    await restartedServer.close();
+    await rm(root, { recursive: true, force: true });
   });
 });

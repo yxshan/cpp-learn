@@ -177,6 +177,12 @@ describe("[T-WORK-003] Workspace query and save command", () => {
     });
     expect(replay).toEqual(first);
     expect(saveCalls).toBe(1);
+    await expect(
+      platform.dispatch({
+        ...command,
+        changes: [{ path: "main.cpp", content: "different\n" }],
+      }),
+    ).rejects.toThrow("Command identifier reused with a different payload");
   });
 });
 

@@ -52,6 +52,22 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
     return 0;
   }
 
+  if (command === "next") {
+    const result = await dependencies.platform.query({ type: "activity.next" });
+    if (!result.activity) {
+      dependencies.stderr("No available Activity\n");
+      return 5;
+    }
+    if (flags.includes("--json")) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else {
+      dependencies.stdout(
+        `Next Activity: ${result.activity.title} (${result.activity.id})\n`,
+      );
+    }
+    return 0;
+  }
+
   if (command === "check") {
     const activityFlag = flags.indexOf("--activity");
     const activityId = activityFlag >= 0 ? flags[activityFlag + 1] : undefined;
@@ -71,7 +87,7 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
         `Grade ${result.report.verdict}: ${activityId} (${result.jobId})\n`,
       );
     }
-    return result.report.verdict === "automated_pass" ? 0 : 4;
+    return 0;
   }
 
   if (command === "serve" && dependencies.serve) {
@@ -80,7 +96,7 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
   }
 
   dependencies.stderr(
-    "Usage: cpplearn <doctor [--json] | status [--json] | check --activity <id> [--json] | serve>\n",
+    "Usage: cpplearn <doctor [--json] | next [--json] | status [--json] | check --activity <id> [--json] | serve>\n",
   );
   return 2;
 }

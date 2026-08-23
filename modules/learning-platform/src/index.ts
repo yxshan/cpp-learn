@@ -27,6 +27,7 @@ export interface LearningPlatformDependencies {
   readonly probes: LearningPlatformProbes;
   readonly curriculum: {
     getActivity(activityId: string): Promise<ActivityDetail | undefined>;
+    getNextActivity?(): Promise<ActivityDetail | undefined>;
     getJudge(activityId: string): Promise<JudgeSpec | undefined>;
   };
   readonly workspace: {
@@ -84,15 +85,24 @@ export interface LearningPlatformDependencies {
 export function createLearningPlatform(
   dependencies: LearningPlatformDependencies,
 ): LearningPlatform {
-  const commandReceipts = new Map<string, Promise<CommandResult>>();
+  const commandReceipts = new Map<
+    string,
+    { readonly fingerprint: string; readonly result: Promise<CommandResult> }
+  >();
   const retainedJobEvents = new Map<string, readonly PlatformEvent[]>();
 
   return {
     async dispatch<C extends LearningCommand>(
       command: C,
     ): Promise<CommandResultFor<C>> {
+      const fingerprint = JSON.stringify(command);
       const existing = commandReceipts.get(command.commandId);
-      if (existing) return existing as Promise<CommandResultFor<C>>;
+      if (existing) {
+        if (existing.fingerprint !== fingerprint) {
+          throw new Error("Command identifier reused with a different payload");
+        }
+        return existing.result as Promise<CommandResultFor<C>>;
+      }
 
       const execution = (async (): Promise<CommandResult> => {
         switch (command.type) {
@@ -183,7 +193,10 @@ export function createLearningPlatform(
           }
         }
       })();
-      commandReceipts.set(command.commandId, execution);
+      commandReceipts.set(command.commandId, {
+        fingerprint,
+        result: execution,
+      });
       return execution as Promise<CommandResultFor<C>>;
     },
     async query<Q extends LearningQuery>(query: Q): Promise<QueryResultFor<Q>> {
@@ -206,6 +219,13 @@ export function createLearningPlatform(
           const activity = await dependencies.curriculum.getActivity(
             query.activityId,
           );
+          return {
+            schemaVersion: SCHEMA_VERSION,
+            activity: activity ?? null,
+          } as unknown as QueryResultFor<Q>;
+        }
+        case "activity.next": {
+          const activity = await dependencies.curriculum.getNextActivity?.();
           return {
             schemaVersion: SCHEMA_VERSION,
             activity: activity ?? null,

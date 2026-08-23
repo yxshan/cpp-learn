@@ -328,9 +328,18 @@ export function createFilesystemWorkspace(
     if (!/^snap_[a-f0-9]{20}$/.test(snapshotId)) {
       throw new Error("Invalid Source Snapshot identifier");
     }
-    return readJson<StoredSnapshot>(
-      join(dependencies.workspaceRoot, ".snapshots", `${snapshotId}.json`),
-    );
+    const root = await snapshotRoot();
+    return readJson<StoredSnapshot>(join(root, `${snapshotId}.json`));
+  }
+
+  async function snapshotRoot(): Promise<string> {
+    await mkdir(dependencies.workspaceRoot, { recursive: true });
+    await rejectSpecialPath(dependencies.workspaceRoot);
+    const root = join(dependencies.workspaceRoot, ".snapshots");
+    await rejectSpecialPath(root);
+    await mkdir(root, { recursive: true });
+    await rejectSpecialPath(root);
+    return root;
   }
 
   return {
@@ -374,10 +383,8 @@ export function createFilesystemWorkspace(
     async snapshot(activityId) {
       const state = await stateFor(activityId);
       const snapshot = createSnapshot(activityId, state.files);
-      await atomicWriteJson(
-        join(dependencies.workspaceRoot, ".snapshots", `${snapshot.id}.json`),
-        snapshot,
-      );
+      const root = await snapshotRoot();
+      await atomicWriteJson(join(root, `${snapshot.id}.json`), snapshot);
       return {
         id: snapshot.id,
         activityId: snapshot.activityId,
