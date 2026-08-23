@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -45,7 +45,7 @@ After `npm run build`, `./cpplearn serve`:
 4. Starts the HTTP API and built Web assets on `127.0.0.1:4173`.
 5. Prints the local Web URL.
 
-Startup fails safely if required content, built Web assets, or the event log cannot be read. Single-writer locking and interrupted-tail recovery remain Stage 2 work.
+Startup fails safely if required content or built Web assets cannot be read. The Learning Record repairs an interrupted trailing append by quarantining invalid bytes and recording `recovery.performed`; SQLite projections are rebuilt from the valid event log during initialization.
 
 ## 4. Configuration
 
@@ -88,7 +88,11 @@ Export creates a checksummed archive of events, Workspaces, retained snapshots, 
 
 ### Restore
 
-Restore writes to a new validated data root, verifies checksums and schemas, rebuilds projections, and only then makes the root active.
+```bash
+cpplearn restore --input <explicit-path>
+```
+
+Restore verifies manifest shape, safe paths, file checksums, and event envelopes before mutation. It writes new staged data and Workspace roots, swaps them into place only after validation, and retains the previous roots with a `.pre-restore-*` suffix for recovery. Restart the local service after a Web restore.
 
 ### Projection rebuild
 
@@ -96,7 +100,7 @@ Restore writes to a new validated data root, verifies checksums and schemas, reb
 cpplearn doctor --rebuild-projections
 ```
 
-Rebuild never modifies the source event log.
+The Learning Record exposes rebuild through its maintenance Interface and automatically rebuilds during startup. A dedicated `doctor --rebuild-projections` presentation command remains planned. Rebuild never modifies the source event log.
 
 ## 7. Content authoring workflow
 

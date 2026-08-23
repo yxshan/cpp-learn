@@ -285,3 +285,114 @@ describe("[T-LEARN-002] Run, Grade, and Evidence policy", () => {
     });
   });
 });
+
+describe("[T-JUDGE-004] running job cancellation", () => {
+  it("cancels the active Judge and never promotes cancelled work to Concept Evidence", async () => {
+    const events: AttemptCompletedEvent[] = [];
+    let judgeStarted: (() => void) | undefined;
+    const started = new Promise<void>((resolve) => {
+      judgeStarted = resolve;
+    });
+    const platform = createLearningPlatform({
+      clock: () => new Date("2026-08-23T08:00:00.000Z"),
+      probes: {
+        curriculum: async () => ({ ready: true, activityCount: 1 }),
+        toolchain: async () => ({ ready: true, compiler: "clang" }),
+        record: async () => ({ ready: true }),
+      },
+      curriculum: {
+        getActivity: async () => ({
+          id: "cancel-me",
+          version: 1,
+          kind: "exercise",
+          title: "Cancel me",
+          estimatedMinutes: 10,
+          conceptIds: ["process-control"],
+          markdown: "",
+          workspace: { editablePaths: ["main.cpp"] },
+        }),
+        getJudge: async () => ({
+          activityId: "cancel-me",
+          activityVersion: 1,
+          judgeVersion: 1,
+          expectedStdout: "",
+          timeoutMs: 2_000,
+        }),
+      },
+      workspace: {
+        open: async () => ({ activityId: "cancel-me", revision: 1, files: {} }),
+        save: async () => ({ ok: true, revision: 2 }),
+        snapshot: async () => ({
+          id: "snap_cancel",
+          activityId: "cancel-me",
+          digest: "cancel-digest",
+        }),
+        readSnapshot: async () => ({
+          id: "snap_cancel",
+          activityId: "cancel-me",
+          digest: "cancel-digest",
+          files: { "main.cpp": "int main() {}\n" },
+        }),
+      },
+      judge: {
+        execute: async ({ jobId, mode, signal }) => {
+          judgeStarted?.();
+          await new Promise<void>((resolve) =>
+            signal.addEventListener("abort", () => resolve(), { once: true }),
+          );
+          return {
+            schemaVersion: 1,
+            reportId: `report_${jobId}`,
+            jobId,
+            mode,
+            activity: { id: "cancel-me", version: 1, judgeVersion: 1 },
+            source: { snapshotId: "snap_cancel", digest: "cancel-digest" },
+            toolchain: { compiler: "clang", standard: "c++20" },
+            verdict: "cancelled",
+            stages: [{ kind: "compile", outcome: "fail", durationMs: 1 }],
+            startedAt: "2026-08-23T08:00:00.000Z",
+            completedAt: "2026-08-23T08:00:00.001Z",
+          };
+        },
+      },
+      record: {
+        append: async (event) => {
+          events.push(event);
+        },
+        list: async () => events,
+      },
+    });
+
+    const grade = platform.dispatch({
+      type: "activity.grade",
+      commandId: "cmd_cancel_grade",
+      activityId: "cancel-me",
+    });
+    await started;
+    await expect(
+      platform.dispatch({
+        type: "job.cancel",
+        commandId: "cmd_cancel_job",
+        jobId: "job_cmd_cancel_grade",
+      }),
+    ).resolves.toEqual({
+      schemaVersion: 1,
+      commandId: "cmd_cancel_job",
+      jobId: "job_cmd_cancel_grade",
+      cancelled: true,
+    });
+    await expect(grade).resolves.toMatchObject({
+      report: { verdict: "cancelled" },
+    });
+    const terminalEvents = [];
+    for await (const event of platform.events("job_cmd_cancel_grade")) {
+      terminalEvents.push(event.type);
+    }
+    expect(terminalEvents).toEqual(["judge.queued", "judge.cancelled"]);
+    await expect(platform.query({ type: "dashboard.get" })).resolves.toEqual({
+      schemaVersion: 1,
+      attempts: [expect.objectContaining({ verdict: "cancelled" })],
+      conceptStates: {},
+    });
+  });
+});

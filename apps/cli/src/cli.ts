@@ -8,6 +8,17 @@ export interface CliDependencies {
   readonly stdout: (text: string) => void;
   readonly stderr: (text: string) => void;
   readonly serve?: () => Promise<void>;
+  readonly archive?: {
+    exportTo(outputPath: string): Promise<{
+      readonly schemaVersion: 1;
+      readonly createdAt: string;
+      readonly fileCount: number;
+    }>;
+    restoreFrom(inputPath: string): Promise<{
+      readonly schemaVersion: 1;
+      readonly restoredFiles: number;
+    }>;
+  };
 }
 
 function formatDoctorReport(report: BootstrapResult): string {
@@ -104,13 +115,45 @@ export async function runCli(dependencies: CliDependencies): Promise<number> {
     return 0;
   }
 
+  if (command === "export" && dependencies.archive) {
+    const outputFlag = flags.indexOf("--output");
+    const outputPath = outputFlag >= 0 ? flags[outputFlag + 1] : undefined;
+    if (!outputPath) {
+      dependencies.stderr("Usage: cpplearn export --output PATH [--json]\n");
+      return 2;
+    }
+    const result = await dependencies.archive.exportTo(outputPath);
+    dependencies.stdout(
+      flags.includes("--json")
+        ? `${JSON.stringify(result)}\n`
+        : `Exported ${result.fileCount} files to ${outputPath}\n`,
+    );
+    return 0;
+  }
+
+  if (command === "restore" && dependencies.archive) {
+    const inputFlag = flags.indexOf("--input");
+    const inputPath = inputFlag >= 0 ? flags[inputFlag + 1] : undefined;
+    if (!inputPath) {
+      dependencies.stderr("Usage: cpplearn restore --input PATH [--json]\n");
+      return 2;
+    }
+    const result = await dependencies.archive.restoreFrom(inputPath);
+    dependencies.stdout(
+      flags.includes("--json")
+        ? `${JSON.stringify(result)}\n`
+        : `Restored ${result.restoredFiles} files from ${inputPath}\n`,
+    );
+    return 0;
+  }
+
   if (command === "serve" && dependencies.serve) {
     await dependencies.serve();
     return 0;
   }
 
   dependencies.stderr(
-    "Usage: cpplearn <doctor [--json] | next [--minutes N] [--json] | status [--json] | check --activity <id> [--json] | serve>\n",
+    "Usage: cpplearn <doctor [--json] | next [--minutes N] [--json] | status [--json] | check --activity <id> [--json] | export --output PATH [--json] | restore --input PATH [--json] | serve>\n",
   );
   return 2;
 }

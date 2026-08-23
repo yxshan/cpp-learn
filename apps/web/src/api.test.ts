@@ -3,12 +3,15 @@ import { describe, expect, it, vi } from "vitest";
 import type { BootstrapResult } from "@cpp-learn/contracts";
 
 import {
+  cancelJob,
   executeActivity,
+  exportBackup,
   getActivity,
   getBootstrap,
   getDashboard,
   getWorkspace,
   saveWorkspace,
+  restoreBackup,
 } from "./api.js";
 
 const bootstrap: BootstrapResult = {
@@ -83,6 +86,42 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
   });
 });
 
+describe("[T-DATA-002] Web backup Adapter", () => {
+  it("uses explicit versioned export and confirmed restore requests", async () => {
+    const document = {
+      schemaVersion: 1,
+      createdAt: "2026-08-23T10:00:00.000Z",
+      files: [],
+      configuration: {},
+    };
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(document), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ schemaVersion: 1, restoredFiles: 0 }), {
+          status: 200,
+        }),
+      );
+
+    await expect(exportBackup("export_1", request)).resolves.toEqual(document);
+    await expect(
+      restoreBackup(document, "restore_1", request),
+    ).resolves.toEqual({ schemaVersion: 1, restoredFiles: 0 });
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      "/api/v1/exports",
+      "/api/v1/restores",
+    ]);
+    expect(JSON.parse(String(request.mock.calls[1]?.[1]?.body))).toMatchObject({
+      schemaVersion: 1,
+      commandId: "restore_1",
+      confirm: true,
+      archive: document,
+    });
+  });
+});
+
 describe("[T-WEB-001] learning-flow API Adapter", () => {
   it("uses versioned endpoints for lesson, workspace, save, Grade, and dashboard", async () => {
     const responses = [
@@ -109,6 +148,12 @@ describe("[T-WEB-001] learning-flow API Adapter", () => {
         report: { verdict: "automated_pass" },
       },
       { schemaVersion: 1, attempts: [], conceptStates: {} },
+      {
+        schemaVersion: 1,
+        commandId: "cancel_1",
+        jobId: "job_1",
+        cancelled: true,
+      },
     ];
     const request = vi.fn().mockImplementation(
       async () =>
@@ -127,6 +172,7 @@ describe("[T-WEB-001] learning-flow API Adapter", () => {
     );
     await executeActivity("source-to-program", "grade", "grade_1", request);
     await getDashboard(request);
+    await cancelJob("job_1", "cancel_1", request);
 
     expect(request.mock.calls.map(([url]) => url)).toEqual([
       "/api/v1/activities/source-to-program",
@@ -134,8 +180,10 @@ describe("[T-WEB-001] learning-flow API Adapter", () => {
       "/api/v1/workspaces/source-to-program",
       "/api/v1/activities/source-to-program/grades",
       "/api/v1/dashboard",
+      "/api/v1/jobs/job_1/cancellations",
     ]);
     expect(request.mock.calls[2]?.[1]).toMatchObject({ method: "PATCH" });
     expect(request.mock.calls[3]?.[1]).toMatchObject({ method: "POST" });
+    expect(request.mock.calls[5]?.[1]).toMatchObject({ method: "POST" });
   });
 });

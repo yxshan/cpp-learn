@@ -63,12 +63,25 @@ export interface WorkspaceResult {
 }
 
 export type ExecutionMode = "run" | "grade";
+export interface PublicJudgeTest {
+  readonly name: string;
+  readonly stdin: string;
+  readonly expectedStdout: string;
+}
+
+export interface PrivateJudgeTest extends PublicJudgeTest {
+  readonly failureCategory: string;
+}
+
 export interface JudgeSpec {
   readonly activityId: string;
   readonly activityVersion: number;
   readonly judgeVersion: number;
   readonly expectedStdout: string;
   readonly timeoutMs: number;
+  readonly publicTests?: readonly PublicJudgeTest[];
+  readonly privateTests?: readonly PrivateJudgeTest[];
+  readonly sanitizers?: readonly ("address" | "undefined")[];
 }
 
 export type JudgeVerdict =
@@ -77,15 +90,30 @@ export type JudgeVerdict =
   | "public_failure"
   | "timeout"
   | "output_limit"
+  | "private_failure"
+  | "sanitizer_failure"
+  | "cancelled"
   | "automated_pass"
   | "judge_system_error";
 
 export interface JudgeReportStage {
-  readonly kind: "compile" | "test";
+  readonly kind:
+    "compile" | "test" | "public_test" | "private_test" | "asan" | "ubsan";
   readonly outcome: "pass" | "fail" | "system_error";
   readonly durationMs: number;
   readonly stdout?: string;
   readonly stderr?: string;
+  readonly testName?: string;
+  readonly feedback?: string;
+  readonly diagnostics?: readonly JudgeDiagnostic[];
+}
+
+export interface JudgeDiagnostic {
+  readonly category: "compiler" | "sanitizer" | "runtime";
+  readonly message: string;
+  readonly file?: string;
+  readonly line?: number;
+  readonly column?: number;
 }
 
 export interface JudgeReport {
@@ -100,6 +128,7 @@ export interface JudgeReport {
   };
   readonly source: { readonly snapshotId: string; readonly digest: string };
   readonly toolchain: { readonly compiler: string; readonly standard: "c++20" };
+  readonly buildFlags?: readonly string[];
   readonly verdict: JudgeVerdict;
   readonly stages: readonly JudgeReportStage[];
   readonly startedAt: string;
@@ -117,6 +146,18 @@ export interface AttemptCompletedEvent {
   readonly mode: ExecutionMode;
   readonly report: JudgeReport;
 }
+
+export interface RecoveryPerformedEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly type: "recovery.performed";
+  readonly occurredAt: string;
+  readonly quarantinedFile: string;
+  readonly invalidBytes: number;
+}
+
+export type LearningRecordEvent =
+  AttemptCompletedEvent | RecoveryPerformedEvent;
 
 export interface DashboardResult {
   readonly schemaVersion: typeof SCHEMA_VERSION;
@@ -208,15 +249,33 @@ export interface ActivityExecutionCommandResult {
   readonly report: JudgeReport;
 }
 
-export type LearningCommand = WorkspaceSaveCommand | ActivityExecutionCommand;
+export interface JobCancelCommand {
+  readonly type: "job.cancel";
+  readonly commandId: string;
+  readonly jobId: string;
+}
+
+export interface JobCancelCommandResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly commandId: string;
+  readonly jobId: string;
+  readonly cancelled: boolean;
+}
+
+export type LearningCommand =
+  WorkspaceSaveCommand | ActivityExecutionCommand | JobCancelCommand;
 export type CommandResult =
-  WorkspaceSaveCommandResult | ActivityExecutionCommandResult;
+  | WorkspaceSaveCommandResult
+  | ActivityExecutionCommandResult
+  | JobCancelCommandResult;
 export type CommandResultFor<C extends LearningCommand> =
   C extends WorkspaceSaveCommand
     ? WorkspaceSaveCommandResult
     : C extends ActivityExecutionCommand
       ? ActivityExecutionCommandResult
-      : never;
+      : C extends JobCancelCommand
+        ? JobCancelCommandResult
+        : never;
 export type JobId = string;
 
 export interface PlatformEvent {

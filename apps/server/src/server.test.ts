@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,7 +10,11 @@ import type {
   JudgeReport,
   LearningPlatform,
 } from "@cpp-learn/contracts";
-import { createJsonlLearningRecord } from "@cpp-learn/learning-record";
+import { createNativeJudge } from "@cpp-learn/judge";
+import {
+  createJsonlLearningRecord,
+  createLocalDataArchive,
+} from "@cpp-learn/learning-record";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
 import {
   createFilesystemWorkspace,
@@ -341,6 +345,139 @@ describe("[T-CONTRACT-004] HTTP execution and progress Adapters", () => {
     expect(stream.body).toContain('"type":"judge.report.ready"');
     await server.close();
   });
+
+  it("maps a loopback cancellation request to the shared command contract", async () => {
+    const dispatched: unknown[] = [];
+    const platform: LearningPlatform = {
+      dispatch: (async (command: unknown) => {
+        dispatched.push(command);
+        return {
+          schemaVersion: 1,
+          commandId: "cmd_cancel_http",
+          jobId: "job_active",
+          cancelled: true,
+        };
+      }) as LearningPlatform["dispatch"],
+      async *events() {},
+      query: vi.fn(),
+    };
+    const server = createServer({ platform });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/jobs/job_active/cancellations",
+      headers: { origin: "http://127.0.0.1:3000" },
+      payload: { schemaVersion: 1, commandId: "cmd_cancel_http" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      schemaVersion: 1,
+      commandId: "cmd_cancel_http",
+      jobId: "job_active",
+      cancelled: true,
+    });
+    expect(dispatched).toEqual([
+      {
+        type: "job.cancel",
+        commandId: "cmd_cancel_http",
+        jobId: "job_active",
+      },
+    ]);
+    await server.close();
+  });
+
+  it("keeps serving after a Judge runner crash without creating false Evidence", async () => {
+    const events: AttemptCompletedEvent[] = [];
+    const run = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("worker channel closed"))
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "ok\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      });
+    const workspace = createInMemoryWorkspace([
+      {
+        activityId: "crash-profile",
+        editablePaths: ["main.cpp"],
+        starterFiles: { "main.cpp": "int main() {}\n" },
+      },
+    ]);
+    const platform = createLearningPlatform({
+      clock: () => new Date("2026-08-23T08:00:00.000Z"),
+      probes: {
+        curriculum: async () => ({ ready: true, activityCount: 1 }),
+        toolchain: async () => ({ ready: true, compiler: "clang" }),
+        record: async () => ({ ready: true }),
+      },
+      curriculum: {
+        getActivity: async () => ({
+          id: "crash-profile",
+          version: 1,
+          kind: "exercise",
+          title: "Crash profile",
+          estimatedMinutes: 10,
+          conceptIds: ["worker-isolation"],
+          markdown: "",
+          workspace: { editablePaths: ["main.cpp"] },
+        }),
+        getJudge: async () => ({
+          activityId: "crash-profile",
+          activityVersion: 1,
+          judgeVersion: 1,
+          expectedStdout: "ok\n",
+          timeoutMs: 2_000,
+        }),
+      },
+      workspace,
+      judge: createNativeJudge({ run }),
+      record: {
+        append: async (event) => {
+          events.push(event);
+        },
+        list: async () => events,
+      },
+    });
+    const server = createServer({ platform });
+
+    const crashed = await server.inject({
+      method: "POST",
+      url: "/api/v1/activities/crash-profile/grades",
+      payload: { schemaVersion: 1, commandId: "cmd_crashed_worker" },
+    });
+    expect(crashed.statusCode).toBe(200);
+    expect(crashed.json()).toMatchObject({
+      report: { verdict: "judge_system_error" },
+    });
+    const dashboardAfterCrash = await server.inject({
+      method: "GET",
+      url: "/api/v1/dashboard",
+    });
+    expect(dashboardAfterCrash.json()).toMatchObject({ conceptStates: {} });
+    await expect(
+      server.inject({ method: "GET", url: "/api/v1/health" }),
+    ).resolves.toMatchObject({ statusCode: 200 });
+
+    const recovered = await server.inject({
+      method: "POST",
+      url: "/api/v1/activities/crash-profile/grades",
+      payload: { schemaVersion: 1, commandId: "cmd_recovered_worker" },
+    });
+    expect(recovered.json()).toMatchObject({
+      report: { verdict: "automated_pass" },
+    });
+    await server.close();
+  });
 });
 
 describe("[T-RECORD-001] Grade recovery through a server restart", () => {
@@ -348,6 +485,7 @@ describe("[T-RECORD-001] Grade recovery through a server restart", () => {
     const root = await mkdtemp(join(tmpdir(), "cpp-learn-restart-"));
     const eventsRoot = join(root, "events");
     const workspaceRoot = join(root, "workspaces");
+    let judgeExecutions = 0;
     const createPlatform = async () => {
       const events = createJsonlLearningRecord({ dataRoot: eventsRoot });
       await events.initialize();
@@ -389,23 +527,26 @@ describe("[T-RECORD-001] Grade recovery through a server restart", () => {
         },
         workspace,
         judge: {
-          execute: async ({ jobId, mode, snapshot }): Promise<JudgeReport> => ({
-            schemaVersion: 1,
-            reportId: `report_${jobId}`,
-            jobId,
-            mode,
-            activity: {
-              id: "source-to-program",
-              version: 1,
-              judgeVersion: 1,
-            },
-            source: { snapshotId: snapshot.id, digest: snapshot.digest },
-            toolchain: { compiler: "clang", standard: "c++20" },
-            verdict: "automated_pass",
-            stages: [],
-            startedAt: "2026-08-23T08:00:00.000Z",
-            completedAt: "2026-08-23T08:00:00.001Z",
-          }),
+          execute: async ({ jobId, mode, snapshot }): Promise<JudgeReport> => {
+            judgeExecutions += 1;
+            return {
+              schemaVersion: 1,
+              reportId: `report_${jobId}`,
+              jobId,
+              mode,
+              activity: {
+                id: "source-to-program",
+                version: 1,
+                judgeVersion: 1,
+              },
+              source: { snapshotId: snapshot.id, digest: snapshot.digest },
+              toolchain: { compiler: "clang", standard: "c++20" },
+              verdict: "automated_pass",
+              stages: [],
+              startedAt: "2026-08-23T08:00:00.000Z",
+              completedAt: "2026-08-23T08:00:00.001Z",
+            };
+          },
         },
         record: events,
       });
@@ -437,7 +578,112 @@ describe("[T-RECORD-001] Grade recovery through a server restart", () => {
     expect(recoveredJob.json()).toMatchObject({
       report: { jobId, verdict: "automated_pass" },
     });
+    const replayed = await restartedServer.inject({
+      method: "POST",
+      url: "/api/v1/activities/source-to-program/grades",
+      payload: { schemaVersion: 1, commandId: "cmd_restart_grade" },
+    });
+    expect(replayed.json()).toMatchObject({
+      jobId,
+      report: { jobId, verdict: "automated_pass" },
+    });
+    expect(judgeExecutions).toBe(1);
     await restartedServer.close();
     await rm(root, { recursive: true, force: true });
+  });
+});
+
+describe("[T-DATA-002] HTTP backup and restore Adapters", () => {
+  it("exports only scoped local data and requires explicit restore confirmation", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-learn-http-backup-"));
+    const dataRoot = join(root, "data");
+    const workspaceRoot = join(root, "workspaces");
+    await writeFile(join(root, "placeholder"), "", "utf8");
+    const record = createJsonlLearningRecord({ dataRoot });
+    await record.initialize();
+    await mkdir(workspaceRoot, { recursive: true });
+    await writeFile(join(workspaceRoot, "main.cpp"), "original\n", "utf8");
+    const archive = createLocalDataArchive({ dataRoot, workspaceRoot });
+    const platform: LearningPlatform = {
+      async dispatch() {
+        throw new Error("No learning commands in this fixture");
+      },
+      async *events() {},
+      query: vi.fn(),
+    };
+    const server = createServer({ platform, archive });
+
+    const exported = await server.inject({
+      method: "POST",
+      url: "/api/v1/exports",
+      payload: { schemaVersion: 1, commandId: "cmd_export_http" },
+    });
+    expect(exported.statusCode).toBe(200);
+    expect(exported.headers["content-disposition"]).toContain("attachment");
+    expect(exported.body).not.toContain("privateTests");
+
+    await writeFile(join(workspaceRoot, "main.cpp"), "damaged\n", "utf8");
+    const rejected = await server.inject({
+      method: "POST",
+      url: "/api/v1/restores",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_restore_rejected",
+        confirm: false,
+        archive: exported.json(),
+      },
+    });
+    expect(rejected.statusCode).toBe(400);
+    const restored = await server.inject({
+      method: "POST",
+      url: "/api/v1/restores",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_restore_http",
+        confirm: true,
+        archive: exported.json(),
+      },
+    });
+    expect(restored.statusCode).toBe(200);
+    expect(restored.json()).toMatchObject({
+      restoredFiles: expect.any(Number),
+    });
+    await expect(
+      readFile(join(workspaceRoot, "main.cpp"), "utf8"),
+    ).resolves.toBe("original\n");
+    await server.close();
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("accepts a valid restore request larger than Fastify's 1 MiB default", async () => {
+    const platform: LearningPlatform = {
+      async dispatch() {
+        throw new Error("No learning commands in this fixture");
+      },
+      async *events() {},
+      query: vi.fn(),
+    };
+    const restoreFrom = vi
+      .fn()
+      .mockResolvedValue({ schemaVersion: 1, restoredFiles: 1 });
+    const server = createServer({
+      platform,
+      archive: { exportTo: vi.fn(), restoreFrom },
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/restores",
+      payload: {
+        schemaVersion: 1,
+        commandId: "cmd_large_restore",
+        confirm: true,
+        archive: { schemaVersion: 1, payload: "x".repeat(1_100_000) },
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(restoreFrom).toHaveBeenCalledOnce();
+    await server.close();
   });
 });

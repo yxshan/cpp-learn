@@ -9,7 +9,12 @@ import {
 
 import type { BootstrapResult, DashboardResult } from "@cpp-learn/contracts";
 
-import { getBootstrap, getDashboard } from "./api.js";
+import {
+  exportBackup,
+  getBootstrap,
+  getDashboard,
+  restoreBackup,
+} from "./api.js";
 
 const LessonWorkspace = lazy(async () => {
   const module = await import("./LessonWorkspace.js");
@@ -61,6 +66,40 @@ export function App() {
   const [dashboard, setDashboard] = useState<DashboardResult>();
   const [error, setError] = useState<string>();
   const [showWorkspace, setShowWorkspace] = useState(false);
+  const [dataMessage, setDataMessage] = useState("可导出校验后的本地备份");
+
+  const downloadBackup = async (): Promise<void> => {
+    try {
+      const archive = await exportBackup(`web_export_${crypto.randomUUID()}`);
+      const url = URL.createObjectURL(
+        new Blob([`${JSON.stringify(archive, null, 2)}\n`], {
+          type: "application/json",
+        }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "cpp-learn-backup.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      setDataMessage("备份已导出；文件仅在你的设备上生成");
+    } catch (cause) {
+      setDataMessage(cause instanceof Error ? cause.message : "导出失败");
+    }
+  };
+
+  const restoreFromFile = async (file: File): Promise<void> => {
+    if (!window.confirm("恢复会覆盖备份中包含的本地文件，是否继续？")) return;
+    try {
+      const archive = JSON.parse(await file.text()) as unknown;
+      const result = await restoreBackup(
+        archive,
+        `web_restore_${crypto.randomUUID()}`,
+      );
+      setDataMessage(`已恢复 ${result.restoredFiles} 个文件，请重启本地服务`);
+    } catch (cause) {
+      setDataMessage(cause instanceof Error ? cause.message : "恢复失败");
+    }
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -156,7 +195,7 @@ export function App() {
 
         <section className="stage-banner" aria-labelledby="stage-title">
           <div className="stage-copy">
-            <span className="stage-chip">STAGE 1 · FIRST LEARNING LOOP</span>
+            <span className="stage-chip">STAGE 2 · RELIABLE LOCAL JUDGE</span>
             <h2 id="stage-title">
               读懂、修改、运行，再用 Grade 证明你掌握了它。
             </h2>
@@ -240,7 +279,7 @@ export function App() {
             <StatusCard
               eyebrow="LEARNING RECORD"
               title="本地学习记录"
-              detail="追加式 JSONL · 可恢复"
+              detail="追加式 JSONL · SQLite 投影 · 可恢复"
               ready={bootstrap?.services.record.ready ?? false}
               icon="↳"
             />
@@ -305,10 +344,31 @@ export function App() {
                 </p>
               )}
             </div>
+            <div className="data-actions">
+              <button
+                className="secondary-button"
+                onClick={() => void downloadBackup()}
+              >
+                导出本地备份
+              </button>
+              <label className="secondary-button file-button">
+                恢复备份
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file) void restoreFromFile(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              <span>{dataMessage}</span>
+            </div>
           </article>
         </section>
         <footer>
-          <span>cpp-learn v0.1.0 · Stage 1</span>
+          <span>cpp-learn · Stage 2</span>
           <span>Local-first · C++20 · React</span>
         </footer>
       </main>

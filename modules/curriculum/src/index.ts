@@ -3,7 +3,11 @@ import {
   type ValidationIssue,
 } from "@cpp-learn/content-schema";
 import type { CurriculumReadiness } from "@cpp-learn/contracts";
-import type { ActivityDetail } from "@cpp-learn/contracts";
+import type {
+  ActivityDetail,
+  PrivateJudgeTest,
+  PublicJudgeTest,
+} from "@cpp-learn/contracts";
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 
@@ -29,6 +33,9 @@ export interface Activity {
     readonly version: number;
     readonly expectedStdout: string;
     readonly timeoutMs: number;
+    readonly publicTests?: readonly PublicJudgeTest[];
+    readonly privateTests?: readonly PrivateJudgeTest[];
+    readonly sanitizers?: readonly ("address" | "undefined")[];
   };
   readonly evidencePolicy: { readonly automatedPass: boolean };
 }
@@ -53,6 +60,9 @@ export interface JudgeDefinition {
   readonly judgeVersion: number;
   readonly expectedStdout: string;
   readonly timeoutMs: number;
+  readonly publicTests?: readonly PublicJudgeTest[];
+  readonly privateTests?: readonly PrivateJudgeTest[];
+  readonly sanitizers?: readonly ("address" | "undefined")[];
 }
 
 export function validateCatalog(
@@ -67,6 +77,24 @@ export function validateCatalog(
   const validActivities = activities as readonly Activity[];
   const activityIndexes = new Map<string, number>();
   for (const [index, activity] of validActivities.entries()) {
+    for (const [testIndex, privateTest] of (
+      activity.judge.privateTests ?? []
+    ).entries()) {
+      const hiddenValues = [privateTest.stdin, privateTest.expectedStdout]
+        .map((value) => value.trim())
+        .filter((value) => value.length >= 4);
+      if (
+        hiddenValues.some((value) =>
+          privateTest.failureCategory.includes(value),
+        )
+      ) {
+        issues.push({
+          path: `/${index}/judge/privateTests/${testIndex}/failureCategory`,
+          message: "private-test feedback must not copy hidden values",
+          keyword: "privacy",
+        });
+      }
+    }
     if (activityIndexes.has(activity.id)) {
       issues.push({
         path: `/${index}/id`,
@@ -274,6 +302,15 @@ export function createFilesystemCurriculum(
         judgeVersion: activity.judge.version,
         expectedStdout: activity.judge.expectedStdout,
         timeoutMs: activity.judge.timeoutMs,
+        ...(activity.judge.publicTests
+          ? { publicTests: activity.judge.publicTests }
+          : {}),
+        ...(activity.judge.privateTests
+          ? { privateTests: activity.judge.privateTests }
+          : {}),
+        ...(activity.judge.sanitizers
+          ? { sanitizers: activity.judge.sanitizers }
+          : {}),
       };
     },
   };

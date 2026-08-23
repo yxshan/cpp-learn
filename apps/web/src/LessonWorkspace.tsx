@@ -11,6 +11,7 @@ import type {
 } from "@cpp-learn/contracts";
 
 import {
+  cancelJob,
   executeActivity,
   getActivity,
   getWorkspace,
@@ -37,9 +38,11 @@ export function LessonWorkspace({
 }: LessonWorkspaceProps) {
   const [activity, setActivity] = useState<ActivityDetail>();
   const [workspace, setWorkspace] = useState<WorkspaceView>();
-  const [source, setSource] = useState("");
+  const [sources, setSources] = useState<Record<string, string>>({});
+  const [activePath, setActivePath] = useState("main.cpp");
   const [report, setReport] = useState<JudgeReport>();
   const [busy, setBusy] = useState<"save" | "run" | "grade">();
+  const [activeJobId, setActiveJobId] = useState<string>();
   const [message, setMessage] = useState("正在加载课程工作区…");
 
   useEffect(() => {
@@ -48,7 +51,10 @@ export function LessonWorkspace({
         if (!activityResult.activity) throw new Error("课程不存在");
         setActivity(activityResult.activity);
         setWorkspace(workspaceResult.workspace);
-        setSource(workspaceResult.workspace.files["main.cpp"] ?? "");
+        setSources({ ...workspaceResult.workspace.files });
+        setActivePath(
+          activityResult.activity.workspace.editablePaths[0] ?? "main.cpp",
+        );
         setMessage("工作区已加载");
       })
       .catch((error: unknown) =>
@@ -57,11 +63,14 @@ export function LessonWorkspace({
   }, []);
 
   const persist = async (): Promise<void> => {
-    if (!workspace) return;
+    if (!workspace || !activity) return;
     const result = await saveWorkspace(ACTIVITY_ID, {
       commandId: commandId("save"),
       baseRevision: workspace.revision,
-      changes: [{ path: "main.cpp", content: source }],
+      changes: activity.workspace.editablePaths.map((path) => ({
+        path,
+        content: sources[path] ?? "",
+      })),
     });
     if (!result.result.ok) {
       throw new Error(
@@ -73,7 +82,7 @@ export function LessonWorkspace({
     setWorkspace({
       ...workspace,
       revision: result.result.revision,
-      files: { "main.cpp": source },
+      files: { ...sources },
     });
   };
 
@@ -95,7 +104,14 @@ export function LessonWorkspace({
     try {
       await persist();
       setMessage(mode === "run" ? "正在编译并运行…" : "正在提交判题…");
-      const result = await executeActivity(ACTIVITY_ID, mode, commandId(mode));
+      const executionCommandId = commandId(mode);
+      const jobId = `job_${executionCommandId}`;
+      setActiveJobId(jobId);
+      const result = await executeActivity(
+        ACTIVITY_ID,
+        mode,
+        executionCommandId,
+      );
       setReport(result.report);
       setMessage(
         result.report.verdict === "automated_pass"
@@ -108,7 +124,18 @@ export function LessonWorkspace({
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "执行失败");
     } finally {
+      setActiveJobId(undefined);
       setBusy(undefined);
+    }
+  };
+
+  const cancel = async (): Promise<void> => {
+    if (!activeJobId) return;
+    try {
+      const result = await cancelJob(activeJobId, commandId("cancel"));
+      setMessage(result.cancelled ? "正在取消判题…" : "任务已经结束");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "取消失败");
     }
   };
 
@@ -141,6 +168,11 @@ export function LessonWorkspace({
           >
             {busy === "grade" ? "判题中…" : "Grade"}
           </button>
+          {activeJobId && (
+            <button className="danger-button" onClick={() => void cancel()}>
+              取消任务
+            </button>
+          )}
         </div>
       </header>
 
@@ -159,15 +191,32 @@ export function LessonWorkspace({
         </article>
         <section className="coding-panel" aria-label="C++ 代码工作区">
           <div className="editor-titlebar">
-            <span>main.cpp</span>
+            <div className="file-tabs" role="tablist" aria-label="源文件">
+              {Object.keys(sources).map((path) => (
+                <button
+                  key={path}
+                  role="tab"
+                  aria-selected={path === activePath}
+                  className={path === activePath ? "active" : ""}
+                  onClick={() => setActivePath(path)}
+                >
+                  {path}
+                </button>
+              ))}
+            </div>
             <span>revision {workspace?.revision ?? 0}</span>
           </div>
           <Editor
             height="440px"
             language="cpp"
             theme="vs-dark"
-            value={source}
-            onChange={(value) => setSource(value ?? "")}
+            value={sources[activePath] ?? ""}
+            onChange={(value) =>
+              setSources((current) => ({
+                ...current,
+                [activePath]: value ?? "",
+              }))
+            }
             options={{
               automaticLayout: true,
               minimap: { enabled: false },
@@ -185,11 +234,23 @@ export function LessonWorkspace({
                 <span>{report.mode === "run" ? "Run 反馈" : "Grade 证据"}</span>
               )}
             </div>
-            {report?.stages.map((stage) => (
-              <pre key={stage.kind}>
-                {stage.kind} · {stage.outcome} · {stage.durationMs}ms{"\n"}
-                {stage.stdout ?? ""}
-                {stage.stderr ?? ""}
+            {report?.stages.map((stage, index) => (
+              <pre key={`${stage.kind}-${stage.testName ?? index}`}>
+                {stage.kind}
+                {stage.testName ? ` · ${stage.testName}` : ""} · {stage.outcome}{" "}
+                · {stage.durationMs}ms{"\n"}
+                {stage.feedback ? `${stage.feedback}\n` : ""}
+                {stage.diagnostics
+                  ?.map((diagnostic) => {
+                    const location = diagnostic.file
+                      ? `${diagnostic.file}:${diagnostic.line ?? "?"}:${diagnostic.column ?? "?"}: `
+                      : "";
+                    return `${location}${diagnostic.message}`;
+                  })
+                  .join("\n") ?? ""}
+                {stage.diagnostics?.length ? "\n" : ""}
+                {stage.kind !== "private_test" ? (stage.stdout ?? "") : ""}
+                {stage.kind !== "private_test" ? (stage.stderr ?? "") : ""}
               </pre>
             ))}
           </div>

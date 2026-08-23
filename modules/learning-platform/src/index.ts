@@ -74,6 +74,7 @@ export interface LearningPlatformDependencies {
         readonly digest: string;
         readonly files: Readonly<Record<string, string>>;
       };
+      readonly signal: AbortSignal;
     }): Promise<JudgeReport>;
   };
   readonly record: {
@@ -90,6 +91,7 @@ export function createLearningPlatform(
     { readonly fingerprint: string; readonly result: Promise<CommandResult> }
   >();
   const retainedJobEvents = new Map<string, readonly PlatformEvent[]>();
+  const activeJobs = new Map<string, AbortController>();
 
   return {
     async dispatch<C extends LearningCommand>(
@@ -106,6 +108,16 @@ export function createLearningPlatform(
 
       const execution = (async (): Promise<CommandResult> => {
         switch (command.type) {
+          case "job.cancel": {
+            const controller = activeJobs.get(command.jobId);
+            controller?.abort();
+            return {
+              schemaVersion: SCHEMA_VERSION,
+              commandId: command.commandId,
+              jobId: command.jobId,
+              cancelled: controller !== undefined,
+            };
+          }
           case "workspace.save": {
             const result = await dependencies.workspace.save({
               activityId: command.activityId,
@@ -120,6 +132,29 @@ export function createLearningPlatform(
           }
           case "activity.run":
           case "activity.grade": {
+            const priorAttempt = (await dependencies.record.list()).find(
+              (event) => event.commandId === command.commandId,
+            );
+            if (priorAttempt) {
+              const requestedMode =
+                command.type === "activity.run" ? "run" : "grade";
+              if (
+                priorAttempt.activityId !== command.activityId ||
+                priorAttempt.mode !== requestedMode
+              ) {
+                throw new Error(
+                  "Command identifier reused with a different payload",
+                );
+              }
+              return {
+                schemaVersion: SCHEMA_VERSION,
+                commandId: command.commandId,
+                jobId: priorAttempt.report.jobId,
+                snapshotId: priorAttempt.report.source.snapshotId,
+                status: "completed",
+                report: priorAttempt.report,
+              };
+            }
             const activity = await dependencies.curriculum.getActivity(
               command.activityId,
             );
@@ -141,6 +176,8 @@ export function createLearningPlatform(
             );
             const mode = command.type === "activity.run" ? "run" : "grade";
             const jobId = `job_${command.commandId}`;
+            const controller = new AbortController();
+            activeJobs.set(jobId, controller);
             retainedJobEvents.set(jobId, [
               {
                 schemaVersion: SCHEMA_VERSION,
@@ -149,13 +186,19 @@ export function createLearningPlatform(
                 type: "judge.queued",
               },
             ]);
-            const report = await dependencies.judge.execute({
-              jobId,
-              mode,
-              activity,
-              spec,
-              snapshot,
-            });
+            let report: JudgeReport;
+            try {
+              report = await dependencies.judge.execute({
+                jobId,
+                mode,
+                activity,
+                spec,
+                snapshot,
+                signal: controller.signal,
+              });
+            } finally {
+              activeJobs.delete(jobId);
+            }
             const event: AttemptCompletedEvent = {
               schemaVersion: SCHEMA_VERSION,
               eventId: `evt_${command.commandId}`,
@@ -179,7 +222,12 @@ export function createLearningPlatform(
                 schemaVersion: SCHEMA_VERSION,
                 jobId,
                 sequence: 2,
-                type: "judge.report.ready",
+                type:
+                  report.verdict === "cancelled"
+                    ? "judge.cancelled"
+                    : report.verdict === "judge_system_error"
+                      ? "judge.system-error"
+                      : "judge.report.ready",
               },
             ]);
             return {

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -23,9 +23,9 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | FR-020, FR-021 | DD §4; IC §2 | T-WORK-002 idempotent init; T-WORK-003 revision conflict | Stage 1–2 |
 | FR-022, FR-023 | DD §4; DATA §7 | T-WORK-004 snapshot immutability; T-WORK-005 historical diff | Stage 1–2 |
 | FR-030, FR-031 | DD §5; CJS §7 | T-JUDGE-001 Run evidence isolation; T-JUDGE-002 immutable Grade | Stage 1–2 |
-| FR-032, FR-033 | CJS §6–7 | T-JUDGE-003 verdict golden suite; T-JUDGE-004 judge-profile suite | Stage 2–5 |
-| FR-034, FR-035 | DD §5; IC §3–4 | T-JUDGE-005 event/report contract; T-JUDGE-006 cancellation | Stage 2 |
-| FR-036 | ARCH §9; DD §5 | T-JUDGE-007 worker crash isolation | Stage 2 |
+| FR-032, FR-033 | CJS §6–7 | T-JUDGE-003 verdict and Judge Profile suite | Stage 2–5 |
+| FR-034, FR-035 | DD §5; IC §3–4 | T-CONTRACT-004 event/report adapter; T-JUDGE-004 cancellation | Stage 2 |
+| FR-036 | ARCH §9; DD §5 | T-JUDGE-003 process-runner crash isolation and subsequent-job test | Stage 2 |
 | FR-040, FR-041 | DD §6; DATA §2–4 | T-RECORD-001 event append; T-LEARN-002 evidence derivation | Stage 1–3 |
 | FR-042, FR-043 | DATA §6; CJS §9 | T-LEARN-003 state transitions; T-LEARN-004 assistance constraints | Stage 3 |
 | FR-044, FR-045 | DD §2, §6 | T-LEARN-005 review scheduling; T-RECORD-002 rebuild/idempotency | Stage 2–3 |

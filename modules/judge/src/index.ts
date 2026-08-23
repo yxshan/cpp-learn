@@ -7,6 +7,7 @@ import {
   SCHEMA_VERSION,
   type ActivityDetail,
   type ExecutionMode,
+  type JudgeDiagnostic,
   type JudgeReport,
   type JudgeReportStage,
   type JudgeSpec,
@@ -31,11 +32,14 @@ export interface BoundedProcessRequest {
   readonly timeoutMs: number;
   readonly maxOutputBytes: number;
   readonly environment: Readonly<Record<string, string>>;
+  readonly stdin?: string;
+  readonly signal?: AbortSignal;
 }
 
 export interface BoundedProcessResult extends ProcessResult {
   readonly timedOut: boolean;
   readonly outputLimitExceeded: boolean;
+  readonly cancelled?: boolean;
 }
 
 export type BoundedProcessRunner = (
@@ -44,6 +48,7 @@ export type BoundedProcessRunner = (
 
 export interface NativeToolchainProbeDependencies {
   readonly execute: ProcessExecutor;
+  readonly compiler?: string;
 }
 
 export type JudgeStageKind = "prepare" | "compile" | "test" | "analyze";
@@ -115,13 +120,14 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
       detached: true,
       env: request.environment,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["pipe", "pipe", "pipe"],
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
     let outputBytes = 0;
     let timedOut = false;
     let outputLimitExceeded = false;
+    let cancelled = false;
     const killProcessGroup = (): void => {
       if (child.pid !== undefined) {
         try {
@@ -133,6 +139,12 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
       }
       child.kill("SIGKILL");
     };
+    const cancel = (): void => {
+      cancelled = true;
+      killProcessGroup();
+    };
+    request.signal?.addEventListener("abort", cancel, { once: true });
+    if (request.signal?.aborted) cancel();
     const stopForOutputLimit = (chunk: Buffer, target: Buffer[]): void => {
       if (outputLimitExceeded) return;
       const remaining = Math.max(0, request.maxOutputBytes - outputBytes);
@@ -149,6 +161,8 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
     child.stderr.on("data", (chunk: Buffer) =>
       stopForOutputLimit(chunk, stderr),
     );
+    child.stdin.on("error", () => undefined);
+    child.stdin.end(request.stdin ?? "");
     const timeout = setTimeout(() => {
       timedOut = true;
       killProcessGroup();
@@ -156,16 +170,19 @@ export const runBoundedProcess: BoundedProcessRunner = async (request) =>
     timeout.unref();
     child.once("error", (error) => {
       clearTimeout(timeout);
+      request.signal?.removeEventListener("abort", cancel);
       reject(error);
     });
     child.once("close", (exitCode) => {
       clearTimeout(timeout);
+      request.signal?.removeEventListener("abort", cancel);
       resolve({
         exitCode,
         stdout: Buffer.concat(stdout).toString("utf8"),
         stderr: Buffer.concat(stderr).toString("utf8"),
         timedOut,
         outputLimitExceeded,
+        cancelled,
       });
     });
   });
@@ -175,7 +192,10 @@ export function createNativeToolchainProbe(
 ): () => Promise<ToolchainReadiness> {
   return async () => {
     try {
-      const result = await dependencies.execute("clang++", ["--version"]);
+      const result = await dependencies.execute(
+        dependencies.compiler ?? "clang++",
+        ["--version"],
+      );
       const compiler = result.stdout.split(/\r?\n/, 1)[0]?.trim();
       if (result.exitCode !== 0 || !compiler) {
         return {
@@ -201,6 +221,7 @@ export interface JudgeExecutionRequest {
     readonly digest: string;
     readonly files: Readonly<Record<string, string>>;
   };
+  readonly signal?: AbortSignal;
 }
 
 export interface Judge {
@@ -212,6 +233,7 @@ export interface NativeJudgeDependencies {
   readonly clock?: () => Date;
   readonly monotonicClock?: () => number;
   readonly compiler?: string;
+  readonly compilerFingerprint?: string;
   readonly maxOutputBytes?: number;
 }
 
@@ -227,10 +249,15 @@ function isSafeSnapshotPath(path: string): boolean {
 }
 
 function reportStage(
-  kind: "compile" | "test",
+  kind: JudgeReportStage["kind"],
   outcome: "pass" | "fail" | "system_error",
   durationMs: number,
   result?: ProcessResult,
+  details: {
+    readonly testName?: string;
+    readonly feedback?: string;
+    readonly diagnostics?: readonly JudgeDiagnostic[];
+  } = {},
 ): JudgeReportStage {
   return {
     kind,
@@ -238,7 +265,38 @@ function reportStage(
     durationMs: Math.max(0, durationMs),
     ...(result?.stdout ? { stdout: result.stdout } : {}),
     ...(result?.stderr ? { stderr: result.stderr } : {}),
+    ...(details.testName ? { testName: details.testName } : {}),
+    ...(details.feedback ? { feedback: details.feedback } : {}),
+    ...(details.diagnostics && details.diagnostics.length > 0
+      ? { diagnostics: details.diagnostics }
+      : {}),
   };
+}
+
+function compilerDiagnostics(stderr: string): readonly JudgeDiagnostic[] {
+  return stderr.split(/\r?\n/).flatMap((line) => {
+    const match =
+      /^(.+):(\d+):(\d+):\s+(?:fatal\s+)?(?:error|warning):\s+(.+)$/.exec(line);
+    if (!match) return [];
+    return [
+      {
+        category: "compiler" as const,
+        file: match[1] ?? "",
+        line: Number(match[2]),
+        column: Number(match[3]),
+        message: match[4] ?? line,
+      },
+    ];
+  });
+}
+
+function sanitizerDiagnostics(stderr: string): readonly JudgeDiagnostic[] {
+  const message = stderr
+    .split(/\r?\n/)
+    .find(
+      (line) => line.includes("Sanitizer") || line.includes("runtime error:"),
+    );
+  return message ? [{ category: "sanitizer", message }] : [];
 }
 
 export function createNativeJudge(
@@ -248,13 +306,15 @@ export function createNativeJudge(
   const clock = dependencies.clock ?? (() => new Date());
   const monotonicClock = dependencies.monotonicClock ?? (() => Date.now());
   const compiler = dependencies.compiler ?? "/usr/bin/clang++";
+  const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
   const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
 
   return {
     async execute(request) {
       const startedAt = clock().toISOString();
       const stages: JudgeReportStage[] = [];
-      let verdict: JudgeReport["verdict"] = "judge_system_error";
+      let verdict: JudgeReport["verdict"];
+      let activeStageKind: JudgeReportStage["kind"] = "compile";
       let executionRoot: string | undefined;
       try {
         if (
@@ -285,6 +345,9 @@ export function createNativeJudge(
           LC_ALL: "C",
           TMPDIR: executionRoot,
         };
+        const cancellation = request.signal
+          ? { signal: request.signal }
+          : ({} as const);
         const compileStarted = monotonicClock();
         const compile = await run({
           executable: compiler,
@@ -301,52 +364,247 @@ export function createNativeJudge(
           timeoutMs: request.spec.timeoutMs,
           maxOutputBytes,
           environment,
+          ...cancellation,
         });
         const compileDuration = monotonicClock() - compileStarted;
-        if (compile.outputLimitExceeded) {
+        if (compile.cancelled) {
+          stages.push(reportStage("compile", "fail", compileDuration, compile));
+          verdict = "cancelled";
+        } else if (compile.outputLimitExceeded) {
           stages.push(reportStage("compile", "fail", compileDuration, compile));
           verdict = "output_limit";
         } else if (compile.timedOut) {
           stages.push(reportStage("compile", "fail", compileDuration, compile));
           verdict = "timeout";
         } else if (compile.exitCode !== 0) {
-          stages.push(reportStage("compile", "fail", compileDuration, compile));
+          stages.push(
+            reportStage("compile", "fail", compileDuration, compile, {
+              diagnostics: compilerDiagnostics(compile.stderr),
+            }),
+          );
           verdict = "compile_error";
         } else {
           stages.push(reportStage("compile", "pass", compileDuration, compile));
-          const testStarted = monotonicClock();
-          const test = await run({
-            executable: executablePath,
-            args: [],
-            cwd: executionRoot,
-            timeoutMs: request.spec.timeoutMs,
-            maxOutputBytes,
-            environment,
-          });
-          const testDuration = monotonicClock() - testStarted;
-          if (test.outputLimitExceeded) {
-            stages.push(reportStage("test", "fail", testDuration, test));
-            verdict = "output_limit";
-          } else if (test.timedOut) {
-            stages.push(reportStage("test", "fail", testDuration, test));
-            verdict = "timeout";
-          } else if (test.exitCode !== 0) {
-            stages.push(reportStage("test", "fail", testDuration, test));
-            verdict = "runtime_error";
-          } else if (test.stdout !== request.spec.expectedStdout) {
-            stages.push(reportStage("test", "fail", testDuration, test));
-            verdict = "public_failure";
-          } else {
-            stages.push(reportStage("test", "pass", testDuration, test));
-            verdict = "automated_pass";
+          const publicTests = request.spec.publicTests ?? [
+            {
+              name: "expected output",
+              stdin: "",
+              expectedStdout: request.spec.expectedStdout,
+            },
+          ];
+          verdict = "automated_pass";
+          for (const publicTest of publicTests) {
+            const kind = request.spec.publicTests ? "public_test" : "test";
+            activeStageKind = kind;
+            const testStarted = monotonicClock();
+            const test = await run({
+              executable: executablePath,
+              args: [],
+              cwd: executionRoot,
+              timeoutMs: request.spec.timeoutMs,
+              maxOutputBytes,
+              environment,
+              stdin: publicTest.stdin,
+              ...cancellation,
+            });
+            const testDuration = monotonicClock() - testStarted;
+            const details = request.spec.publicTests
+              ? { testName: publicTest.name }
+              : {};
+            if (test.cancelled) {
+              stages.push(
+                reportStage(kind, "fail", testDuration, test, details),
+              );
+              verdict = "cancelled";
+            } else if (test.outputLimitExceeded) {
+              stages.push(
+                reportStage(kind, "fail", testDuration, test, details),
+              );
+              verdict = "output_limit";
+            } else if (test.timedOut) {
+              stages.push(
+                reportStage(kind, "fail", testDuration, test, details),
+              );
+              verdict = "timeout";
+            } else if (test.exitCode !== 0) {
+              stages.push(
+                reportStage(kind, "fail", testDuration, test, details),
+              );
+              verdict = "runtime_error";
+            } else if (test.stdout !== publicTest.expectedStdout) {
+              stages.push(
+                reportStage(kind, "fail", testDuration, test, details),
+              );
+              verdict = "public_failure";
+            } else {
+              stages.push(
+                reportStage(kind, "pass", testDuration, test, details),
+              );
+            }
+            if (verdict !== "automated_pass") break;
+          }
+
+          if (
+            verdict === "automated_pass" &&
+            request.mode === "grade" &&
+            request.spec.privateTests
+          ) {
+            for (const privateTest of request.spec.privateTests) {
+              activeStageKind = "private_test";
+              const testStarted = monotonicClock();
+              const test = await run({
+                executable: executablePath,
+                args: [],
+                cwd: executionRoot,
+                timeoutMs: request.spec.timeoutMs,
+                maxOutputBytes,
+                environment,
+                stdin: privateTest.stdin,
+                ...cancellation,
+              });
+              const testDuration = monotonicClock() - testStarted;
+              const passed =
+                !test.cancelled &&
+                !test.outputLimitExceeded &&
+                !test.timedOut &&
+                test.exitCode === 0 &&
+                test.stdout === privateTest.expectedStdout;
+              stages.push(
+                reportStage(
+                  "private_test",
+                  passed ? "pass" : "fail",
+                  testDuration,
+                  undefined,
+                  {
+                    testName: privateTest.name,
+                    ...(passed
+                      ? {}
+                      : { feedback: privateTest.failureCategory }),
+                  },
+                ),
+              );
+              if (!passed) {
+                verdict = test.cancelled
+                  ? "cancelled"
+                  : test.timedOut
+                    ? "timeout"
+                    : test.outputLimitExceeded
+                      ? "output_limit"
+                      : "private_failure";
+                break;
+              }
+            }
+          }
+
+          if (
+            verdict === "automated_pass" &&
+            request.mode === "grade" &&
+            request.spec.sanitizers
+          ) {
+            for (const sanitizer of request.spec.sanitizers) {
+              const kind = sanitizer === "address" ? "asan" : "ubsan";
+              activeStageKind = kind;
+              const sanitizerStarted = monotonicClock();
+              const sanitizerExecutable = join(
+                executionRoot,
+                `program-${sanitizer}`,
+              );
+              const sanitizerCompile = await run({
+                executable: compiler,
+                args: [
+                  "-std=c++20",
+                  "-Wall",
+                  "-Wextra",
+                  "-Wpedantic",
+                  `-fsanitize=${sanitizer}`,
+                  "-fno-omit-frame-pointer",
+                  ...sources,
+                  "-o",
+                  sanitizerExecutable,
+                ],
+                cwd: executionRoot,
+                timeoutMs: request.spec.timeoutMs,
+                maxOutputBytes,
+                environment,
+                ...cancellation,
+              });
+              if (sanitizerCompile.cancelled) {
+                stages.push(
+                  reportStage(
+                    kind,
+                    "fail",
+                    monotonicClock() - sanitizerStarted,
+                    sanitizerCompile,
+                  ),
+                );
+                verdict = "cancelled";
+                break;
+              }
+              if (
+                sanitizerCompile.exitCode !== 0 ||
+                sanitizerCompile.timedOut ||
+                sanitizerCompile.outputLimitExceeded
+              ) {
+                stages.push(
+                  reportStage(
+                    kind,
+                    "system_error",
+                    monotonicClock() - sanitizerStarted,
+                    sanitizerCompile,
+                    {
+                      diagnostics: compilerDiagnostics(sanitizerCompile.stderr),
+                    },
+                  ),
+                );
+                verdict = "judge_system_error";
+                break;
+              }
+              const sanitizerTest = await run({
+                executable: sanitizerExecutable,
+                args: [],
+                cwd: executionRoot,
+                timeoutMs: request.spec.timeoutMs,
+                maxOutputBytes,
+                environment,
+                stdin: publicTests[0]?.stdin ?? "",
+                ...cancellation,
+              });
+              const diagnostics = sanitizerDiagnostics(sanitizerTest.stderr);
+              const passed =
+                !sanitizerTest.cancelled &&
+                !sanitizerTest.timedOut &&
+                !sanitizerTest.outputLimitExceeded &&
+                sanitizerTest.exitCode === 0 &&
+                diagnostics.length === 0;
+              stages.push(
+                reportStage(
+                  kind,
+                  passed ? "pass" : "fail",
+                  monotonicClock() - sanitizerStarted,
+                  sanitizerTest,
+                  { diagnostics },
+                ),
+              );
+              if (!passed) {
+                verdict = sanitizerTest.cancelled
+                  ? "cancelled"
+                  : sanitizerTest.timedOut
+                    ? "timeout"
+                    : sanitizerTest.outputLimitExceeded
+                      ? "output_limit"
+                      : "sanitizer_failure";
+                break;
+              }
+            }
           }
         }
-      } catch (error) {
+      } catch {
+        verdict = "judge_system_error";
         stages.push(
-          reportStage("compile", "system_error", 0, {
+          reportStage(activeStageKind, "system_error", 0, {
             exitCode: null,
             stdout: "",
-            stderr: error instanceof Error ? error.message : "Judge failed",
+            stderr: "Judge worker failed",
           }),
         );
       } finally {
@@ -369,7 +627,8 @@ export function createNativeJudge(
           snapshotId: request.snapshot.id,
           digest: request.snapshot.digest,
         },
-        toolchain: { compiler, standard: "c++20" },
+        toolchain: { compiler: compilerFingerprint, standard: "c++20" },
+        buildFlags: ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic"],
         verdict,
         stages,
         startedAt,

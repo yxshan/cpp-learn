@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -53,6 +53,8 @@ Acceptance:
 - Playwright covers the complete path.
 
 ## 4. Stage 2: Reliable Judge and records
+
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 2 Implementation Report](15-STAGE-2-IMPLEMENTATION-REPORT.md).
 
 Deliver:
 

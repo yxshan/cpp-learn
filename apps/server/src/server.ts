@@ -1,12 +1,25 @@
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifyStatic from "@fastify/static";
 
 import type { LearningPlatform } from "@cpp-learn/contracts";
 
+const MAX_ARCHIVE_REQUEST_BYTES = 64 * 1024 * 1024;
+
 export interface ServerDependencies {
   readonly platform: LearningPlatform;
   readonly logger?: boolean;
   readonly webRoot?: string;
+  readonly archive?: {
+    exportTo(outputPath: string): Promise<unknown>;
+    restoreFrom(inputPath: string): Promise<{
+      readonly schemaVersion: 1;
+      readonly restoredFiles: number;
+    }>;
+  };
 }
 
 interface SaveWorkspaceBody {
@@ -28,6 +41,18 @@ function isExecuteActivityBody(value: unknown): value is ExecuteActivityBody {
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
   return body["schemaVersion"] === 1 && typeof body["commandId"] === "string";
+}
+
+function isRestoreBody(value: unknown): value is ExecuteActivityBody & {
+  readonly confirm: true;
+  readonly archive: unknown;
+} {
+  return (
+    isExecuteActivityBody(value) &&
+    "confirm" in value &&
+    value.confirm === true &&
+    "archive" in value
+  );
 }
 
 function isAllowedMutationOrigin(origin: string | undefined): boolean {
@@ -182,6 +207,32 @@ export function createServer(
     "activity.grade",
   );
 
+  server.post<{ Params: { jobId: string }; Body: unknown }>(
+    "/api/v1/jobs/:jobId/cancellations",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      if (!isExecuteActivityBody(request.body)) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: {
+            code: "validation_error",
+            message: "Invalid cancellation request",
+          },
+        });
+      }
+      return dependencies.platform.dispatch({
+        type: "job.cancel",
+        commandId: request.body.commandId,
+        jobId: request.params.jobId,
+      });
+    },
+  );
+
   server.get<{ Params: { jobId: string } }>(
     "/api/v1/jobs/:jobId",
     async (request, reply) => {
@@ -193,6 +244,90 @@ export function createServer(
       return result;
     },
   );
+
+  if (dependencies.archive) {
+    server.post<{ Body: unknown }>(
+      "/api/v1/exports",
+      async (request, reply) => {
+        if (!isAllowedMutationOrigin(request.headers.origin)) {
+          return reply.code(403).send({
+            schemaVersion: 1,
+            error: {
+              code: "origin_rejected",
+              message: "Origin is not loopback",
+            },
+          });
+        }
+        if (!isExecuteActivityBody(request.body)) {
+          return reply.code(400).send({
+            schemaVersion: 1,
+            error: {
+              code: "validation_error",
+              message: "Invalid export request",
+            },
+          });
+        }
+        const temporaryRoot = await mkdtemp(
+          join(tmpdir(), "cpp-learn-export-"),
+        );
+        try {
+          const outputPath = join(temporaryRoot, "cpp-learn-backup.json");
+          await dependencies.archive?.exportTo(outputPath);
+          const document = JSON.parse(
+            await readFile(outputPath, "utf8"),
+          ) as unknown;
+          return reply
+            .header(
+              "content-disposition",
+              'attachment; filename="cpp-learn-backup.json"',
+            )
+            .send(document);
+        } finally {
+          await rm(temporaryRoot, { recursive: true, force: true });
+        }
+      },
+    );
+
+    server.post<{ Body: unknown }>(
+      "/api/v1/restores",
+      { bodyLimit: MAX_ARCHIVE_REQUEST_BYTES },
+      async (request, reply) => {
+        if (!isAllowedMutationOrigin(request.headers.origin)) {
+          return reply.code(403).send({
+            schemaVersion: 1,
+            error: {
+              code: "origin_rejected",
+              message: "Origin is not loopback",
+            },
+          });
+        }
+        if (!isRestoreBody(request.body)) {
+          return reply.code(400).send({
+            schemaVersion: 1,
+            error: {
+              code: "validation_error",
+              message: "Restore requires an archive and explicit confirmation",
+            },
+          });
+        }
+        const temporaryRoot = await mkdtemp(
+          join(tmpdir(), "cpp-learn-restore-"),
+        );
+        try {
+          const inputPath = join(temporaryRoot, "cpp-learn-backup.json");
+          await writeFile(
+            inputPath,
+            `${JSON.stringify(request.body.archive)}\n`,
+            "utf8",
+          );
+          const result = await dependencies.archive?.restoreFrom(inputPath);
+          return { ...result, restartRequired: true };
+        } finally {
+          await rm(temporaryRoot, { recursive: true, force: true });
+        }
+      },
+    );
+  }
 
   server.get<{ Params: { jobId: string } }>(
     "/api/v1/jobs/:jobId/events",

@@ -188,6 +188,54 @@ describe("[T-CLI-001] status and check", () => {
   });
 });
 
+describe("[T-DATA-001] CLI export and restore", () => {
+  it("requires explicit paths and delegates local backup operations", async () => {
+    const archive = {
+      exportTo: vi.fn().mockResolvedValue({
+        schemaVersion: 1,
+        createdAt: "2026-08-23T10:00:00.000Z",
+        fileCount: 3,
+      }),
+      restoreFrom: vi
+        .fn()
+        .mockResolvedValue({ schemaVersion: 1, restoredFiles: 3 }),
+    };
+    const platform = {
+      query: vi.fn(),
+      dispatch: vi.fn(),
+      async *events() {},
+    } as unknown as LearningPlatform;
+    const stdout = vi.fn();
+
+    await expect(
+      runCli({
+        argv: ["export", "--output", "/tmp/cpp-learn-backup.json", "--json"],
+        platform,
+        archive,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+    await expect(
+      runCli({
+        argv: ["restore", "--input", "/tmp/cpp-learn-backup.json", "--json"],
+        platform,
+        archive,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+
+    expect(archive.exportTo).toHaveBeenCalledWith("/tmp/cpp-learn-backup.json");
+    expect(archive.restoreFrom).toHaveBeenCalledWith(
+      "/tmp/cpp-learn-backup.json",
+    );
+    expect(stdout).toHaveBeenCalledWith(
+      `${JSON.stringify({ schemaVersion: 1, restoredFiles: 3 })}\n`,
+    );
+  });
+});
+
 describe("[T-CONTRACT-001] Web/CLI Judge equivalence", () => {
   it("returns the same verdict for the same immutable Source Snapshot", async () => {
     const attempts: AttemptCompletedEvent[] = [];

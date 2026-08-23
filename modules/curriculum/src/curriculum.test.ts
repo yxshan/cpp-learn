@@ -80,4 +80,29 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
       ],
     });
   });
+
+  it("rejects private-test feedback that copies hidden input or expected output", () => {
+    const candidate = activity("private-leak", []);
+    const result = validateCatalog([
+      {
+        ...candidate,
+        judge: {
+          ...candidate.judge,
+          privateTests: [
+            {
+              name: "hidden case",
+              stdin: "secret-input-value\n",
+              expectedStdout: "secret-output-value\n",
+              failureCategory: "Failed for secret-input-value",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: [expect.objectContaining({ keyword: "privacy" })],
+    });
+  });
 });

@@ -20,7 +20,23 @@
   "judge": {
     "version": 1,
     "expectedStdout": "Hello, C++!\n",
-    "timeoutMs": 2000
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "prints the greeting",
+        "stdin": "",
+        "expectedStdout": "Hello, C++!\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "stable execution",
+        "stdin": "",
+        "expectedStdout": "Hello, C++!\n",
+        "failureCategory": "program output is not stable"
+      }
+    ],
+    "sanitizers": ["address", "undefined"]
   },
   "evidencePolicy": {
     "automatedPass": true

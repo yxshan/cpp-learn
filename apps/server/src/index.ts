@@ -1,6 +1,9 @@
 import { fileURLToPath } from "node:url";
 
-import { createProductionPlatform } from "./composition.js";
+import {
+  createProductionDataArchive,
+  createProductionPlatform,
+} from "./composition.js";
 import { resolveServerAddress } from "./config.js";
 import { createServer } from "./server.js";
 
@@ -10,6 +13,7 @@ const { host, port } = resolveServerAddress(process.env);
 
 const server = createServer({
   platform: await createProductionPlatform(),
+  archive: createProductionDataArchive(),
   logger: true,
   webRoot,
 });

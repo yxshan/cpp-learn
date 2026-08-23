@@ -718,6 +718,37 @@ footer {
 .secondary-button {
   padding: 9px 14px;
 }
+.danger-button {
+  padding: 9px 14px;
+  border: 1px solid #7c2d3a;
+  border-radius: 7px;
+  color: #ffb4bf;
+  background: #2a1119;
+  cursor: pointer;
+}
+.data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 18px;
+}
+.data-actions > span {
+  width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+}
+.file-button {
+  display: inline-flex;
+  cursor: pointer;
+}
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
 .workspace-topbar button:disabled {
   opacity: 0.45;
   cursor: wait;
@@ -728,6 +759,24 @@ footer {
   grid-template-columns: minmax(300px, 0.72fr) minmax(520px, 1.28fr);
   gap: 18px;
   align-items: start;
+}
+.file-tabs {
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+}
+.file-tabs button {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 5px;
+  color: #77879b;
+  background: transparent;
+  font: 11px var(--mono);
+  cursor: pointer;
+}
+.file-tabs button.active {
+  color: #d9e4f2;
+  background: #192638;
 }
 .lesson-panel,
 .coding-panel {

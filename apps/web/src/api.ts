@@ -4,6 +4,7 @@ import {
   type ActivityResult,
   type BootstrapResult,
   type DashboardResult,
+  type JobCancelCommandResult,
   type WorkspaceResult,
   type WorkspaceSaveCommandResult,
 } from "@cpp-learn/contracts";
@@ -114,12 +115,73 @@ export async function executeActivity(
   );
 }
 
+export async function cancelJob(
+  jobId: string,
+  commandId: string,
+  request: Request = fetch,
+): Promise<JobCancelCommandResult> {
+  return requestJson(
+    `/api/v1/jobs/${encodeURIComponent(jobId)}/cancellations`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ schemaVersion: 1, commandId }),
+    },
+    request,
+  );
+}
+
 export async function getDashboard(
   request: Request = fetch,
 ): Promise<DashboardResult> {
   return requestJson(
     "/api/v1/dashboard",
     { headers: { accept: "application/json" } },
+    request,
+  );
+}
+
+export async function exportBackup(
+  commandId: string,
+  request: Request = fetch,
+): Promise<unknown> {
+  return requestJson(
+    "/api/v1/exports",
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ schemaVersion: 1, commandId }),
+    },
+    request,
+  );
+}
+
+export async function restoreBackup(
+  archive: unknown,
+  commandId: string,
+  request: Request = fetch,
+): Promise<{ readonly schemaVersion: 1; readonly restoredFiles: number }> {
+  return requestJson(
+    "/api/v1/restores",
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        schemaVersion: 1,
+        commandId,
+        confirm: true,
+        archive,
+      }),
+    },
     request,
   );
 }

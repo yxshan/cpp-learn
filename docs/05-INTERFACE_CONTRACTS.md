@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -76,24 +76,36 @@ Conflict response uses HTTP `409` and returns the latest revision without overwr
 ```text
 POST /api/v1/activities/:activityId/runs
 POST /api/v1/activities/:activityId/grades
-POST /api/v1/jobs/:jobId/cancel
+POST /api/v1/jobs/:jobId/cancellations
 GET  /api/v1/jobs/:jobId
 GET  /api/v1/jobs/:jobId/events
 ```
 
 Run request may include stdin and runtime arguments allowed by the Activity contract. Grade request contains no hidden-test selection.
 
-Grade accepted response:
+Current local Grade response:
 
 ```json
 {
   "schemaVersion": 1,
   "jobId": "job_...",
   "snapshotId": "snap_...",
-  "status": "queued",
-  "eventsUrl": "/api/v1/jobs/job_.../events"
+  "status": "completed",
+  "report": { "verdict": "automated_pass", "stages": [] }
 }
 ```
+
+The current local adapter completes the request before returning the final report. The deterministic Job ID is `job_${commandId}`, so the Web adapter can issue a cancellation while the execution request remains in flight.
+
+### Local data operations
+
+```text
+POST /api/v1/exports
+POST /api/v1/restores
+```
+
+Both routes reject non-loopback Origins. Restore requires `confirm: true`, validates every path and checksum before mutation, activates staged data roots, retains the prior roots for recovery, and reports that the local service must be restarted.
+Archive request bodies have an explicit 64 MiB local safety limit; larger restores use the CLI adapter.
 
 ### Hints, reflections, and progress
 
@@ -148,18 +160,17 @@ interface JudgeReport {
   activity: { id: string; version: number; judgeVersion: number };
   source: { snapshotId: string; digest: string };
   toolchain: ToolchainFingerprint;
+  buildFlags: string[];
   verdict:
     | "compile_error"
-    | "contract_failure"
+    | "runtime_error"
     | "public_failure"
-    | "hidden_property_failure"
     | "timeout"
     | "output_limit"
-    | "memory_safety_failure"
-    | "data_race_suspected"
-    | "performance_failure"
+    | "private_failure"
+    | "sanitizer_failure"
+    | "cancelled"
     | "automated_pass"
-    | "pending_teacher_review"
     | "judge_system_error";
   stages: JudgeStageResult[];
   startedAt: string;
@@ -199,7 +210,8 @@ cpplearn next [--minutes N] [--json]
 cpplearn check [--activity ID] [--json]
 cpplearn status [--due] [--json]
 cpplearn doctor [--json]
-cpplearn export --output PATH
+cpplearn export --output PATH [--json]
+cpplearn restore --input PATH [--json]
 ```
 
 Exit codes:
@@ -218,4 +230,3 @@ Exit codes:
 - CLI JSON output is compared with direct Learning Platform results.
 - SSE replay and final-report fallback are contract-tested.
 - Old event fixtures are loaded in migration tests before a release.
-

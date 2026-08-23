@@ -81,7 +81,21 @@
       "properties": {
         "version": { "type": "integer", "minimum": 1 },
         "expectedStdout": { "type": "string", "maxLength": 65536 },
-        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 10000 }
+        "timeoutMs": { "type": "integer", "minimum": 100, "maximum": 10000 },
+        "publicTests": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/publicTest" }
+        },
+        "privateTests": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/privateTest" }
+        },
+        "sanitizers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["address", "undefined"] }
+        }
       }
     },
     "evidencePolicy": {
@@ -90,6 +104,33 @@
       "required": ["automatedPass"],
       "properties": {
         "automatedPass": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "publicTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "stdin", "expectedStdout"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "stdin": { "type": "string", "maxLength": 65536 },
+        "expectedStdout": { "type": "string", "maxLength": 65536 }
+      }
+    },
+    "privateTest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "stdin", "expectedStdout", "failureCategory"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "stdin": { "type": "string", "maxLength": 65536 },
+        "expectedStdout": { "type": "string", "maxLength": 65536 },
+        "failureCategory": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
       }
     }
   }
