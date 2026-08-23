@@ -1,0 +1,12 @@
+{
+  "name": "@cpp-learn/curriculum",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@cpp-learn/content-schema": "*",
+    "@cpp-learn/contracts": "*"
+  }
+}
+

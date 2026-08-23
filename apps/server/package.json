@@ -1,0 +1,22 @@
+{
+  "name": "@cpp-learn/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/server.ts",
+    "./composition": "./src/composition.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@cpp-learn/contracts": "*",
+    "@cpp-learn/curriculum": "*",
+    "@cpp-learn/judge": "*",
+    "@cpp-learn/learning-record": "*",
+    "@cpp-learn/learning-platform": "*",
+    "fastify": "5.12.1"
+  }
+}

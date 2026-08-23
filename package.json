@@ -1,0 +1,40 @@
+{
+  "name": "cpp-learn",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "modules/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run typecheck && npm --workspace @cpp-learn/web run build",
+    "dev": "npm --workspace @cpp-learn/server run dev",
+    "dev:web": "npm --workspace @cpp-learn/web run dev",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:docs": "node scripts/check-docs.mjs",
+    "check": "npm run check:docs && npm run lint && npm run typecheck && npm test && npm run build",
+    "cpplearn": "tsx apps/cli/src/index.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.2.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.1.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "eslint": "10.9.0",
+    "tsx": "4.23.12",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.67.0",
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
+  }
+}

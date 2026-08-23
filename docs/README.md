@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -28,7 +28,8 @@ Read in this order:
 10. [Development and Operations Guide](10-DEVELOPMENT_AND_OPERATIONS_GUIDE.md)
 11. [Roadmap and Acceptance Plan](11-ROADMAP_AND_ACCEPTANCE_PLAN.md)
 12. [Requirements Traceability Matrix](12-REQUIREMENTS_TRACEABILITY_MATRIX.md)
-13. [Domain Context](CONTEXT.md)
+13. [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md)
+14. [Domain Context](CONTEXT.md)
 
 ## Architecture decisions
 
@@ -54,4 +55,3 @@ If an archived statement conflicts with a current baseline document or accepted 
 - Hard-to-reverse architecture changes require an ADR.
 - Interface changes require versioning and corresponding contract-test updates.
 - Dates use `YYYY-MM-DD`; identifiers remain stable after publication.
-

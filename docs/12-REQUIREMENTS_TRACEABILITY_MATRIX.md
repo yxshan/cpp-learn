@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -66,4 +66,16 @@ This matrix links every SRS requirement group to design ownership, planned verif
 ## 5. Maintenance rule
 
 No requirement is accepted until its planned verification has an executable test or an approved manual evidence record. A requirement change must update this matrix in the same change set.
+
+## 6. Executable Stage 0 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-CONTRACT-001 | Web, HTTP, and CLI Adapter contract tests under `apps/*/src/*.test.ts` | Passed |
+| T-CONTENT-001 | `modules/curriculum/src/curriculum.test.ts` | Passed |
+| T-SEC-001 | `modules/workspace/src/workspace.test.ts` | Passed for Stage 0 path scope |
+| T-COMPAT-001 | `modules/judge/src/judge.test.ts` and `cpplearn doctor` smoke evidence | Passed on reference macOS environment |
+| T-MODULE-001 | Learning Platform and Learning Record Interface tests under `modules/*/src/*.test.ts` | Passed |
+
+See the [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md) for the complete gate output and explicitly deferred coverage.
 

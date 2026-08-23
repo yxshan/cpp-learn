@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "source-to-program",
+  "version": 1,
+  "kind": "lesson",
+  "title": "从源代码到可执行程序",
+  "estimatedMinutes": 35,
+  "conceptIds": [
+    "compile-link-run",
+    "cpp-program-structure"
+  ],
+  "prerequisiteIds": [],
+  "content": {
+    "format": "markdown",
+    "path": "activities/source-to-program/lesson.md"
+  },
+  "evidencePolicy": {
+    "automatedPass": false
+  }
+}
+

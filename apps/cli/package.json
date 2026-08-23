@@ -1,0 +1,11 @@
+{
+  "name": "@cpp-learn/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cpp-learn/contracts": "*",
+    "@cpp-learn/learning-platform": "*",
+    "@cpp-learn/server": "*"
+  }
+}

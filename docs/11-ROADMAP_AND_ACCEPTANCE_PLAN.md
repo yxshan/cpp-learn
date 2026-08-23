@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -13,6 +13,8 @@
 Delivery is capability-gated, not calendar-gated. A stage is complete only when its acceptance evidence is reproducible on the reference environment and linked in the traceability matrix.
 
 ## 2. Stage 0: Engineering baseline
+
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md).
 
 Deliver:
 
