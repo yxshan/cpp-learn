@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -33,21 +33,19 @@ npm run test:e2e
 ./cpplearn doctor
 ```
 
-Until implementation exists, these commands are normative targets rather than current executable commands.
+These commands are executable. `npm run test:e2e` starts loopback API and Vite services for the controlled Chromium flow.
 
 ## 3. Local startup
 
-`./cpplearn serve` shall:
+After `npm run build`, `./cpplearn serve`:
 
-1. Resolve configuration and data roots.
-2. Acquire the single-writer lock.
-3. Validate/recover the event log.
-4. Validate content and activate the catalog.
-5. Check required toolchain capabilities.
-6. Start the HTTP Adapter on loopback.
-7. Open or print the local Web URL.
+1. Resolves the current local data and Workspace roots.
+2. Initializes the append-only JSONL event log.
+3. Validates content and activates the catalog.
+4. Starts the HTTP API and built Web assets on `127.0.0.1:4173`.
+5. Prints the local Web URL.
 
-Startup shall fail safely if the event log is not recoverable or required content is invalid.
+Startup fails safely if required content, built Web assets, or the event log cannot be read. Single-writer locking and interrupted-tail recovery remain Stage 2 work.
 
 ## 4. Configuration
 
@@ -139,4 +137,3 @@ Rebuild never modifies the source event log.
 - Keep archived proposals unchanged except for archive metadata.
 - Add ADRs only for hard-to-reverse, surprising trade-offs.
 - Run link, identifier, and traceability checks before release.
-

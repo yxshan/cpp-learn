@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -32,6 +32,8 @@ Acceptance:
 - Documentation and ADR index are current.
 
 ## 3. Stage 1: Web vertical slice
+
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md).
 
 Deliver:
 

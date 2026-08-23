@@ -1,23 +1,44 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
-import type { BootstrapResult } from "@cpp-learn/contracts";
+import type { BootstrapResult, DashboardResult } from "@cpp-learn/contracts";
 
-import { getBootstrap } from "./api.js";
+import { getBootstrap, getDashboard } from "./api.js";
 
-type LoadState =
-  | { readonly status: "loading" }
-  | { readonly status: "ready"; readonly data: BootstrapResult }
-  | { readonly status: "error"; readonly message: string };
+const LessonWorkspace = lazy(async () => {
+  const module = await import("./LessonWorkspace.js");
+  return { default: module.LessonWorkspace };
+});
 
-interface StatusCardProps {
+function BrandMark() {
+  return (
+    <span className="brand-mark" aria-hidden="true">
+      <span>&lt;</span>
+      <span className="brand-plus">++</span>
+      <span>/&gt;</span>
+    </span>
+  );
+}
+
+function StatusCard({
+  eyebrow,
+  title,
+  detail,
+  ready,
+  icon,
+}: {
   readonly eyebrow: string;
   readonly title: string;
   readonly detail: string;
   readonly ready: boolean;
   readonly icon: ReactNode;
-}
-
-function StatusCard({ eyebrow, title, detail, ready, icon }: StatusCardProps) {
+}) {
   return (
     <article className="status-card">
       <div className={`status-icon ${ready ? "is-ready" : "needs-attention"}`}>
@@ -35,33 +56,23 @@ function StatusCard({ eyebrow, title, detail, ready, icon }: StatusCardProps) {
   );
 }
 
-function BrandMark() {
-  return (
-    <span className="brand-mark" aria-hidden="true">
-      <span>&lt;</span>
-      <span className="brand-plus">++</span>
-      <span>/&gt;</span>
-    </span>
-  );
-}
-
-function AppIcon({ children }: { readonly children: ReactNode }) {
-  return <span aria-hidden="true">{children}</span>;
-}
-
 export function App() {
-  const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [bootstrap, setBootstrap] = useState<BootstrapResult>();
+  const [dashboard, setDashboard] = useState<DashboardResult>();
+  const [error, setError] = useState<string>();
+  const [showWorkspace, setShowWorkspace] = useState(false);
 
   const refresh = useCallback(async () => {
-    setState({ status: "loading" });
     try {
-      setState({ status: "ready", data: await getBootstrap() });
-    } catch (error) {
-      setState({
-        status: "error",
-        message:
-          error instanceof Error ? error.message : "无法连接本地学习服务",
-      });
+      const [nextBootstrap, nextDashboard] = await Promise.all([
+        getBootstrap(),
+        getDashboard(),
+      ]);
+      setBootstrap(nextBootstrap);
+      setDashboard(nextDashboard);
+      setError(undefined);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "无法连接本地学习服务");
     }
   }, []);
 
@@ -69,7 +80,26 @@ export function App() {
     void refresh();
   }, [refresh]);
 
-  const data = state.status === "ready" ? state.data : undefined;
+  if (showWorkspace) {
+    return (
+      <Suspense
+        fallback={
+          <div className="workspace-loading">正在加载本地代码编辑器…</div>
+        }
+      >
+        <LessonWorkspace
+          onBack={() => setShowWorkspace(false)}
+          onEvidenceChanged={async () => {
+            setDashboard(await getDashboard());
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  const practiced = Object.values(dashboard?.conceptStates ?? {}).filter(
+    (state) => state === "practiced",
+  ).length;
 
   return (
     <div className="app-shell">
@@ -81,35 +111,26 @@ export function App() {
             <span>Engineering Track</span>
           </div>
         </div>
-
         <nav aria-label="主导航">
           <p className="nav-label">学习空间</p>
           <a className="nav-item active" href="#overview">
-            <AppIcon>⌁</AppIcon>总览
+            <span>⌁</span>总览
           </a>
-          <a className="nav-item" href="#current">
-            <AppIcon>▶</AppIcon>当前课程
-          </a>
-          <a className="nav-item" href="#principles">
-            <AppIcon>◇</AppIcon>设计边界
-          </a>
-          <button className="nav-item" disabled>
-            <AppIcon>↻</AppIcon>复习队列<span className="nav-badge">稍后</span>
+          <button className="nav-item" onClick={() => setShowWorkspace(true)}>
+            <span>▶</span>当前课程
           </button>
-          <p className="nav-label secondary">工具</p>
           <a className="nav-item" href="#environment">
-            <AppIcon>⌘</AppIcon>开发环境
+            <span>⌘</span>开发环境
           </a>
           <a className="nav-item" href="#records">
-            <AppIcon>▤</AppIcon>学习记录
+            <span>▤</span>学习记录
           </a>
         </nav>
-
         <div className="sidebar-footer">
           <span className="local-pulse" />
           <div>
             <strong>本地模式</strong>
-            <span>数据保存在此设备</span>
+            <span>代码与记录保存在此设备</span>
           </div>
         </div>
       </aside>
@@ -118,12 +139,14 @@ export function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">学习控制台</p>
-            <h1>早上好，准备构建点什么？</h1>
+            <h1>从第一段 C++ 程序开始</h1>
           </div>
           <div className="topbar-actions">
-            <span className={`overall-status ${data?.ready ? "is-ready" : ""}`}>
+            <span
+              className={`overall-status ${bootstrap?.ready ? "is-ready" : ""}`}
+            >
               <i />
-              {data?.ready ? "环境已就绪" : "正在检查环境"}
+              {bootstrap?.ready ? "环境已就绪" : "正在检查环境"}
             </span>
             <button className="avatar" aria-label="本地学习者">
               L
@@ -133,17 +156,23 @@ export function App() {
 
         <section className="stage-banner" aria-labelledby="stage-title">
           <div className="stage-copy">
-            <span className="stage-chip">STAGE 0 · ENGINEERING BASELINE</span>
-            <h2 id="stage-title">先把地基打稳，再写第一行学习代码。</h2>
+            <span className="stage-chip">STAGE 1 · FIRST LEARNING LOOP</span>
+            <h2 id="stage-title">
+              读懂、修改、运行，再用 Grade 证明你掌握了它。
+            </h2>
             <p>
-              共享核心、Web、CLI、课程校验与本地记录正在组成同一个可靠的学习环境。
+              同一份本地代码会经过 C++20 编译器与公开测试；只有 Grade
+              通过才会形成概念学习证据。
             </p>
             <div className="stage-actions">
-              <button className="primary-button" onClick={() => void refresh()}>
-                {state.status === "loading" ? "正在检测…" : "重新检测环境"}
+              <button
+                className="primary-button"
+                onClick={() => setShowWorkspace(true)}
+              >
+                开始第一课
               </button>
               <span>
-                阶段进度 <strong>1 / 7</strong>
+                阶段进度 <strong>2 / 7</strong>
               </span>
             </div>
           </div>
@@ -161,9 +190,7 @@ export function App() {
                 {"\n\n"}
                 <span className="code-blue">int</span> main() {"{"}
                 {"\n"} std::cout &lt;&lt;{" "}
-                <span className="code-green">"Hello, future."</span>;{"\n"}{" "}
-                <span className="code-purple">return</span>{" "}
-                <span className="code-orange">0</span>;{"\n"}
+                <span className="code-green">"Hello, C++!"</span>;{"\n"}
                 {"}"}
               </code>
             </pre>
@@ -173,10 +200,10 @@ export function App() {
           </div>
         </section>
 
-        {state.status === "error" && (
+        {error && (
           <section className="error-panel" role="alert">
             <strong>本地服务暂时不可用</strong>
-            <span>{state.message}。请先运行 `npm run dev`，然后重试。</span>
+            <span>{error}</span>
             <button onClick={() => void refresh()}>重试</button>
           </section>
         )}
@@ -188,8 +215,8 @@ export function App() {
               <h2>工程环境</h2>
             </div>
             <span className="last-check">
-              {data
-                ? `检测于 ${new Date(data.generatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
+              {bootstrap
+                ? `检测于 ${new Date(bootstrap.generatedAt).toLocaleTimeString("zh-CN")}`
                 : "检测中"}
             </span>
           </div>
@@ -197,106 +224,91 @@ export function App() {
             <StatusCard
               eyebrow="CURRICULUM"
               title="课程目录"
-              detail={
-                data
-                  ? `${data.services.curriculum.activityCount} 个活动已通过结构校验`
-                  : "正在读取课程清单"
-              }
-              ready={data?.services.curriculum.ready ?? false}
-              icon={<AppIcon>01</AppIcon>}
+              detail={`${bootstrap?.services.curriculum.activityCount ?? 0} 个活动已校验`}
+              ready={bootstrap?.services.curriculum.ready ?? false}
+              icon="01"
             />
             <StatusCard
               eyebrow="TOOLCHAIN"
               title="C++20 工具链"
-              detail={data?.services.toolchain.compiler ?? "正在探测 clang++"}
-              ready={data?.services.toolchain.ready ?? false}
-              icon={<AppIcon>++</AppIcon>}
+              detail={
+                bootstrap?.services.toolchain.compiler ?? "正在探测 clang++"
+              }
+              ready={bootstrap?.services.toolchain.ready ?? false}
+              icon="++"
             />
             <StatusCard
               eyebrow="LEARNING RECORD"
               title="本地学习记录"
-              detail="追加式事件日志 · 完全由你拥有"
-              ready={data?.services.record.ready ?? false}
-              icon={<AppIcon>↳</AppIcon>}
+              detail="追加式 JSONL · 可恢复"
+              ready={bootstrap?.services.record.ready ?? false}
+              icon="↳"
             />
           </div>
         </section>
 
-        <section id="current" className="learning-grid section-block">
+        <section id="records" className="learning-grid section-block">
           <article className="current-card">
             <div className="section-heading compact">
               <div>
-                <p className="eyebrow">NEXT INCREMENT</p>
-                <h2>首个学习闭环</h2>
+                <p className="eyebrow">CURRENT ACTIVITY</p>
+                <h2>从源代码到可执行程序</h2>
               </div>
-              <span className="time-pill">STAGE 1</span>
+              <span className="time-pill">35 MIN</span>
             </div>
             <div className="lesson-row">
-              <div className="lesson-number">→</div>
+              <div className="lesson-number">01</div>
               <div className="lesson-copy">
-                <span className="lesson-kind">
-                  {data?.services.curriculum.activityCount ?? 0}{" "}
-                  个课程活动已通过契约
-                </span>
-                <h3>阅读、编辑、运行、判题与记录</h3>
-                <p>
-                  下一阶段将由课程模块提供内容，由工作区和 Judge
-                  组成完整闭环；Web 页面只负责展示平台返回的状态。
-                </p>
+                <span className="lesson-kind">LESSON + WORKSPACE</span>
+                <h3>完成第一个可判定的 C++ 学习闭环</h3>
+                <p>课程、代码编辑、编译运行、客观判题和学习记录已连通。</p>
                 <div className="lesson-tags">
-                  <span>Lesson</span>
-                  <span>Workspace</span>
-                  <span>Judge</span>
+                  <span>Compile</span>
+                  <span>Run</span>
+                  <span>Evidence</span>
                 </div>
               </div>
               <button
-                className="lesson-button"
-                disabled
-                title="Stage 1 将开放课程工作区"
+                className="lesson-button enabled"
+                onClick={() => setShowWorkspace(true)}
               >
-                尚未开放 <span>→</span>
+                进入课程 <span>→</span>
               </button>
             </div>
           </article>
-
-          <article id="principles" className="path-card">
-            <p className="eyebrow">DESIGN BOUNDARIES</p>
-            <h2>平台不会替你假装学会</h2>
-            <div className="path-list">
-              <div className="path-item active">
-                <i>1</i>
-                <div>
-                  <strong>数据归你所有</strong>
-                  <span>默认只保存在本地</span>
-                </div>
+          <article className="path-card">
+            <p className="eyebrow">YOUR EVIDENCE</p>
+            <h2>本地学习进度</h2>
+            <div className="metric-row">
+              <div>
+                <strong>{dashboard?.attempts.length ?? 0}</strong>
+                <span>运行与判题</span>
               </div>
-              <div className="path-item">
-                <i>2</i>
-                <div>
-                  <strong>判题保持客观</strong>
-                  <span>编译与测试决定结果</span>
-                </div>
+              <div>
+                <strong>{practiced}</strong>
+                <span>已练习概念</span>
               </div>
-              <div className="path-item">
-                <i>3</i>
-                <div>
-                  <strong>AI 负责辅助</strong>
-                  <span>提示不等于掌握证据</span>
-                </div>
-              </div>
-              <div className="path-item">
-                <i>4</i>
-                <div>
-                  <strong>方向稍后选择</strong>
-                  <span>共同基础不会浪费</span>
-                </div>
-              </div>
+            </div>
+            <div className="attempt-list">
+              {dashboard?.attempts
+                .slice(-3)
+                .reverse()
+                .map((attempt) => (
+                  <div key={attempt.jobId}>
+                    <span>{attempt.mode.toUpperCase()}</span>
+                    <strong>{attempt.verdict}</strong>
+                  </div>
+                ))}
+              {dashboard?.attempts.length === 0 && (
+                <p className="muted">
+                  尚无记录，完成一次 Grade 后会显示在这里。
+                </p>
+              )}
             </div>
           </article>
         </section>
-
-        <footer id="records">
-          <span>cpp-learn v0.1.0 · Stage 0</span>
+        <footer>
+          <span>cpp-learn v0.1.0 · Stage 1</span>
           <span>Local-first · C++20 · React</span>
         </footer>
       </main>

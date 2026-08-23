@@ -11,7 +11,18 @@
     "format": "markdown",
     "path": "activities/source-to-program/lesson.md"
   },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "Hello, C++!\n",
+    "timeoutMs": 2000
+  },
   "evidencePolicy": {
-    "automatedPass": false
+    "automatedPass": true
   }
 }

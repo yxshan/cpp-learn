@@ -3,6 +3,7 @@ import {
   type ValidationIssue,
 } from "@cpp-learn/content-schema";
 import type { CurriculumReadiness } from "@cpp-learn/contracts";
+import type { ActivityDetail } from "@cpp-learn/contracts";
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 
@@ -20,11 +21,37 @@ export interface Activity {
   readonly conceptIds: readonly string[];
   readonly prerequisiteIds: readonly string[];
   readonly content: { readonly format: "markdown"; readonly path: string };
+  readonly workspace: {
+    readonly editablePaths: readonly string[];
+    readonly starterFiles: Readonly<Record<string, string>>;
+  };
+  readonly judge: {
+    readonly version: number;
+    readonly expectedStdout: string;
+    readonly timeoutMs: number;
+  };
   readonly evidencePolicy: { readonly automatedPass: boolean };
 }
 
 export interface Curriculum {
   readiness(): Promise<CurriculumReadiness>;
+  getActivity(activityId: string): Promise<ActivityDetail | undefined>;
+  listWorkspaceActivities(): Promise<readonly WorkspaceActivityDefinition[]>;
+  getJudge(activityId: string): Promise<JudgeDefinition | undefined>;
+}
+
+export interface WorkspaceActivityDefinition {
+  readonly activityId: string;
+  readonly editablePaths: readonly string[];
+  readonly starterFiles: Readonly<Record<string, string>>;
+}
+
+export interface JudgeDefinition {
+  readonly activityId: string;
+  readonly activityVersion: number;
+  readonly judgeVersion: number;
+  readonly expectedStdout: string;
+  readonly timeoutMs: number;
 }
 
 export function validateCatalog(
@@ -77,50 +104,49 @@ export interface FilesystemCurriculumProbeDependencies {
   readonly catalogPath: string;
 }
 
+async function loadActivities(
+  dependencies: FilesystemCurriculumProbeDependencies,
+): Promise<readonly Activity[]> {
+  const catalog = JSON.parse(
+    await readFile(dependencies.catalogPath, "utf8"),
+  ) as unknown;
+  if (!isCatalogManifest(catalog))
+    throw new Error("Catalog manifest is invalid");
+
+  const catalogRoot = dirname(dependencies.catalogPath);
+  const candidates = await Promise.all(
+    catalog.activityManifests.map(async (manifestPath) => {
+      const path = resolveInsideCatalogRoot(catalogRoot, manifestPath);
+      return JSON.parse(await readFile(path, "utf8")) as unknown;
+    }),
+  );
+  const validation = validateCatalog(candidates);
+  if (!validation.ok) {
+    throw new Error(
+      validation.issues
+        .map((issue) => `${issue.path}: ${issue.message}`)
+        .join("; "),
+    );
+  }
+  const activities = candidates as readonly Activity[];
+  await Promise.all(
+    activities.map((activity) =>
+      readFile(
+        resolveInsideCatalogRoot(catalogRoot, activity.content.path),
+        "utf8",
+      ),
+    ),
+  );
+  return activities;
+}
+
 export function createFilesystemCurriculumProbe(
   dependencies: FilesystemCurriculumProbeDependencies,
 ): () => Promise<CurriculumReadiness> {
   return async () => {
     try {
-      const catalog = JSON.parse(
-        await readFile(dependencies.catalogPath, "utf8"),
-      ) as unknown;
-      if (!isCatalogManifest(catalog)) {
-        return {
-          ready: false,
-          activityCount: 0,
-          issues: ["Catalog manifest is invalid"],
-        };
-      }
-
-      const catalogRoot = dirname(dependencies.catalogPath);
-      const activities = await Promise.all(
-        catalog.activityManifests.map(async (manifestPath) => {
-          const path = resolveInsideCatalogRoot(catalogRoot, manifestPath);
-          return JSON.parse(await readFile(path, "utf8")) as unknown;
-        }),
-      );
-      const validation = validateCatalog(activities);
-      if (!validation.ok) {
-        return {
-          ready: false,
-          activityCount: 0,
-          issues: validation.issues.map(
-            (issue) => `${issue.path}: ${issue.message}`,
-          ),
-        };
-      }
-
-      await Promise.all(
-        (activities as readonly Activity[]).map(async (activity) => {
-          const contentPath = resolveInsideCatalogRoot(
-            catalogRoot,
-            activity.content.path,
-          );
-          await readFile(contentPath, "utf8");
-        }),
-      );
-      return { ready: true, activityCount: validation.activityCount };
+      const activities = await loadActivities(dependencies);
+      return { ready: true, activityCount: activities.length };
     } catch (error) {
       return {
         ready: false,
@@ -136,5 +162,50 @@ export function createFilesystemCurriculumProbe(
 export function createFilesystemCurriculum(
   dependencies: FilesystemCurriculumProbeDependencies,
 ): Curriculum {
-  return { readiness: createFilesystemCurriculumProbe(dependencies) };
+  return {
+    readiness: createFilesystemCurriculumProbe(dependencies),
+    async getActivity(activityId) {
+      const activities = await loadActivities(dependencies);
+      const catalogRoot = dirname(dependencies.catalogPath);
+      const activity = activities.find(
+        (candidate) => candidate.id === activityId,
+      );
+      if (!activity) return undefined;
+      const markdown = await readFile(
+        resolveInsideCatalogRoot(catalogRoot, activity.content.path),
+        "utf8",
+      );
+      return {
+        id: activity.id,
+        version: activity.version,
+        kind: activity.kind,
+        title: activity.title,
+        estimatedMinutes: activity.estimatedMinutes,
+        conceptIds: activity.conceptIds,
+        markdown,
+        workspace: { editablePaths: activity.workspace.editablePaths },
+      };
+    },
+    async listWorkspaceActivities() {
+      const activities = await loadActivities(dependencies);
+      return activities.map((activity) => ({
+        activityId: activity.id,
+        editablePaths: activity.workspace.editablePaths,
+        starterFiles: activity.workspace.starterFiles,
+      }));
+    },
+    async getJudge(activityId) {
+      const activity = (await loadActivities(dependencies)).find(
+        (candidate) => candidate.id === activityId,
+      );
+      if (!activity) return undefined;
+      return {
+        activityId: activity.id,
+        activityVersion: activity.version,
+        judgeVersion: activity.judge.version,
+        expectedStdout: activity.judge.expectedStdout,
+        timeoutMs: activity.judge.timeoutMs,
+      };
+    },
+  };
 }

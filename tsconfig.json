@@ -24,6 +24,8 @@
     "packages/**/*.ts",
     "scripts/**/*.mjs",
     "vitest.config.ts",
+    "playwright.config.ts",
+    "e2e/**/*.ts",
     "eslint.config.js"
   ]
 }

@@ -593,6 +593,12 @@ h1 {
 .lesson-button span {
   margin-left: 8px;
 }
+.lesson-button.enabled {
+  color: #07120f;
+  border-color: var(--green);
+  background: var(--green);
+  cursor: pointer;
+}
 .path-card > h2 {
   margin-bottom: 24px;
   color: #dae4f0;
@@ -665,6 +671,175 @@ footer {
   letter-spacing: 0.05em;
 }
 
+.workspace-page {
+  min-height: 100vh;
+  padding: 22px 3vw 34px;
+  background: #080e17;
+}
+.workspace-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #8b9aae;
+  background: #080e17;
+  font: 12px var(--mono);
+}
+.workspace-topbar {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid #1d2a3b;
+}
+.workspace-topbar > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.workspace-status {
+  margin-right: 10px;
+  color: #77879b;
+  font: 10px var(--mono);
+}
+.text-button,
+.secondary-button {
+  border: 1px solid #2b3c51;
+  border-radius: 7px;
+  color: #aab8ca;
+  background: #111b29;
+  cursor: pointer;
+}
+.text-button {
+  padding: 9px 12px;
+  border-color: transparent;
+  background: transparent;
+}
+.secondary-button {
+  padding: 9px 14px;
+}
+.workspace-topbar button:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.workspace-layout {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: minmax(300px, 0.72fr) minmax(520px, 1.28fr);
+  gap: 18px;
+  align-items: start;
+}
+.lesson-panel,
+.coding-panel {
+  overflow: hidden;
+  border: 1px solid #203047;
+  border-radius: 13px;
+  background: #0d1622;
+}
+.lesson-panel {
+  min-height: 600px;
+  padding: 28px;
+}
+.markdown-body {
+  color: #a5b2c4;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+  color: #edf3fa;
+  line-height: 1.35;
+}
+.markdown-body code {
+  padding: 2px 5px;
+  color: #74d7b2;
+  background: #12261f;
+  border-radius: 4px;
+  font-family: var(--mono);
+}
+.markdown-body pre {
+  overflow: auto;
+  padding: 15px;
+  background: #080e16;
+  border-radius: 8px;
+}
+.markdown-body pre code {
+  padding: 0;
+  background: transparent;
+}
+.editor-titlebar {
+  height: 42px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #8090a5;
+  border-bottom: 1px solid #223047;
+  background: #111b28;
+  font: 10px var(--mono);
+}
+.judge-output {
+  min-height: 115px;
+  padding: 15px;
+  border-top: 1px solid #223047;
+  background: #090f18;
+}
+.judge-output > div {
+  display: flex;
+  justify-content: space-between;
+  color: #d59080;
+  font: 11px var(--mono);
+}
+.judge-output.pass > div {
+  color: var(--green);
+}
+.judge-output pre {
+  margin: 10px 0 0;
+  color: #8391a3;
+  white-space: pre-wrap;
+  font: 10px/1.6 var(--mono);
+}
+.metric-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.metric-row > div {
+  padding: 15px;
+  border: 1px solid #203047;
+  border-radius: 9px;
+  background: #101b28;
+}
+.metric-row strong,
+.metric-row span {
+  display: block;
+}
+.metric-row strong {
+  color: var(--green);
+  font: 24px var(--mono);
+}
+.metric-row span {
+  margin-top: 4px;
+  color: #647388;
+  font-size: 10px;
+}
+.attempt-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 7px;
+}
+.attempt-list > div {
+  display: flex;
+  justify-content: space-between;
+  color: #738399;
+  font: 9px var(--mono);
+}
+.attempt-list strong {
+  color: #9aa9bc;
+  font-weight: 500;
+}
+
 @media (max-width: 1060px) {
   .stage-banner {
     grid-template-columns: 1fr;
@@ -676,6 +851,9 @@ footer {
     grid-template-columns: 1fr;
   }
   .learning-grid {
+    grid-template-columns: 1fr;
+  }
+  .workspace-layout {
     grid-template-columns: 1fr;
   }
 }
@@ -732,6 +910,21 @@ footer {
     flex-direction: column;
     justify-content: center;
     gap: 6px;
+  }
+  .workspace-page {
+    padding: 12px;
+  }
+  .workspace-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-bottom: 12px;
+  }
+  .workspace-topbar > div {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .workspace-status {
+    width: 100%;
   }
 }
 

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  createFilesystemWorkspace,
   createInMemoryWorkspace,
   resolveEditablePath,
   validateEditablePath,
@@ -105,5 +106,50 @@ describe("[T-MODULE-001] Workspace Interface", () => {
       to: savedSnapshot.id,
       changedPaths: ["main.cpp"],
     });
+  });
+});
+
+describe("[T-WORK-001] filesystem Workspace", () => {
+  it("preserves learner files and immutable snapshots across Adapter restart", async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), "cpp-learn-files-"));
+    temporaryRoots.push(workspaceRoot);
+    const activities = [
+      {
+        activityId: "first-program",
+        editablePaths: ["main.cpp"],
+        starterFiles: { "main.cpp": "int main() {}\n" },
+      },
+    ];
+    const workspace = createFilesystemWorkspace({ workspaceRoot, activities });
+
+    await expect(workspace.open("first-program")).resolves.toMatchObject({
+      revision: 0,
+      files: { "main.cpp": "int main() {}\n" },
+    });
+    await expect(
+      workspace.save({
+        activityId: "first-program",
+        baseRevision: 0,
+        changes: [{ path: "main.cpp", content: "int main() { return 0; }\n" }],
+      }),
+    ).resolves.toEqual({ ok: true, revision: 1 });
+    const snapshot = await workspace.snapshot("first-program");
+
+    const restarted = createFilesystemWorkspace({ workspaceRoot, activities });
+    await expect(restarted.open("first-program")).resolves.toMatchObject({
+      revision: 1,
+      files: { "main.cpp": "int main() { return 0; }\n" },
+    });
+    await expect(restarted.readSnapshot(snapshot.id)).resolves.toMatchObject({
+      id: snapshot.id,
+      files: { "main.cpp": "int main() { return 0; }\n" },
+    });
+    await expect(
+      restarted.save({
+        activityId: "first-program",
+        baseRevision: 0,
+        changes: [{ path: "main.cpp", content: "stale\n" }],
+      }),
+    ).resolves.toEqual({ ok: false, code: "revision_conflict" });
   });
 });

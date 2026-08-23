@@ -1,7 +1,6 @@
-import { posix } from "node:path";
-import { lstat } from "node:fs/promises";
-import { createHash } from "node:crypto";
-import { join } from "node:path";
+import { createHash, randomUUID } from "node:crypto";
+import { lstat, mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname, join, posix } from "node:path";
 
 export type EditablePathResult =
   | { readonly ok: true; readonly path: string }
@@ -69,6 +68,10 @@ export interface SourceSnapshot {
   readonly digest: string;
 }
 
+export interface SourceSnapshotView extends SourceSnapshot {
+  readonly files: Readonly<Record<string, string>>;
+}
+
 export interface WorkspaceDiff {
   readonly from: SnapshotId;
   readonly to: SnapshotId;
@@ -79,6 +82,7 @@ export interface Workspace {
   open(activityId: ActivityId): Promise<WorkspaceView>;
   save(request: SaveWorkspaceRequest): Promise<SaveWorkspaceResult>;
   snapshot(activityId: ActivityId): Promise<SourceSnapshot>;
+  readSnapshot(snapshotId: SnapshotId): Promise<SourceSnapshotView>;
   diff(from: SnapshotId, to: SnapshotId): Promise<WorkspaceDiff>;
 }
 
@@ -98,10 +102,37 @@ interface StoredSnapshot extends SourceSnapshot {
   readonly files: Readonly<Record<string, string>>;
 }
 
+interface PersistedWorkspaceState {
+  readonly schemaVersion: 1;
+  readonly activityId: ActivityId;
+  readonly revision: number;
+  readonly files: Readonly<Record<string, string>>;
+}
+
 function copyFiles(
   files: Readonly<Record<string, string>>,
 ): Record<string, string> {
   return { ...files };
+}
+
+function createSnapshot(
+  activityId: ActivityId,
+  files: Readonly<Record<string, string>>,
+): StoredSnapshot {
+  const copiedFiles = copyFiles(files);
+  const canonicalSource = JSON.stringify({
+    activityId,
+    files: Object.fromEntries(
+      Object.entries(copiedFiles).sort(([a], [b]) => a.localeCompare(b)),
+    ),
+  });
+  const digest = createHash("sha256").update(canonicalSource).digest("hex");
+  return {
+    id: `snap_${digest.slice(0, 20)}`,
+    activityId,
+    digest,
+    files: copiedFiles,
+  };
 }
 
 export function createInMemoryWorkspace(
@@ -157,22 +188,14 @@ export function createInMemoryWorkspace(
     },
     async snapshot(activityId) {
       const activity = requireActivity(activityId);
-      const files = copyFiles(activity.files);
-      const canonicalSource = JSON.stringify({
-        activityId,
-        files: Object.fromEntries(
-          Object.entries(files).sort(([a], [b]) => a.localeCompare(b)),
-        ),
-      });
-      const digest = createHash("sha256").update(canonicalSource).digest("hex");
-      const snapshot: StoredSnapshot = {
-        id: `snap_${digest.slice(0, 20)}`,
-        activityId,
-        digest,
-        files,
-      };
+      const snapshot = createSnapshot(activityId, activity.files);
       snapshots.set(snapshot.id, snapshot);
-      return { id: snapshot.id, activityId, digest };
+      return { id: snapshot.id, activityId, digest: snapshot.digest };
+    },
+    async readSnapshot(snapshotId) {
+      const snapshot = snapshots.get(snapshotId);
+      if (!snapshot) throw new Error("Unknown Source Snapshot");
+      return { ...snapshot, files: copyFiles(snapshot.files) };
     },
     async diff(from, to) {
       const fromSnapshot = snapshots.get(from);
@@ -187,6 +210,200 @@ export function createInMemoryWorkspace(
         .filter((path) => fromSnapshot.files[path] !== toSnapshot.files[path])
         .sort();
       return { from, to, changedPaths };
+    },
+  };
+}
+
+export interface FilesystemWorkspaceDependencies {
+  readonly workspaceRoot: string;
+  readonly activities: readonly InMemoryWorkspaceActivity[];
+}
+
+async function atomicWriteJson(path: string, value: unknown): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  const temporaryPath = `${path}.${randomUUID()}.tmp`;
+  await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
+  await rename(temporaryPath, path);
+}
+
+async function readJson<T>(path: string): Promise<T> {
+  return JSON.parse(await readFile(path, "utf8")) as T;
+}
+
+function isMissingFile(error: unknown): boolean {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
+}
+
+async function rejectSpecialPath(path: string): Promise<void> {
+  try {
+    const info = await lstat(path);
+    if (
+      info.isSymbolicLink() ||
+      info.isBlockDevice() ||
+      info.isCharacterDevice()
+    ) {
+      throw new Error("Workspace storage path is not a regular directory");
+    }
+  } catch (error) {
+    if (!isMissingFile(error)) throw error;
+  }
+}
+
+export function createFilesystemWorkspace(
+  dependencies: FilesystemWorkspaceDependencies,
+): Workspace {
+  const activityDefinitions = new Map(
+    dependencies.activities.map((activity) => [activity.activityId, activity]),
+  );
+  const saveQueues = new Map<ActivityId, Promise<void>>();
+
+  function requireDefinition(
+    activityId: ActivityId,
+  ): InMemoryWorkspaceActivity {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(activityId)) {
+      throw new Error("Invalid Activity identifier");
+    }
+    const definition = activityDefinitions.get(activityId);
+    if (!definition) throw new Error(`Unknown Activity: ${activityId}`);
+    return definition;
+  }
+
+  async function activityRoot(activityId: ActivityId): Promise<string> {
+    requireDefinition(activityId);
+    await mkdir(dependencies.workspaceRoot, { recursive: true });
+    await rejectSpecialPath(dependencies.workspaceRoot);
+    const root = join(dependencies.workspaceRoot, activityId);
+    await rejectSpecialPath(root);
+    await mkdir(root, { recursive: true });
+    return root;
+  }
+
+  async function stateFor(
+    activityId: ActivityId,
+  ): Promise<PersistedWorkspaceState> {
+    const definition = requireDefinition(activityId);
+    const root = await activityRoot(activityId);
+    const statePath = join(root, "workspace.json");
+    try {
+      return await readJson<PersistedWorkspaceState>(statePath);
+    } catch (error) {
+      if (!isMissingFile(error)) throw error;
+      const initialState: PersistedWorkspaceState = {
+        schemaVersion: 1,
+        activityId,
+        revision: 0,
+        files: copyFiles(definition.starterFiles),
+      };
+      await atomicWriteJson(statePath, initialState);
+      return initialState;
+    }
+  }
+
+  async function serializeSave<T>(
+    activityId: ActivityId,
+    action: () => Promise<T>,
+  ): Promise<T> {
+    const prior = saveQueues.get(activityId) ?? Promise.resolve();
+    let release: () => void = () => undefined;
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const queued = prior.then(() => current);
+    saveQueues.set(activityId, queued);
+    await prior;
+    try {
+      return await action();
+    } finally {
+      release();
+      if (saveQueues.get(activityId) === queued) saveQueues.delete(activityId);
+    }
+  }
+
+  async function storedSnapshot(
+    snapshotId: SnapshotId,
+  ): Promise<StoredSnapshot> {
+    if (!/^snap_[a-f0-9]{20}$/.test(snapshotId)) {
+      throw new Error("Invalid Source Snapshot identifier");
+    }
+    return readJson<StoredSnapshot>(
+      join(dependencies.workspaceRoot, ".snapshots", `${snapshotId}.json`),
+    );
+  }
+
+  return {
+    async open(activityId) {
+      const state = await stateFor(activityId);
+      return {
+        activityId,
+        revision: state.revision,
+        files: copyFiles(state.files),
+      };
+    },
+    async save(request) {
+      return serializeSave(request.activityId, async () => {
+        const definition = requireDefinition(request.activityId);
+        const state = await stateFor(request.activityId);
+        if (state.revision !== request.baseRevision) {
+          return { ok: false, code: "revision_conflict" } as const;
+        }
+        if (
+          request.changes.some(
+            (change) =>
+              !validateEditablePath(change.path, definition.editablePaths).ok,
+          )
+        ) {
+          return { ok: false, code: "invalid_path" } as const;
+        }
+        const files = copyFiles(state.files);
+        for (const change of request.changes)
+          files[change.path] = change.content;
+        const nextState: PersistedWorkspaceState = {
+          schemaVersion: 1,
+          activityId: request.activityId,
+          revision: state.revision + 1,
+          files,
+        };
+        const root = await activityRoot(request.activityId);
+        await atomicWriteJson(join(root, "workspace.json"), nextState);
+        return { ok: true, revision: nextState.revision } as const;
+      });
+    },
+    async snapshot(activityId) {
+      const state = await stateFor(activityId);
+      const snapshot = createSnapshot(activityId, state.files);
+      await atomicWriteJson(
+        join(dependencies.workspaceRoot, ".snapshots", `${snapshot.id}.json`),
+        snapshot,
+      );
+      return {
+        id: snapshot.id,
+        activityId: snapshot.activityId,
+        digest: snapshot.digest,
+      };
+    },
+    async readSnapshot(snapshotId) {
+      const snapshot = await storedSnapshot(snapshotId);
+      return { ...snapshot, files: copyFiles(snapshot.files) };
+    },
+    async diff(from, to) {
+      const [fromSnapshot, toSnapshot] = await Promise.all([
+        storedSnapshot(from),
+        storedSnapshot(to),
+      ]);
+      const paths = new Set([
+        ...Object.keys(fromSnapshot.files),
+        ...Object.keys(toSnapshot.files),
+      ]);
+      return {
+        from,
+        to,
+        changedPaths: [...paths]
+          .filter((path) => fromSnapshot.files[path] !== toSnapshot.files[path])
+          .sort(),
+      };
     },
   };
 }

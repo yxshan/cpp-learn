@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -79,3 +79,18 @@ No requirement is accepted until its planned verification has an executable test
 
 See the [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md) for the complete gate output and explicitly deferred coverage.
 
+## 7. Executable Stage 1 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-LEARN-001 | `modules/learning-platform/src/learning-platform.test.ts`; Activity HTTP and Web Adapter tests | Passed |
+| T-WORK-001, T-WORK-003, T-WORK-004 | Filesystem restart, conflict, and immutable snapshot tests in `modules/workspace/src/workspace.test.ts` | Passed |
+| T-JUDGE-001, T-JUDGE-002 | Native C++20 compile/run report tests and shared Platform execution tests | Passed for Stage 1 public-output scope |
+| T-RECORD-001 | JSONL append, checksum, and process-restart recovery in `modules/learning-record/src/learning-record.test.ts` | Passed |
+| T-LEARN-002, BR-001, BR-002 | Run/Grade evidence-policy test in `modules/learning-platform/src/learning-platform.test.ts` | Passed |
+| T-CONTRACT-002 | HTTP SSE replay and Job Report contract test in `apps/server/src/server.test.ts` | Passed |
+| T-CONTRACT-001, NFR-006 | HTTP, Web, and CLI Adapters dispatch through the shared `LearningPlatform` | Passed |
+| T-OPS-001, NFR-001 | Integrated built-Web hosting test plus local Chromium learning-loop test | Passed |
+| T-E2E-001, T-E2E-004 | `e2e/first-learning-loop.spec.ts` | Passed on reference macOS environment |
+
+See the [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md) for scope boundaries and exact reproduction commands.

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -29,7 +29,8 @@ Read in this order:
 11. [Roadmap and Acceptance Plan](11-ROADMAP_AND_ACCEPTANCE_PLAN.md)
 12. [Requirements Traceability Matrix](12-REQUIREMENTS_TRACEABILITY_MATRIX.md)
 13. [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md)
-14. [Domain Context](CONTEXT.md)
+14. [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md)
+15. [Domain Context](CONTEXT.md)
 
 ## Architecture decisions
 
