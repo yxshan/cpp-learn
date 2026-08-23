@@ -34,16 +34,18 @@ function InteractiveBlock({
   return (
     <section className="interactive-fallback">
       <p className="eyebrow">INTERACTIVE · {block.type}</p>
-      <pre>{steps.slice(0, step + 1).join(" → ")}</pre>
+      <pre aria-live="polite">{steps.slice(0, step + 1).join(" → ")}</pre>
       {steps.length > 1 && (
         <div className="interactive-controls">
           <button
+            type="button"
             disabled={step === 0}
             onClick={() => setStep((value) => value - 1)}
           >
             上一步
           </button>
           <button
+            type="button"
             disabled={step === steps.length - 1}
             onClick={() => setStep((value) => value + 1)}
           >
@@ -61,13 +63,33 @@ function commandId(prefix: string): string {
 
 export interface LessonWorkspaceProps {
   readonly activityId?: string;
+  readonly currentPosition?: number | undefined;
+  readonly totalActivities?: number | undefined;
+  readonly previousActivity?:
+    | {
+        readonly id: string;
+        readonly title: string;
+      }
+    | undefined;
+  readonly nextActivity?:
+    | {
+        readonly id: string;
+        readonly title: string;
+      }
+    | undefined;
   readonly onBack: () => void;
+  readonly onNavigate: (activityId: string) => void;
   readonly onEvidenceChanged: () => Promise<void>;
 }
 
 export function LessonWorkspace({
   activityId = "source-to-program",
+  currentPosition,
+  totalActivities,
+  previousActivity,
+  nextActivity,
   onBack,
+  onNavigate,
   onEvidenceChanged,
 }: LessonWorkspaceProps) {
   const [activity, setActivity] = useState<ActivityDetail>();
@@ -76,9 +98,12 @@ export function LessonWorkspace({
   const [activePath, setActivePath] = useState("main.cpp");
   const [report, setReport] = useState<JudgeReport>();
   const [busy, setBusy] = useState<"save" | "run" | "grade">();
+  const [isDirty, setIsDirty] = useState(false);
   const [activeJobId, setActiveJobId] = useState<string>();
   const [message, setMessage] = useState("正在加载课程工作区…");
-  const [attemptId] = useState(() => `web_attempt_${crypto.randomUUID()}`);
+  const [attemptId, setAttemptId] = useState(
+    () => `web_attempt_${crypto.randomUUID()}`,
+  );
   const [revealedHints, setRevealedHints] = useState<
     readonly {
       readonly id: string;
@@ -91,6 +116,14 @@ export function LessonWorkspace({
   >({});
 
   useEffect(() => {
+    setActivity(undefined);
+    setWorkspace(undefined);
+    setSources({});
+    setReport(undefined);
+    setRevealedHints([]);
+    setReflectionAnswers({});
+    setAttemptId(`web_attempt_${crypto.randomUUID()}`);
+    setMessage("正在加载课程工作区…");
     void Promise.all([getActivity(activityId), getWorkspace(activityId)])
       .then(([activityResult, workspaceResult]) => {
         if (!activityResult.activity) throw new Error("课程不存在");
@@ -100,12 +133,23 @@ export function LessonWorkspace({
         setActivePath(
           activityResult.activity.workspace.editablePaths[0] ?? "main.cpp",
         );
+        setIsDirty(false);
         setMessage("工作区已加载");
       })
       .catch((error: unknown) =>
         setMessage(error instanceof Error ? error.message : "工作区加载失败"),
       );
   }, [activityId]);
+
+  useEffect(() => {
+    const warnBeforeUnload = (event: BeforeUnloadEvent): void => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [isDirty]);
 
   const persist = async (): Promise<void> => {
     if (!workspace || !activity) return;
@@ -129,6 +173,27 @@ export function LessonWorkspace({
       revision: result.result.revision,
       files: { ...sources },
     });
+    setIsDirty(false);
+  };
+
+  const returnToOverview = (): void => {
+    if (
+      isDirty &&
+      !window.confirm("当前代码尚未保存。返回总览会丢失这些修改，是否继续？")
+    ) {
+      return;
+    }
+    onBack();
+  };
+
+  const navigateToActivity = (nextActivityId: string): void => {
+    if (
+      isDirty &&
+      !window.confirm("当前代码尚未保存。切换课程会丢失这些修改，是否继续？")
+    ) {
+      return;
+    }
+    onNavigate(nextActivityId);
   };
 
   const save = async (): Promise<void> => {
@@ -232,13 +297,20 @@ export function LessonWorkspace({
   return (
     <div className="workspace-page">
       <header className="workspace-topbar">
-        <button className="text-button" onClick={onBack}>
+        <button
+          className="text-button"
+          type="button"
+          onClick={returnToOverview}
+        >
           ← 返回总览
         </button>
         <div>
-          <span className="workspace-status">{message}</span>
+          <span className="workspace-status" aria-live="polite">
+            {message}
+          </span>
           <button
             className="secondary-button"
+            type="button"
             disabled={!workspace || Boolean(busy)}
             onClick={() => void save()}
           >
@@ -246,6 +318,7 @@ export function LessonWorkspace({
           </button>
           <button
             className="secondary-button"
+            type="button"
             disabled={!workspace || Boolean(busy)}
             onClick={() => void execute("run")}
           >
@@ -253,23 +326,59 @@ export function LessonWorkspace({
           </button>
           <button
             className="primary-button"
+            type="button"
             disabled={!workspace || Boolean(busy)}
             onClick={() => void execute("grade")}
           >
             {busy === "grade" ? "判题中…" : "Grade"}
           </button>
           {activeJobId && (
-            <button className="danger-button" onClick={() => void cancel()}>
+            <button
+              className="danger-button"
+              type="button"
+              onClick={() => void cancel()}
+            >
               取消任务
             </button>
           )}
         </div>
       </header>
 
+      <nav className="lesson-pager" aria-label="切换课程">
+        <button
+          type="button"
+          disabled={!previousActivity}
+          onClick={() => {
+            if (previousActivity) navigateToActivity(previousActivity.id);
+          }}
+        >
+          <small>← 上一节</small>
+          <span>{previousActivity?.title ?? "已到课程起点"}</span>
+        </button>
+        <div aria-live="polite">
+          <span>
+            {currentPosition && totalActivities
+              ? `${currentPosition} / ${totalActivities}`
+              : "正在读取课程位置"}
+          </span>
+          <strong>{activity?.title ?? "正在加载课程"}</strong>
+        </div>
+        <button
+          type="button"
+          disabled={!nextActivity}
+          onClick={() => {
+            if (nextActivity) navigateToActivity(nextActivity.id);
+          }}
+        >
+          <small>下一节 →</small>
+          <span>{nextActivity?.title ?? "已完成全部课程"}</span>
+        </button>
+      </nav>
+
       <div className="workspace-layout">
         <article className="lesson-panel">
           <p className="eyebrow">
-            LESSON · {activity?.estimatedMinutes ?? 0} MIN
+            课程内容 · 预计 {activity?.estimatedMinutes ?? 0} 分钟
           </p>
           <div className="markdown-body">
             {activity ? (
@@ -281,7 +390,7 @@ export function LessonWorkspace({
           {activity && (
             <div className="activity-brief">
               <section>
-                <p className="eyebrow">OBJECTIVES</p>
+                <p className="eyebrow">学习目标</p>
                 <ul>
                   {activity.objectives?.map((objective) => (
                     <li key={objective}>{objective}</li>
@@ -289,7 +398,7 @@ export function LessonWorkspace({
                 </ul>
               </section>
               <section>
-                <p className="eyebrow">VICTORY CONDITIONS</p>
+                <p className="eyebrow">完成标准</p>
                 <ul>
                   {activity.victoryConditions?.map((condition) => (
                     <li key={condition}>{condition}</li>
@@ -300,7 +409,7 @@ export function LessonWorkspace({
                 <InteractiveBlock block={block} key={block.id} />
               ))}
               <section>
-                <p className="eyebrow">SOURCES</p>
+                <p className="eyebrow">参考资料</p>
                 <ul>
                   {activity.sources?.map((source) => (
                     <li key={source.url}>
@@ -317,7 +426,7 @@ export function LessonWorkspace({
             <div className="learning-assistance">
               <div className="assistance-heading">
                 <div>
-                  <p className="eyebrow">ORDERED ASSISTANCE</p>
+                  <p className="eyebrow">分级辅助</p>
                   <h3>分级提示</h3>
                 </div>
                 <span>
@@ -333,6 +442,7 @@ export function LessonWorkspace({
               {revealedHints.length < activity.learning.hints.length && (
                 <button
                   className="secondary-button"
+                  type="button"
                   onClick={() => void revealNextHint()}
                 >
                   {activity.learning.hints[revealedHints.length]?.kind ===
@@ -342,11 +452,13 @@ export function LessonWorkspace({
                 </button>
               )}
               <div className="reflection-box">
-                <p className="eyebrow">REFLECTION</p>
+                <p className="eyebrow">学习反思</p>
                 {activity.learning.reflections.map((prompt) => (
                   <label key={prompt.id}>
                     <span>{prompt.prompt}</span>
                     <textarea
+                      name={`reflection-${prompt.id}`}
+                      autoComplete="off"
                       value={reflectionAnswers[prompt.id] ?? ""}
                       onChange={(event) => {
                         const answer = event.currentTarget.value;
@@ -360,6 +472,7 @@ export function LessonWorkspace({
                 ))}
                 <button
                   className="secondary-button"
+                  type="button"
                   onClick={() => void saveReflection()}
                 >
                   保存反思
@@ -370,12 +483,12 @@ export function LessonWorkspace({
         </article>
         <section className="coding-panel" aria-label="C++ 代码工作区">
           <div className="editor-titlebar">
-            <div className="file-tabs" role="tablist" aria-label="源文件">
+            <div className="file-tabs" role="group" aria-label="源文件">
               {Object.keys(sources).map((path) => (
                 <button
                   key={path}
-                  role="tab"
-                  aria-selected={path === activePath}
+                  type="button"
+                  aria-pressed={path === activePath}
                   className={path === activePath ? "active" : ""}
                   onClick={() => setActivePath(path)}
                 >
@@ -386,18 +499,20 @@ export function LessonWorkspace({
             <span>revision {workspace?.revision ?? 0}</span>
           </div>
           <Editor
-            height="440px"
+            height="100%"
             language="cpp"
             theme="vs-dark"
             value={sources[activePath] ?? ""}
-            onChange={(value) =>
+            onChange={(value) => {
               setSources((current) => ({
                 ...current,
                 [activePath]: value ?? "",
-              }))
-            }
+              }));
+              setIsDirty(true);
+            }}
             options={{
               automaticLayout: true,
+              ariaLabel: `${activity?.title ?? "C++ 课程"}代码编辑器`,
               minimap: { enabled: false },
               fontSize: 14,
               fontFamily: "SFMono-Regular, Consolas, monospace",

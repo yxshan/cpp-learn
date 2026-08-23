@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -31,9 +31,9 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | FR-044, FR-045 | DD §2, §6 | T-LEARN-005 review scheduling; T-RECORD-002 rebuild/idempotency | Stage 2–3 |
 | FR-050, FR-051 | DD §8; SEC §4 | T-TEACH-001 Teacher Pack completeness; T-TEACH-002 redaction | Stage 3 |
 | FR-052, FR-053 | DD §8; CJS §9 | T-TEACH-003 observation policy; T-TEACH-004 pending review | Stage 3 |
-| FR-060, FR-061 | ARCH §2; IC §2 | T-E2E-001 primary views; T-E2E-002 diagnostic mapping | Stage 1–3 |
+| FR-060, FR-061 | ARCH §2; IC §2 | T-E2E-001 primary views; T-E2E-002 diagnostic mapping | Stage 1–5.1 |
 | FR-062, FR-063 | IC §3; DD §7 | T-CONTRACT-002 SSE/replay; T-E2E-003 raw-log disclosure | Stage 1–2 |
-| FR-064 | DD §2; Roadmap Stage 1 | T-E2E-004 dashboard session entry and summaries | Stage 1–3 |
+| FR-064 | DD §2; Roadmap Stage 1 | T-E2E-004 dashboard session entry and summaries | Stage 1–5.1 |
 | FR-070, FR-071 | DATA §10; DEVOPS §6 | T-DATA-001 export; T-DATA-002 backup/restore | Stage 2 |
 | FR-072 | DD §4; CJS §4 | T-WORK-006 content upgrade preservation | Stage 2–4 |
 
@@ -49,7 +49,7 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | NFR-006 | ARCH §4, §7 | T-CONTRACT-001 Web/CLI equivalence | Stage 0–1 |
 | NFR-007 | DD §1; TQP §2 | T-MODULE-001 Interface-level Module suites | Stage 0 onward |
 | NFR-008 | DEVOPS §5 | T-OBS-001 correlation and log-redaction suite | Stage 1–2 |
-| NFR-009 | TQP §6 | T-A11Y-001 keyboard and semantic-label critical flow | Stage 1–3 |
+| NFR-009 | TQP §6 | T-A11Y-001 keyboard and semantic-label critical flow | Stage 1–5.1 |
 | NFR-010 | SEC §5 | T-PRIV-001 no-remote-traffic default; export consent | Stage 1–2 |
 | NFR-011 | DD §5; DATA §4 | T-JUDGE-008 report reproduction metadata | Stage 2 |
 | NFR-012 | CJS §10 | T-CONTENT-005 required-field and Review coverage | Stage 1–4 |
@@ -130,3 +130,12 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-SYSTEM-001 | Per-Grade temporary root is removed; existing timeout/cancellation tests terminate the process group | Passed |
 | T-CONTENT-007 | 42 starters, references, and mutations exercise algorithm, hash-index, POSIX, thread, loopback HTTP, SQLite, and CMake profiles | Passed |
 | T-WORK-001 | CLI Project Milestones 1–3 share one persistent Workspace identity and preserve Learner files | Passed |
+
+## 12. Executable Stage 5.1 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-E2E-001 | `e2e/first-learning-loop.spec.ts` opens the Track, navigates ordered Activities, and completes the real Chromium/Clang learning loop without browser errors | Passed |
+| T-E2E-004 | Dashboard entry, Activity query state, direct Workspace URLs, and return-to-overview behavior | Passed |
+| T-A11Y-001 | Semantic navigation, skip link, labeled filters and Workspace regions, visible focus states, and keyboard-operable controls | Passed by implementation review |
+| T-UI-001 | Desktop Lesson scrolling keeps `window.scrollY` and editor position fixed; 390-pixel viewport has no document-level horizontal overflow | Passed |

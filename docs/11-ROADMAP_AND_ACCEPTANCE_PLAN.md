@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -128,7 +128,27 @@ Acceptance:
 - Performance checks are same-machine relative comparisons.
 - Linux-only outcomes are labeled and not inferred from macOS.
 
-## 8. Stage 6: Career track completion
+## 8. Stage 5.1: Web learning experience stabilization
+
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 5.1 Implementation Report](19-STAGE-5.1-IMPLEMENTATION-REPORT.md).
+
+Deliver:
+
+- A responsive overview with semantic navigation, Activity filtering, and durable URL state.
+- Direct Activity links and ordered previous/next navigation across the complete Track.
+- A desktop training layout where Lesson content scrolls independently while the code editor and Judge actions remain visible.
+- A single-column narrow-screen layout without horizontal overflow.
+- Keyboard-visible controls, semantic labels, skip navigation, and unsaved-work confirmation.
+
+Acceptance:
+
+- Opening, filtering, and navigating Activities preserves a meaningful URL and browser history.
+- Previous/next controls expose boundary states and switch both Activity content and Workspace.
+- Scrolling long Lesson content does not move the desktop editor or the browser viewport.
+- A 390-pixel viewport has no document-level horizontal overflow.
+- The complete real-browser learning loop still passes with no browser errors.
+
+## 9. Stage 6: Career track completion
 
 Deliver:
 
@@ -143,7 +163,7 @@ Acceptance:
 - Knowledge Map traces Project evidence back to Concepts.
 - Export contains a coherent learner-owned portfolio history without private judge material.
 
-## 9. Global definition of done
+## 10. Global definition of done
 
 - Requirement implemented and traced.
 - Module/contract/integration/E2E tests pass as applicable.
@@ -153,7 +173,7 @@ Acceptance:
 - No known S1/S2 defects in the released scope.
 - Acceptance evidence is reproducible and archived with the release.
 
-## 10. Deferred decisions
+## 11. Deferred decisions
 
 - Desktop packaging.
 - Specific SQLite Node Adapter.

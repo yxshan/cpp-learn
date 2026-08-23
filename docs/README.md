@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -34,7 +34,8 @@ Read in this order:
 16. [Stage 3 Implementation Report](16-STAGE-3-IMPLEMENTATION-REPORT.md)
 17. [Stage 4 Implementation Report](17-STAGE-4-IMPLEMENTATION-REPORT.md)
 18. [Stage 5 Implementation Report](18-STAGE-5-IMPLEMENTATION-REPORT.md)
-19. [Domain Context](CONTEXT.md)
+19. [Stage 5.1 Implementation Report](19-STAGE-5.1-IMPLEMENTATION-REPORT.md)
+20. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

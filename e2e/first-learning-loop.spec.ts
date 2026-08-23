@@ -10,7 +10,7 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
     page.getByRole("heading", { name: "从第一段 C++ 程序开始" }),
   ).toBeVisible();
   await expect(
-    page.locator("#curriculum").getByRole("heading", { name: "课程目录" }),
+    page.locator("#curriculum").getByRole("heading", { name: "课程路径" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", {
@@ -22,9 +22,42 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
       name: /Project：CLI 数据管理器 Milestone 3/,
     }),
   ).toBeVisible();
-  await expect(page.getByText("STAGE 5 · ALGORITHMS & SYSTEMS")).toBeVisible();
+  await expect(page.getByText("阶段 05 · 算法与系统")).toBeVisible();
 
   await page.getByRole("button", { name: "开始第一课" }).click();
+  await expect(page).toHaveURL(/activity=source-to-program/);
+  await expect(
+    page.getByRole("heading", { name: "从源代码到可执行程序" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /上一节/ })).toBeDisabled();
+
+  const lessonPanel = page.locator(".lesson-panel");
+  const codingPanel = page.locator(".coding-panel");
+  const editorTopBefore = await codingPanel.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
+  await lessonPanel.evaluate((element) => {
+    element.scrollTop = Math.min(
+      900,
+      element.scrollHeight - element.clientHeight,
+    );
+  });
+  await expect
+    .poll(() => lessonPanel.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  expect(
+    await codingPanel.evaluate(
+      (element) => element.getBoundingClientRect().top,
+    ),
+  ).toBe(editorTopBefore);
+
+  await page.getByRole("button", { name: /下一节/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "延迟复习：编译与运行" }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/activity=source-to-program-review/);
+  await page.getByRole("button", { name: /上一节/ }).click();
   await expect(
     page.getByRole("heading", { name: "从源代码到可执行程序" }),
   ).toBeVisible();
@@ -55,6 +88,7 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
   await expect(page.getByText("Grade 通过，学习证据已记录")).toBeVisible();
 
   await page.getByRole("button", { name: "返回总览" }).click();
+  await expect(page).not.toHaveURL(/activity=/);
   await expect(page.getByText("已练习概念")).toBeVisible();
   await expect(page.getByText("GRADE").first()).toBeVisible();
   const knowledgeMap = page.locator("#knowledge-map");
@@ -72,4 +106,21 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
       .first(),
   ).toBeVisible();
   expect(browserErrors).toEqual([]);
+});
+
+test("[T-UI-001] narrow training layout does not overflow the viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?activity=source-to-program");
+  await expect(
+    page.getByRole("heading", { name: "从源代码到可执行程序" }),
+  ).toBeVisible();
+
+  const widths = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+  }));
+  expect(widths.document).toBeLessThanOrEqual(widths.viewport);
+  await expect(page.getByRole("button", { name: /下一节/ })).toBeVisible();
 });

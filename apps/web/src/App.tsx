@@ -25,6 +25,44 @@ import {
   restoreBackup,
 } from "./api.js";
 
+type CatalogFilter = "core" | "exercise" | "review" | "all";
+type SectionId =
+  "overview" | "curriculum" | "environment" | "records" | "reviews";
+
+const numberFormatter = new Intl.NumberFormat("zh-CN");
+const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+function initialCatalogFilter(): CatalogFilter {
+  const value = new URLSearchParams(window.location.search).get("catalog");
+  return value === "exercise" || value === "review" || value === "all"
+    ? value
+    : "core";
+}
+
+function initialWorkspaceActivityId(): string | undefined {
+  return (
+    new URLSearchParams(window.location.search).get("activity") ?? undefined
+  );
+}
+
+function initialSectionId(): SectionId {
+  const section = window.location.hash.slice(1);
+  return section === "curriculum" ||
+    section === "environment" ||
+    section === "records" ||
+    section === "reviews"
+    ? section
+    : "overview";
+}
+
 const LessonWorkspace = lazy(async () => {
   const module = await import("./LessonWorkspace.js");
   return { default: module.LessonWorkspace };
@@ -55,7 +93,10 @@ function StatusCard({
 }) {
   return (
     <article className="status-card">
-      <div className={`status-icon ${ready ? "is-ready" : "needs-attention"}`}>
+      <div
+        className={`status-icon ${ready ? "is-ready" : "needs-attention"}`}
+        aria-hidden="true"
+      >
         {icon}
       </div>
       <div>
@@ -74,11 +115,32 @@ export function App() {
   const [bootstrap, setBootstrap] = useState<BootstrapResult>();
   const [dashboard, setDashboard] = useState<DashboardResult>();
   const [error, setError] = useState<string>();
-  const [workspaceActivityId, setWorkspaceActivityId] = useState<string>();
+  const [workspaceActivityId, setWorkspaceActivityId] = useState<
+    string | undefined
+  >(initialWorkspaceActivityId);
   const [progress, setProgress] = useState<ProgressResult>();
   const [reviews, setReviews] = useState<ReviewsResult>();
   const [catalog, setCatalog] = useState<ActivitiesResult>();
+  const [catalogFilter, setCatalogFilter] =
+    useState<CatalogFilter>(initialCatalogFilter);
+  const [activeSection, setActiveSection] =
+    useState<SectionId>(initialSectionId);
   const [dataMessage, setDataMessage] = useState("可导出校验后的本地备份");
+
+  const openWorkspace = useCallback((activityId?: string): void => {
+    if (!activityId) return;
+    setWorkspaceActivityId(activityId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("activity", activityId);
+    window.history.pushState(null, "", url);
+  }, []);
+
+  const closeWorkspace = useCallback((): void => {
+    setWorkspaceActivityId(undefined);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("activity");
+    window.history.replaceState(null, "", url);
+  }, []);
 
   const downloadBackup = async (): Promise<void> => {
     try {
@@ -143,6 +205,35 @@ export function App() {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    const syncWorkspaceFromUrl = (): void => {
+      setWorkspaceActivityId(initialWorkspaceActivityId());
+    };
+    window.addEventListener("popstate", syncWorkspaceFromUrl);
+    return () => window.removeEventListener("popstate", syncWorkspaceFromUrl);
+  }, []);
+
+  useEffect(() => {
+    const syncSectionFromHash = (): void =>
+      setActiveSection(initialSectionId());
+    window.addEventListener("hashchange", syncSectionFromHash);
+    return () => window.removeEventListener("hashchange", syncSectionFromHash);
+  }, []);
+
+  const currentActivityIndex =
+    catalog?.activities.findIndex(
+      (activity) => activity.id === workspaceActivityId,
+    ) ?? -1;
+  const previousActivity =
+    currentActivityIndex > 0
+      ? catalog?.activities[currentActivityIndex - 1]
+      : undefined;
+  const nextActivity =
+    currentActivityIndex >= 0 &&
+    currentActivityIndex < (catalog?.activities.length ?? 0) - 1
+      ? catalog?.activities[currentActivityIndex + 1]
+      : undefined;
+
   if (workspaceActivityId) {
     return (
       <Suspense
@@ -152,7 +243,14 @@ export function App() {
       >
         <LessonWorkspace
           activityId={workspaceActivityId}
-          onBack={() => setWorkspaceActivityId(undefined)}
+          currentPosition={
+            currentActivityIndex >= 0 ? currentActivityIndex + 1 : undefined
+          }
+          totalActivities={catalog?.activities.length}
+          previousActivity={previousActivity}
+          nextActivity={nextActivity}
+          onBack={closeWorkspace}
+          onNavigate={openWorkspace}
           onEvidenceChanged={async () => {
             const [nextDashboard, nextProgress, nextReviews] =
               await Promise.all([
@@ -186,52 +284,98 @@ export function App() {
         (activity) => activity.kind === "project-milestone",
       ).length ?? 0,
   };
+  const filteredActivities =
+    catalog?.activities.filter((activity) => {
+      if (catalogFilter === "core") {
+        return (
+          activity.kind === "lesson" || activity.kind === "project-milestone"
+        );
+      }
+      if (catalogFilter === "exercise") return activity.kind === "exercise";
+      if (catalogFilter === "review") return activity.kind === "review";
+      return true;
+    }) ?? [];
+
+  const selectCatalogFilter = (filter: CatalogFilter): void => {
+    setCatalogFilter(filter);
+    const url = new URL(window.location.href);
+    if (filter === "core") url.searchParams.delete("catalog");
+    else url.searchParams.set("catalog", filter);
+    window.history.replaceState(null, "", url);
+  };
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <BrandMark />
-          <div>
-            <strong>C++ Learn</strong>
-            <span>Engineering Track</span>
+      <a className="skip-link" href="#overview">
+        跳到主要内容
+      </a>
+      <header className="sidebar">
+        <div className="sidebar-inner">
+          <div className="brand">
+            <BrandMark />
+            <div>
+              <strong translate="no">C++ Learn</strong>
+              <span>现代 C++ 工程学习路径</span>
+            </div>
+          </div>
+          <nav aria-label="主导航">
+            <a
+              className={`nav-item ${activeSection === "overview" ? "active" : ""}`}
+              href="#overview"
+              aria-current={
+                activeSection === "overview" ? "location" : undefined
+              }
+            >
+              <span aria-hidden="true">01</span>总览
+            </a>
+            <a
+              className={`nav-item ${activeSection === "curriculum" ? "active" : ""}`}
+              href="#curriculum"
+              aria-current={
+                activeSection === "curriculum" ? "location" : undefined
+              }
+            >
+              <span aria-hidden="true">02</span>课程
+            </a>
+            <a
+              className={`nav-item ${activeSection === "environment" ? "active" : ""}`}
+              href="#environment"
+              aria-current={
+                activeSection === "environment" ? "location" : undefined
+              }
+            >
+              <span aria-hidden="true">03</span>环境
+            </a>
+            <a
+              className={`nav-item ${activeSection === "records" ? "active" : ""}`}
+              href="#records"
+              aria-current={
+                activeSection === "records" ? "location" : undefined
+              }
+            >
+              <span aria-hidden="true">04</span>记录
+            </a>
+            <a
+              className={`nav-item ${activeSection === "reviews" ? "active" : ""}`}
+              href="#reviews"
+              aria-current={
+                activeSection === "reviews" ? "location" : undefined
+              }
+            >
+              <span aria-hidden="true">05</span>复习
+            </a>
+          </nav>
+          <div className="sidebar-footer">
+            <span className="local-pulse" aria-hidden="true" />
+            <div>
+              <strong>本地模式</strong>
+              <span>数据保存在此设备</span>
+            </div>
           </div>
         </div>
-        <nav aria-label="主导航">
-          <p className="nav-label">学习空间</p>
-          <a className="nav-item active" href="#overview">
-            <span>⌁</span>总览
-          </a>
-          <button
-            className="nav-item"
-            onClick={() => setWorkspaceActivityId(catalog?.activities[0]?.id)}
-            disabled={!catalog?.activities[0]}
-          >
-            <span>▶</span>当前课程
-          </button>
-          <a className="nav-item" href="#environment">
-            <span>⌘</span>开发环境
-          </a>
-          <a className="nav-item" href="#records">
-            <span>▤</span>学习记录
-          </a>
-          <a className="nav-item" href="#reviews">
-            <span>↻</span>复习队列
-          </a>
-          <a className="nav-item" href="#knowledge-map">
-            <span>◇</span>知识地图
-          </a>
-        </nav>
-        <div className="sidebar-footer">
-          <span className="local-pulse" />
-          <div>
-            <strong>本地模式</strong>
-            <span>代码与记录保存在此设备</span>
-          </div>
-        </div>
-      </aside>
+      </header>
 
-      <main id="overview">
+      <main id="overview" tabIndex={-1}>
         <header className="topbar">
           <div>
             <p className="eyebrow">学习控制台</p>
@@ -240,19 +384,21 @@ export function App() {
           <div className="topbar-actions">
             <span
               className={`overall-status ${bootstrap?.ready ? "is-ready" : ""}`}
+              role="status"
+              aria-live="polite"
             >
-              <i />
+              <i aria-hidden="true" />
               {bootstrap?.ready ? "环境已就绪" : "正在检查环境"}
             </span>
-            <button className="avatar" aria-label="本地学习者">
-              L
-            </button>
+            <span className="session-mark" aria-hidden="true">
+              LOCAL / 01
+            </span>
           </div>
         </header>
 
         <section className="stage-banner" aria-labelledby="stage-title">
           <div className="stage-copy">
-            <span className="stage-chip">STAGE 5 · ALGORITHMS & SYSTEMS</span>
+            <span className="stage-chip">阶段 05 · 算法与系统</span>
             <h2 id="stage-title">
               从语言心智模型走向可验证的现代 C++ 工程能力。
             </h2>
@@ -263,19 +409,19 @@ export function App() {
             <div className="stage-actions">
               <button
                 className="primary-button"
-                onClick={() =>
-                  setWorkspaceActivityId(catalog?.activities[0]?.id)
-                }
+                type="button"
+                onClick={() => openWorkspace(catalog?.activities[0]?.id)}
+                disabled={!catalog?.activities[0]}
               >
                 开始第一课
               </button>
               <span>
-                初始课程{" "}
-                <strong>{catalog?.activities.length ?? 0} Activities</strong>
+                完整路径{" "}
+                <strong>{catalog?.activities.length ?? 0} 个学习活动</strong>
               </span>
             </div>
           </div>
-          <div className="code-window" aria-label="C++ 示例代码">
+          <div className="code-window" aria-hidden="true" translate="no">
             <div className="window-bar">
               <i />
               <i />
@@ -303,39 +449,118 @@ export function App() {
           <section className="error-panel" role="alert">
             <strong>本地服务暂时不可用</strong>
             <span>{error}</span>
-            <button onClick={() => void refresh()}>重试</button>
+            <button type="button" onClick={() => void refresh()}>
+              重新连接
+            </button>
           </section>
         )}
 
-        <section id="curriculum" className="section-block">
+        <section
+          id="curriculum"
+          className="section-block"
+          aria-labelledby="curriculum-title"
+        >
           <div className="section-heading">
             <div>
-              <p className="eyebrow">MODERN C++ TRACK</p>
-              <h2>课程目录</h2>
+              <p className="eyebrow">
+                MODERN C++ PATH /{" "}
+                {numberFormatter.format(catalog?.activities.length ?? 0)}{" "}
+                ACTIVITIES
+              </p>
+              <h2 id="curriculum-title">课程路径</h2>
             </div>
             <span className="last-check">
-              {catalogCounts.lessons} Lessons ·{" "}
-              {catalogCounts.exercisesAndReviews} Exercises/Reviews ·{" "}
-              {catalogCounts.milestones} Project Milestones
+              {numberFormatter.format(catalogCounts.lessons)} 课 ·{" "}
+              {numberFormatter.format(catalogCounts.exercisesAndReviews)}{" "}
+              次练习与复习 · {numberFormatter.format(catalogCounts.milestones)}{" "}
+              个项目里程碑
             </span>
           </div>
+          <div className="catalog-toolbar">
+            <div role="group" aria-label="筛选课程路径">
+              {(
+                [
+                  ["core", "主线与项目"],
+                  ["exercise", "练习"],
+                  ["review", "复习"],
+                  ["all", "全部"],
+                ] as const
+              ).map(([filter, label]) => (
+                <button
+                  key={filter}
+                  type="button"
+                  aria-pressed={catalogFilter === filter}
+                  className={catalogFilter === filter ? "active" : ""}
+                  onClick={() => selectCatalogFilter(filter)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <span aria-live="polite">
+              当前显示 {numberFormatter.format(filteredActivities.length)} 项
+            </span>
+          </div>
+          <div className="catalog-guide" aria-label="课程结构说明">
+            <div>
+              <strong>主线课程</strong>
+              <span>建立模型</span>
+            </div>
+            <i aria-hidden="true" />
+            <div>
+              <strong>刻意练习</strong>
+              <span>写代码验证</span>
+            </div>
+            <i aria-hidden="true" />
+            <div>
+              <strong>延迟复习</strong>
+              <span>形成长期证据</span>
+            </div>
+          </div>
           <div className="activity-grid">
-            {catalog?.activities.map((activity) => (
-              <button
-                key={activity.id}
-                className="activity-card"
-                onClick={() => setWorkspaceActivityId(activity.id)}
-              >
-                <span className={`activity-kind kind-${activity.kind}`}>
-                  {activity.kind}
-                </span>
-                <strong>{activity.title}</strong>
-                <small>
-                  {activity.estimatedMinutes} 分钟 ·{" "}
-                  {activity.conceptIds.length} Concepts
-                </small>
-              </button>
-            ))}
+            {filteredActivities.map((activity) => {
+              const index = catalog?.activities.indexOf(activity) ?? 0;
+              return (
+                <button
+                  key={activity.id}
+                  className="activity-card"
+                  type="button"
+                  onClick={() => openWorkspace(activity.id)}
+                >
+                  <span className="activity-index">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="activity-copy">
+                    <span className={`activity-kind kind-${activity.kind}`}>
+                      {activity.kind === "lesson"
+                        ? "课程"
+                        : activity.kind === "review"
+                          ? "复习"
+                          : activity.kind === "exercise"
+                            ? "练习"
+                            : "项目"}
+                    </span>
+                    <strong>{activity.title}</strong>
+                    <small>
+                      {numberFormatter.format(activity.estimatedMinutes)} 分钟 ·{" "}
+                      {numberFormatter.format(activity.conceptIds.length)}{" "}
+                      个概念
+                    </small>
+                  </span>
+                  <span className="activity-arrow" aria-hidden="true">
+                    ↗
+                  </span>
+                </button>
+              );
+            })}
+            {!catalog &&
+              Array.from({ length: 6 }, (_, index) => (
+                <div
+                  className="activity-card activity-skeleton"
+                  aria-hidden="true"
+                  key={index}
+                />
+              ))}
           </div>
         </section>
 
@@ -347,7 +572,7 @@ export function App() {
             </div>
             <span className="last-check">
               {bootstrap
-                ? `检测于 ${new Date(bootstrap.generatedAt).toLocaleTimeString("zh-CN")}`
+                ? `检测于 ${timeFormatter.format(new Date(bootstrap.generatedAt))}`
                 : "检测中"}
             </span>
           </div>
@@ -355,7 +580,9 @@ export function App() {
             <StatusCard
               eyebrow="CURRICULUM"
               title="课程目录"
-              detail={`${bootstrap?.services.curriculum.activityCount ?? 0} 个活动已校验`}
+              detail={`${numberFormatter.format(
+                bootstrap?.services.curriculum.activityCount ?? 0,
+              )} 个活动已校验`}
               ready={bootstrap?.services.curriculum.ready ?? false}
               icon="01"
             />
@@ -401,7 +628,8 @@ export function App() {
               </div>
               <button
                 className="lesson-button enabled"
-                onClick={() => setWorkspaceActivityId("source-to-program")}
+                type="button"
+                onClick={() => openWorkspace("source-to-program")}
               >
                 进入课程 <span>→</span>
               </button>
@@ -412,11 +640,13 @@ export function App() {
             <h2>本地学习进度</h2>
             <div className="metric-row">
               <div>
-                <strong>{dashboard?.attempts.length ?? 0}</strong>
+                <strong>
+                  {numberFormatter.format(dashboard?.attempts.length ?? 0)}
+                </strong>
                 <span>运行与判题</span>
               </div>
               <div>
-                <strong>{practiced}</strong>
+                <strong>{numberFormatter.format(practiced)}</strong>
                 <span>已练习概念</span>
               </div>
             </div>
@@ -439,6 +669,7 @@ export function App() {
             <div className="data-actions">
               <button
                 className="secondary-button"
+                type="button"
                 onClick={() => void downloadBackup()}
               >
                 导出本地备份
@@ -447,6 +678,8 @@ export function App() {
                 恢复备份
                 <input
                   type="file"
+                  name="backup"
+                  autoComplete="off"
                   accept="application/json,.json"
                   onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
@@ -455,7 +688,7 @@ export function App() {
                   }}
                 />
               </label>
-              <span>{dataMessage}</span>
+              <span aria-live="polite">{dataMessage}</span>
             </div>
           </article>
         </section>
@@ -467,7 +700,7 @@ export function App() {
                 <h2>延迟复习</h2>
               </div>
               <span className="time-pill">
-                {dashboard?.dueReviewCount ?? 0} DUE
+                {numberFormatter.format(dashboard?.dueReviewCount ?? 0)} DUE
               </span>
             </div>
             <div className="review-list">
@@ -477,7 +710,7 @@ export function App() {
                     <strong>{review.conceptId}</strong>
                     <span>{review.reason}</span>
                     <small>
-                      {new Date(review.dueAt).toLocaleString("zh-CN")}
+                      {dateTimeFormatter.format(new Date(review.dueAt))}
                     </small>
                   </div>
                   <button
@@ -487,7 +720,8 @@ export function App() {
                         : "secondary-button"
                     }
                     disabled={review.status !== "due"}
-                    onClick={() => setWorkspaceActivityId(review.activityId)}
+                    type="button"
+                    onClick={() => openWorkspace(review.activityId)}
                   >
                     {review.status === "due" ? "开始复习" : "尚未到期"}
                   </button>
@@ -512,7 +746,10 @@ export function App() {
                   <strong>{concept.conceptId}</strong>
                   <p>{concept.explanation}</p>
                   <small>
-                    {concept.supportingEvidenceIds.length} 条支持证据
+                    {numberFormatter.format(
+                      concept.supportingEvidenceIds.length,
+                    )}{" "}
+                    条支持证据
                   </small>
                 </div>
               ))}
