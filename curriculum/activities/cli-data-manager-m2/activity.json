@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "id": "cli-data-manager-m2",
+  "version": 2,
+  "kind": "project-milestone",
+  "title": "Project：CLI 数据管理器 Milestone 2",
+  "estimatedMinutes": 75,
+  "conceptIds": ["cpp-classes", "cpp-stl-containers", "cpp-multi-file"],
+  "prerequisiteIds": ["cli-data-manager-m1"],
+  "objectives": ["在保留上一 Milestone 文件的前提下增加持久 Project 能力。"],
+  "victoryConditions": ["RecordStore 接收一条记录并输出 size=1。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: vector",
+      "url": "https://en.cppreference.com/w/cpp/container/vector"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines C.4",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-member"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cli-data-manager-m2/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "cli-data-manager",
+    "editablePaths": [
+      "main.cpp",
+      "record.cpp",
+      "record.hpp",
+      "store.cpp",
+      "store.hpp"
+    ],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(){std::string name;int score{};std::cin>>name>>score;RecordStore store;store.add(Record{name,score});std::cout<<\"size=\"<<store.size()<<'\\n';}\n",
+      "record.hpp": "#pragma once\n#include <string>\nstruct Record{std::string name;int score;};\nstd::string format_record(const Record& record);\n",
+      "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& record){return record.name+\"=\"+std::to_string(record.score);}\n",
+      "store.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\n#include \"record.hpp\"\nclass RecordStore{std::vector<Record> records_;public:void add(Record record);std::size_t size()const;};\n",
+      "store.cpp": "#include \"store.hpp\"\nvoid RecordStore::add(Record record){/*TODO*/}\nstd::size_t RecordStore::size()const{/*TODO*/}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "size=1\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "one record",
+        "stdin": "alice 42\n",
+        "expectedStdout": "size=1\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "stable store",
+        "stdin": "bob -3\n",
+        "expectedStdout": "size=1\n",
+        "failureCategory": "store size must reflect inserted records"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "push-record",
+        "title": "把记录加入容器",
+        "kind": "nudge",
+        "content": "records_.push_back(std::move(record)) 转移参数值。"
+      },
+      {
+        "id": "report-container-size",
+        "title": "从容器读取数量",
+        "kind": "concept",
+        "content": "size() const 返回 records_.size()。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "void RecordStore::add(Record r){records_.push_back(std::move(r));} std::size_t RecordStore::size()const{return records_.size();}"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "milestone-preservation",
+        "prompt": "第二个 Milestone 为什么必须保留并演进第一个 Milestone 的文件？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["stl-containers-algorithms-review"],
+    "teacherRubric": {
+      "id": "project-evolution-rubric",
+      "prompt": "回答应联系真实工程的连续增量、兼容接口与避免重写。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(){std::string name;int score{};std::cin>>name>>score;RecordStore store;store.add(Record{name,score});std::cout<<\"size=\"<<store.size()<<'\\n';}\n",
+      "record.hpp": "#pragma once\n#include <string>\nstruct Record{std::string name;int score;};\nstd::string format_record(const Record& record);\n",
+      "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record&r){return r.name+\"=\"+std::to_string(r.score);}\n",
+      "store.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\n#include \"record.hpp\"\nclass RecordStore{std::vector<Record>records_;public:void add(Record record);std::size_t size()const;};\n",
+      "store.cpp": "#include <utility>\n#include \"store.hpp\"\nvoid RecordStore::add(Record r){records_.push_back(std::move(r));}\nstd::size_t RecordStore::size()const{return records_.size();}\n"
+    },
+    "mutations": [
+      {
+        "id": "discard-record",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\n#include \"record.hpp\"\n#include \"store.hpp\"\nint main(){std::string name;int score{};std::cin>>name>>score;RecordStore store;store.add(Record{name,score});std::cout<<\"size=\"<<store.size()<<'\\n';}\n",
+          "record.hpp": "#pragma once\n#include <string>\nstruct Record{std::string name;int score;};\nstd::string format_record(const Record& record);\n",
+          "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record&r){return r.name+\"=\"+std::to_string(r.score);}\n",
+          "store.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\n#include \"record.hpp\"\nclass RecordStore{std::vector<Record>records_;public:void add(Record record);std::size_t size()const;};\n",
+          "store.cpp": "#include \"store.hpp\"\nvoid RecordStore::add(Record){}\nstd::size_t RecordStore::size()const{return records_.size();}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "milestone-evolution",
+        "type": "algorithm-trace",
+        "fallback": "M1 Record+formatter -> preserve files -> M2 add RecordStore -> Grade complete Project Workspace"
+      }
+    ],
+    "printFallback": "画出 M1 文件保留、M2 新增 store 文件的增量图。"
+  }
+}

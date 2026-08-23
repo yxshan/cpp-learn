@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "cmake-testing-debugging-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：修复多文件契约",
+  "estimatedMinutes": 20,
+  "conceptIds": ["cpp-multi-file", "cpp-build-link"],
+  "prerequisiteIds": ["cmake-testing-debugging"],
+  "objectives": ["延迟回忆头文件声明与源文件定义。"],
+  "victoryConditions": ["三个文件编译链接并输出输入的两倍。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: definition",
+      "url": "https://en.cppreference.com/w/cpp/language/definition"
+    },
+    {
+      "kind": "reference",
+      "title": "CMake tutorial",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cmake-testing-debugging-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp", "math.cpp", "math.hpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include \"math.hpp\"\nint main(){int n{};std::cin>>n;std::cout<<double_value(n)<<'\\n';}\n",
+      "math.hpp": "#pragma once\nint double_value(int value);\n",
+      "math.cpp": "#include \"math.hpp\"\nint double_value(int value){/*recall*/}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "10\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      { "name": "double", "stdin": "5\n", "expectedStdout": "10\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative double",
+        "stdin": "-4\n",
+        "expectedStdout": "-8\n",
+        "failureCategory": "definition must handle signed parameters"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 8
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "return-double",
+        "title": "返回两倍值",
+        "kind": "nudge",
+        "content": "定义中的参数名可以不同，但类型与顺序必须匹配。"
+      },
+      {
+        "id": "one-definition",
+        "title": "保持唯一定义",
+        "kind": "concept",
+        "content": "头文件只放声明，math.cpp 放定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return value * 2;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "header-role",
+        "prompt": "头文件声明对 main.cpp 和 math.cpp 分别起什么作用？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "cmake-testing-debugging",
+    "teacherRubric": {
+      "id": "header-role-rubric",
+      "prompt": "回答应说明共享编译期契约并让定义一致性可检查。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include \"math.hpp\"\nint main(){int n{};std::cin>>n;std::cout<<double_value(n)<<'\\n';}\n",
+      "math.hpp": "#pragma once\nint double_value(int value);\n",
+      "math.cpp": "#include \"math.hpp\"\nint double_value(int value){return value*2;}\n"
+    },
+    "mutations": [
+      {
+        "id": "signature-mismatch",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include \"math.hpp\"\nint main(){int n{};std::cin>>n;std::cout<<double_value(n)<<'\\n';}\n",
+          "math.hpp": "#pragma once\nint double_value(int value);\n",
+          "math.cpp": "#include \"math.hpp\"\ndouble double_value(double value){return value*2;}\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "列出声明、定义、调用三处必须一致的签名部分。"
+  }
+}

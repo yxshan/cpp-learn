@@ -2,6 +2,7 @@ import {
   parseBootstrapResult,
   type ActivityExecutionCommandResult,
   type ActivityResult,
+  type ActivitiesResult,
   type BootstrapResult,
   type DashboardResult,
   type HintRevealCommandResult,
@@ -57,6 +58,16 @@ export async function getActivity(
 ): Promise<ActivityResult> {
   return requestJson(
     `/api/v1/activities/${encodeURIComponent(activityId)}`,
+    { headers: { accept: "application/json" } },
+    request,
+  );
+}
+
+export async function getActivities(
+  request: Request = fetch,
+): Promise<ActivitiesResult> {
+  return requestJson(
+    "/api/v1/activities",
     { headers: { accept: "application/json" } },
     request,
   );

@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "values-and-types-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：类型驱动的整数计算",
+  "estimatedMinutes": 15,
+  "conceptIds": ["cpp-static-types", "cpp-stream-io"],
+  "prerequisiteIds": ["values-and-types"],
+  "objectives": ["延迟回忆静态类型与标准流。"],
+  "victoryConditions": ["独立读取两个整数并输出差值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: fundamental types",
+      "url": "https://en.cppreference.com/w/cpp/language/types"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: iostream",
+      "url": "https://en.cppreference.com/w/cpp/io"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/values-and-types-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){ int left{}, right{}; /* recall without copying */ }\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "7\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "difference", "stdin": "10 3\n", "expectedStdout": "7\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative difference",
+        "stdin": "2 5\n",
+        "expectedStdout": "-3\n",
+        "failureCategory": "subtraction must preserve operand order"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "recall-streams",
+        "title": "回忆流方向",
+        "kind": "nudge",
+        "content": "输入流把数据写入变量，输出流接收要打印的值。"
+      },
+      {
+        "id": "preserve-order",
+        "title": "保持操作数顺序",
+        "kind": "concept",
+        "content": "目标是 left - right，而不是绝对差。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "std::cin>>left>>right; std::cout<<left-right<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "typed-input",
+        "prompt": "为什么 std::cin 在读取前必须知道目标变量的类型？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "values-and-types",
+    "teacherRubric": {
+      "id": "typed-input-rubric",
+      "prompt": "回答应联系解析规则、目标存储类型和编译期接口。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint main(){ int left{},right{}; std::cin>>left>>right; std::cout<<left-right<<'\\n'; }\n"
+    },
+    "mutations": [
+      {
+        "id": "reversed-operands",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){ int a{},b{}; std::cin>>a>>b; std::cout<<b-a<<'\\n'; }\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "在纸面追踪输入 2 5 时 left 与 right 的值。"
+  }
+}

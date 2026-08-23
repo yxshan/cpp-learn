@@ -153,6 +153,106 @@ describe("[T-WORK-001] filesystem Workspace", () => {
     ).resolves.toEqual({ ok: false, code: "revision_conflict" });
   });
 
+  it("adds files from a newer Activity version without overwriting learner work", async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), "cpp-learn-upgrade-"));
+    temporaryRoots.push(workspaceRoot);
+    const firstVersion = createFilesystemWorkspace({
+      workspaceRoot,
+      activities: [
+        {
+          activityId: "project-m1",
+          version: 1,
+          persistenceId: "project-workspace",
+          editablePaths: ["main.cpp"],
+          starterFiles: { "main.cpp": "int main() {}\n" },
+        },
+      ],
+    });
+    await firstVersion.open("project-m1");
+    await firstVersion.save({
+      activityId: "project-m1",
+      baseRevision: 0,
+      changes: [{ path: "main.cpp", content: "int main() { return 42; }\n" }],
+    });
+
+    const upgraded = createFilesystemWorkspace({
+      workspaceRoot,
+      activities: [
+        {
+          activityId: "project-m2",
+          version: 2,
+          persistenceId: "project-workspace",
+          editablePaths: ["main.cpp", "support.cpp"],
+          starterFiles: {
+            "main.cpp": "int main() { return 0; }\n",
+            "support.cpp": "int answer() { return 42; }\n",
+          },
+        },
+      ],
+    });
+
+    await expect(upgraded.open("project-m2")).resolves.toMatchObject({
+      activityId: "project-m2",
+      revision: 2,
+      files: {
+        "main.cpp": "int main() { return 42; }\n",
+        "support.cpp": "int answer() { return 42; }\n",
+      },
+    });
+  });
+
+  it("serializes migration with concurrent saves so Learner files cannot be lost", async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), "cpp-learn-upgrade-"));
+    temporaryRoots.push(workspaceRoot);
+    const original = createFilesystemWorkspace({
+      workspaceRoot,
+      activities: [
+        {
+          activityId: "concurrent-upgrade",
+          version: 1,
+          editablePaths: ["main.cpp"],
+          starterFiles: { "main.cpp": "starter\n" },
+        },
+      ],
+    });
+    await original.open("concurrent-upgrade");
+    await original.save({
+      activityId: "concurrent-upgrade",
+      baseRevision: 0,
+      changes: [{ path: "main.cpp", content: "learner-v1\n" }],
+    });
+    const upgraded = createFilesystemWorkspace({
+      workspaceRoot,
+      activities: [
+        {
+          activityId: "concurrent-upgrade",
+          version: 2,
+          editablePaths: ["main.cpp", "support.cpp"],
+          starterFiles: {
+            "main.cpp": "new-starter\n",
+            "support.cpp": "support\n",
+          },
+        },
+      ],
+    });
+
+    await Promise.all([
+      upgraded.open("concurrent-upgrade"),
+      upgraded.save({
+        activityId: "concurrent-upgrade",
+        baseRevision: 1,
+        changes: [{ path: "main.cpp", content: "learner-v2\n" }],
+      }),
+    ]);
+
+    await expect(upgraded.open("concurrent-upgrade")).resolves.toMatchObject({
+      files: {
+        "main.cpp": expect.stringMatching(/^learner-v[12]\n$/),
+        "support.cpp": "support\n",
+      },
+    });
+  });
+
   it("rejects a snapshot store redirected through a symbolic link", async () => {
     const workspaceRoot = await mkdtemp(join(tmpdir(), "cpp-learn-files-"));
     const outsideRoot = await mkdtemp(join(tmpdir(), "cpp-learn-outside-"));

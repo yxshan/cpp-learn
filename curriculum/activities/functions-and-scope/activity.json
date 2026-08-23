@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "functions-and-scope",
+  "version": 1,
+  "kind": "lesson",
+  "title": "函数与作用域",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-functions", "cpp-scope"],
+  "prerequisiteIds": ["values-and-types"],
+  "objectives": ["用参数与返回值定义窄函数契约。"],
+  "victoryConditions": ["square 对正数、负数和零均返回正确结果。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: functions",
+      "url": "https://en.cppreference.com/w/cpp/language/functions"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.2",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-logical"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/functions-and-scope/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n\nint square(int value) {\n    // TODO\n}\n\nint main() {\n    int value{};\n    std::cin >> value;\n    std::cout << square(value) << '\\n';\n}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "25\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "positive square", "stdin": "5\n", "expectedStdout": "25\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative square",
+        "stdin": "-7\n",
+        "expectedStdout": "49\n",
+        "failureCategory": "function must work for signed inputs"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 2
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "return-expression",
+        "title": "返回表达式",
+        "kind": "nudge",
+        "content": "平方是 value 与自身相乘。"
+      },
+      {
+        "id": "local-contract",
+        "title": "关注函数边界",
+        "kind": "concept",
+        "content": "square 只依赖参数，不需要读取 main 的局部变量。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "int square(int value){ return value * value; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "scope-boundary",
+        "prompt": "为什么 square 不能直接访问 main 中的局部变量 value？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["functions-and-scope-review"],
+    "teacherRubric": {
+      "id": "scope-rubric",
+      "prompt": "回答应指出块作用域与通过参数传值的函数边界。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint square(int value){ return value*value; }\nint main(){ int value{}; std::cin>>value; std::cout<<square(value)<<'\\n'; }\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-return",
+        "files": {
+          "main.cpp": "#include <iostream>\nint square(int value){ return value *; }\nint main(){ int v{}; std::cin>>v; std::cout<<square(v)<<'\\n'; }\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "call-frame",
+        "type": "lifetime-timeline",
+        "fallback": "main value -> square parameter -> return value -> parameter lifetime ends"
+      }
+    ],
+    "printFallback": "画出 main 调用 square 时参数产生与销毁的时间线。"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "pointers-and-lifetime",
+  "version": 1,
+  "kind": "lesson",
+  "title": "指针与生命周期",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-pointers", "cpp-lifetime"],
+  "prerequisiteIds": ["references-and-const"],
+  "objectives": ["理解取地址、解引用与对象生命周期的关系。"],
+  "victoryConditions": ["程序通过有效指针修改对象且 Sanitizer 无报告。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: pointers",
+      "url": "https://en.cppreference.com/w/cpp/language/pointer"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.42",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-ptr"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/pointers-and-lifetime/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){ int value{}; std::cin>>value; int* observer = nullptr; /* TODO */ }\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "42\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "increment", "stdin": "41\n", "expectedStdout": "42\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative increment",
+        "stdin": "-2\n",
+        "expectedStdout": "-1\n",
+        "failureCategory": "pointer operation must use the input object"
+      }
+    ],
+    "sanitizers": ["address", "undefined"]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "take-address",
+        "title": "先取得地址",
+        "kind": "nudge",
+        "content": "用 &value 得到现存对象的地址。"
+      },
+      {
+        "id": "dereference-safely",
+        "title": "只解引用有效指针",
+        "kind": "concept",
+        "content": "observer 指向仍在作用域内的 value 后，*observer 表示该对象。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "int* observer=&value; ++(*observer); std::cout<<value<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "dangling-pointer",
+        "prompt": "如果返回局部变量的地址，函数结束后为什么会形成悬空指针？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["pointers-and-lifetime-review"],
+    "teacherRubric": {
+      "id": "lifetime-rubric",
+      "prompt": "回答应说明局部对象生命周期结束，而地址值本身不能延长对象生命周期。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint main(){int value{};std::cin>>value;int* observer=&value;++(*observer);std::cout<<value<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "use-after-free",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){int value{};std::cin>>value;int* p=new int[1]{value};std::cout<<p[0]+1<<'\\n';delete[] p;p[0]=0;}\n"
+        },
+        "expectedVerdict": "sanitizer_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "pointer-lifetime",
+        "type": "lifetime-timeline",
+        "fallback": "value constructed -> observer=&value -> dereference valid -> value destroyed at scope end"
+      }
+    ],
+    "printFallback": "画出对象 value 的生命周期区间，并标记 observer 可安全解引用的区间。"
+  }
+}

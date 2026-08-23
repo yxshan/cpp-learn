@@ -103,6 +103,41 @@ describe("[T-OPS-001] integrated Web hosting", () => {
 });
 
 describe("[T-CONTRACT-002] HTTP Activity Adapter", () => {
+  it("lists Track Activities without lesson bodies or reference solutions", async () => {
+    const result = {
+      schemaVersion: 1 as const,
+      activities: [
+        {
+          id: "source-to-program",
+          version: 1,
+          kind: "lesson" as const,
+          title: "从源代码到可执行程序",
+          estimatedMinutes: 35,
+          conceptIds: ["compile-link-run"],
+          prerequisiteIds: [],
+        },
+      ],
+    };
+    const platform: LearningPlatform = {
+      async dispatch() {
+        throw new Error("No commands in this fixture");
+      },
+      async *events() {},
+      query: vi.fn().mockResolvedValue(result),
+    };
+    const server = createServer({ platform });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/v1/activities",
+    });
+
+    expect(response.json()).toEqual(result);
+    expect(response.body).not.toContain("referenceFiles");
+    expect(platform.query).toHaveBeenCalledWith({ type: "activities.list" });
+    await server.close();
+  });
+
   it("maps a versioned Activity query without exposing curriculum files", async () => {
     const platform = createLearningPlatform({
       clock: () => new Date("2026-08-23T08:00:00.000Z"),

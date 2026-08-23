@@ -5,7 +5,10 @@ import {
 import type { CurriculumReadiness } from "@cpp-learn/contracts";
 import type {
   ActivityDetail,
+  ActivitySource,
   HintKind,
+  InteractiveLessonBlock,
+  JudgeVerdict,
   PrivateJudgeTest,
   PublicJudgeTest,
   ReflectionPrompt,
@@ -26,8 +29,12 @@ export interface Activity {
   readonly estimatedMinutes: number;
   readonly conceptIds: readonly string[];
   readonly prerequisiteIds: readonly string[];
+  readonly objectives: readonly string[];
+  readonly victoryConditions: readonly string[];
+  readonly sources: readonly ActivitySource[];
   readonly content: { readonly format: "markdown"; readonly path: string };
   readonly workspace: {
+    readonly persistenceId?: string;
     readonly editablePaths: readonly string[];
     readonly starterFiles: Readonly<Record<string, string>>;
   };
@@ -40,6 +47,7 @@ export interface Activity {
     readonly sanitizers?: readonly ("address" | "undefined")[];
   };
   readonly evidencePolicy: EvidencePolicyDefinition;
+  readonly quality: ActivityQualityDefinition;
   readonly learning: {
     readonly hints: readonly HintDefinition[];
     readonly reflections: readonly ReflectionPrompt[];
@@ -47,6 +55,20 @@ export interface Activity {
     readonly reviewOf?: string;
     readonly teacherRubric: TeacherRubricDefinition;
   };
+}
+
+export interface ActivityQualityDefinition {
+  readonly referenceFiles: Readonly<Record<string, string>>;
+  readonly mutations: readonly {
+    readonly id: string;
+    readonly files: Readonly<Record<string, string>>;
+    readonly expectedVerdict: Exclude<
+      JudgeVerdict,
+      "automated_pass" | "cancelled" | "judge_system_error"
+    >;
+  }[];
+  readonly interactiveBlocks: readonly InteractiveLessonBlock[];
+  readonly printFallback: string;
 }
 
 export interface EvidencePolicyDefinition {
@@ -83,15 +105,26 @@ export interface Curriculum {
   readiness(): Promise<CurriculumReadiness>;
   getActivity(activityId: string): Promise<ActivityDetail | undefined>;
   getNextActivity(minutes?: number): Promise<ActivityDetail | undefined>;
+  listActivities(): Promise<readonly ActivityDetail[]>;
   listWorkspaceActivities(): Promise<readonly WorkspaceActivityDefinition[]>;
   getJudge(activityId: string): Promise<JudgeDefinition | undefined>;
   getLearning(
     activityId: string,
   ): Promise<ActivityLearningDefinition | undefined>;
+  listVerificationCases(): Promise<readonly ContentVerificationCase[]>;
+}
+
+export interface ContentVerificationCase {
+  readonly activity: ActivityDetail;
+  readonly judge: JudgeDefinition;
+  readonly referenceFiles: Readonly<Record<string, string>>;
+  readonly mutations: ActivityQualityDefinition["mutations"];
 }
 
 export interface WorkspaceActivityDefinition {
   readonly activityId: string;
+  readonly version: number;
+  readonly persistenceId?: string;
   readonly editablePaths: readonly string[];
   readonly starterFiles: Readonly<Record<string, string>>;
 }
@@ -122,6 +155,55 @@ export function validateCatalog(
   );
   const activityIndexes = new Map<string, number>();
   for (const [index, activity] of validActivities.entries()) {
+    const sourceKinds = new Set(activity.sources.map((source) => source.kind));
+    if (!sourceKinds.has("primary") || !sourceKinds.has("reference")) {
+      issues.push({
+        path: `/${index}/sources`,
+        message: "Activity sources require both primary and reference links",
+        keyword: "sources",
+      });
+    }
+    const editablePaths = new Set(activity.workspace.editablePaths);
+    const referencePaths = Object.keys(activity.quality.referenceFiles);
+    if (
+      referencePaths.some((path) => !editablePaths.has(path)) ||
+      activity.workspace.editablePaths.some(
+        (path) => !(path in activity.quality.referenceFiles),
+      )
+    ) {
+      issues.push({
+        path: `/${index}/quality/referenceFiles`,
+        message: "reference files must exactly cover editable Workspace paths",
+        keyword: "reference",
+      });
+    }
+    const mutationIds = activity.quality.mutations.map(
+      (mutation) => mutation.id,
+    );
+    if (new Set(mutationIds).size !== mutationIds.length) {
+      issues.push({
+        path: `/${index}/quality/mutations`,
+        message: "mutation identifiers must be unique",
+        keyword: "mutation",
+      });
+    }
+    for (const [
+      mutationIndex,
+      mutation,
+    ] of activity.quality.mutations.entries()) {
+      if (
+        Object.keys(mutation.files).some((path) => !editablePaths.has(path)) ||
+        activity.workspace.editablePaths.some(
+          (path) => !(path in mutation.files),
+        )
+      ) {
+        issues.push({
+          path: `/${index}/quality/mutations/${mutationIndex}/files`,
+          message: "mutation files must exactly cover editable Workspace paths",
+          keyword: "mutation",
+        });
+      }
+    }
     for (const [testIndex, privateTest] of (
       activity.judge.privateTests ?? []
     ).entries()) {
@@ -201,6 +283,57 @@ export function validateCatalog(
         keyword: "order",
       });
     }
+    if (solutionIndex < 2) {
+      issues.push({
+        path: `/${index}/learning/hints`,
+        message: "Activity requires two graded hints before a final solution",
+        keyword: "hint-policy",
+      });
+    } else {
+      const normalizeDisclosure = (value: string) =>
+        value.replace(/\s+/g, " ").trim();
+      const referenceSource = Object.values(activity.quality.referenceFiles)
+        .join("\n")
+        .replace(/\s+/g, " ")
+        .trim();
+      for (const [hintIndex, hint] of activity.learning.hints
+        .slice(0, solutionIndex)
+        .entries()) {
+        const disclosure = normalizeDisclosure(hint.content);
+        if (disclosure.length >= 20 && referenceSource.includes(disclosure)) {
+          issues.push({
+            path: `/${index}/learning/hints/${hintIndex}/content`,
+            message: "graded hint leaks a reference-solution fragment",
+            keyword: "hint-leak",
+          });
+        }
+      }
+      const publicValues = new Set(
+        [
+          activity.judge.expectedStdout,
+          ...(activity.judge.publicTests ?? []).flatMap((test) => [
+            test.stdin,
+            test.expectedStdout,
+          ]),
+        ]
+          .map(normalizeDisclosure)
+          .filter((value) => value.length > 0),
+      );
+      const privateValues = (activity.judge.privateTests ?? [])
+        .flatMap((test) => [test.stdin, test.expectedStdout])
+        .map(normalizeDisclosure)
+        .filter((value) => value.length > 0 && !publicValues.has(value));
+      for (const [hintIndex, hint] of activity.learning.hints.entries()) {
+        const disclosure = normalizeDisclosure(hint.content);
+        if (privateValues.some((value) => disclosure.includes(value))) {
+          issues.push({
+            path: `/${index}/learning/hints/${hintIndex}/content`,
+            message: "Hint exposes a private Judge input or expected output",
+            keyword: "hint-private-leak",
+          });
+        }
+      }
+    }
   }
 
   const visiting = new Set<string>();
@@ -226,6 +359,19 @@ export function validateCatalog(
       message: `cyclic Activity prerequisites include: ${cyclicActivity.id}`,
       keyword: "graph",
     });
+  }
+
+  for (const [index, activity] of validActivities.entries()) {
+    if (
+      activity.kind !== "review" &&
+      activity.learning.reviewIds.length === 0
+    ) {
+      issues.push({
+        path: `/${index}/learning/reviewIds`,
+        message: "non-Review Activity must declare a delayed Review variant",
+        keyword: "review-coverage",
+      });
+    }
   }
 
   if (issues.length > 0) return { ok: false, issues };
@@ -329,6 +475,22 @@ export function createFilesystemCurriculumProbe(
 export function createFilesystemCurriculum(
   dependencies: FilesystemCurriculumProbeDependencies,
 ): Curriculum {
+  const judgeDefinition = (activity: Activity): JudgeDefinition => ({
+    activityId: activity.id,
+    activityVersion: activity.version,
+    judgeVersion: activity.judge.version,
+    expectedStdout: activity.judge.expectedStdout,
+    timeoutMs: activity.judge.timeoutMs,
+    ...(activity.judge.publicTests
+      ? { publicTests: activity.judge.publicTests }
+      : {}),
+    ...(activity.judge.privateTests
+      ? { privateTests: activity.judge.privateTests }
+      : {}),
+    ...(activity.judge.sanitizers
+      ? { sanitizers: activity.judge.sanitizers }
+      : {}),
+  });
   const activityDetail = async (
     activity: Activity | undefined,
   ): Promise<ActivityDetail | undefined> => {
@@ -345,6 +507,12 @@ export function createFilesystemCurriculum(
       title: activity.title,
       estimatedMinutes: activity.estimatedMinutes,
       conceptIds: activity.conceptIds,
+      prerequisiteIds: activity.prerequisiteIds,
+      objectives: activity.objectives,
+      victoryConditions: activity.victoryConditions,
+      sources: activity.sources,
+      interactiveBlocks: activity.quality.interactiveBlocks,
+      printFallback: activity.quality.printFallback,
       markdown,
       workspace: { editablePaths: activity.workspace.editablePaths },
       learning: {
@@ -378,10 +546,23 @@ export function createFilesystemCurriculum(
           : activities.find((activity) => activity.estimatedMinutes <= minutes),
       );
     },
+    async listActivities() {
+      return Promise.all(
+        (await loadActivities(dependencies)).map(activityDetail),
+      ).then((activities) =>
+        activities.filter(
+          (activity): activity is ActivityDetail => activity !== undefined,
+        ),
+      );
+    },
     async listWorkspaceActivities() {
       const activities = await loadActivities(dependencies);
       return activities.map((activity) => ({
         activityId: activity.id,
+        version: activity.version,
+        ...(activity.workspace.persistenceId
+          ? { persistenceId: activity.workspace.persistenceId }
+          : {}),
         editablePaths: activity.workspace.editablePaths,
         starterFiles: activity.workspace.starterFiles,
       }));
@@ -391,22 +572,7 @@ export function createFilesystemCurriculum(
         (candidate) => candidate.id === activityId,
       );
       if (!activity) return undefined;
-      return {
-        activityId: activity.id,
-        activityVersion: activity.version,
-        judgeVersion: activity.judge.version,
-        expectedStdout: activity.judge.expectedStdout,
-        timeoutMs: activity.judge.timeoutMs,
-        ...(activity.judge.publicTests
-          ? { publicTests: activity.judge.publicTests }
-          : {}),
-        ...(activity.judge.privateTests
-          ? { privateTests: activity.judge.privateTests }
-          : {}),
-        ...(activity.judge.sanitizers
-          ? { sanitizers: activity.judge.sanitizers }
-          : {}),
-      };
+      return judgeDefinition(activity);
     },
     async getLearning(activityId) {
       const activity = (await loadActivities(dependencies)).find(
@@ -424,6 +590,17 @@ export function createFilesystemCurriculum(
         teacherRubric: activity.learning.teacherRubric,
         starterFiles: activity.workspace.starterFiles,
       };
+    },
+    async listVerificationCases() {
+      const activities = await loadActivities(dependencies);
+      return Promise.all(
+        activities.map(async (activity) => ({
+          activity: (await activityDetail(activity))!,
+          judge: judgeDefinition(activity),
+          referenceFiles: activity.quality.referenceFiles,
+          mutations: activity.quality.mutations,
+        })),
+      );
     },
   };
 }

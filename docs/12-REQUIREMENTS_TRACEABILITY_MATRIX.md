@@ -111,3 +111,11 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-RECORD-002 | Stage 3 atomic event-batch restart, regression rejection, and equivalent SQLite projection rebuild in `modules/learning-record/src/learning-record.test.ts` | Passed |
 | T-TEACH-001–T-TEACH-004 | Teacher Pack redaction, observation validation, direct-state prohibition, and pending review tests | Passed |
 | T-E2E-001, T-E2E-005 | Real browser reflection → Grade → demonstrated Evidence → Review schedule in `e2e/first-learning-loop.spec.ts` | Passed |
+
+## 10. Executable Stage 4 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-CONTENT-006 | Release scale, Activity Catalog redaction, 27 unsolved starters, 27 Clang reference solutions, and 27 mutation fixtures | Passed |
+| T-WORK-001 | Version-aware Workspace upgrade preserves Learner files and adds only missing starter paths | Passed |
+| T-E2E-001, T-E2E-005 | Expanded Track catalog plus real-browser/real-Clang learning loop | Passed |

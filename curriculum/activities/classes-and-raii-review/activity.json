@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "classes-and-raii-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：封装不变量",
+  "estimatedMinutes": 20,
+  "conceptIds": ["cpp-classes", "cpp-raii"],
+  "prerequisiteIds": ["classes-and-raii"],
+  "objectives": ["延迟回忆类的状态与操作边界。"],
+  "victoryConditions": ["Balance 正确累加输入金额。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: class",
+      "url": "https://en.cppreference.com/w/cpp/language/class"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines C.2",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-org"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/classes-and-raii-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nclass Balance{int amount_{};public:void deposit(int n){/*recall*/}int value()const{/*recall*/}};int main(){int n{};std::cin>>n;Balance b;b.deposit(n);b.deposit(2);std::cout<<b.value()<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "7\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "deposit", "stdin": "5\n", "expectedStdout": "7\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "zero deposit",
+        "stdin": "0\n",
+        "expectedStdout": "2\n",
+        "failureCategory": "state updates must compose"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "update-member",
+        "title": "更新成员状态",
+        "kind": "nudge",
+        "content": "deposit 把 n 加入 amount_。"
+      },
+      {
+        "id": "observer-return",
+        "title": "观察器返回状态",
+        "kind": "concept",
+        "content": "value() 不修改对象。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "void deposit(int n){amount_+=n;} int value()const{return amount_;}"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "private-state",
+        "prompt": "为什么 amount_ 应保持 private？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "classes-and-raii",
+    "teacherRubric": {
+      "id": "encapsulation-rubric",
+      "prompt": "回答应说明操作集中维护不变量并减少任意写入。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nclass Balance{int amount_{};public:void deposit(int n){amount_+=n;}int value()const{return amount_;}};int main(){int n{};std::cin>>n;Balance b;b.deposit(n);b.deposit(2);std::cout<<b.value()<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "replace-state",
+        "files": {
+          "main.cpp": "#include <iostream>\nclass Balance{int a_{};public:void deposit(int n){a_=n;}int value()const{return a_;}};int main(){int n{};std::cin>>n;Balance b;b.deposit(n);b.deposit(2);std::cout<<b.value()<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "列出 Balance 对外公开的操作与内部不变量。"
+  }
+}

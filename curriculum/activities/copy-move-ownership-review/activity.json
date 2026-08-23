@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "copy-move-ownership-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：移动唯一所有权",
+  "estimatedMinutes": 20,
+  "conceptIds": ["cpp-copy-move", "cpp-smart-pointers"],
+  "prerequisiteIds": ["copy-move-ownership"],
+  "objectives": ["延迟回忆 unique_ptr 的移动语义。"],
+  "victoryConditions": ["所有权移动后从目标指针输出输入值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: move",
+      "url": "https://en.cppreference.com/w/cpp/utility/move"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines R.21",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-unique"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/copy-move-ownership-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <memory>\n#include <utility>\nint main(){int n{};std::cin>>n;auto first=std::make_unique<int>(n);/* move and print */}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "11\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "move owner", "stdin": "11\n", "expectedStdout": "11\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "zero value",
+        "stdin": "0\n",
+        "expectedStdout": "0\n",
+        "failureCategory": "moved owner must preserve the object"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "std-move",
+        "title": "显式允许移动",
+        "kind": "nudge",
+        "content": "用 std::move(first) 初始化 second。"
+      },
+      {
+        "id": "source-empty",
+        "title": "只使用新所有者",
+        "kind": "concept",
+        "content": "移动后从 second 解引用；不要依赖 first 的旧值。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "auto second=std::move(first); std::cout<<*second<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "moved-from-state",
+        "prompt": "移动后为什么不应再解引用 first？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "copy-move-ownership",
+    "teacherRubric": {
+      "id": "moved-from-rubric",
+      "prompt": "回答应说明所有权已转移，first 不再拥有原对象。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <memory>\n#include <utility>\nint main(){int n{};std::cin>>n;auto first=std::make_unique<int>(n);auto second=std::move(first);std::cout<<*second<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "use-source-after-move",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <memory>\n#include <utility>\nint main(){int n{};std::cin>>n;auto first=std::make_unique<int>(n);auto second=std::move(first);std::cout<<*first<<'\\n';}\n"
+        },
+        "expectedVerdict": "runtime_error"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "写出 move 前后 first 与 second 的所有权状态。"
+  }
+}

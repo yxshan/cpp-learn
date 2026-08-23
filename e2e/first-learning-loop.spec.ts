@@ -9,6 +9,14 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
   await expect(
     page.getByRole("heading", { name: "从第一段 C++ 程序开始" }),
   ).toBeVisible();
+  await expect(
+    page.locator("#curriculum").getByRole("heading", { name: "课程目录" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: /Project：CLI 数据管理器 Milestone 1/,
+    }),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "开始第一课" }).click();
   await expect(

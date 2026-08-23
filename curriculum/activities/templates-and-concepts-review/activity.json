@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "templates-and-concepts-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：泛型最小值",
+  "estimatedMinutes": 20,
+  "conceptIds": ["cpp-templates", "cpp-concepts"],
+  "prerequisiteIds": ["templates-and-concepts"],
+  "objectives": ["延迟回忆受约束泛型接口。"],
+  "victoryConditions": ["smaller 输出两个输入中的较小值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: constraints",
+      "url": "https://en.cppreference.com/w/cpp/language/constraints"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines T.10",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rt-concepts"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/templates-and-concepts-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T smaller(T a,T b){/*recall*/}\nint main(){int a{},b{};std::cin>>a>>b;std::cout<<smaller(a,b)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "2\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "smaller", "stdin": "8 2\n", "expectedStdout": "2\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative smaller",
+        "stdin": "-3 4\n",
+        "expectedStdout": "-3\n",
+        "failureCategory": "comparison must preserve signed ordering"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 8
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "choose-smaller",
+        "title": "选择更小参数",
+        "kind": "nudge",
+        "content": "比较 a < b。"
+      },
+      {
+        "id": "same-type",
+        "title": "保持同一模板类型",
+        "kind": "concept",
+        "content": "两个参数和返回值都使用 T。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return a<b?a:b;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "constraint-location",
+        "prompt": "为什么约束应出现在模板接口附近？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "templates-and-concepts",
+    "teacherRubric": {
+      "id": "constraint-location-rubric",
+      "prompt": "回答应联系调用者可见契约与编译诊断。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T smaller(T a,T b){return a<b?a:b;}int main(){int a{},b{};std::cin>>a>>b;std::cout<<smaller(a,b)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "returns-larger",
+        "files": {
+          "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T smaller(T a,T b){return a>b?a:b;}int main(){int a{},b{};std::cin>>a>>b;std::cout<<smaller(a,b)<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "写出 smaller 的类型参数、约束、参数与返回类型。"
+  }
+}

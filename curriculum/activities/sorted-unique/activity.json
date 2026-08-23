@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "id": "sorted-unique",
+  "version": 1,
+  "kind": "exercise",
+  "title": "练习：排序去重",
+  "estimatedMinutes": 35,
+  "conceptIds": ["cpp-stl-containers", "cpp-algorithms"],
+  "prerequisiteIds": ["stl-containers-algorithms"],
+  "objectives": ["组合 sort、unique 与 erase。"],
+  "victoryConditions": ["四个输入按升序且无重复输出。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: unique",
+      "url": "https://en.cppreference.com/w/cpp/algorithm/unique"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: vector erase",
+      "url": "https://en.cppreference.com/w/cpp/container/vector/erase"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/sorted-unique/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int>v(4);for(int&x:v)std::cin>>x;/*sort unique erase print*/}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "1 2 3\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "remove duplicate",
+        "stdin": "3 1 2 1\n",
+        "expectedStdout": "1 2 3\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "all duplicate",
+        "stdin": "5 5 5 5\n",
+        "expectedStdout": "5\n",
+        "failureCategory": "logical tail after unique must be erased"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "sort-before-unique",
+        "title": "先排序",
+        "kind": "nudge",
+        "content": "unique 只合并相邻重复值。"
+      },
+      {
+        "id": "erase-tail",
+        "title": "删除逻辑尾部",
+        "kind": "concept",
+        "content": "unique 返回新逻辑终点，再调用 erase。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "sort(v.begin(),v.end());v.erase(unique(v.begin(),v.end()),v.end());"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "unique-contract",
+        "prompt": "为什么 unique 不直接改变 vector 的 size？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["stl-containers-algorithms-review"],
+    "teacherRubric": {
+      "id": "unique-contract-rubric",
+      "prompt": "回答应区分算法重排范围与容器负责存储大小。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int>v(4);for(int&x:v)std::cin>>x;std::sort(v.begin(),v.end());v.erase(std::unique(v.begin(),v.end()),v.end());for(std::size_t i=0;i<v.size();++i)std::cout<<v[i]<<(i+1==v.size()?'\\n':' ');}\n"
+    },
+    "mutations": [
+      {
+        "id": "forget-erase",
+        "files": {
+          "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int>v(4);for(int&x:v)std::cin>>x;std::sort(v.begin(),v.end());std::unique(v.begin(),v.end());for(int x:v)std::cout<<x<<' ';std::cout<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "追踪 [3,1,2,1] 经 sort、unique、erase 的范围变化。"
+  }
+}

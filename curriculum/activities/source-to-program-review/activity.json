@@ -7,6 +7,20 @@
   "estimatedMinutes": 15,
   "conceptIds": ["compile-link-run", "cpp-program-structure"],
   "prerequisiteIds": ["source-to-program"],
+  "objectives": ["延迟回忆构建与运行的先后关系。"],
+  "victoryConditions": ["不查看上一课即可输出 Build first, run second。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: main function",
+      "url": "https://en.cppreference.com/w/cpp/language/main_function"
+    },
+    {
+      "kind": "reference",
+      "title": "Clang command line reference",
+      "url": "https://clang.llvm.org/docs/ClangCommandLineReference.html"
+    }
+  ],
   "content": {
     "format": "markdown",
     "path": "activities/source-to-program-review/lesson.md"
@@ -78,5 +92,21 @@
       "id": "compile-stage-recall",
       "prompt": "回答应指出语法错误阻止编译成功，因此没有新的可执行程序可启动。"
     }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n\nint main() {\n    std::cout << \"Build first, run second.\\n\";\n    return 0;\n}\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-semicolon",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    std::cout << \"Build first, run second.\\n\"\n    return 0;\n}\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "在纸面写出从源文件到进程的阶段顺序，并说明缺少分号在哪一阶段被发现。"
   }
 }

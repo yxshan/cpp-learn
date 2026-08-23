@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "id": "cmake-testing-debugging",
+  "version": 1,
+  "kind": "lesson",
+  "title": "多文件、构建、测试与调试",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-multi-file", "cpp-build-link"],
+  "prerequisiteIds": ["templates-and-concepts"],
+  "objectives": ["维护声明、定义与调用点之间的一致契约。"],
+  "victoryConditions": ["main.cpp 与 math.cpp 成功链接并输出 42。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake tutorial",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html"
+    },
+    {
+      "kind": "reference",
+      "title": "CMake testing guide",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/Testing%20and%20CTest.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cmake-testing-debugging/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp", "math.cpp", "math.hpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include \"math.hpp\"\nint main(){std::cout<<answer()<<'\\n';}\n",
+      "math.hpp": "#pragma once\nint answer();\n",
+      "math.cpp": "#include \"math.hpp\"\nint answer(){/* TODO */}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "42\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      { "name": "linked target", "stdin": "", "expectedStdout": "42\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "repeatable build",
+        "stdin": "",
+        "expectedStdout": "42\n",
+        "failureCategory": "multi-file target must produce stable behavior"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "match-declaration",
+        "title": "匹配声明",
+        "kind": "nudge",
+        "content": "math.cpp 中的定义必须与 math.hpp 的 int answer() 一致。"
+      },
+      {
+        "id": "link-definition",
+        "title": "链接需要唯一定义",
+        "kind": "concept",
+        "content": "main 只看到声明；链接器在 math.cpp 目标中寻找定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "int answer(){ return 42; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "compile-versus-link",
+        "prompt": "如果 math.hpp 有声明但 math.cpp 没有定义，错误为何通常出现在链接阶段？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["cmake-testing-debugging-review"],
+    "teacherRubric": {
+      "id": "link-contract-rubric",
+      "prompt": "回答应区分单个翻译单元编译与跨目标符号解析。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include \"math.hpp\"\nint main(){std::cout<<answer()<<'\\n';}\n",
+      "math.hpp": "#pragma once\nint answer();\n",
+      "math.cpp": "#include \"math.hpp\"\nint answer(){return 42;}\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-definition",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include \"math.hpp\"\nint main(){std::cout<<answer()<<'\\n';}\n",
+          "math.hpp": "#pragma once\nint answer();\n",
+          "math.cpp": "#include \"math.hpp\"\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "build-graph",
+        "type": "algorithm-trace",
+        "fallback": "main.cpp -> main.o; math.cpp -> math.o; linker -> program; program -> tests"
+      }
+    ],
+    "printFallback": "画出两个翻译单元到可执行文件再到测试的构建图。"
+  }
+}

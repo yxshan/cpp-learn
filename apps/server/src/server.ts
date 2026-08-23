@@ -126,6 +126,10 @@ export function createServer(
     dependencies.platform.query({ type: "dashboard.get" }),
   );
 
+  server.get("/api/v1/activities", async () =>
+    dependencies.platform.query({ type: "activities.list" }),
+  );
+
   server.get<{ Params: { activityId: string } }>(
     "/api/v1/activities/:activityId",
     async (request, reply) => {

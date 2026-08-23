@@ -88,6 +88,8 @@ export interface Workspace {
 
 export interface InMemoryWorkspaceActivity {
   readonly activityId: ActivityId;
+  readonly version?: number;
+  readonly persistenceId?: string;
   readonly editablePaths: readonly string[];
   readonly starterFiles: Readonly<Record<string, string>>;
 }
@@ -106,6 +108,7 @@ interface PersistedWorkspaceState {
   readonly schemaVersion: 1;
   readonly activityId: ActivityId;
   readonly revision: number;
+  readonly contentVersion?: number;
   readonly files: Readonly<Record<string, string>>;
 }
 
@@ -272,29 +275,49 @@ export function createFilesystemWorkspace(
   }
 
   async function activityRoot(activityId: ActivityId): Promise<string> {
-    requireDefinition(activityId);
+    const definition = requireDefinition(activityId);
     await mkdir(dependencies.workspaceRoot, { recursive: true });
     await rejectSpecialPath(dependencies.workspaceRoot);
-    const root = join(dependencies.workspaceRoot, activityId);
+    const root = join(
+      dependencies.workspaceRoot,
+      definition.persistenceId ?? activityId,
+    );
     await rejectSpecialPath(root);
     await mkdir(root, { recursive: true });
     return root;
   }
 
-  async function stateFor(
+  async function stateForUnlocked(
     activityId: ActivityId,
   ): Promise<PersistedWorkspaceState> {
     const definition = requireDefinition(activityId);
     const root = await activityRoot(activityId);
     const statePath = join(root, "workspace.json");
     try {
-      return await readJson<PersistedWorkspaceState>(statePath);
+      const persisted = await readJson<PersistedWorkspaceState>(statePath);
+      const storedVersion = persisted.contentVersion ?? 1;
+      const currentVersion = definition.version ?? 1;
+      if (storedVersion >= currentVersion) return persisted;
+      const upgradedFiles = copyFiles(persisted.files);
+      for (const [path, content] of Object.entries(definition.starterFiles)) {
+        if (!(path in upgradedFiles)) upgradedFiles[path] = content;
+      }
+      const upgraded: PersistedWorkspaceState = {
+        ...persisted,
+        activityId,
+        revision: persisted.revision + 1,
+        contentVersion: currentVersion,
+        files: upgradedFiles,
+      };
+      await atomicWriteJson(statePath, upgraded);
+      return upgraded;
     } catch (error) {
       if (!isMissingFile(error)) throw error;
       const initialState: PersistedWorkspaceState = {
         schemaVersion: 1,
         activityId,
         revision: 0,
+        contentVersion: definition.version ?? 1,
         files: copyFiles(definition.starterFiles),
       };
       await atomicWriteJson(statePath, initialState);
@@ -306,19 +329,20 @@ export function createFilesystemWorkspace(
     activityId: ActivityId,
     action: () => Promise<T>,
   ): Promise<T> {
-    const prior = saveQueues.get(activityId) ?? Promise.resolve();
+    const queueId = requireDefinition(activityId).persistenceId ?? activityId;
+    const prior = saveQueues.get(queueId) ?? Promise.resolve();
     let release: () => void = () => undefined;
     const current = new Promise<void>((resolve) => {
       release = resolve;
     });
     const queued = prior.then(() => current);
-    saveQueues.set(activityId, queued);
+    saveQueues.set(queueId, queued);
     await prior;
     try {
       return await action();
     } finally {
       release();
-      if (saveQueues.get(activityId) === queued) saveQueues.delete(activityId);
+      if (saveQueues.get(queueId) === queued) saveQueues.delete(queueId);
     }
   }
 
@@ -344,7 +368,9 @@ export function createFilesystemWorkspace(
 
   return {
     async open(activityId) {
-      const state = await stateFor(activityId);
+      const state = await serializeSave(activityId, () =>
+        stateForUnlocked(activityId),
+      );
       return {
         activityId,
         revision: state.revision,
@@ -354,7 +380,7 @@ export function createFilesystemWorkspace(
     async save(request) {
       return serializeSave(request.activityId, async () => {
         const definition = requireDefinition(request.activityId);
-        const state = await stateFor(request.activityId);
+        const state = await stateForUnlocked(request.activityId);
         if (state.revision !== request.baseRevision) {
           return { ok: false, code: "revision_conflict" } as const;
         }
@@ -373,6 +399,7 @@ export function createFilesystemWorkspace(
           schemaVersion: 1,
           activityId: request.activityId,
           revision: state.revision + 1,
+          contentVersion: state.contentVersion ?? definition.version ?? 1,
           files,
         };
         const root = await activityRoot(request.activityId);
@@ -381,7 +408,9 @@ export function createFilesystemWorkspace(
       });
     },
     async snapshot(activityId) {
-      const state = await stateFor(activityId);
+      const state = await serializeSave(activityId, () =>
+        stateForUnlocked(activityId),
+      );
       const snapshot = createSnapshot(activityId, state.files);
       const root = await snapshotRoot();
       await atomicWriteJson(join(root, `${snapshot.id}.json`), snapshot);

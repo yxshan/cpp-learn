@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "stl-containers-algorithms-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：算法组合",
+  "estimatedMinutes": 20,
+  "conceptIds": ["cpp-stl-containers", "cpp-algorithms"],
+  "prerequisiteIds": ["stl-containers-algorithms"],
+  "objectives": ["延迟回忆容器范围与算法组合。"],
+  "victoryConditions": ["使用 max_element 输出最大值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: max_element",
+      "url": "https://en.cppreference.com/w/cpp/algorithm/max_element"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: iterators",
+      "url": "https://en.cppreference.com/w/cpp/iterator"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/stl-containers-algorithms-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int>v(3);for(int&x:v)std::cin>>x;/* recall max_element */}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "9\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "maximum", "stdin": "2 9 4\n", "expectedStdout": "9\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "all negative",
+        "stdin": "-5 -2 -8\n",
+        "expectedStdout": "-2\n",
+        "failureCategory": "maximum must work for negative ranges"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "iterator-result",
+        "title": "算法返回迭代器",
+        "kind": "nudge",
+        "content": "max_element 返回指向最大元素的迭代器。"
+      },
+      {
+        "id": "dereference-result",
+        "title": "读取迭代器所指元素",
+        "kind": "concept",
+        "content": "对结果使用 * 得到最大值。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "std::cout<<*std::max_element(v.begin(),v.end())<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "iterator-return",
+        "prompt": "max_element 为什么返回迭代器而不是直接返回值？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "stl-containers-algorithms",
+    "teacherRubric": {
+      "id": "iterator-result-rubric",
+      "prompt": "回答应提到位置、可泛化范围以及避免复制元素。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int>v(3);for(int&x:v)std::cin>>x;std::cout<<*std::max_element(v.begin(),v.end())<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "zero-initialized-max",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){int best=0,x{};for(int i=0;i<3;++i){std::cin>>x;if(x>best)best=x;}std::cout<<best<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "在三个全负数上手工检查最大值算法。"
+  }
+}

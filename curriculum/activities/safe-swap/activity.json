@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "id": "safe-swap",
+  "version": 1,
+  "kind": "exercise",
+  "title": "练习：安全交换",
+  "estimatedMinutes": 30,
+  "conceptIds": ["cpp-references", "cpp-const"],
+  "prerequisiteIds": ["references-and-const"],
+  "objectives": ["用可变引用修改调用者对象。"],
+  "victoryConditions": ["任意输入均按降序输出。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: references",
+      "url": "https://en.cppreference.com/w/cpp/language/reference"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: swap",
+      "url": "https://en.cppreference.com/w/cpp/algorithm/swap"
+    }
+  ],
+  "content": { "format": "markdown", "path": "activities/safe-swap/lesson.md" },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nvoid order_desc(int& a,int& b){/*TODO*/}\nint main(){int a{},b{};std::cin>>a>>b;order_desc(a,b);std::cout<<a<<' '<<b<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "9 2\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "reorder", "stdin": "2 9\n", "expectedStdout": "9 2\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "already ordered",
+        "stdin": "7 -1\n",
+        "expectedStdout": "7 -1\n",
+        "failureCategory": "ordered values must remain stable"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "compare-first",
+        "title": "先比较",
+        "kind": "nudge",
+        "content": "只有 a < b 时才交换。"
+      },
+      {
+        "id": "swap-reference",
+        "title": "交换原对象",
+        "kind": "concept",
+        "content": "std::swap 接收引用并修改对象。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "if(a<b) std::swap(a,b);"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "conditional-mutation",
+        "prompt": "为什么已经有序时不应修改对象？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["references-and-const-review"],
+    "teacherRubric": {
+      "id": "conditional-swap-rubric",
+      "prompt": "回答应联系最小修改与保持既有正确状态。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <utility>\nvoid order_desc(int&a,int&b){if(a<b)std::swap(a,b);}int main(){int a{},b{};std::cin>>a>>b;order_desc(a,b);std::cout<<a<<' '<<b<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "always-swap",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <utility>\nvoid order_desc(int&a,int&b){std::swap(a,b);}int main(){int a{},b{};std::cin>>a>>b;order_desc(a,b);std::cout<<a<<' '<<b<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "列出 a<b 与 a>=b 两条状态转移。"
+  }
+}

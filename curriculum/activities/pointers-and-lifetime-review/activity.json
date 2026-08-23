@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "pointers-and-lifetime-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：可空观察指针",
+  "estimatedMinutes": 20,
+  "conceptIds": ["cpp-pointers", "cpp-lifetime"],
+  "prerequisiteIds": ["pointers-and-lifetime"],
+  "objectives": ["延迟回忆空指针检查与安全解引用。"],
+  "victoryConditions": ["read_or 在空与非空两条路径均正确。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: nullptr",
+      "url": "https://en.cppreference.com/w/cpp/language/nullptr"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.23",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-nullptr"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/pointers-and-lifetime-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint read_or(const int* value,int fallback){ /* recall */ }\nint main(){int mode{},value{};std::cin>>mode>>value;std::cout<<(mode?read_or(&value,7):read_or(nullptr,7))<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "9\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "non-null", "stdin": "1 9\n", "expectedStdout": "9\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "null fallback",
+        "stdin": "0 99\n",
+        "expectedStdout": "7\n",
+        "failureCategory": "null observers must use the fallback path"
+      }
+    ],
+    "sanitizers": ["address", "undefined"]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "test-before-read",
+        "title": "先判断再读取",
+        "kind": "nudge",
+        "content": "指针可在条件中转换为真假。"
+      },
+      {
+        "id": "no-null-dereference",
+        "title": "空指针不可解引用",
+        "kind": "concept",
+        "content": "只有 value 非空时才能计算 *value。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return value ? *value : fallback;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "nullable-interface",
+        "prompt": "为什么引用不适合表达这里的“可能没有值”？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "pointers-and-lifetime",
+    "teacherRubric": {
+      "id": "nullable-rubric",
+      "prompt": "回答应指出引用必须绑定对象，而指针可以用 nullptr 表达缺失。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint read_or(const int* value,int fallback){return value?*value:fallback;} int main(){int mode{},value{};std::cin>>mode>>value;std::cout<<(mode?read_or(&value,7):read_or(nullptr,7))<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "always-dereference",
+        "files": {
+          "main.cpp": "#include <iostream>\nint read_or(const int* value,int){return *value;} int main(){int m{},v{};std::cin>>m>>v;std::cout<<(m?read_or(&v,7):read_or(nullptr,7))<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "列出指针为空与非空时各自允许执行的语句。"
+  }
+}

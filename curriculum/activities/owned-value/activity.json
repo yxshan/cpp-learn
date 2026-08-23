@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "owned-value",
+  "version": 1,
+  "kind": "exercise",
+  "title": "练习：所有权包装",
+  "estimatedMinutes": 30,
+  "conceptIds": ["cpp-copy-move", "cpp-smart-pointers"],
+  "prerequisiteIds": ["copy-move-ownership"],
+  "objectives": ["组合智能指针、移动和解引用。"],
+  "victoryConditions": ["移动后的唯一所有者输出输入两倍。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: unique_ptr",
+      "url": "https://en.cppreference.com/w/cpp/memory/unique_ptr"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: move",
+      "url": "https://en.cppreference.com/w/cpp/utility/move"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/owned-value/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <memory>\n#include <utility>\nint main(){int n{};std::cin>>n;/* own, move, print double */}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "12\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "double owned", "stdin": "6\n", "expectedStdout": "12\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative owned",
+        "stdin": "-3\n",
+        "expectedStdout": "-6\n",
+        "failureCategory": "ownership transfer must preserve signed value"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "create-owner",
+        "title": "创建所有者",
+        "kind": "nudge",
+        "content": "先 make_unique<int>(n)。"
+      },
+      {
+        "id": "move-owner",
+        "title": "移动后使用目标",
+        "kind": "concept",
+        "content": "std::move 转移所有权，新变量负责释放对象。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "auto a=std::make_unique<int>(n);auto b=std::move(a);std::cout<<*b*2<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "single-delete",
+        "prompt": "唯一所有权如何避免重复释放？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["copy-move-ownership-review"],
+    "teacherRubric": {
+      "id": "single-delete-rubric",
+      "prompt": "回答应说明任一时刻只有一个所有者负责析构。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <memory>\n#include <utility>\nint main(){int n{};std::cin>>n;auto a=std::make_unique<int>(n);auto b=std::move(a);std::cout<<*b*2<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "copy-owner",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <memory>\nint main(){auto a=std::make_unique<int>(6);auto b=a;std::cout<<*b*2<<'\\n';}\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "画出所有权从 a 转移到 b 的唯一箭头。"
+  }
+}

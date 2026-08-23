@@ -60,6 +60,7 @@ export interface LearningPlatformDependencies {
   readonly probes: LearningPlatformProbes;
   readonly curriculum: {
     getActivity(activityId: string): Promise<ActivityDetail | undefined>;
+    listActivities?(): Promise<readonly ActivityDetail[]>;
     getNextActivity?(minutes?: number): Promise<ActivityDetail | undefined>;
     getJudge(activityId: string): Promise<JudgeSpec | undefined>;
     getLearning?(activityId: string): Promise<LearningDefinition | undefined>;
@@ -1084,6 +1085,21 @@ export function createLearningPlatform(
           return {
             schemaVersion: SCHEMA_VERSION,
             activity: activity ?? null,
+          } as unknown as QueryResultFor<Q>;
+        }
+        case "activities.list": {
+          const activities = await dependencies.curriculum.listActivities?.();
+          return {
+            schemaVersion: SCHEMA_VERSION,
+            activities: (activities ?? []).map((activity) => ({
+              id: activity.id,
+              version: activity.version,
+              kind: activity.kind,
+              title: activity.title,
+              estimatedMinutes: activity.estimatedMinutes,
+              conceptIds: activity.conceptIds,
+              prerequisiteIds: activity.prerequisiteIds ?? [],
+            })),
           } as unknown as QueryResultFor<Q>;
         }
         case "activity.next": {

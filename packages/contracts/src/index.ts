@@ -40,11 +40,38 @@ export interface ActivityDetail {
   readonly title: string;
   readonly estimatedMinutes: number;
   readonly conceptIds: readonly string[];
+  readonly prerequisiteIds?: readonly string[];
+  readonly objectives?: readonly string[];
+  readonly victoryConditions?: readonly string[];
+  readonly sources?: readonly ActivitySource[];
+  readonly interactiveBlocks?: readonly InteractiveLessonBlock[];
+  readonly printFallback?: string;
   readonly markdown: string;
   readonly workspace: {
     readonly editablePaths: readonly string[];
   };
   readonly learning?: ActivityLearningSummary;
+}
+
+export interface ActivitySource {
+  readonly kind: "primary" | "reference";
+  readonly title: string;
+  readonly url: string;
+}
+
+export interface InteractiveLessonBlock {
+  readonly id: string;
+  readonly type:
+    | "code-compare"
+    | "memory-visualization"
+    | "lifetime-timeline"
+    | "container-visualization"
+    | "algorithm-trace"
+    | "network-flow"
+    | "quiz"
+    | "exercise"
+    | "reflection";
+  readonly fallback: string;
 }
 
 export type HintKind = "nudge" | "concept" | "solution";
@@ -76,6 +103,19 @@ export type AttemptIndependence =
 export interface ActivityResult {
   readonly schemaVersion: typeof SCHEMA_VERSION;
   readonly activity: ActivityDetail | null;
+}
+
+export interface ActivitiesResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly activities: readonly {
+    readonly id: string;
+    readonly version: number;
+    readonly kind: ActivityDetail["kind"];
+    readonly title: string;
+    readonly estimatedMinutes: number;
+    readonly conceptIds: readonly string[];
+    readonly prerequisiteIds: readonly string[];
+  }[];
 }
 
 export interface WorkspaceView {
@@ -348,6 +388,7 @@ export interface JobResult {
 
 export type LearningQuery =
   | { readonly type: "bootstrap.get" }
+  | { readonly type: "activities.list" }
   | { readonly type: "activity.get"; readonly activityId: string }
   | { readonly type: "activity.next"; readonly minutes?: number }
   | { readonly type: "workspace.get"; readonly activityId: string }
@@ -359,6 +400,7 @@ export type LearningQuery =
   | { readonly type: "job.get"; readonly jobId: string };
 export type QueryResult =
   | BootstrapResult
+  | ActivitiesResult
   | ActivityResult
   | WorkspaceResult
   | DashboardResult
@@ -370,25 +412,27 @@ export type QueryResultFor<Q extends LearningQuery> = Q extends {
   readonly type: "bootstrap.get";
 }
   ? BootstrapResult
-  : Q extends { readonly type: "activity.get" }
-    ? ActivityResult
-    : Q extends { readonly type: "activity.next" }
+  : Q extends { readonly type: "activities.list" }
+    ? ActivitiesResult
+    : Q extends { readonly type: "activity.get" }
       ? ActivityResult
-      : Q extends { readonly type: "workspace.get" }
-        ? WorkspaceResult
-        : Q extends { readonly type: "dashboard.get" }
-          ? DashboardResult
-          : Q extends { readonly type: "progress.get" }
-            ? ProgressResult
-            : Q extends { readonly type: "reviews.get" }
-              ? ReviewsResult
-              : Q extends { readonly type: "concept.get" }
-                ? ProgressResult
-                : Q extends { readonly type: "attempt.get" }
-                  ? AttemptResult
-                  : Q extends { readonly type: "job.get" }
-                    ? JobResult
-                    : never;
+      : Q extends { readonly type: "activity.next" }
+        ? ActivityResult
+        : Q extends { readonly type: "workspace.get" }
+          ? WorkspaceResult
+          : Q extends { readonly type: "dashboard.get" }
+            ? DashboardResult
+            : Q extends { readonly type: "progress.get" }
+              ? ProgressResult
+              : Q extends { readonly type: "reviews.get" }
+                ? ReviewsResult
+                : Q extends { readonly type: "concept.get" }
+                  ? ProgressResult
+                  : Q extends { readonly type: "attempt.get" }
+                    ? AttemptResult
+                    : Q extends { readonly type: "job.get" }
+                      ? JobResult
+                      : never;
 
 export interface WorkspaceSaveCommand {
   readonly type: "workspace.save";

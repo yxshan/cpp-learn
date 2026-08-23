@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "functions-and-scope-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：函数契约",
+  "estimatedMinutes": 15,
+  "conceptIds": ["cpp-functions", "cpp-scope"],
+  "prerequisiteIds": ["functions-and-scope"],
+  "objectives": ["延迟回忆参数、返回值和局部作用域。"],
+  "victoryConditions": ["cube 对任意测试整数返回三次方。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: functions",
+      "url": "https://en.cppreference.com/w/cpp/language/functions"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.2",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-logical"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/functions-and-scope-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint cube(int value){ /* recall */ }\nint main(){ int v{}; std::cin>>v; std::cout<<cube(v)<<'\\n'; }\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "27\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "cube", "stdin": "3\n", "expectedStdout": "27\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative cube",
+        "stdin": "-2\n",
+        "expectedStdout": "-8\n",
+        "failureCategory": "cube must preserve the sign"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "three-factors",
+        "title": "三个因子",
+        "kind": "nudge",
+        "content": "三次方需要三个 value 相乘。"
+      },
+      {
+        "id": "return-type",
+        "title": "匹配返回类型",
+        "kind": "concept",
+        "content": "表达式结果通过 return 满足 int 返回契约。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "int cube(int value){ return value*value*value; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "no-global",
+        "prompt": "为什么这里不需要全局变量？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "functions-and-scope",
+    "teacherRubric": {
+      "id": "function-boundary-rubric",
+      "prompt": "回答应强调参数已经提供全部依赖，局部状态更易推理。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint cube(int value){ return value*value*value; }\nint main(){ int v{}; std::cin>>v; std::cout<<cube(v)<<'\\n'; }\n"
+    },
+    "mutations": [
+      {
+        "id": "square-only",
+        "files": {
+          "main.cpp": "#include <iostream>\nint cube(int v){ return v*v; } int main(){ int v{}; std::cin>>v; std::cout<<cube(v)<<'\\n'; }\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "写出 cube 的输入、输出和唯一依赖。"
+  }
+}

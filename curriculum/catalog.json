@@ -2,6 +2,31 @@
   "schemaVersion": 1,
   "activityManifests": [
     "activities/source-to-program/activity.json",
-    "activities/source-to-program-review/activity.json"
+    "activities/source-to-program-review/activity.json",
+    "activities/values-and-types/activity.json",
+    "activities/values-and-types-review/activity.json",
+    "activities/functions-and-scope/activity.json",
+    "activities/functions-and-scope-review/activity.json",
+    "activities/references-and-const/activity.json",
+    "activities/references-and-const-review/activity.json",
+    "activities/pointers-and-lifetime/activity.json",
+    "activities/pointers-and-lifetime-review/activity.json",
+    "activities/classes-and-raii/activity.json",
+    "activities/classes-and-raii-review/activity.json",
+    "activities/copy-move-ownership/activity.json",
+    "activities/copy-move-ownership-review/activity.json",
+    "activities/stl-containers-algorithms/activity.json",
+    "activities/stl-containers-algorithms-review/activity.json",
+    "activities/templates-and-concepts/activity.json",
+    "activities/templates-and-concepts-review/activity.json",
+    "activities/cmake-testing-debugging/activity.json",
+    "activities/cmake-testing-debugging-review/activity.json",
+    "activities/numeric-summary/activity.json",
+    "activities/safe-swap/activity.json",
+    "activities/owned-value/activity.json",
+    "activities/sorted-unique/activity.json",
+    "activities/generic-minimum/activity.json",
+    "activities/cli-data-manager-m1/activity.json",
+    "activities/cli-data-manager-m2/activity.json"
   ]
 }

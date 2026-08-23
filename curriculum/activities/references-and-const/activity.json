@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "references-and-const",
+  "version": 1,
+  "kind": "lesson",
+  "title": "引用与 const",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-references", "cpp-const"],
+  "prerequisiteIds": ["functions-and-scope"],
+  "objectives": ["区分值传递、可变引用和 const 引用。"],
+  "victoryConditions": ["函数能交换调用者的两个整数。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: references",
+      "url": "https://en.cppreference.com/w/cpp/language/reference"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.16",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-in"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/references-and-const/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n\nvoid swap_values(int& left, int& right) {\n    // TODO\n}\n\nint main(){ int a{},b{}; std::cin>>a>>b; swap_values(a,b); std::cout<<a<<' '<<b<<'\\n'; }\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "9 4\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "swap", "stdin": "4 9\n", "expectedStdout": "9 4\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "signed swap",
+        "stdin": "-1 8\n",
+        "expectedStdout": "8 -1\n",
+        "failureCategory": "the caller objects were not both exchanged"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "save-one-value",
+        "title": "先保存一个值",
+        "kind": "nudge",
+        "content": "覆盖 left 前，把它保存到局部临时变量。"
+      },
+      {
+        "id": "alias-effect",
+        "title": "引用修改原对象",
+        "kind": "concept",
+        "content": "left 和 right 是调用者对象的别名，对它们赋值会改变 a 与 b。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "void swap_values(int& a,int& b){ int temp=a; a=b; b=temp; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "reference-versus-value",
+        "prompt": "如果去掉参数中的 &，为什么 main 中的 a 和 b 不会交换？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["references-and-const-review"],
+    "teacherRubric": {
+      "id": "reference-alias-rubric",
+      "prompt": "回答应说明值参数是副本，而引用参数是调用者对象的别名。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nvoid swap_values(int& a,int& b){ int t=a; a=b; b=t; }\nint main(){ int a{},b{}; std::cin>>a>>b; swap_values(a,b); std::cout<<a<<' '<<b<<'\\n'; }\n"
+    },
+    "mutations": [
+      {
+        "id": "pass-by-value",
+        "files": {
+          "main.cpp": "#include <iostream>\nvoid swap_values(int a,int b){ int t=a;a=b;b=t; } int main(){ int a{},b{};std::cin>>a>>b;swap_values(a,b);std::cout<<a<<' '<<b<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "alias-view",
+        "type": "memory-visualization",
+        "fallback": "left -> object a; right -> object b; no new int objects for the references"
+      }
+    ],
+    "printFallback": "画两个对象 a、b，并把引用 left、right 的箭头指向它们。"
+  }
+}

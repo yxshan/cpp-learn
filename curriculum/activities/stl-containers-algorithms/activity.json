@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "stl-containers-algorithms",
+  "version": 1,
+  "kind": "lesson",
+  "title": "STL 容器、迭代器与算法",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-stl-containers", "cpp-algorithms"],
+  "prerequisiteIds": ["copy-move-ownership"],
+  "objectives": ["用 vector、迭代器范围和 sort 分离存储与算法。"],
+  "victoryConditions": ["三个输入按升序输出。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: vector",
+      "url": "https://en.cppreference.com/w/cpp/container/vector"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: sort",
+      "url": "https://en.cppreference.com/w/cpp/algorithm/sort"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/stl-containers-algorithms/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int> values(3);for(int& v:values)std::cin>>v;/* sort and print */}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "1 2 3\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "unsorted values",
+        "stdin": "3 1 2\n",
+        "expectedStdout": "1 2 3\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "duplicates",
+        "stdin": "5 -1 5\n",
+        "expectedStdout": "-1 5 5\n",
+        "failureCategory": "sorting must preserve duplicate values"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "sort-range",
+        "title": "传入半开范围",
+        "kind": "nudge",
+        "content": "std::sort 接收 begin() 与 end()。"
+      },
+      {
+        "id": "range-loop",
+        "title": "遍历排序结果",
+        "kind": "concept",
+        "content": "范围 for 逐个读取 vector 元素。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "std::sort(values.begin(),values.end()); for(int v:values) std::cout<<v<<' ';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "algorithm-separation",
+        "prompt": "为什么 sort 不需要知道容器的具体存储实现？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["stl-containers-algorithms-review"],
+    "teacherRubric": {
+      "id": "iterator-range-rubric",
+      "prompt": "回答应联系迭代器范围作为容器与算法之间的接口。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int> v(3);for(int& x:v)std::cin>>x;std::sort(v.begin(),v.end());std::cout<<v[0]<<' '<<v[1]<<' '<<v[2]<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "descending-order",
+        "files": {
+          "main.cpp": "#include <algorithm>\n#include <functional>\n#include <iostream>\n#include <vector>\nint main(){std::vector<int>v(3);for(int&x:v)std::cin>>x;std::sort(v.begin(),v.end(),std::greater<>{});std::cout<<v[0]<<' '<<v[1]<<' '<<v[2]<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "sort-trace",
+        "type": "algorithm-trace",
+        "fallback": "[3,1,2] -> compare/swap -> [1,2,3]"
+      }
+    ],
+    "printFallback": "手工追踪 [3,1,2] 排序为 [1,2,3]。"
+  }
+}

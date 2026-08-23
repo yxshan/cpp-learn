@@ -6,6 +6,7 @@ import {
   cancelJob,
   executeActivity,
   exportBackup,
+  getActivities,
   getActivity,
   getBootstrap,
   getDashboard,
@@ -87,6 +88,35 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
     await expect(getBootstrap(request)).rejects.toThrow(
       "Bootstrap response violates the transport contract",
     );
+  });
+});
+
+describe("[T-CONTENT-006] Web Activity Catalog Adapter", () => {
+  it("loads the versioned Track catalog", async () => {
+    const payload = {
+      schemaVersion: 1,
+      activities: [
+        {
+          id: "source-to-program",
+          version: 1,
+          kind: "lesson",
+          title: "从源代码到可执行程序",
+          estimatedMinutes: 35,
+          conceptIds: ["compile-link-run"],
+          prerequisiteIds: [],
+        },
+      ],
+    };
+    const request = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify(payload), { status: 200 }),
+      );
+
+    await expect(getActivities(request)).resolves.toEqual(payload);
+    expect(request).toHaveBeenCalledWith("/api/v1/activities", {
+      headers: { accept: "application/json" },
+    });
   });
 });
 

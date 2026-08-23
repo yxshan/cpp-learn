@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "copy-move-ownership",
+  "version": 1,
+  "kind": "lesson",
+  "title": "复制、移动与智能指针",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-copy-move", "cpp-smart-pointers"],
+  "prerequisiteIds": ["classes-and-raii"],
+  "objectives": ["用 unique_ptr 表达唯一所有权并理解移动。"],
+  "victoryConditions": ["程序创建拥有整数的 unique_ptr 并输出其值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: unique_ptr",
+      "url": "https://en.cppreference.com/w/cpp/memory/unique_ptr"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines R.20",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-owner"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/copy-move-ownership/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <memory>\nint main(){int value{};std::cin>>value;/* TODO: own value */}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "42\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "owned value", "stdin": "42\n", "expectedStdout": "42\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "signed value",
+        "stdin": "-5\n",
+        "expectedStdout": "-5\n",
+        "failureCategory": "ownership wrapper must preserve the stored value"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "make-unique",
+        "title": "使用工厂函数",
+        "kind": "nudge",
+        "content": "std::make_unique<int>(value) 创建并返回唯一所有者。"
+      },
+      {
+        "id": "dereference-owner",
+        "title": "读取被拥有对象",
+        "kind": "concept",
+        "content": "unique_ptr 支持 * 解引用，但离开作用域会自动释放对象。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "auto owned=std::make_unique<int>(value); std::cout<<*owned<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "move-not-copy",
+        "prompt": "为什么 unique_ptr 可以移动但不能复制？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["copy-move-ownership-review"],
+    "teacherRubric": {
+      "id": "unique-owner-rubric",
+      "prompt": "回答应指出复制会产生两个唯一所有者，而移动只转移所有权。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <memory>\nint main(){int value{};std::cin>>value;auto owned=std::make_unique<int>(value);std::cout<<*owned<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "copy-unique-owner",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <memory>\nint main(){auto a=std::make_unique<int>(42);auto b=a;std::cout<<*b<<'\\n';}\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "ownership-transfer",
+        "type": "memory-visualization",
+        "fallback": "owner A -> object; move(A) => A empty, owner B -> object"
+      }
+    ],
+    "printFallback": "画出 unique_ptr 移动前后唯一所有者箭头的变化。"
+  }
+}

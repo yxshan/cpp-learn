@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "templates-and-concepts",
+  "version": 1,
+  "kind": "lesson",
+  "title": "模板与 concepts",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-templates", "cpp-concepts"],
+  "prerequisiteIds": ["stl-containers-algorithms"],
+  "objectives": ["编写受约束的泛型函数并读懂实例化错误。"],
+  "victoryConditions": ["泛型 larger 正确处理输入整数。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: templates",
+      "url": "https://en.cppreference.com/w/cpp/language/templates"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: concepts",
+      "url": "https://en.cppreference.com/w/cpp/language/constraints"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/templates-and-concepts/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate <std::totally_ordered T>\nT larger(T a,T b){/*TODO*/}\nint main(){int a{},b{};std::cin>>a>>b;std::cout<<larger(a,b)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "7\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "larger", "stdin": "7 3\n", "expectedStdout": "7\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative larger",
+        "stdin": "-9 -2\n",
+        "expectedStdout": "-2\n",
+        "failureCategory": "generic comparison must not assume non-negative values"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "conditional-result",
+        "title": "比较两个参数",
+        "kind": "nudge",
+        "content": "使用 > 选择要返回的参数。"
+      },
+      {
+        "id": "constraint-contract",
+        "title": "阅读约束",
+        "kind": "concept",
+        "content": "totally_ordered 保证比较操作可用。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return a>b?a:b;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "concept-benefit",
+        "prompt": "concepts 相比模板内部晚出现的错误有什么优势？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["templates-and-concepts-review"],
+    "teacherRubric": {
+      "id": "concept-interface-rubric",
+      "prompt": "回答应说明约束靠近接口、诊断更早且意图更清晰。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T larger(T a,T b){return a>b?a:b;}int main(){int a{},b{};std::cin>>a>>b;std::cout<<larger(a,b)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-template-parameter",
+        "files": {
+          "main.cpp": "#include <iostream>\nT larger(T a,T b){return a>b?a:b;}int main(){std::cout<<larger(1,2)<<'\\n';}\n"
+        },
+        "expectedVerdict": "compile_error"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "instantiation",
+        "type": "algorithm-trace",
+        "fallback": "call larger<int> -> check constraint -> instantiate body -> execute"
+      }
+    ],
+    "printFallback": "写出 larger<int> 从约束检查到实例化的步骤。"
+  }
+}

@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 
 import type {
   ActivityDetail,
+  InteractiveLessonBlock,
   JudgeReport,
   WorkspaceView,
 } from "@cpp-learn/contracts";
@@ -22,6 +23,37 @@ import {
 
 self.MonacoEnvironment = { getWorker: () => new EditorWorker() };
 loader.config({ monaco });
+
+function InteractiveBlock({
+  block,
+}: {
+  readonly block: InteractiveLessonBlock;
+}) {
+  const steps = block.fallback.split(/\s*->\s*/);
+  const [step, setStep] = useState(0);
+  return (
+    <section className="interactive-fallback">
+      <p className="eyebrow">INTERACTIVE · {block.type}</p>
+      <pre>{steps.slice(0, step + 1).join(" → ")}</pre>
+      {steps.length > 1 && (
+        <div className="interactive-controls">
+          <button
+            disabled={step === 0}
+            onClick={() => setStep((value) => value - 1)}
+          >
+            上一步
+          </button>
+          <button
+            disabled={step === steps.length - 1}
+            onClick={() => setStep((value) => value + 1)}
+          >
+            下一步
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function commandId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
@@ -246,6 +278,41 @@ export function LessonWorkspace({
               <p>{message}</p>
             )}
           </div>
+          {activity && (
+            <div className="activity-brief">
+              <section>
+                <p className="eyebrow">OBJECTIVES</p>
+                <ul>
+                  {activity.objectives?.map((objective) => (
+                    <li key={objective}>{objective}</li>
+                  ))}
+                </ul>
+              </section>
+              <section>
+                <p className="eyebrow">VICTORY CONDITIONS</p>
+                <ul>
+                  {activity.victoryConditions?.map((condition) => (
+                    <li key={condition}>{condition}</li>
+                  ))}
+                </ul>
+              </section>
+              {activity.interactiveBlocks?.map((block) => (
+                <InteractiveBlock block={block} key={block.id} />
+              ))}
+              <section>
+                <p className="eyebrow">SOURCES</p>
+                <ul>
+                  {activity.sources?.map((source) => (
+                    <li key={source.url}>
+                      <a href={source.url} target="_blank" rel="noreferrer">
+                        {source.title}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          )}
           {activity?.learning && (
             <div className="learning-assistance">
               <div className="assistance-heading">

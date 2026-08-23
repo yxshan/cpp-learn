@@ -91,6 +91,8 @@ Acceptance:
 
 ## 6. Stage 4: Modern C++ curriculum release
 
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 4 Implementation Report](17-STAGE-4-IMPLEMENTATION-REPORT.md).
+
 Deliver initially:
 
 - 10–12 Lessons.

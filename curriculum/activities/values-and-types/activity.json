@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "values-and-types",
+  "version": 1,
+  "kind": "lesson",
+  "title": "值、类型与输入输出",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-static-types", "cpp-stream-io"],
+  "prerequisiteIds": ["source-to-program"],
+  "objectives": ["用静态类型声明数据并通过标准流完成输入输出。"],
+  "victoryConditions": ["程序能处理正数、负数与零并输出正确和。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: fundamental types",
+      "url": "https://en.cppreference.com/w/cpp/language/types"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines ES.20",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Res-always"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/values-and-types/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n\nint main() {\n    int left{};\n    int right{};\n    // TODO: read both values and print their sum\n}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "5\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "positive values", "stdin": "2 3\n", "expectedStdout": "5\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "signed values",
+        "stdin": "10 -4\n",
+        "expectedStdout": "6\n",
+        "failureCategory": "signed integer input is not handled generally"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 2
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "read-two-values",
+        "title": "先完成输入",
+        "kind": "nudge",
+        "content": "使用 std::cin 依次写入两个已经声明的 int。"
+      },
+      {
+        "id": "stream-result",
+        "title": "再输出表达式",
+        "kind": "concept",
+        "content": "std::cout 可以直接接收 left + right 的计算结果；记得换行。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "#include <iostream>\nint main(){ int a{},b{}; std::cin>>a>>b; std::cout<<a+b<<'\\n'; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "static-type-difference",
+        "prompt": "C++ 的 int 与 JavaScript number 在类型确定时间上有什么差别？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["values-and-types-review"],
+    "teacherRubric": {
+      "id": "static-type-explanation",
+      "prompt": "回答应指出 C++ 类型在编译期确定，并影响可用操作与存储。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint main(){ int a{},b{}; std::cin>>a>>b; std::cout<<a+b<<'\\n'; }\n"
+    },
+    "mutations": [
+      {
+        "id": "hardcoded-public-case",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){ int a{},b{}; std::cin>>a>>b; std::cout<<5<<'\\n'; }\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "type-compare",
+        "type": "code-compare",
+        "fallback": "JavaScript: let value = 1; C++: int value{1};"
+      }
+    ],
+    "printFallback": "对比 let value = 1 与 int value{1}，标出类型在何时确定。"
+  }
+}

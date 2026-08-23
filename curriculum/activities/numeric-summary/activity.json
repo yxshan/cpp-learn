@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "numeric-summary",
+  "version": 1,
+  "kind": "exercise",
+  "title": "练习：数值摘要",
+  "estimatedMinutes": 30,
+  "conceptIds": ["cpp-static-types", "cpp-functions"],
+  "prerequisiteIds": ["functions-and-scope"],
+  "objectives": ["组合静态类型、输入流和函数契约。"],
+  "victoryConditions": ["正确输出三个整数的整数平均值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: arithmetic",
+      "url": "https://en.cppreference.com/w/cpp/language/operator_arithmetic"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.2",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-logical"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/numeric-summary/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint average(int a,int b,int c){/*TODO*/}\nint main(){int a{},b{},c{};std::cin>>a>>b>>c;std::cout<<average(a,b,c)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "4\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "average", "stdin": "3 4 5\n", "expectedStdout": "4\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "signed average",
+        "stdin": "-3 0 3\n",
+        "expectedStdout": "0\n",
+        "failureCategory": "average must use every signed input"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "sum-first",
+        "title": "先求和",
+        "kind": "nudge",
+        "content": "把三个参数相加。"
+      },
+      {
+        "id": "integer-division",
+        "title": "注意整数除法",
+        "kind": "concept",
+        "content": "int 表达式除以 3 得到整数结果。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return (a+b+c)/3;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "division-semantics",
+        "prompt": "整数除法与 JavaScript number 除法有什么差异？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["functions-and-scope-review"],
+    "teacherRubric": {
+      "id": "integer-division-rubric",
+      "prompt": "回答应指出 int 除法截断小数部分。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint average(int a,int b,int c){return (a+b+c)/3;}int main(){int a{},b{},c{};std::cin>>a>>b>>c;std::cout<<average(a,b,c)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "omit-third",
+        "files": {
+          "main.cpp": "#include <iostream>\nint average(int a,int b,int){return (a+b)/2;}int main(){int a{},b{},c{};std::cin>>a>>b>>c;std::cout<<average(a,b,c)<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "手算 3、4、5 的整数平均值。"
+  }
+}

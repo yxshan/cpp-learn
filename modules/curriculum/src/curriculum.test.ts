@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { resolve } from "node:path";
 
-import { validateCatalog } from "./index.js";
+import { createFilesystemCurriculum, validateCatalog } from "./index.js";
 
 describe("[T-CONTENT-001] Curriculum catalog validation", () => {
   it("rejects invalid required content and reports every detected contract error", () => {
@@ -46,6 +47,20 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
     estimatedMinutes: 10,
     conceptIds: [`${id}-concept`],
     prerequisiteIds,
+    objectives: [`Complete ${id}.`],
+    victoryConditions: ["Reference behavior is reproduced."],
+    sources: [
+      {
+        kind: "primary",
+        title: "C++ language reference",
+        url: "https://en.cppreference.com/w/cpp/language",
+      },
+      {
+        kind: "reference",
+        title: "C++ Core Guidelines",
+        url: "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+      },
+    ],
     content: { format: "markdown", path: `activities/${id}/lesson.md` },
     workspace: {
       editablePaths: ["main.cpp"],
@@ -57,6 +72,18 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
       demonstratedRequiresReflection: true,
       demonstratedRequiresIndependent: true,
       reviewAfterDays: 1,
+    },
+    quality: {
+      referenceFiles: { "main.cpp": "int main() { return 0; }\n" },
+      mutations: [
+        {
+          id: "wrong-output",
+          files: { "main.cpp": "int main() { return 1; }\n" },
+          expectedVerdict: "runtime_error",
+        },
+      ],
+      interactiveBlocks: [],
+      printFallback: "Compile and run the listed source locally.",
     },
     learning: {
       hints: [
@@ -82,7 +109,9 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
 
     expect(result).toMatchObject({
       ok: false,
-      issues: [expect.objectContaining({ keyword: "graph" })],
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "graph" }),
+      ]),
     });
   });
 
@@ -91,12 +120,12 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
       validateCatalog([activity("activity-a", ["missing-activity"])]),
     ).toMatchObject({
       ok: false,
-      issues: [
+      issues: expect.arrayContaining([
         expect.objectContaining({
           keyword: "graph",
           message: expect.stringContaining("unknown prerequisite"),
         }),
-      ],
+      ]),
     });
   });
 
@@ -121,7 +150,9 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
 
     expect(result).toMatchObject({
       ok: false,
-      issues: [expect.objectContaining({ keyword: "privacy" })],
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "privacy" }),
+      ]),
     });
   });
 });
@@ -136,6 +167,20 @@ describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
     estimatedMinutes: 20,
     conceptIds: ["learning-loop-concept"],
     prerequisiteIds: [],
+    objectives: ["Explain the learning loop."],
+    victoryConditions: ["The program passes the declared Judge contract."],
+    sources: [
+      {
+        kind: "primary",
+        title: "C++ language reference",
+        url: "https://en.cppreference.com/w/cpp/language",
+      },
+      {
+        kind: "reference",
+        title: "C++ Core Guidelines",
+        url: "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+      },
+    ],
     content: { format: "markdown", path: "activities/learning-loop/lesson.md" },
     workspace: {
       editablePaths: ["main.cpp"],
@@ -147,6 +192,24 @@ describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
       demonstratedRequiresReflection: true,
       demonstratedRequiresIndependent: true,
       reviewAfterDays: 1,
+    },
+    quality: {
+      referenceFiles: { "main.cpp": "int main() { return 0; }\n" },
+      mutations: [
+        {
+          id: "compile-error",
+          files: { "main.cpp": "int main( {\n" },
+          expectedVerdict: "compile_error",
+        },
+      ],
+      interactiveBlocks: [
+        {
+          id: "build-pipeline",
+          type: "algorithm-trace",
+          fallback: "source -> compile -> link -> execute",
+        },
+      ],
+      printFallback: "Read the build pipeline from left to right.",
     },
     learning: {
       hints: [
@@ -231,5 +294,132 @@ describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
       ok: false,
       issues: [expect.objectContaining({ keyword: "graph" })],
     });
+  });
+
+  it("rejects Activities without source diversity, reference files, or mutation fixtures", () => {
+    const review = {
+      ...completeActivity,
+      id: "learning-loop-review",
+      kind: "review",
+      prerequisiteIds: ["learning-loop"],
+      learning: {
+        ...completeActivity.learning,
+        reviewIds: [],
+        reviewOf: "learning-loop",
+      },
+    } as const;
+    const result = validateCatalog([
+      {
+        ...completeActivity,
+        sources: [
+          completeActivity.sources[0],
+          { ...completeActivity.sources[0], title: "Another primary source" },
+        ],
+        quality: {
+          ...completeActivity.quality,
+          referenceFiles: { "other.cpp": "int main() {}\n" },
+          mutations: [
+            completeActivity.quality.mutations[0],
+            completeActivity.quality.mutations[0],
+          ],
+        },
+      },
+      review,
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "sources" }),
+        expect.objectContaining({ keyword: "reference" }),
+        expect.objectContaining({ keyword: "mutation" }),
+      ]),
+    });
+  });
+
+  it("rejects a graded hint that copies a reference-solution fragment", () => {
+    const result = validateCatalog([
+      {
+        ...completeActivity,
+        learning: {
+          ...completeActivity.learning,
+          hints: [
+            {
+              ...completeActivity.learning.hints[0],
+              content: "int main() { return 0; }",
+            },
+            completeActivity.learning.hints[1],
+            completeActivity.learning.hints[2],
+          ],
+        },
+      },
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "hint-leak" }),
+      ]),
+    });
+  });
+
+  it("rejects any Hint that exposes private Judge input or output", () => {
+    const result = validateCatalog([
+      {
+        ...completeActivity,
+        judge: {
+          ...completeActivity.judge,
+          privateTests: [
+            {
+              name: "hidden case",
+              stdin: "private-seed-9281\n",
+              expectedStdout: "private-result-4107\n",
+              failureCategory: "hidden behavior differs",
+            },
+          ],
+        },
+        learning: {
+          ...completeActivity.learning,
+          hints: [
+            completeActivity.learning.hints[0],
+            completeActivity.learning.hints[1],
+            {
+              ...completeActivity.learning.hints[2],
+              content: "Try the hidden input private-seed-9281 to verify it.",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "hint-private-leak" }),
+      ]),
+    });
+  });
+});
+
+describe("[T-CONTENT-006] Stage 4 initial Modern C++ release", () => {
+  it("publishes 10 Lessons, 15 Exercises/Reviews, and one two-Milestone Project", async () => {
+    const curriculum = createFilesystemCurriculum({
+      catalogPath: resolve("curriculum", "catalog.json"),
+    });
+
+    const activities = await curriculum.listActivities();
+    expect(
+      activities.filter((activity) => activity.kind === "lesson"),
+    ).toHaveLength(10);
+    expect(
+      activities.filter(
+        (activity) =>
+          activity.kind === "exercise" || activity.kind === "review",
+      ),
+    ).toHaveLength(15);
+    expect(
+      activities.filter((activity) => activity.kind === "project-milestone"),
+    ).toHaveLength(2);
+    expect(JSON.stringify(activities)).not.toContain("referenceFiles");
   });
 });

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "id": "classes-and-raii",
+  "version": 1,
+  "kind": "lesson",
+  "title": "类、组合与 RAII",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-classes", "cpp-raii"],
+  "prerequisiteIds": ["pointers-and-lifetime"],
+  "objectives": ["用类维护不变量并理解析构驱动的资源释放。"],
+  "victoryConditions": [
+    "对象离开内层作用域时，析构函数在 done 之前输出 released。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: classes",
+      "url": "https://en.cppreference.com/w/cpp/language/classes"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines R.1",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rr-raii"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/classes-and-raii/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nclass ScopeMessage { public: ~ScopeMessage(){ /* TODO: release notification */ } };\nint main(){ { ScopeMessage guard; std::cout<<\"active\\n\"; } std::cout<<\"done\\n\"; }\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "active\nreleased\ndone\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "scope exit",
+        "stdin": "",
+        "expectedStdout": "active\nreleased\ndone\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "deterministic destruction",
+        "stdin": "",
+        "expectedStdout": "active\nreleased\ndone\n",
+        "failureCategory": "destructor must run at the scope boundary"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "destructor-boundary",
+        "title": "定位析构时机",
+        "kind": "nudge",
+        "content": "内层花括号结束时 guard 被析构。"
+      },
+      {
+        "id": "release-in-destructor",
+        "title": "把清理绑定到析构",
+        "kind": "concept",
+        "content": "在析构函数中输出 released，所有离开作用域的路径都会触发它。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "~ScopeMessage(){ std::cout << \"released\\n\"; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "raii-boundary",
+        "prompt": "RAII 为什么让异常路径上的资源释放更可靠？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["classes-and-raii-review"],
+    "teacherRubric": {
+      "id": "raii-rubric",
+      "prompt": "回答应联系栈展开、析构函数与资源对象生命周期。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nclass ScopeMessage{public:~ScopeMessage(){std::cout<<\"released\\n\";}};int main(){{ScopeMessage guard;std::cout<<\"active\\n\";}std::cout<<\"done\\n\";}\n"
+    },
+    "mutations": [
+      {
+        "id": "manual-release-only",
+        "files": {
+          "main.cpp": "#include <iostream>\nclass ScopeMessage{public:~ScopeMessage(){}};int main(){{ScopeMessage guard;std::cout<<\"active\\n\";}std::cout<<\"done\\n\";}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "raii-scope",
+        "type": "lifetime-timeline",
+        "fallback": "constructor acquires invariant -> methods use it -> destructor releases resources"
+      }
+    ],
+    "printFallback": "画出 ScopeMessage 从构造到析构的对象生命周期。"
+  }
+}

@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import type {
+  ActivitiesResult,
   BootstrapResult,
   DashboardResult,
   ProgressResult,
@@ -16,6 +17,7 @@ import type {
 
 import {
   exportBackup,
+  getActivities,
   getBootstrap,
   getDashboard,
   getProgress,
@@ -75,6 +77,7 @@ export function App() {
   const [workspaceActivityId, setWorkspaceActivityId] = useState<string>();
   const [progress, setProgress] = useState<ProgressResult>();
   const [reviews, setReviews] = useState<ReviewsResult>();
+  const [catalog, setCatalog] = useState<ActivitiesResult>();
   const [dataMessage, setDataMessage] = useState("可导出校验后的本地备份");
 
   const downloadBackup = async (): Promise<void> => {
@@ -112,17 +115,24 @@ export function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [nextBootstrap, nextDashboard, nextProgress, nextReviews] =
-        await Promise.all([
-          getBootstrap(),
-          getDashboard(),
-          getProgress(),
-          getReviews(false),
-        ]);
+      const [
+        nextBootstrap,
+        nextDashboard,
+        nextProgress,
+        nextReviews,
+        nextCatalog,
+      ] = await Promise.all([
+        getBootstrap(),
+        getDashboard(),
+        getProgress(),
+        getReviews(false),
+        getActivities(),
+      ]);
       setBootstrap(nextBootstrap);
       setDashboard(nextDashboard);
       setProgress(nextProgress);
       setReviews(nextReviews);
+      setCatalog(nextCatalog);
       setError(undefined);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "无法连接本地学习服务");
@@ -180,7 +190,8 @@ export function App() {
           </a>
           <button
             className="nav-item"
-            onClick={() => setWorkspaceActivityId("source-to-program")}
+            onClick={() => setWorkspaceActivityId(catalog?.activities[0]?.id)}
+            disabled={!catalog?.activities[0]}
           >
             <span>▶</span>当前课程
           </button>
@@ -227,25 +238,26 @@ export function App() {
 
         <section className="stage-banner" aria-labelledby="stage-title">
           <div className="stage-copy">
-            <span className="stage-chip">
-              STAGE 3 · EXPLAINABLE LEARNING LOOP
-            </span>
+            <span className="stage-chip">STAGE 4 · MODERN C++ CURRICULUM</span>
             <h2 id="stage-title">
-              读懂、修改、运行，再用 Grade 证明你掌握了它。
+              从语言心智模型走向可验证的现代 C++ 工程能力。
             </h2>
             <p>
-              提示、反思、独立 Grade 与延迟复习形成一条可解释的证据链；
-              每次状态变化都能追溯原因。
+              10 个 Lesson、15 个 Exercise/Review 与首个渐进式 Project
+              共用一套可解释 Evidence、真实 Clang Judge 和本地学习记录。
             </p>
             <div className="stage-actions">
               <button
                 className="primary-button"
-                onClick={() => setWorkspaceActivityId("source-to-program")}
+                onClick={() =>
+                  setWorkspaceActivityId(catalog?.activities[0]?.id)
+                }
               >
                 开始第一课
               </button>
               <span>
-                阶段进度 <strong>3 / 7</strong>
+                初始课程{" "}
+                <strong>{catalog?.activities.length ?? 0} Activities</strong>
               </span>
             </div>
           </div>
@@ -280,6 +292,36 @@ export function App() {
             <button onClick={() => void refresh()}>重试</button>
           </section>
         )}
+
+        <section id="curriculum" className="section-block">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">MODERN C++ TRACK</p>
+              <h2>课程目录</h2>
+            </div>
+            <span className="last-check">
+              10 Lessons · 15 Exercises/Reviews · 1 Project
+            </span>
+          </div>
+          <div className="activity-grid">
+            {catalog?.activities.map((activity) => (
+              <button
+                key={activity.id}
+                className="activity-card"
+                onClick={() => setWorkspaceActivityId(activity.id)}
+              >
+                <span className={`activity-kind kind-${activity.kind}`}>
+                  {activity.kind}
+                </span>
+                <strong>{activity.title}</strong>
+                <small>
+                  {activity.estimatedMinutes} 分钟 ·{" "}
+                  {activity.conceptIds.length} Concepts
+                </small>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <section id="environment" className="section-block">
           <div className="section-heading">

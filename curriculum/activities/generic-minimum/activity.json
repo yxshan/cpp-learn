@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "generic-minimum",
+  "version": 1,
+  "kind": "exercise",
+  "title": "练习：泛型最小值",
+  "estimatedMinutes": 30,
+  "conceptIds": ["cpp-templates", "cpp-concepts"],
+  "prerequisiteIds": ["templates-and-concepts"],
+  "objectives": ["把比较逻辑推广到受约束类型。"],
+  "victoryConditions": ["三个有序类型值中返回最小者。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: concepts",
+      "url": "https://en.cppreference.com/w/cpp/language/constraints"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines T.10",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rt-concepts"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/generic-minimum/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T minimum_of_three(T a,T b,T c){/*TODO*/}\nint main(){int a{},b{},c{};std::cin>>a>>b>>c;std::cout<<minimum_of_three(a,b,c)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "2\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "minimum", "stdin": "7 2 5\n", "expectedStdout": "2\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative minimum",
+        "stdin": "-1 3 -8\n",
+        "expectedStdout": "-8\n",
+        "failureCategory": "all three generic arguments must participate"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 4
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "pairwise-min",
+        "title": "分两步比较",
+        "kind": "nudge",
+        "content": "先求 a 与 b 的较小值，再与 c 比较。"
+      },
+      {
+        "id": "constraint-operations",
+        "title": "约束保证比较",
+        "kind": "concept",
+        "content": "totally_ordered 允许可靠使用 <。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "T result=a<b?a:b;return result<c?result:c;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "generic-reuse",
+        "prompt": "这个模板还可以用于哪些类型，前提是什么？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["templates-and-concepts-review"],
+    "teacherRubric": {
+      "id": "generic-reuse-rubric",
+      "prompt": "回答应举例并指出类型需满足 totally_ordered。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T minimum_of_three(T a,T b,T c){T r=a<b?a:b;return r<c?r:c;}int main(){int a{},b{},c{};std::cin>>a>>b>>c;std::cout<<minimum_of_three(a,b,c)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "ignore-third",
+        "files": {
+          "main.cpp": "#include <concepts>\n#include <iostream>\ntemplate<std::totally_ordered T>T minimum_of_three(T a,T b,T){return a<b?a:b;}int main(){int a{},b{},c{};std::cin>>a>>b>>c;std::cout<<minimum_of_three(a,b,c)<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "画出两次比较形成的决策树。"
+  }
+}

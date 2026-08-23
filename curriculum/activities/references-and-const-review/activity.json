@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "id": "references-and-const-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：const 引用读取",
+  "estimatedMinutes": 15,
+  "conceptIds": ["cpp-references", "cpp-const"],
+  "prerequisiteIds": ["references-and-const"],
+  "objectives": ["延迟回忆只读引用接口。"],
+  "victoryConditions": ["larger 正确返回两数较大者且参数保持只读。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: reference initialization",
+      "url": "https://en.cppreference.com/w/cpp/language/reference_initialization"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines F.16",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rf-in"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/references-and-const-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint larger(const int& a,const int& b){ /* recall */ }\nint main(){ int a{},b{};std::cin>>a>>b;std::cout<<larger(a,b)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "8\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      { "name": "larger", "stdin": "3 8\n", "expectedStdout": "8\n" }
+    ],
+    "privateTests": [
+      {
+        "name": "negative values",
+        "stdin": "-2 -9\n",
+        "expectedStdout": "-2\n",
+        "failureCategory": "comparison must work below zero"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 6
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "compare-values",
+        "title": "比较引用指向的值",
+        "kind": "nudge",
+        "content": "引用使用方式与普通变量相同。"
+      },
+      {
+        "id": "read-only-contract",
+        "title": "保持只读契约",
+        "kind": "concept",
+        "content": "const 阻止函数通过引用修改调用者对象。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return a > b ? a : b;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "const-benefit",
+        "prompt": "const int& 向调用者表达了什么保证？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "references-and-const",
+    "teacherRubric": {
+      "id": "const-contract-rubric",
+      "prompt": "回答应指出函数借用对象但承诺不通过该引用修改它。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint larger(const int& a,const int& b){ return a>b?a:b; } int main(){int a{},b{};std::cin>>a>>b;std::cout<<larger(a,b)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "always-first",
+        "files": {
+          "main.cpp": "#include <iostream>\nint larger(const int&a,const int&){return a;} int main(){int a{},b{};std::cin>>a>>b;std::cout<<larger(a,b)<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "列出 const int& 接口允许与禁止的操作。"
+  }
+}
