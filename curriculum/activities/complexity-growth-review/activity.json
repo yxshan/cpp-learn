@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "id": "complexity-growth-review",
+  "version": 1,
+  "kind": "review",
+  "title": "Review：解释增长比",
+  "estimatedMinutes": 25,
+  "conceptIds": ["algorithm-complexity", "performance-measurement"],
+  "prerequisiteIds": ["complexity-growth-check"],
+  "objectives": ["闭卷恢复同机相对测量中增长比的解释边界。"],
+  "victoryConditions": ["能区分阈值内增长与明显超阈值增长，并解释测量前提。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ Core Guidelines: performance",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-per"
+    },
+    {
+      "kind": "reference",
+      "title": "Google Benchmark: reducing variance",
+      "url": "https://google.github.io/benchmark/reducing_variance.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/complexity-growth-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){double baseline{},scaled{};std::cin>>baseline>>scaled;/* TODO: classify a 3.2 growth boundary */std::cout<<\"unknown\\n\";}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "within-boundary\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "linear-like growth",
+        "stdin": "10 20\n",
+        "expectedStdout": "within-boundary\n"
+      },
+      {
+        "name": "clearly excessive growth",
+        "stdin": "10 40\n",
+        "expectedStdout": "over-boundary\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "near-boundary growth",
+        "stdin": "10 31\n",
+        "expectedStdout": "within-boundary\n",
+        "failureCategory": "classification must use the declared scaled-to-baseline boundary"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "form-a-ratio",
+        "title": "先形成无量纲比值",
+        "kind": "nudge",
+        "content": "用 scaled 除以 baseline，而不是比较两个绝对毫秒数。"
+      },
+      {
+        "id": "apply-boundary",
+        "title": "应用声明阈值",
+        "kind": "concept",
+        "content": "比值不超过 3.2 时输出 within-boundary，否则输出 over-boundary。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "用 scaled / baseline <= 3.2 的条件表达式选择两个输出标签。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "measurement-preconditions",
+        "prompt": "为什么同机、交替顺序、重复取中位数仍只能提供复杂度证据，而不是数学证明？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "complexity-growth-check",
+    "teacherRubric": {
+      "id": "complexity-review-rubric",
+      "prompt": "回答应区分经验测量与渐进复杂度证明，并说明噪声控制条件。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint main(){double baseline{},scaled{};std::cin>>baseline>>scaled;std::cout<<(scaled/baseline<=3.2?\"within-boundary\\n\":\"over-boundary\\n\");}\n"
+    },
+    "mutations": [
+      {
+        "id": "too-strict-boundary",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){double baseline{},scaled{};std::cin>>baseline>>scaled;std::cout<<(scaled/baseline<=3.0?\"within-boundary\\n\":\"over-boundary\\n\");}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "ratio-classifier",
+        "type": "algorithm-trace",
+        "fallback": "baseline median + scaled median -> scaled / baseline -> compare with 3.2 -> evidence, not proof"
+      }
+    ],
+    "printFallback": "列出增长比有效所需的环境控制条件，并写出它不能证明的结论。"
+  }
+}

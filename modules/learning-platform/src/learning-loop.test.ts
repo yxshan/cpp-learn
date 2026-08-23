@@ -393,6 +393,107 @@ describe("[T-LEARN-003] explainable Concept transitions", () => {
     });
   });
 
+  it("schedules each Concept only into a Review that declares coverage for it", async () => {
+    const { platform, dependencies } = platformFixture();
+    const sourceWithTwoConcepts: ActivityDetail = {
+      ...activity,
+      conceptIds: ["compile-link-run", "second-concept"],
+      learning: {
+        ...activity.learning!,
+        reviewIds: ["learning-loop-review", "second-review"],
+      },
+    };
+    const secondReview: ActivityDetail = {
+      ...reviewActivity,
+      id: "second-review",
+      conceptIds: ["second-concept"],
+      learning: {
+        ...reviewActivity.learning!,
+        reviewOf: activity.id,
+      },
+    };
+    const originalLearning = dependencies.curriculum.getLearning!;
+    Object.assign(dependencies.curriculum, {
+      getActivity: async (activityId: string) =>
+        activityId === activity.id
+          ? sourceWithTwoConcepts
+          : activityId === reviewActivity.id
+            ? reviewActivity
+            : activityId === secondReview.id
+              ? secondReview
+              : undefined,
+      getLearning: async (activityId: string) => {
+        const learning = await originalLearning(activityId);
+        return activityId === activity.id && learning
+          ? {
+              ...learning,
+              reviewIds: [reviewActivity.id, secondReview.id],
+            }
+          : learning;
+      },
+    });
+
+    await platform.dispatch({
+      type: "reflection.submit",
+      commandId: "cmd_mapped_review_reflection",
+      attemptId: "attempt_mapped_review",
+      activityId: activity.id,
+      answers: [{ promptId: "explain", answer: "Map evidence by Concept." }],
+    });
+    await platform.dispatch({
+      type: "activity.grade",
+      commandId: "cmd_mapped_review_grade",
+      attemptId: "attempt_mapped_review",
+      activityId: activity.id,
+    });
+
+    const result = await platform.query({
+      type: "reviews.get",
+      dueOnly: false,
+    });
+    expect(result.reviews).toEqual([
+      expect.objectContaining({
+        activityId: "learning-loop-review",
+        conceptId: "compile-link-run",
+      }),
+      expect.objectContaining({
+        activityId: "second-review",
+        conceptId: "second-concept",
+      }),
+    ]);
+
+    await platform.dispatch({
+      type: "hint.reveal",
+      commandId: "cmd_mapped_hint",
+      attemptId: "attempt_mapped_solution",
+      activityId: activity.id,
+      hintId: "nudge",
+      confirmFullSolution: false,
+    });
+    await platform.dispatch({
+      type: "hint.reveal",
+      commandId: "cmd_mapped_solution",
+      attemptId: "attempt_mapped_solution",
+      activityId: activity.id,
+      hintId: "solution",
+      confirmFullSolution: true,
+    });
+    const afterSolution = await platform.query({
+      type: "reviews.get",
+      dueOnly: false,
+    });
+    expect(afterSolution.reviews).toEqual([
+      expect.objectContaining({
+        activityId: "learning-loop-review",
+        conceptId: "compile-link-run",
+      }),
+      expect.objectContaining({
+        activityId: "second-review",
+        conceptId: "second-concept",
+      }),
+    ]);
+  });
+
   it("[T-LEARN-007] caps a solution-exposed passing attempt at practiced and schedules a compensating Review", async () => {
     const { platform, batches } = platformFixture();
     await platform.dispatch({

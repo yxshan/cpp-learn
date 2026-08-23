@@ -361,7 +361,9 @@
       "required": [
         "name",
         "baselineStdin",
+        "baselineExpectedStdout",
         "scaledStdin",
+        "scaledExpectedStdout",
         "repetitions",
         "maxMedianRatio",
         "failureCategory"
@@ -369,7 +371,9 @@
       "properties": {
         "name": { "type": "string", "minLength": 1, "maxLength": 120 },
         "baselineStdin": { "type": "string", "maxLength": 65536 },
+        "baselineExpectedStdout": { "type": "string", "maxLength": 65536 },
         "scaledStdin": { "type": "string", "maxLength": 65536 },
+        "scaledExpectedStdout": { "type": "string", "maxLength": 65536 },
         "repetitions": { "type": "integer", "minimum": 1, "maximum": 9 },
         "maxMedianRatio": { "type": "number", "minimum": 1, "maximum": 100 },
         "failureCategory": {
@@ -403,12 +407,12 @@
             "kind": { "const": "cmake" },
             "target": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_.+-]+$",
+              "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.+-]*$",
               "maxLength": 120
             },
             "testTarget": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_.+-]+$",
+              "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.+-]*$",
               "maxLength": 120
             },
             "ctest": { "type": "boolean" }

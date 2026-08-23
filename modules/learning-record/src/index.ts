@@ -251,6 +251,8 @@ function isAttemptCompletedEvent(
     report["toolchain"]["standard"] === "c++20" &&
     (report["toolchain"]["buildSystem"] === undefined ||
       report["toolchain"]["buildSystem"] === "cmake/ctest") &&
+    isOptionalString(report["toolchain"]["cmake"]) &&
+    isOptionalString(report["toolchain"]["ctest"]) &&
     (report["buildFlags"] === undefined ||
       isStringArray(report["buildFlags"])) &&
     (report["seeds"] === undefined ||

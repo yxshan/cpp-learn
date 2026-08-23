@@ -31,6 +31,9 @@
     "activities/deterministic-sort-properties/activity.json",
     "activities/deterministic-sort-properties-review/activity.json",
     "activities/complexity-growth-check/activity.json",
+    "activities/complexity-growth-review/activity.json",
+    "activities/hash-index-invariants/activity.json",
+    "activities/hash-index-invariants-review/activity.json",
     "activities/posix-files-processes/activity.json",
     "activities/threads-atomics/activity.json",
     "activities/systems-runtime-review/activity.json",
@@ -38,6 +41,7 @@
     "activities/loopback-http-review/activity.json",
     "activities/sqlite-transactions/activity.json",
     "activities/sqlite-transactions-review/activity.json",
-    "activities/cli-data-manager-m3/activity.json"
+    "activities/cli-data-manager-m3/activity.json",
+    "activities/cmake-ctest-review/activity.json"
   ]
 }

@@ -9,11 +9,15 @@
     "system-files",
     "system-processes",
     "system-threads",
+    "concurrency-atomics",
+    "cpp-raii",
     "resource-cleanup"
   ],
   "prerequisiteIds": ["posix-files-processes", "threads-atomics"],
   "objectives": ["在延迟任务中同时恢复文件、线程和子进程的生命周期责任。"],
-  "victoryConditions": ["写线程结束后子进程读取 6 字节，父进程等待并清理。"],
+  "victoryConditions": [
+    "写线程结束后原子计数为 1，子进程读取 6 字节，父进程等待并清理。"
+  ],
   "sources": [
     {
       "kind": "primary",
@@ -33,22 +37,26 @@
   "workspace": {
     "editablePaths": ["main.cpp"],
     "starterFiles": {
-      "main.cpp": "#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n#include <string>\n#include <sys/wait.h>\n#include <thread>\n#include <unistd.h>\nint inspect(){/* recall file read */return 0;}int main(){std::thread writer([]{std::ofstream(\"review.txt\")<<\"review\";});writer.join();pid_t child=fork();if(child==0)_exit(inspect());int status{};waitpid(child,&status,0);std::remove(\"review.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<'\\n';}\n"
+      "main.cpp": "#include <atomic>\n#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n#include <string>\n#include <sys/wait.h>\n#include <thread>\n#include <unistd.h>\nint inspect(){/* recall file read */return 0;}int main(){std::atomic<int> completed{0};std::thread writer([&]{std::ofstream(\"review.txt\")<<\"review\";completed.fetch_add(1);});writer.join();pid_t child=fork();if(child==0)_exit(inspect());int status{};waitpid(child,&status,0);std::remove(\"review.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<\",threads=\"<<completed.load()<<'\\n';}\n"
     }
   },
   "judge": {
     "version": 1,
-    "expectedStdout": "bytes=6\n",
+    "expectedStdout": "bytes=6,threads=1\n",
     "timeoutMs": 3000,
     "buildProfile": { "kind": "direct", "threadSupport": true },
     "publicTests": [
-      { "name": "resource review", "stdin": "", "expectedStdout": "bytes=6\n" }
+      {
+        "name": "resource review",
+        "stdin": "",
+        "expectedStdout": "bytes=6,threads=1\n"
+      }
     ],
     "privateTests": [
       {
         "name": "resource lifecycle verification",
         "stdin": "",
-        "expectedStdout": "bytes=6\n",
+        "expectedStdout": "bytes=6,threads=1\n",
         "failureCategory": "resource-lifecycle"
       }
     ]
@@ -83,7 +91,7 @@
     "reflections": [
       {
         "id": "cleanup-order",
-        "prompt": "解释 writer join、fork、waitpid 和 remove 的顺序为何不能随意交换。",
+        "prompt": "解释 atomic 更新、writer join、fork、waitpid 和 remove 的顺序为何不能随意交换。",
         "required": true
       }
     ],
@@ -91,18 +99,18 @@
     "reviewOf": "posix-files-processes",
     "teacherRubric": {
       "id": "system-review-rubric",
-      "prompt": "回答应给出写完成、进程读取、父进程回收和文件删除之间的因果顺序。"
+      "prompt": "回答应给出原子可见性、写完成、进程读取、父进程回收和文件删除之间的因果顺序。"
     }
   },
   "quality": {
     "referenceFiles": {
-      "main.cpp": "#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n#include <string>\n#include <sys/wait.h>\n#include <thread>\n#include <unistd.h>\nint inspect(){std::ifstream input(\"review.txt\",std::ios::binary);std::string data((std::istreambuf_iterator<char>(input)),{});return static_cast<int>(data.size());}int main(){std::thread writer([]{std::ofstream(\"review.txt\")<<\"review\";});writer.join();pid_t child=fork();if(child==0)_exit(inspect());int status{};waitpid(child,&status,0);std::remove(\"review.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<'\\n';}\n"
+      "main.cpp": "#include <atomic>\n#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <iterator>\n#include <string>\n#include <sys/wait.h>\n#include <thread>\n#include <unistd.h>\nint inspect(){std::ifstream input(\"review.txt\",std::ios::binary);std::string data((std::istreambuf_iterator<char>(input)),{});return static_cast<int>(data.size());}int main(){std::atomic<int> completed{0};std::thread writer([&]{std::ofstream(\"review.txt\")<<\"review\";completed.fetch_add(1);});writer.join();pid_t child=fork();if(child==0)_exit(inspect());int status{};waitpid(child,&status,0);std::remove(\"review.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<\",threads=\"<<completed.load()<<'\\n';}\n"
     },
     "mutations": [
       {
         "id": "constant-status",
         "files": {
-          "main.cpp": "#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <sys/wait.h>\n#include <thread>\n#include <unistd.h>\nint main(){std::thread writer([]{std::ofstream(\"review.txt\")<<\"review\";});writer.join();pid_t child=fork();if(child==0)_exit(1);int status{};waitpid(child,&status,0);std::remove(\"review.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<'\\n';}\n"
+          "main.cpp": "#include <atomic>\n#include <cstdio>\n#include <fstream>\n#include <iostream>\n#include <sys/wait.h>\n#include <thread>\n#include <unistd.h>\nint main(){std::atomic<int> completed{0};std::thread writer([&]{std::ofstream(\"review.txt\")<<\"review\";completed.fetch_add(1);});writer.join();pid_t child=fork();if(child==0)_exit(1);int status{};waitpid(child,&status,0);std::remove(\"review.txt\");std::cout<<\"bytes=\"<<WEXITSTATUS(status)<<\",threads=\"<<completed.load()<<'\\n';}\n"
         },
         "expectedVerdict": "public_failure"
       }

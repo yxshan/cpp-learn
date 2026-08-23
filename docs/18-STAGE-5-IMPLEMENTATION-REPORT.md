@@ -12,6 +12,7 @@
 
 - A deterministic algorithm profile with bounded integer-vector generation, fixed seeds, sorting oracle, replayable counterexamples, and `property_failure`.
 - A same-machine relative performance profile that alternates baseline/scaled input, uses median durations, records the growth ratio, and emits `performance_failure`.
+- A hash-index Module and delayed Review that make update, deletion, uniqueness, and average-complexity invariants executable.
 - Fixed direct-build capabilities for thread support and allowlisted SQLite linkage.
 - A declarative CMake profile that performs clean configure, named application/test target build, CTest, and final integration tests without manifest shell commands.
 - POSIX file/process, thread/atomic, dynamic loopback HTTP, and isolated SQLite transaction Activities with delayed Reviews.
@@ -20,28 +21,29 @@
 
 ## 2. Release inventory
 
-Stage 5 adds 11 Activities to the Stage 4 baseline:
+Stage 5 adds 15 Activities to the Stage 4 baseline:
 
 | Kind | Count added | Capability |
 |---|---:|---|
-| Lesson | 5 | Properties, files/processes, threads, loopback HTTP, SQLite |
+| Lesson | 6 | Properties, hash indexes, files/processes, threads, loopback HTTP, SQLite |
 | Exercise | 1 | Same-machine complexity growth |
-| Review | 4 | Delayed algorithm, runtime, HTTP, and transaction retrieval |
+| Review | 7 | Delayed property, complexity, data-structure, runtime, HTTP, transaction, and CMake retrieval |
 | Project Milestone | 1 | Clean CMake/CTest engineering workflow |
 
-The complete Track now contains 38 Activities. The CLI data manager is one persistent Project with three independently verifiable Milestones.
+The complete Track now contains 42 Activities. The CLI data manager is one persistent Project with three independently verifiable Milestones.
 
 ## 3. Acceptance evidence
 
 | Acceptance statement | Evidence | Result |
 |---|---|---|
 | Generated failure reproduces | `T-JUDGE-006` repeats the same seed and obtains the same stdin/counterexample | Passed |
-| Performance is same-machine relative | `T-JUDGE-007` derives verdict from baseline/scaled medians and ratio | Passed |
+| Performance is correct and same-machine relative | `T-JUDGE-007` rejects wrong baseline/scaled results before deriving a verdict from their medians and ratio | Passed |
 | System resources are cleaned | `T-SYSTEM-001`, bounded-process timeout/cancellation tests, and per-Activity cleanup behavior | Passed |
 | Loopback is offline and conflict-free | Reference Activity binds `127.0.0.1:0` and completes a local HTTP round trip | Passed |
 | SQLite fixture is isolated | Reference/Review Activities create, query, close, and remove databases under the Grade root | Passed |
-| CMake/CTest is real | M3 clean-configures, builds named app/test targets, passes CTest, and passes CLI integration tests | Passed |
-| Content mutations hit intended stages | `npm run check:content` Grades 38 starters, 38 references, and 38 mutations | Passed |
+| CMake/CTest is real | M3 clean-configures, builds named app/test targets, passes CTest and CLI integration tests, and records both tool versions | Passed |
+| Review coverage is executable | Complexity, hash-index, atomic/runtime, and CMake concepts have matching delayed Review variants with strong verification | Passed |
+| Content mutations hit intended stages | `npm run check:content` Grades 42 starters, 42 references, and 42 mutations | Passed |
 
 Reproduce the release gates with:
 
@@ -54,7 +56,7 @@ The content gate needs normal local permission to bind a loopback dynamic port. 
 
 ## 4. Safety and portability
 
-Judge specifications select fixed generator, oracle, library, thread, and build capabilities. They cannot embed process arguments or shell hooks. Native execution remains the documented trusted local mode, not a hostile-code sandbox.
+Judge specifications select fixed generator, oracle, library, thread, and build capabilities. CMake target names cannot begin with an option marker, and manifests cannot embed process arguments or shell hooks. CMake/CTest version probes use the same timeout, cancellation, output-limit, minimal-environment, and temporary-root boundary as other Judge processes. Native execution remains the documented trusted local mode, not a hostile-code sandbox.
 
 System programs run with a minimal environment under a unique temporary root. Timeout or cancellation kills the learner process group. The Judge deletes the root after success, failure, cancellation, or worker exception. Loopback Activities own both endpoints and use a dynamic port. SQLite files are local fixtures.
 
@@ -63,7 +65,7 @@ The released process/socket code uses POSIX interfaces verified on the reference
 ## 5. Known limitations
 
 - The generated-property registry initially contains the integer-vector sorting profile; future fixed generators cover graphs, strings, parsers, and state machines.
-- Relative performance checks reduce noise with alternating medians but cannot prove an asymptotic bound; they are supporting Evidence tied to the declared Activity.
+- Relative performance checks verify both scaled-input results and reduce noise with alternating medians, but they cannot prove an asymptotic bound; they are supporting Evidence tied to the declared Activity.
 - The Native Judge does not isolate hostile code from the host. Container-safe execution remains deferred.
 - Loopback and POSIX Activities require corresponding local OS capabilities; the current readiness probe reports the compiler but does not yet expose capability-by-capability availability.
 - Web renders property and performance evidence textually; specialized charts and counterexample replay controls remain future UI work.

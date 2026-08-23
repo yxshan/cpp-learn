@@ -128,5 +128,5 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-JUDGE-007 | Same-machine baseline/scaled medians produce a relative performance verdict | Passed |
 | T-JUDGE-008 | Declarative clean CMake configure, named application/test target build, CTest, and integration run | Passed |
 | T-SYSTEM-001 | Per-Grade temporary root is removed; existing timeout/cancellation tests terminate the process group | Passed |
-| T-CONTENT-007 | 38 starters, references, and mutations exercise algorithm, POSIX, thread, loopback HTTP, SQLite, and CMake profiles | Passed |
+| T-CONTENT-007 | 42 starters, references, and mutations exercise algorithm, hash-index, POSIX, thread, loopback HTTP, SQLite, and CMake profiles | Passed |
 | T-WORK-001 | CLI Project Milestones 1–3 share one persistent Workspace identity and preserve Learner files | Passed |

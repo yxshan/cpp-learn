@@ -155,6 +155,34 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
       ]),
     });
   });
+
+  it("rejects CMake target names that can be interpreted as command options", () => {
+    const candidate = activity("unsafe-cmake-target", []);
+    const result = validateCatalog([
+      {
+        ...candidate,
+        judge: {
+          ...candidate.judge,
+          buildProfile: {
+            kind: "cmake",
+            target: "--parallel",
+            testTarget: "tests",
+            ctest: true,
+          },
+        },
+      },
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({
+          path: expect.stringContaining("buildProfile/target"),
+          keyword: "pattern",
+        }),
+      ]),
+    });
+  });
 });
 
 describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
@@ -292,7 +320,78 @@ describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
       ]),
     ).toMatchObject({
       ok: false,
-      issues: [expect.objectContaining({ keyword: "graph" })],
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "graph" }),
+      ]),
+    });
+  });
+
+  it("rejects a Review link that cannot rehearse any source Concept", () => {
+    const unrelatedReview = {
+      ...completeActivity,
+      id: "unrelated-review",
+      kind: "review",
+      conceptIds: ["unrelated-concept"],
+      prerequisiteIds: ["learning-loop"],
+      learning: {
+        ...completeActivity.learning,
+        reviewIds: [],
+        reviewOf: "learning-loop",
+      },
+    } as const;
+
+    expect(
+      validateCatalog([
+        {
+          ...completeActivity,
+          learning: {
+            ...completeActivity.learning,
+            reviewIds: ["unrelated-review"],
+          },
+        },
+        unrelatedReview,
+      ]),
+    ).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "review-coverage" }),
+      ]),
+    });
+  });
+
+  it("rejects Review links that leave any source Concept uncovered", () => {
+    const partialReview = {
+      ...completeActivity,
+      id: "partial-review",
+      kind: "review",
+      prerequisiteIds: ["learning-loop"],
+      learning: {
+        ...completeActivity.learning,
+        reviewIds: [],
+        reviewOf: "learning-loop",
+      },
+    } as const;
+
+    expect(
+      validateCatalog([
+        {
+          ...completeActivity,
+          conceptIds: ["learning-loop-concept", "uncovered-concept"],
+          learning: {
+            ...completeActivity.learning,
+            reviewIds: ["partial-review"],
+          },
+        },
+        partialReview,
+      ]),
+    ).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({
+          keyword: "review-coverage",
+          message: expect.stringContaining("uncovered-concept"),
+        }),
+      ]),
     });
   });
 
@@ -399,6 +498,45 @@ describe("[T-CONTENT-005] Stage 3 learning-loop content", () => {
       ]),
     });
   });
+
+  it("rejects any Hint that exposes a performance-check expected output", () => {
+    const result = validateCatalog([
+      {
+        ...completeActivity,
+        judge: {
+          ...completeActivity.judge,
+          performanceCheck: {
+            name: "growth",
+            baselineStdin: "1000\n",
+            baselineExpectedStdout: "private-baseline-result\n",
+            scaledStdin: "2000\n",
+            scaledExpectedStdout: "private-scaled-result\n",
+            repetitions: 3,
+            maxMedianRatio: 3,
+            failureCategory: "growth boundary",
+          },
+        },
+        learning: {
+          ...completeActivity.learning,
+          hints: [
+            completeActivity.learning.hints[0],
+            completeActivity.learning.hints[1],
+            {
+              ...completeActivity.learning.hints[2],
+              content: "The scaled result is private-scaled-result.",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "hint-private-leak" }),
+      ]),
+    });
+  });
 });
 
 describe("[T-CONTENT-006] Stage 4 initial Modern C++ release", () => {
@@ -439,7 +577,12 @@ describe("[T-CONTENT-007] Stage 5 algorithms and systems release", () => {
     await expect(
       curriculum.getJudge("complexity-growth-check"),
     ).resolves.toMatchObject({
-      performanceCheck: { repetitions: 3, maxMedianRatio: 3.2 },
+      performanceCheck: {
+        repetitions: 3,
+        maxMedianRatio: 3.2,
+        baselineExpectedStdout: "31996000\n",
+        scaledExpectedStdout: "127992000\n",
+      },
     });
     await expect(
       curriculum.getJudge("cli-data-manager-m3"),
@@ -461,7 +604,17 @@ describe("[T-CONTENT-007] Stage 5 algorithms and systems release", () => {
         ({ persistenceId }) => persistenceId === "cli-data-manager",
       ),
     ).toBe(true);
-    const publicActivities = JSON.stringify(await curriculum.listActivities());
+    const activities = await curriculum.listActivities();
+    expect(activities).toHaveLength(42);
+    expect(activities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "hash-index-invariants" }),
+        expect.objectContaining({ id: "hash-index-invariants-review" }),
+        expect.objectContaining({ id: "complexity-growth-review" }),
+        expect.objectContaining({ id: "cmake-ctest-review" }),
+      ]),
+    );
+    const publicActivities = JSON.stringify(activities);
     expect(publicActivities).not.toContain("propertyTests");
     expect(publicActivities).not.toContain("performanceCheck");
     expect(publicActivities).not.toContain("buildProfile");

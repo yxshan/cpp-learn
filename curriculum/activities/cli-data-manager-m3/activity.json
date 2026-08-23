@@ -116,7 +116,7 @@
         "required": true
       }
     ],
-    "reviewIds": ["cmake-testing-debugging-review"],
+    "reviewIds": ["cmake-ctest-review"],
     "teacherRubric": {
       "id": "cmake-project-rubric",
       "prompt": "回答应涉及复用 library target、生产入口与测试入口分离、clean build 和回归可复现性。"

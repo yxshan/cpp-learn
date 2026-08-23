@@ -413,6 +413,14 @@ export function LessonWorkspace({
                 <span>{report.mode === "run" ? "Run 反馈" : "Grade 证据"}</span>
               )}
             </div>
+            {report && (
+              <pre>
+                {report.toolchain.compiler} · {report.toolchain.standard}
+                {report.toolchain.buildSystem
+                  ? ` · ${report.toolchain.buildSystem}\n${report.toolchain.cmake ?? ""}\n${report.toolchain.ctest ?? ""}`
+                  : ""}
+              </pre>
+            )}
             {report?.stages.map((stage, index) => (
               <pre key={`${stage.kind}-${stage.testName ?? index}`}>
                 {stage.kind}

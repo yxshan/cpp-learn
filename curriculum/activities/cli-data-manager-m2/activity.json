@@ -97,7 +97,11 @@
         "required": true
       }
     ],
-    "reviewIds": ["stl-containers-algorithms-review"],
+    "reviewIds": [
+      "classes-and-raii-review",
+      "stl-containers-algorithms-review",
+      "cmake-testing-debugging-review"
+    ],
     "teacherRubric": {
       "id": "project-evolution-rubric",
       "prompt": "回答应联系真实工程的连续增量、兼容接口与避免重写。"

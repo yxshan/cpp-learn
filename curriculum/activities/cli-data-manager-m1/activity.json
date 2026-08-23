@@ -89,7 +89,11 @@
         "required": true
       }
     ],
-    "reviewIds": ["cmake-testing-debugging-review"],
+    "reviewIds": [
+      "classes-and-raii-review",
+      "stl-containers-algorithms-review",
+      "cmake-testing-debugging-review"
+    ],
     "teacherRubric": {
       "id": "project-boundary-rubric",
       "prompt": "回答应联系纯函数、稳定接口、单元测试与未来输出格式扩展。"

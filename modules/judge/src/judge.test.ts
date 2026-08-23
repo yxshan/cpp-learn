@@ -795,7 +795,12 @@ describe("[T-JUDGE-007] same-machine relative performance", () => {
             : 1;
       return {
         exitCode: 0,
-        stdout: request.stdin === "public\n" ? "ok\n" : "",
+        stdout:
+          request.stdin === "public\n"
+            ? "ok\n"
+            : request.stdin === "base\n"
+              ? "base-ok\n"
+              : "scaled-ok\n",
         stderr: "",
         timedOut: false,
         outputLimitExceeded: false,
@@ -829,7 +834,9 @@ describe("[T-JUDGE-007] same-machine relative performance", () => {
         performanceCheck: {
           name: "doubling growth",
           baselineStdin: "base\n",
+          baselineExpectedStdout: "base-ok\n",
           scaledStdin: "scaled\n",
+          scaledExpectedStdout: "scaled-ok\n",
           repetitions: 3,
           maxMedianRatio: 3,
           failureCategory: "runtime grows too quickly when input doubles",
@@ -860,6 +867,76 @@ describe("[T-JUDGE-007] same-machine relative performance", () => {
       ],
     });
   });
+
+  it("rejects a fast program whose scaled-input result is wrong", async () => {
+    let now = 0;
+    const run = vi.fn(async (request: { readonly stdin?: string }) => {
+      now += 1;
+      return {
+        exitCode: 0,
+        stdout: request.stdin === "public\n" ? "ok\n" : "wrong\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      };
+    });
+    const report = await createNativeJudge({
+      run,
+      monotonicClock: () => now,
+    }).execute({
+      jobId: "job_fast_but_wrong",
+      mode: "grade",
+      activity: {
+        id: "complexity-correctness",
+        version: 1,
+        kind: "exercise",
+        title: "Complexity correctness",
+        estimatedMinutes: 30,
+        conceptIds: ["algorithm-complexity"],
+        markdown: "",
+        workspace: { editablePaths: ["main.cpp"] },
+      },
+      spec: {
+        activityId: "complexity-correctness",
+        activityVersion: 1,
+        judgeVersion: 1,
+        expectedStdout: "ok\n",
+        timeoutMs: 2_000,
+        publicTests: [
+          { name: "public", stdin: "public\n", expectedStdout: "ok\n" },
+        ],
+        performanceCheck: {
+          name: "correct growth",
+          baselineStdin: "base\n",
+          baselineExpectedStdout: "base-ok\n",
+          scaledStdin: "scaled\n",
+          scaledExpectedStdout: "scaled-ok\n",
+          repetitions: 3,
+          maxMedianRatio: 3,
+          failureCategory: "scaled execution must remain correct",
+        },
+      },
+      snapshot: {
+        id: "snap_fast_but_wrong",
+        activityId: "complexity-correctness",
+        digest: "fast-but-wrong-digest",
+        files: { "main.cpp": "int main() {}\n" },
+      },
+    });
+
+    expect(report).toMatchObject({
+      verdict: "performance_failure",
+      stages: [
+        { kind: "compile", outcome: "pass" },
+        { kind: "public_test", outcome: "pass" },
+        {
+          kind: "performance",
+          outcome: "fail",
+          feedback: "scaled execution must remain correct",
+        },
+      ],
+    });
+  });
 });
 
 describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
@@ -871,10 +948,27 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
       timedOut: false,
       outputLimitExceeded: false,
     });
+    const inspectTool = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "cmake version 4.1.0\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "ctest version 4.1.0\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      });
     const report = await createNativeJudge({
       run,
       cmake: "cmake",
       ctest: "ctest",
+      inspectTool,
     }).execute({
       jobId: "job_cmake_ctest",
       mode: "grade",
@@ -922,6 +1016,24 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
         args: ["-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Release"],
       }),
     );
+    expect(inspectTool).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        executable: "cmake",
+        args: ["--version"],
+        timeoutMs: 2_000,
+        maxOutputBytes: 16 * 1024,
+      }),
+    );
+    expect(inspectTool).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        executable: "ctest",
+        args: ["--version"],
+        timeoutMs: 2_000,
+        maxOutputBytes: 16 * 1024,
+      }),
+    );
     expect(run).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
@@ -944,7 +1056,11 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
     );
     expect(report).toMatchObject({
       verdict: "automated_pass",
-      toolchain: { buildSystem: "cmake/ctest" },
+      toolchain: {
+        buildSystem: "cmake/ctest",
+        cmake: "cmake version 4.1.0",
+        ctest: "ctest version 4.1.0",
+      },
       stages: [
         { kind: "configure", outcome: "pass" },
         { kind: "build", outcome: "pass" },
@@ -952,6 +1068,63 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
         { kind: "test", outcome: "pass" },
       ],
     });
+  });
+
+  it("preserves cancellation while inspecting build-tool versions", async () => {
+    const run = vi.fn();
+    const cancelledInspection = {
+      exitCode: null,
+      stdout: "",
+      stderr: "",
+      timedOut: false,
+      outputLimitExceeded: false,
+      cancelled: true,
+    };
+    const report = await createNativeJudge({
+      run,
+      inspectTool: vi.fn().mockResolvedValue(cancelledInspection),
+    }).execute({
+      jobId: "job_cancelled_tool_inspection",
+      mode: "grade",
+      activity: {
+        id: "cancelled-cmake",
+        version: 1,
+        kind: "exercise",
+        title: "Cancelled CMake",
+        estimatedMinutes: 20,
+        conceptIds: ["cmake"],
+        markdown: "",
+        workspace: { editablePaths: ["CMakeLists.txt", "main.cpp"] },
+      },
+      spec: {
+        activityId: "cancelled-cmake",
+        activityVersion: 1,
+        judgeVersion: 1,
+        expectedStdout: "",
+        timeoutMs: 2_000,
+        buildProfile: {
+          kind: "cmake",
+          target: "app",
+          testTarget: "tests",
+          ctest: true,
+        },
+      },
+      snapshot: {
+        id: "snap_cancelled_cmake",
+        activityId: "cancelled-cmake",
+        digest: "cancelled-cmake-digest",
+        files: {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\n",
+          "main.cpp": "int main() {}\n",
+        },
+      },
+    });
+
+    expect(report).toMatchObject({
+      verdict: "cancelled",
+      stages: [{ kind: "configure", outcome: "fail" }],
+    });
+    expect(run).not.toHaveBeenCalled();
   });
 });
 

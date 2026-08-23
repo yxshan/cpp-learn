@@ -158,7 +158,9 @@ export interface GeneratedPropertyTest {
 export interface RelativePerformanceCheck {
   readonly name: string;
   readonly baselineStdin: string;
+  readonly baselineExpectedStdout: string;
   readonly scaledStdin: string;
+  readonly scaledExpectedStdout: string;
   readonly repetitions: number;
   readonly maxMedianRatio: number;
   readonly failureCategory: string;
@@ -173,7 +175,7 @@ export type JudgeBuildProfile =
   | {
       readonly kind: "cmake";
       readonly target: string;
-      readonly testTarget?: string;
+      readonly testTarget: string;
       readonly ctest: boolean;
     };
 
@@ -256,6 +258,8 @@ export interface JudgeReport {
     readonly compiler: string;
     readonly standard: "c++20";
     readonly buildSystem?: "cmake/ctest";
+    readonly cmake?: string;
+    readonly ctest?: string;
   };
   readonly buildFlags?: readonly string[];
   readonly seeds?: readonly number[];

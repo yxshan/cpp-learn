@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "id": "hash-index-invariants-review",
+  "version": 1,
+  "kind": "review",
+  "title": "Review：重建哈希集合语义",
+  "estimatedMinutes": 25,
+  "conceptIds": [
+    "data-structure-hash-table",
+    "data-structure-invariants",
+    "algorithm-complexity"
+  ],
+  "prerequisiteIds": ["hash-index-invariants"],
+  "objectives": ["用哈希集合闭卷恢复唯一性、不变量与平均复杂度语义。"],
+  "victoryConditions": ["正确统计重复输入中的不同值数量。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: unordered_set",
+      "url": "https://en.cppreference.com/w/cpp/container/unordered_set"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines: containers",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rsl-containers"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/hash-index-invariants-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <unordered_set>\nint main(){int count{};std::cin>>count;std::unordered_set<int> unique;while(count--){int value{};std::cin>>value;/* recall the state transition */}std::cout<<\"unique=\"<<unique.size()<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "unique=3\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "duplicate values",
+        "stdin": "5\n1 2 1 3 2\n",
+        "expectedStdout": "unique=3\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "one repeated value",
+        "stdin": "4\n7 7 7 7\n",
+        "expectedStdout": "unique=1\n",
+        "failureCategory": "repeated equal values must preserve set uniqueness"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 21
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "set-transition",
+        "title": "每次输入更新集合",
+        "kind": "nudge",
+        "content": "循环体需要把当前 value 交给维护唯一性的容器。"
+      },
+      {
+        "id": "insert-value",
+        "title": "使用集合插入",
+        "kind": "concept",
+        "content": "unordered_set::insert 会让重复的等价值保持为一个元素。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "在循环体中调用 unique.insert(value)。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "set-versus-sequence",
+        "prompt": "为什么集合的 size 能表示不同值数量？哈希冲突为什么不改变相等性语义？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "hash-index-invariants",
+    "teacherRubric": {
+      "id": "hash-set-review-rubric",
+      "prompt": "回答应区分哈希桶冲突与键相等，并说明集合唯一性不变量。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <unordered_set>\nint main(){int count{};std::cin>>count;std::unordered_set<int> unique;while(count--){int value{};std::cin>>value;unique.insert(value);}std::cout<<\"unique=\"<<unique.size()<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "constant-public-count",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){int count{};std::cin>>count;int value{};while(count--)std::cin>>value;std::cout<<\"unique=3\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "set-invariant",
+        "type": "container-visualization",
+        "fallback": "read value -> hash bucket candidate -> equality check -> insert only if absent -> unique size"
+      }
+    ],
+    "printFallback": "追踪重复值进入集合时，哪些输入改变 size，哪些保持不变。"
+  }
+}

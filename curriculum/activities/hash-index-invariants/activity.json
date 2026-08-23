@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "id": "hash-index-invariants",
+  "version": 1,
+  "kind": "lesson",
+  "title": "哈希索引与状态不变量",
+  "estimatedMinutes": 35,
+  "conceptIds": [
+    "data-structure-hash-table",
+    "data-structure-invariants",
+    "algorithm-complexity"
+  ],
+  "prerequisiteIds": ["stl-containers-algorithms", "complexity-growth-check"],
+  "objectives": [
+    "用 unordered_map 建模可更新索引，并把更新、删除、缺失查询写成显式状态契约。"
+  ],
+  "victoryConditions": [
+    "同一键可更新、删除后不可见、缺失查询稳定输出 missing。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: unordered_map",
+      "url": "https://en.cppreference.com/w/cpp/container/unordered_map"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines: containers",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rsl-containers"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/hash-index-invariants/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include <unordered_map>\nint main(){std::unordered_map<std::string,int> index;int count{};std::cin>>count;while(count--){std::string op,key;std::cin>>op>>key;if(op==\"set\"){int value{};std::cin>>value;index.emplace(key,value);}else if(op==\"erase\"){index.erase(key);}else if(op==\"get\"){auto found=index.find(key);std::cout<<(found==index.end()?\"missing\":std::to_string(found->second))<<'\\n';}}}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "1\n2\nmissing\n",
+    "timeoutMs": 2500,
+    "publicTests": [
+      {
+        "name": "insert update lookup",
+        "stdin": "5\nset alice 1\nget alice\nset alice 2\nget alice\nget bob\n",
+        "expectedStdout": "1\n2\nmissing\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "erase and missing lookup",
+        "stdin": "4\nset hidden 9\nerase hidden\nget hidden\nget absent\n",
+        "expectedStdout": "missing\nmissing\n",
+        "failureCategory": "erased and never-inserted keys must both be absent from the index"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 8
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "distinguish-insert-update",
+        "title": "区分插入与更新",
+        "kind": "nudge",
+        "content": "emplace 不会覆盖已经存在的键；先确认 set 命令承诺的状态变化。"
+      },
+      {
+        "id": "assign-by-key",
+        "title": "按键覆盖值",
+        "kind": "concept",
+        "content": "insert_or_assign 或下标赋值都能表达同一键的新值替换旧值。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "把 set 分支中的 index.emplace(key, value) 改成 index.insert_or_assign(key, value)。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "index-invariant",
+        "prompt": "写出每条命令执行后 map 必须满足的状态不变量，并说明平均 O(1) 不承诺什么。",
+        "required": true
+      }
+    ],
+    "reviewIds": ["hash-index-invariants-review"],
+    "teacherRubric": {
+      "id": "hash-index-rubric",
+      "prompt": "回答应覆盖唯一键、覆盖更新、删除后缺失，以及平均复杂度不等于最坏情况保证。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include <unordered_map>\nint main(){std::unordered_map<std::string,int> index;int count{};std::cin>>count;while(count--){std::string op,key;std::cin>>op>>key;if(op==\"set\"){int value{};std::cin>>value;index.insert_or_assign(key,value);}else if(op==\"erase\"){index.erase(key);}else if(op==\"get\"){auto found=index.find(key);std::cout<<(found==index.end()?\"missing\":std::to_string(found->second))<<'\\n';}}}\n"
+    },
+    "mutations": [
+      {
+        "id": "insert-does-not-update",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\n#include <unordered_map>\nint main(){std::unordered_map<std::string,int> index;int count{};std::cin>>count;while(count--){std::string op,key;std::cin>>op>>key;if(op==\"set\"){int value{};std::cin>>value;index.emplace(key,value);}else if(op==\"erase\"){index.erase(key);}else if(op==\"get\"){auto found=index.find(key);std::cout<<(found==index.end()?\"missing\":std::to_string(found->second))<<'\\n';}}}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "hash-state-transitions",
+        "type": "container-visualization",
+        "fallback": "empty -> set(key,value) -> set(same key,new value) -> erase(key) -> missing"
+      }
+    ],
+    "printFallback": "逐命令画出键集合与值映射，并标记保持不变的约束。"
+  }
+}

@@ -106,7 +106,7 @@ The expected result may be compilation failure, warning removal, or diagnosis. C
 
 Uses examples, deterministic generated properties, edge cases, large inputs, and optional relative performance checks. Failed generated cases retain a reproducible seed.
 
-The initial fixed generator produces bounded integer vectors and compares learner output with a sorting oracle. Generator kind, bounds, case count, and 32-bit seed are declarative. Performance checks use Activity-owned baseline/scaled stdin, alternate repeated runs on one machine, and compare medians against a declared ratio.
+The initial fixed generator produces bounded integer vectors and compares learner output with a sorting oracle. Generator kind, bounds, case count, and 32-bit seed are declarative. Performance checks use Activity-owned baseline/scaled stdin and expected stdout, reject incorrect results, alternate repeated runs on one machine, and compare medians against a declared ratio.
 
 ### System lab
 
@@ -118,7 +118,7 @@ The initial system Module is POSIX-compatible on the reference macOS environment
 
 Configures a clean build, builds named targets, executes CTest or integration probes, and verifies regression behavior across Milestones.
 
-The manifest names one application target and one test target. It cannot provide arbitrary configure/build commands or shell hooks.
+The manifest names one application target and one test target using identifiers that cannot be parsed as command options. It cannot provide arbitrary configure/build commands or shell hooks. Reports capture the inspected CMake and CTest version lines.
 
 ## 7. Judge pipeline
 
@@ -141,7 +141,7 @@ Blocking stage failures stop unsafe or meaningless later stages. Style, formatti
 ## 8. Feedback policy
 
 - Public tests may show input, expectation, and actual result.
-- Private tests show the violated property category, not the exact hidden input.
+- Private fixed/performance tests show the violated property category, not exact hidden inputs or expected outputs; content validation rejects those values in every Hint tier.
 - Compiler and Sanitizer diagnostics retain original text plus a safe explanation.
 - A deterministic generated failure may expose a minimized counterexample after the Grade, unless doing so would reveal a reference solution.
 - Hints are ordered disclosures. Each use is recorded before content is returned.

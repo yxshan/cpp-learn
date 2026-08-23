@@ -81,7 +81,7 @@
         "required": true
       }
     ],
-    "reviewIds": ["functions-and-scope-review"],
+    "reviewIds": ["values-and-types-review", "functions-and-scope-review"],
     "teacherRubric": {
       "id": "integer-division-rubric",
       "prompt": "回答应指出 int 除法截断小数部分。"

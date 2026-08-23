@@ -38,10 +38,20 @@
     "publicTests": [
       { "name": "small sum", "stdin": "10\n", "expectedStdout": "45\n" }
     ],
+    "privateTests": [
+      {
+        "name": "independent functional sum",
+        "stdin": "11\n",
+        "expectedStdout": "55\n",
+        "failureCategory": "the optimized implementation must preserve the arithmetic-series result"
+      }
+    ],
     "performanceCheck": {
       "name": "doubling input growth",
       "baselineStdin": "8000\n",
+      "baselineExpectedStdout": "31996000\n",
       "scaledStdin": "16000\n",
+      "scaledExpectedStdout": "127992000\n",
       "repetitions": 3,
       "maxMedianRatio": 3.2,
       "failureCategory": "same-machine median runtime grows faster than the declared linear boundary"
@@ -81,7 +91,7 @@
         "required": true
       }
     ],
-    "reviewIds": ["deterministic-sort-properties-review"],
+    "reviewIds": ["complexity-growth-review"],
     "teacherRubric": {
       "id": "complexity-measurement-rubric",
       "prompt": "回答应涉及环境控制、输入缩放、重复测量、中位数与增长阶。"

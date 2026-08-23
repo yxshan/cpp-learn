@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "id": "cmake-ctest-review",
+  "version": 1,
+  "kind": "review",
+  "title": "Review：恢复 CMake 目标图",
+  "estimatedMinutes": 30,
+  "conceptIds": [
+    "cpp-cmake",
+    "cpp-ctest",
+    "cpp-multi-file",
+    "project-evolution"
+  ],
+  "prerequisiteIds": ["cli-data-manager-m3"],
+  "objectives": ["闭卷恢复 library、app、test 与 CTest 的目标边界。"],
+  "victoryConditions": [
+    "clean configure、两个命名目标、CTest 和 app 集成运行全部通过。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake tutorial",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html"
+    },
+    {
+      "kind": "reference",
+      "title": "CTest manual",
+      "url": "https://cmake.org/cmake/help/latest/manual/ctest.1.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cmake-ctest-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["CMakeLists.txt", "main.cpp", "tests.cpp"],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cmake_review LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(review-app main.cpp)\nenable_testing()\nadd_executable(review-tests tests.cpp)\nadd_test(NAME review-contract COMMAND review-tests --todo)\n",
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"target-ready\\n\";}\n",
+      "tests.cpp": "int main(int argc,char**){return argc==1?0:2;}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "target-ready\n",
+    "timeoutMs": 10000,
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "review-app",
+      "testTarget": "review-tests",
+      "ctest": true
+    },
+    "publicTests": [
+      {
+        "name": "review app",
+        "stdin": "",
+        "expectedStdout": "target-ready\n"
+      }
+    ],
+    "privateTests": [
+      {
+        "name": "repeat app after CTest",
+        "stdin": "",
+        "expectedStdout": "target-ready\n",
+        "failureCategory": "the application target must remain independently runnable after CTest"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 21
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "inspect-test-command",
+        "title": "检查测试注册参数",
+        "kind": "nudge",
+        "content": "测试程序用 argc 表达它是否收到不属于契约的参数。"
+      },
+      {
+        "id": "invoke-target-only",
+        "title": "只调用测试目标",
+        "kind": "concept",
+        "content": "add_test 的 COMMAND 应只包含 review-tests，不追加额外参数。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "把 add_test 改为 add_test(NAME review-contract COMMAND review-tests)。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "target-graph-recall",
+        "prompt": "configure、build app、build tests、CTest、运行 app 分别验证什么边界？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "cli-data-manager-m3",
+    "teacherRubric": {
+      "id": "cmake-ctest-review-rubric",
+      "prompt": "回答应区分生成构建图、目标编译链接、测试注册执行与最终集成行为。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cmake_review LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(review-app main.cpp)\nenable_testing()\nadd_executable(review-tests tests.cpp)\nadd_test(NAME review-contract COMMAND review-tests)\n",
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"target-ready\\n\";}\n",
+      "tests.cpp": "int main(int argc,char**){return argc==1?0:2;}\n"
+    },
+    "mutations": [
+      {
+        "id": "ctest-extra-argument",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cmake_review LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(review-app main.cpp)\nenable_testing()\nadd_executable(review-tests tests.cpp)\nadd_test(NAME review-contract COMMAND review-tests --broken)\n",
+          "main.cpp": "#include <iostream>\nint main(){std::cout<<\"target-ready\\n\";}\n",
+          "tests.cpp": "int main(int argc,char**){return argc==1?0:2;}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "review-target-graph",
+        "type": "algorithm-trace",
+        "fallback": "configure -> build review-app + review-tests -> CTest -> run review-app -> evidence"
+      }
+    ],
+    "printFallback": "画出 app target、test target 和 CTest 注册之间的有向关系。"
+  }
+}

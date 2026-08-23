@@ -85,7 +85,7 @@ Content CI validates:
 - Referenced files and source URLs.
 - Starter and reference build status.
 - Public and private tests against reference and mutation fixtures.
-- Hint ordering and answer-leak policy.
+- Hint ordering and answer-leak policy, including private fixed/performance inputs and expected outputs.
 - Evidence policy and Review coverage.
 - Print/read-only fallback for interactive blocks.
 - Terminology consistency with [CONTEXT.md](CONTEXT.md).

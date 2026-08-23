@@ -259,6 +259,32 @@ export function validateCatalog(
           message: `unknown Review Activity: ${reviewId}`,
           keyword: "graph",
         });
+      } else if (
+        !review.conceptIds.some((conceptId) =>
+          activity.conceptIds.includes(conceptId),
+        )
+      ) {
+        issues.push({
+          path: `/${index}/learning/reviewIds`,
+          message: `Review Activity does not cover any source Concept: ${reviewId}`,
+          keyword: "review-coverage",
+        });
+      }
+    }
+    if (activity.kind !== "review") {
+      const coveredConceptIds = new Set(
+        activity.learning.reviewIds.flatMap(
+          (reviewId) => byId.get(reviewId)?.conceptIds ?? [],
+        ),
+      );
+      for (const conceptId of activity.conceptIds) {
+        if (!coveredConceptIds.has(conceptId)) {
+          issues.push({
+            path: `/${index}/learning/reviewIds`,
+            message: `No linked Review covers source Concept: ${conceptId}`,
+            keyword: "review-coverage",
+          });
+        }
       }
     }
     if (
@@ -334,7 +360,9 @@ export function validateCatalog(
           activity.judge.performanceCheck
             ? [
                 activity.judge.performanceCheck.baselineStdin,
+                activity.judge.performanceCheck.baselineExpectedStdout,
                 activity.judge.performanceCheck.scaledStdin,
+                activity.judge.performanceCheck.scaledExpectedStdout,
               ]
             : [],
         )

@@ -236,6 +236,7 @@ export interface NativeJudgeDependencies {
   readonly compilerFingerprint?: string;
   readonly cmake?: string;
   readonly ctest?: string;
+  readonly inspectTool?: BoundedProcessRunner;
   readonly maxOutputBytes?: number;
 }
 
@@ -387,6 +388,7 @@ export function createNativeJudge(
   const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
   const cmake = dependencies.cmake ?? "cmake";
   const ctest = dependencies.ctest ?? "ctest";
+  const inspectTool = dependencies.inspectTool ?? run;
   const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
 
   return {
@@ -396,6 +398,8 @@ export function createNativeJudge(
       let verdict: JudgeReport["verdict"] = "judge_system_error";
       let activeStageKind: JudgeReportStage["kind"] = "compile";
       let executionRoot: string | undefined;
+      let cmakeFingerprint: string | undefined;
+      let ctestFingerprint: string | undefined;
       try {
         if (
           request.activity.id !== request.spec.activityId ||
@@ -429,8 +433,57 @@ export function createNativeJudge(
         const cancellation = request.signal
           ? { signal: request.signal }
           : ({} as const);
-        let buildPassed = false;
+        let buildToolsReady = true;
         if (request.spec.buildProfile?.kind === "cmake") {
+          activeStageKind = "configure";
+          const inspectionStarted = monotonicClock();
+          const inspectionRequest = {
+            cwd: executionRoot,
+            timeoutMs: Math.min(request.spec.timeoutMs, 2_000),
+            maxOutputBytes: Math.min(maxOutputBytes, 16 * 1024),
+            environment,
+            ...cancellation,
+          };
+          const [cmakeVersion, ctestVersion] = await Promise.all([
+            inspectTool({
+              ...inspectionRequest,
+              executable: cmake,
+              args: ["--version"],
+            }),
+            inspectTool({
+              ...inspectionRequest,
+              executable: ctest,
+              args: ["--version"],
+            }),
+          ]);
+          cmakeFingerprint = cmakeVersion.stdout.split(/\r?\n/, 1)[0]?.trim();
+          ctestFingerprint = ctestVersion.stdout.split(/\r?\n/, 1)[0]?.trim();
+          const inspectionFailure =
+            failedProcessVerdict(cmakeVersion, "judge_system_error") ??
+            failedProcessVerdict(ctestVersion, "judge_system_error") ??
+            (!cmakeFingerprint || !ctestFingerprint
+              ? "judge_system_error"
+              : undefined);
+          if (inspectionFailure) {
+            verdict = inspectionFailure;
+            buildToolsReady = false;
+            stages.push(
+              reportStage(
+                "configure",
+                inspectionFailure === "judge_system_error"
+                  ? "system_error"
+                  : "fail",
+                monotonicClock() - inspectionStarted,
+                undefined,
+                { feedback: "Build-tool version inspection failed." },
+              ),
+            );
+          }
+        }
+        let buildPassed = false;
+        if (!buildToolsReady) {
+          // The bounded inspection stage already recorded the blocking verdict.
+        } else if (request.spec.buildProfile?.kind === "cmake") {
           activeStageKind = "configure";
           const configureStarted = monotonicClock();
           const configure = await run({
@@ -466,9 +519,7 @@ export function createNativeJudge(
                 "build",
                 "--target",
                 request.spec.buildProfile.target,
-                ...(request.spec.buildProfile.testTarget
-                  ? [request.spec.buildProfile.testTarget]
-                  : []),
+                request.spec.buildProfile.testTarget,
               ],
               cwd: executionRoot,
               timeoutMs: request.spec.timeoutMs,
@@ -770,14 +821,23 @@ export function createNativeJudge(
               | "output_limit"
               | "runtime_error"
               | undefined;
+            let outputMismatch = false;
             for (
               let repetition = 0;
               repetition < performance.repetitions;
               repetition += 1
             ) {
-              for (const [input, durations] of [
-                [performance.baselineStdin, baselineDurations],
-                [performance.scaledStdin, scaledDurations],
+              for (const [input, expectedStdout, durations] of [
+                [
+                  performance.baselineStdin,
+                  performance.baselineExpectedStdout,
+                  baselineDurations,
+                ],
+                [
+                  performance.scaledStdin,
+                  performance.scaledExpectedStdout,
+                  scaledDurations,
+                ],
               ] as const) {
                 const runStarted = monotonicClock();
                 const result = await run({
@@ -800,15 +860,17 @@ export function createNativeJudge(
                       : result.exitCode !== 0
                         ? "runtime_error"
                         : undefined;
-                if (processFailure) break;
+                outputMismatch = result.stdout !== expectedStdout;
+                if (processFailure || outputMismatch) break;
               }
-              if (processFailure) break;
+              if (processFailure || outputMismatch) break;
             }
             const baselineDurationMs = median(baselineDurations);
             const scaledDurationMs = median(scaledDurations);
             const ratio = scaledDurationMs / Math.max(1, baselineDurationMs);
             const passed =
               processFailure === undefined &&
+              !outputMismatch &&
               ratio <= performance.maxMedianRatio;
             stages.push(
               reportStage(
@@ -966,7 +1028,12 @@ export function createNativeJudge(
           compiler: compilerFingerprint,
           standard: "c++20",
           ...(request.spec.buildProfile?.kind === "cmake"
-            ? { buildSystem: "cmake/ctest" as const }
+            ? {
+                buildSystem: "cmake/ctest" as const,
+                ...(cmakeFingerprint && ctestFingerprint
+                  ? { cmake: cmakeFingerprint, ctest: ctestFingerprint }
+                  : {}),
+              }
             : {}),
         },
         buildFlags:

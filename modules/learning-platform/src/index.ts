@@ -309,6 +309,11 @@ export function createLearningPlatform(
     const now = dependencies.clock();
     const concepts = await conceptProjection();
     const scheduledReviews = await reviewProjection();
+    const reviewCoverage = new Map<string, readonly string[]>();
+    for (const reviewId of learning.reviewIds) {
+      const review = await dependencies.curriculum.getActivity(reviewId);
+      if (review) reviewCoverage.set(reviewId, review.conceptIds);
+    }
 
     for (const conceptId of activity.conceptIds) {
       const previous = concepts.get(conceptId)?.state ?? "unseen";
@@ -432,6 +437,7 @@ export function createLearningPlatform(
       }
       if (target === "demonstrated" && previous !== "demonstrated") {
         for (const reviewId of learning.reviewIds) {
+          if (!reviewCoverage.get(reviewId)?.includes(conceptId)) continue;
           const intervalDays = learning.evidencePolicy.reviewAfterDays;
           derived.push({
             schemaVersion: SCHEMA_VERSION,
@@ -633,6 +639,12 @@ export function createLearningPlatform(
               if (activity && reflectionSatisfied && strongVerificationPass) {
                 const concepts = await conceptProjection();
                 const now = dependencies.clock();
+                const reviewCoverage = new Map<string, readonly string[]>();
+                for (const reviewId of learning.reviewIds) {
+                  const review =
+                    await dependencies.curriculum.getActivity(reviewId);
+                  if (review) reviewCoverage.set(reviewId, review.conceptIds);
+                }
                 for (const conceptId of activity.conceptIds) {
                   const previous = concepts.get(conceptId)?.state ?? "unseen";
                   const evidenceId = `evidence_${command.commandId}_${conceptId}`;
@@ -665,9 +677,11 @@ export function createLearningPlatform(
                       nextState: "demonstrated",
                       evidenceIds: [evidenceId],
                       explanation:
-                        "An applicable Teacher Observation joined an independent private Grade and required reflection.",
+                        "An applicable Teacher Observation joined independent strong verification and required reflection.",
                     });
                     for (const reviewId of learning.reviewIds) {
+                      if (!reviewCoverage.get(reviewId)?.includes(conceptId))
+                        continue;
                       observationEvents.push({
                         schemaVersion: SCHEMA_VERSION,
                         eventId: `evt_review_${command.commandId}_${conceptId}_${reviewId}`,
@@ -775,8 +789,16 @@ export function createLearningPlatform(
                 1,
                 Math.floor(learning.evidencePolicy.reviewAfterDays / 2),
               );
+              const reviewCoverage = new Map<string, readonly string[]>();
+              for (const reviewId of learning.reviewIds) {
+                const review =
+                  await dependencies.curriculum.getActivity(reviewId);
+                if (review) reviewCoverage.set(reviewId, review.conceptIds);
+              }
               for (const conceptId of activity.conceptIds) {
                 for (const reviewId of learning.reviewIds) {
+                  if (!reviewCoverage.get(reviewId)?.includes(conceptId))
+                    continue;
                   hintEvents.push({
                     schemaVersion: SCHEMA_VERSION,
                     eventId: `evt_solution_review_${command.commandId}_${conceptId}_${reviewId}`,

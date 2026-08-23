@@ -109,6 +109,45 @@ describe("[T-RECORD-001] append-only attempt history", () => {
     await expect(restartedProcess.list()).resolves.toEqual([event]);
   });
 
+  it("round-trips Stage 5 toolchain and deterministic report metadata", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-learn-record-"));
+    temporaryRoots.push(root);
+    const base = completedGrade("evt_stage_5_report");
+    const event: AttemptCompletedEvent = {
+      ...base,
+      report: {
+        ...base.report,
+        toolchain: {
+          compiler: "Apple clang 17",
+          standard: "c++20",
+          buildSystem: "cmake/ctest",
+          cmake: "cmake version 4.1.0",
+          ctest: "ctest version 4.1.0",
+        },
+        seeds: [20_260_823],
+        stages: [
+          { kind: "configure", outcome: "pass", durationMs: 20 },
+          { kind: "build", outcome: "pass", durationMs: 30 },
+          { kind: "ctest", outcome: "pass", durationMs: 5 },
+          {
+            kind: "property_test",
+            outcome: "pass",
+            durationMs: 4,
+            seed: 20_260_823,
+          },
+        ],
+      },
+    };
+
+    const record = createJsonlLearningRecord({ dataRoot: root });
+    await record.initialize();
+    await record.append(event);
+    const restarted = createJsonlLearningRecord({ dataRoot: root });
+    await restarted.initialize();
+
+    await expect(restarted.list()).resolves.toEqual([event]);
+  });
+
   it("quarantines an interrupted tail and records the recovery before serving history", async () => {
     const root = await mkdtemp(join(tmpdir(), "cpp-learn-record-"));
     temporaryRoots.push(root);
