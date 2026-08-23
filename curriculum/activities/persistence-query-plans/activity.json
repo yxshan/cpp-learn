@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "persistence-query-plans",
+  "version": 1,
+  "kind": "lesson",
+  "title": "查询计划、索引与事务边界",
+  "estimatedMinutes": 40,
+  "conceptIds": ["sql-index-plans", "transaction-boundaries"],
+  "prerequisiteIds": ["sqlite-transactions", "hash-index-invariants"],
+  "objectives": ["从查询形状推导索引访问，并把一组写操作放入明确事务边界。"],
+  "victoryConditions": ["内存索引能处理存在与不存在的键，并输出稳定查找结果。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "SQLite Query Planning",
+      "url": "https://www.sqlite.org/queryplanner.html"
+    },
+    {
+      "kind": "reference",
+      "title": "SQLite Transaction",
+      "url": "https://www.sqlite.org/lang_transaction.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/persistence-query-plans/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <unordered_set>\nint main(){int n{};std::cin>>n;std::unordered_set<int> index;for(int i=0,value;i<n&&std::cin>>value;++i){/* TODO */}int query{};std::cin>>query;std::cout<<\"found=\"<<(index.contains(query)?1:0)<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "found=1\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "indexed lookup",
+        "stdin": "4 7 11 13 17 13\n",
+        "expectedStdout": "found=1\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "populate-index",
+        "title": "先建立查找结构",
+        "kind": "nudge",
+        "content": "读取每个值时将它加入索引。"
+      },
+      {
+        "id": "query-shape",
+        "title": "索引服务于查询形状",
+        "kind": "concept",
+        "content": "等值查询需要快速判断 key 是否存在，而不是保留输入顺序。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "在读取循环中调用 index.insert(value);，查询时保留 contains。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "planner-choice",
+        "prompt": "为什么数据库索引不是越多越好？请联系查询计划、写放大和事务成本。",
+        "required": true
+      }
+    ],
+    "reviewIds": ["persistence-query-plans-review"],
+    "teacherRubric": {
+      "id": "query-plan-rubric",
+      "prompt": "回答应涉及查询谓词、选择性、维护成本、EXPLAIN 与事务写入。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <unordered_set>\nint main(){int n{};std::cin>>n;std::unordered_set<int> index;for(int i=0,value;i<n&&std::cin>>value;++i)index.insert(value);int query{};std::cin>>query;std::cout<<\"found=\"<<(index.contains(query)?1:0)<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "inserts-only-query",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <unordered_set>\nint main(){int n{},value{};std::cin>>n;for(int i=0;i<n;++i)std::cin>>value;int query{};std::cin>>query;std::unordered_set<int> index{query};std::cout<<\"found=\"<<(index.contains(query)?1:0)<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "query-plan-tree",
+        "type": "container-visualization",
+        "fallback": "SQL predicate -> candidate table scan or index lookup -> estimated cost -> chosen plan -> rows -> transaction commit"
+      }
+    ],
+    "printFallback": "画出查询谓词如何映射到扫描或索引访问，以及写事务如何维护索引。"
+  }
+}

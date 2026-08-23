@@ -38,14 +38,10 @@
     "expectedStdout": "42\n",
     "timeoutMs": 3000,
     "publicTests": [
-      { "name": "linked target", "stdin": "", "expectedStdout": "42\n" }
-    ],
-    "privateTests": [
       {
-        "name": "repeatable build",
+        "name": "linked target",
         "stdin": "",
-        "expectedStdout": "42\n",
-        "failureCategory": "multi-file target must produce stable behavior"
+        "expectedStdout": "42\n"
       }
     ]
   },

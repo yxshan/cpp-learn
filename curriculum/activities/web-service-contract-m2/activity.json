@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "id": "web-service-contract-m2",
+  "version": 4,
+  "kind": "project-milestone",
+  "title": "Project：Web 与 C++ 服务契约 Milestone 2",
+  "project": {
+    "id": "web-service-contract",
+    "title": "Web 与 C++ 服务契约",
+    "milestone": 2,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个包含 React/TypeScript 消费端、运行时解码、版本化 C++ 服务边界、兼容发布说明与故障复盘的全栈项目。"
+  },
+  "estimatedMinutes": 100,
+  "conceptIds": [
+    "http-service-contract",
+    "deployment-contracts",
+    "interview-system-design",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["web-service-contract-m1", "production-readiness"],
+  "objectives": [
+    "交付由 React/TypeScript 消费、经真实回环 HTTP 访问 SQLite 记录、并带版本化 envelope 与兼容性回归的本地全栈切片。"
+  ],
+  "victoryConditions": [
+    "CMake 构建真实 C++ HTTP/SQLite 服务；CTest 运行 producer/consumer 契约、从干净 Workspace 执行 Vite TSX 生产构建并挂载 React 组件；公开/私有请求与 Portfolio 证据全部通过。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake CTest",
+      "url": "https://cmake.org/cmake/help/latest/manual/ctest.1.html"
+    },
+    {
+      "kind": "reference",
+      "title": "TypeScript Handbook narrowing",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/web-service-contract-m2/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "web-service-contract",
+    "editablePaths": [
+      "CMakeLists.txt",
+      "main.cpp",
+      "api_contract.hpp",
+      "package.json",
+      "tsconfig.json",
+      "index.html",
+      "main.tsx",
+      "client.ts",
+      "App.tsx",
+      "component.test.tsx",
+      "contract.test.ts",
+      "tests.cpp",
+      "PORTFOLIO.md"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(web_service_contract LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nfind_package(Threads REQUIRED)\nfind_package(SQLite3 REQUIRED)\nadd_executable(web-service-contract main.cpp)\ntarget_link_libraries(web-service-contract PRIVATE Threads::Threads SQLite::SQLite3)\nenable_testing()\nadd_executable(web_contract_tests tests.cpp)\ntarget_compile_definitions(web_contract_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\" CLIENT_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/client.ts\\\" APP_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/App.tsx\\\" MAIN_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/main.cpp\\\")\nadd_test(NAME integration-structure COMMAND web_contract_tests)\nif(NOT CPP_LEARN_NODE)\nfind_program(CPP_LEARN_NODE node REQUIRED)\nendif()\nadd_test(NAME consumer-contract COMMAND ${CPP_LEARN_NODE} --experimental-strip-types ${CMAKE_CURRENT_SOURCE_DIR}/contract.test.ts)\nif(NOT CPP_LEARN_WEB_FRONTEND)\nmessage(FATAL_ERROR \"trusted Web frontend harness is required\")\nendif()\nadd_test(NAME react-build-and-mount COMMAND ${CPP_LEARN_NODE} ${CPP_LEARN_WEB_FRONTEND} ${CMAKE_CURRENT_SOURCE_DIR})\ninstall(TARGETS web-service-contract RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <arpa/inet.h>\n#include <netinet/in.h>\n#include <sys/socket.h>\n#include <unistd.h>\n#include <sqlite3.h>\n#include <array>\n#include <cstring>\n#include <iostream>\n#include <sstream>\n#include <string>\n#include <thread>\n#include \"api_contract.hpp\"\nvoid send_all(int fd,const std::string& value){std::size_t sent=0;while(sent<value.size()){const auto count=send(fd,value.data()+sent,value.size()-sent,0);if(count<=0)return;sent+=static_cast<std::size_t>(count);}}\nint main(){\n std::string method;int requestedId{};std::cin>>method>>requestedId;\n sqlite3* db=nullptr;sqlite3_open(\":memory:\",&db);\n sqlite3_exec(db,\"CREATE TABLE records(id INTEGER PRIMARY KEY); INSERT INTO records VALUES(7); CREATE TABLE metrics(path TEXT);\",nullptr,nullptr,nullptr);\n const int listener=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;\n bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address));listen(listener,4);socklen_t length=sizeof(address);getsockname(listener,reinterpret_cast<sockaddr*>(&address),&length);\n std::thread server([&]{const int peer=accept(listener,nullptr,nullptr);std::string request;std::array<char,512> buffer{};while(request.find(\"\\r\\n\\r\\n\")==std::string::npos){const auto count=recv(peer,buffer.data(),buffer.size(),0);if(count<=0)break;request.append(buffer.data(),static_cast<std::size_t>(count));}\n  std::istringstream line(request);std::string requestMethod,pathValue,version;line>>requestMethod>>pathValue>>version;std::string body=encode_error(\"unsupported\");\n  const std::string prefix=\"/api/v1/records/\";if(requestMethod==\"GET\"&&pathValue.starts_with(prefix)){const int id=std::stoi(pathValue.substr(prefix.size()));sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT id FROM records WHERE id=?\",-1,&statement,nullptr);sqlite3_bind_int(statement,1,id);body=encode_error(\"not-implemented\");sqlite3_finalize(statement);}\n  sqlite3_stmt* metric=nullptr;sqlite3_prepare_v2(db,\"INSERT INTO metrics(path) VALUES(?)\",-1,&metric,nullptr);sqlite3_bind_text(metric,1,pathValue.c_str(),-1,SQLITE_TRANSIENT);sqlite3_step(metric);sqlite3_finalize(metric);\n  const std::string response=\"HTTP/1.1 200 OK\\r\\nContent-Type: text/plain\\r\\nContent-Length: \"+std::to_string(body.size())+\"\\r\\nConnection: close\\r\\n\\r\\n\"+body;send_all(peer,response);close(peer);close(listener);});\n const int client=socket(AF_INET,SOCK_STREAM,0);connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address));const std::string target=\"/api/v1/records/\"+std::to_string(requestedId);send_all(client,method+\" \"+target+\" HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n\");\n std::string response;std::array<char,512> buffer{};for(;;){const auto count=recv(client,buffer.data(),buffer.size(),0);if(count<=0)break;response.append(buffer.data(),static_cast<std::size_t>(count));}close(client);server.join();\n const auto separator=response.find(\"\\r\\n\\r\\n\");const std::string body=separator==std::string::npos?encode_error(\"transport\"):response.substr(separator+4);\n sqlite3_stmt* countStatement=nullptr;sqlite3_prepare_v2(db,\"SELECT COUNT(*) FROM metrics\",-1,&countStatement,nullptr);sqlite3_step(countStatement);const int metrics=sqlite3_column_int(countStatement,0);sqlite3_finalize(countStatement);sqlite3_close(db);\n std::cout<<body<<\" metrics=\"<<metrics<<\"\\n\";\n}\n",
+      "api_contract.hpp": "#pragma once\n#include <string>\ninline std::string encode_success(int id){return \"v1|ok|\"+std::to_string(id);}\ninline std::string encode_error(const std::string& reason){return \"v1|error|\"+reason;}\n",
+      "client.ts": "export type ApiResult={kind:\"ok\";id:number}|{kind:\"error\";reason:string};\nexport function decodeEnvelope(text:string):ApiResult{const [version,status,value]=text.trim().split(\"|\");if(version!==\"v1\")return{kind:\"error\",reason:\"unsupported-version\"};if(status===\"ok\"&&value!==undefined&&Number.isInteger(Number(value)))return{kind:\"ok\",id:Number(value)};return{kind:\"error\",reason:value??\"malformed\"};}\n",
+      "App.tsx": "import {useState} from \"react\";\nimport {decodeEnvelope,type ApiResult} from \"./client\";\nexport function App(){const [state,setState]=useState<ApiResult>({kind:\"error\",reason:\"idle\"});async function load(id:number){const response=await fetch(\"/api/v1/records/\"+id);setState(decodeEnvelope(await response.text()));}return <main><button onClick={()=>void load(7)}>Load record</button><output>{state.kind===\"ok\"?state.id:state.reason}</output></main>;}\n",
+      "contract.test.ts": "import {decodeEnvelope} from \"./client.ts\";\nconst success=decodeEnvelope(\"v1|ok|7\");const missing=decodeEnvelope(\"v1|error|missing\");const incompatible=decodeEnvelope(\"v2|ok|7\");if(success.kind!==\"ok\"||missing.kind!==\"error\"||incompatible.kind!==\"error\")throw new Error(\"contract regression\");\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nstd::string read(const char* path){std::ifstream in(path);return{std::istreambuf_iterator<char>(in),{}};}\nint main(){const auto portfolio=read(PORTFOLIO_PATH);const auto client=read(CLIENT_PATH);const auto app=read(APP_PATH);const auto service=read(MAIN_PATH);auto has=[](const std::string& text,const char* value){return text.find(value)!=std::string::npos;};return has(portfolio,\"build: cmake-http-sqlite\")&&has(portfolio,\"test: http-sqlite-react\")&&has(portfolio,\"benchmark: producer-envelope\")&&has(portfolio,\"retrospective: schema-drift\")&&has(client,\"decodeEnvelope\")&&has(client,\"unsupported-version\")&&has(app,\"useState<ApiResult>\")&&has(app,\"/api/v1/records/\")&&has(service,\"sqlite3_prepare_v2\")&&has(service,\"INADDR_LOOPBACK\")&&has(service,\"accept(\")?0:1;}\n",
+      "PORTFOLIO.md": "# Web Service Contract\n\nbuild: TODO\ntest: TODO\nbenchmark: TODO\nretrospective: TODO\n",
+      "package.json": "{\n  \"name\": \"web-service-contract-client\",\n  \"private\": true,\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"packageManager\": \"npm@11.5.1\",\n  \"scripts\": {\n    \"build\": \"vite build\",\n    \"test\": \"tsx component.test.tsx\"\n  },\n  \"dependencies\": {\n    \"react\": \"19.2.8\",\n    \"react-dom\": \"19.2.8\"\n  },\n  \"devDependencies\": {\n    \"tsx\": \"4.23.12\",\n    \"typescript\": \"6.0.3\",\n    \"vite\": \"8.2.2\"\n  }\n}\n",
+      "tsconfig.json": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2023\",\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"Bundler\",\n    \"strict\": true,\n    \"jsx\": \"react-jsx\",\n    \"noEmit\": true\n  },\n  \"include\": [\n    \"*.ts\",\n    \"*.tsx\"\n  ]\n}\n",
+      "index.html": "<!doctype html>\n<html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Web Service Contract</title></head><body><div id=\"root\"></div><script type=\"module\" src=\"/main.tsx\"></script></body></html>\n",
+      "main.tsx": "import {StrictMode} from \"react\";\nimport {createRoot} from \"react-dom/client\";\nimport {App} from \"./App\";\nconst root=document.querySelector(\"#root\");\nif(!root)throw new Error(\"missing #root\");\ncreateRoot(root).render(<StrictMode><App/></StrictMode>);\n",
+      "component.test.tsx": "import {renderToStaticMarkup} from \"react-dom/server\";\nimport {App} from \"./App\";\nconst markup=renderToStaticMarkup(<App/>);\nif(!markup.includes(\"Load record\")||!markup.includes(\"idle\"))throw new Error(\"App mount contract failed\");\nexport const componentTestPassed=true;\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "v1|ok|7 metrics=1\n",
+    "timeoutMs": 10000,
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "web-service-contract",
+      "testTarget": "web_contract_tests",
+      "ctest": true,
+      "runtimeTools": ["node", "web-frontend"]
+    },
+    "publicTests": [
+      {
+        "name": "release success envelope",
+        "stdin": "GET 7\n",
+        "expectedStdout": "v1|ok|7 metrics=1\n"
+      }
+    ],
+    "performanceCheck": {
+      "name": "relative producer envelope growth",
+      "baselineStdin": "GET 7\n",
+      "baselineExpectedStdout": "v1|ok|7 metrics=1\n",
+      "scaledStdin": "AN_INTENTIONALLY_LONG_UNSUPPORTED_COMMAND_FOR_REPRODUCIBLE_PAYLOAD_SCALING 7\n",
+      "scaledExpectedStdout": "v1|error|unsupported metrics=1\n",
+      "repetitions": 3,
+      "maxMedianRatio": 20,
+      "failureCategory": "same-machine median C++ envelope production time must remain bounded as command size grows"
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "cross-language-evidence",
+        "title": "记录跨语言契约证据",
+        "kind": "nudge",
+        "content": "Portfolio 应覆盖 CMake HTTP/SQLite 构建、真实 producer/consumer 契约测试、C++ envelope 基线和 schema drift 复盘。"
+      },
+      {
+        "id": "consumer-first",
+        "title": "从消费者失败模式出发",
+        "kind": "concept",
+        "content": "契约变更需要说明旧前端如何解析、降级或拒绝，而不只是后端如何输出。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "补全 SQLite step 分支并更新 Portfolio；保留 package.json 的固定 React/Vite/tsx 版本、tsconfig 的 react-jsx 配置、main.tsx createRoot 入口，以及 component.test.tsx 对 App 初始 idle 状态的服务端挂载断言。最终 CTest 必须同时通过 C++ integration、TypeScript decoder、Vite production build 与 React component mount。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "schema-drift-incident",
+        "prompt": "写出后端新增未版本化字段导致旧前端解析失败的事故复盘，并给出兼容发布和契约测试方案。",
+        "required": true
+      }
+    ],
+    "reviewIds": [
+      "network-service-design-review",
+      "production-readiness-review"
+    ],
+    "teacherRubric": {
+      "id": "web-contract-m2-rubric",
+      "prompt": "应覆盖 React 运行时状态、TypeScript decoder、HTTP route、SQLite prepared statement、版本矩阵、契约测试、回滚和 schema drift 复盘。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(web_service_contract LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nfind_package(Threads REQUIRED)\nfind_package(SQLite3 REQUIRED)\nadd_executable(web-service-contract main.cpp)\ntarget_link_libraries(web-service-contract PRIVATE Threads::Threads SQLite::SQLite3)\nenable_testing()\nadd_executable(web_contract_tests tests.cpp)\ntarget_compile_definitions(web_contract_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\" CLIENT_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/client.ts\\\" APP_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/App.tsx\\\" MAIN_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/main.cpp\\\")\nadd_test(NAME integration-structure COMMAND web_contract_tests)\nif(NOT CPP_LEARN_NODE)\nfind_program(CPP_LEARN_NODE node REQUIRED)\nendif()\nadd_test(NAME consumer-contract COMMAND ${CPP_LEARN_NODE} --experimental-strip-types ${CMAKE_CURRENT_SOURCE_DIR}/contract.test.ts)\nif(NOT CPP_LEARN_WEB_FRONTEND)\nmessage(FATAL_ERROR \"trusted Web frontend harness is required\")\nendif()\nadd_test(NAME react-build-and-mount COMMAND ${CPP_LEARN_NODE} ${CPP_LEARN_WEB_FRONTEND} ${CMAKE_CURRENT_SOURCE_DIR})\ninstall(TARGETS web-service-contract RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <arpa/inet.h>\n#include <netinet/in.h>\n#include <sys/socket.h>\n#include <unistd.h>\n#include <sqlite3.h>\n#include <array>\n#include <cstring>\n#include <iostream>\n#include <sstream>\n#include <string>\n#include <thread>\n#include \"api_contract.hpp\"\nvoid send_all(int fd,const std::string& value){std::size_t sent=0;while(sent<value.size()){const auto count=send(fd,value.data()+sent,value.size()-sent,0);if(count<=0)return;sent+=static_cast<std::size_t>(count);}}\nint main(){\n std::string method;int requestedId{};std::cin>>method>>requestedId;\n sqlite3* db=nullptr;sqlite3_open(\":memory:\",&db);\n sqlite3_exec(db,\"CREATE TABLE records(id INTEGER PRIMARY KEY); INSERT INTO records VALUES(7); CREATE TABLE metrics(path TEXT);\",nullptr,nullptr,nullptr);\n const int listener=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;\n bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address));listen(listener,4);socklen_t length=sizeof(address);getsockname(listener,reinterpret_cast<sockaddr*>(&address),&length);\n std::thread server([&]{const int peer=accept(listener,nullptr,nullptr);std::string request;std::array<char,512> buffer{};while(request.find(\"\\r\\n\\r\\n\")==std::string::npos){const auto count=recv(peer,buffer.data(),buffer.size(),0);if(count<=0)break;request.append(buffer.data(),static_cast<std::size_t>(count));}\n  std::istringstream line(request);std::string requestMethod,pathValue,version;line>>requestMethod>>pathValue>>version;std::string body=encode_error(\"unsupported\");\n  const std::string prefix=\"/api/v1/records/\";if(requestMethod==\"GET\"&&pathValue.starts_with(prefix)){const int id=std::stoi(pathValue.substr(prefix.size()));sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT id FROM records WHERE id=?\",-1,&statement,nullptr);sqlite3_bind_int(statement,1,id);if(sqlite3_step(statement)==SQLITE_ROW)body=encode_success(sqlite3_column_int(statement,0));else body=encode_error(\"missing\");sqlite3_finalize(statement);}\n  sqlite3_stmt* metric=nullptr;sqlite3_prepare_v2(db,\"INSERT INTO metrics(path) VALUES(?)\",-1,&metric,nullptr);sqlite3_bind_text(metric,1,pathValue.c_str(),-1,SQLITE_TRANSIENT);sqlite3_step(metric);sqlite3_finalize(metric);\n  const std::string response=\"HTTP/1.1 200 OK\\r\\nContent-Type: text/plain\\r\\nContent-Length: \"+std::to_string(body.size())+\"\\r\\nConnection: close\\r\\n\\r\\n\"+body;send_all(peer,response);close(peer);close(listener);});\n const int client=socket(AF_INET,SOCK_STREAM,0);connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address));const std::string target=\"/api/v1/records/\"+std::to_string(requestedId);send_all(client,method+\" \"+target+\" HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n\");\n std::string response;std::array<char,512> buffer{};for(;;){const auto count=recv(client,buffer.data(),buffer.size(),0);if(count<=0)break;response.append(buffer.data(),static_cast<std::size_t>(count));}close(client);server.join();\n const auto separator=response.find(\"\\r\\n\\r\\n\");const std::string body=separator==std::string::npos?encode_error(\"transport\"):response.substr(separator+4);\n sqlite3_stmt* countStatement=nullptr;sqlite3_prepare_v2(db,\"SELECT COUNT(*) FROM metrics\",-1,&countStatement,nullptr);sqlite3_step(countStatement);const int metrics=sqlite3_column_int(countStatement,0);sqlite3_finalize(countStatement);sqlite3_close(db);\n std::cout<<body<<\" metrics=\"<<metrics<<\"\\n\";\n}\n",
+      "api_contract.hpp": "#pragma once\n#include <string>\ninline std::string encode_success(int id){return \"v1|ok|\"+std::to_string(id);}\ninline std::string encode_error(const std::string& reason){return \"v1|error|\"+reason;}\n",
+      "client.ts": "export type ApiResult={kind:\"ok\";id:number}|{kind:\"error\";reason:string};\nexport function decodeEnvelope(text:string):ApiResult{const [version,status,value]=text.trim().split(\"|\");if(version!==\"v1\")return{kind:\"error\",reason:\"unsupported-version\"};if(status===\"ok\"&&value!==undefined&&Number.isInteger(Number(value)))return{kind:\"ok\",id:Number(value)};return{kind:\"error\",reason:value??\"malformed\"};}\n",
+      "App.tsx": "import {useState} from \"react\";\nimport {decodeEnvelope,type ApiResult} from \"./client\";\nexport function App(){const [state,setState]=useState<ApiResult>({kind:\"error\",reason:\"idle\"});async function load(id:number){const response=await fetch(\"/api/v1/records/\"+id);setState(decodeEnvelope(await response.text()));}return <main><button onClick={()=>void load(7)}>Load record</button><output>{state.kind===\"ok\"?state.id:state.reason}</output></main>;}\n",
+      "contract.test.ts": "import {decodeEnvelope} from \"./client.ts\";\nconst success=decodeEnvelope(\"v1|ok|7\");const missing=decodeEnvelope(\"v1|error|missing\");const incompatible=decodeEnvelope(\"v2|ok|7\");if(success.kind!==\"ok\"||missing.kind!==\"error\"||incompatible.kind!==\"error\")throw new Error(\"contract regression\");\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nstd::string read(const char* path){std::ifstream in(path);return{std::istreambuf_iterator<char>(in),{}};}\nint main(){const auto portfolio=read(PORTFOLIO_PATH);const auto client=read(CLIENT_PATH);const auto app=read(APP_PATH);const auto service=read(MAIN_PATH);auto has=[](const std::string& text,const char* value){return text.find(value)!=std::string::npos;};return has(portfolio,\"build: cmake-http-sqlite\")&&has(portfolio,\"test: http-sqlite-react\")&&has(portfolio,\"benchmark: producer-envelope\")&&has(portfolio,\"retrospective: schema-drift\")&&has(client,\"decodeEnvelope\")&&has(client,\"unsupported-version\")&&has(app,\"useState<ApiResult>\")&&has(app,\"/api/v1/records/\")&&has(service,\"sqlite3_prepare_v2\")&&has(service,\"INADDR_LOOPBACK\")&&has(service,\"accept(\")?0:1;}\n",
+      "PORTFOLIO.md": "# Web Service Contract\n\nbuild: cmake-http-sqlite\ntest: http-sqlite-react\nbenchmark: producer-envelope\nretrospective: schema-drift\n",
+      "package.json": "{\n  \"name\": \"web-service-contract-client\",\n  \"private\": true,\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"packageManager\": \"npm@11.5.1\",\n  \"scripts\": {\n    \"build\": \"vite build\",\n    \"test\": \"tsx component.test.tsx\"\n  },\n  \"dependencies\": {\n    \"react\": \"19.2.8\",\n    \"react-dom\": \"19.2.8\"\n  },\n  \"devDependencies\": {\n    \"tsx\": \"4.23.12\",\n    \"typescript\": \"6.0.3\",\n    \"vite\": \"8.2.2\"\n  }\n}\n",
+      "tsconfig.json": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2023\",\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"Bundler\",\n    \"strict\": true,\n    \"jsx\": \"react-jsx\",\n    \"noEmit\": true\n  },\n  \"include\": [\n    \"*.ts\",\n    \"*.tsx\"\n  ]\n}\n",
+      "index.html": "<!doctype html>\n<html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Web Service Contract</title></head><body><div id=\"root\"></div><script type=\"module\" src=\"/main.tsx\"></script></body></html>\n",
+      "main.tsx": "import {StrictMode} from \"react\";\nimport {createRoot} from \"react-dom/client\";\nimport {App} from \"./App\";\nconst root=document.querySelector(\"#root\");\nif(!root)throw new Error(\"missing #root\");\ncreateRoot(root).render(<StrictMode><App/></StrictMode>);\n",
+      "component.test.tsx": "import {renderToStaticMarkup} from \"react-dom/server\";\nimport {App} from \"./App\";\nconst markup=renderToStaticMarkup(<App/>);\nif(!markup.includes(\"Load record\")||!markup.includes(\"idle\"))throw new Error(\"App mount contract failed\");\nexport const componentTestPassed=true;\n"
+    },
+    "mutations": [
+      {
+        "id": "bypasses-persistence",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(web_service_contract LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nfind_package(Threads REQUIRED)\nfind_package(SQLite3 REQUIRED)\nadd_executable(web-service-contract main.cpp)\ntarget_link_libraries(web-service-contract PRIVATE Threads::Threads SQLite::SQLite3)\nenable_testing()\nadd_executable(web_contract_tests tests.cpp)\ntarget_compile_definitions(web_contract_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\" CLIENT_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/client.ts\\\" APP_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/App.tsx\\\" MAIN_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/main.cpp\\\")\nadd_test(NAME integration-structure COMMAND web_contract_tests)\nif(NOT CPP_LEARN_NODE)\nfind_program(CPP_LEARN_NODE node REQUIRED)\nendif()\nadd_test(NAME consumer-contract COMMAND ${CPP_LEARN_NODE} --experimental-strip-types ${CMAKE_CURRENT_SOURCE_DIR}/contract.test.ts)\nif(NOT CPP_LEARN_WEB_FRONTEND)\nmessage(FATAL_ERROR \"trusted Web frontend harness is required\")\nendif()\nadd_test(NAME react-build-and-mount COMMAND ${CPP_LEARN_NODE} ${CPP_LEARN_WEB_FRONTEND} ${CMAKE_CURRENT_SOURCE_DIR})\ninstall(TARGETS web-service-contract RUNTIME DESTINATION bin)\n",
+          "main.cpp": "#include <arpa/inet.h>\n#include <netinet/in.h>\n#include <sys/socket.h>\n#include <unistd.h>\n#include <sqlite3.h>\n#include <array>\n#include <cstring>\n#include <iostream>\n#include <sstream>\n#include <string>\n#include <thread>\n#include \"api_contract.hpp\"\nvoid send_all(int fd,const std::string& value){std::size_t sent=0;while(sent<value.size()){const auto count=send(fd,value.data()+sent,value.size()-sent,0);if(count<=0)return;sent+=static_cast<std::size_t>(count);}}\nint main(){\n std::string method;int requestedId{};std::cin>>method>>requestedId;\n sqlite3* db=nullptr;sqlite3_open(\":memory:\",&db);\n sqlite3_exec(db,\"CREATE TABLE records(id INTEGER PRIMARY KEY); INSERT INTO records VALUES(7); CREATE TABLE metrics(path TEXT);\",nullptr,nullptr,nullptr);\n const int listener=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;\n bind(listener,reinterpret_cast<sockaddr*>(&address),sizeof(address));listen(listener,4);socklen_t length=sizeof(address);getsockname(listener,reinterpret_cast<sockaddr*>(&address),&length);\n std::thread server([&]{const int peer=accept(listener,nullptr,nullptr);std::string request;std::array<char,512> buffer{};while(request.find(\"\\r\\n\\r\\n\")==std::string::npos){const auto count=recv(peer,buffer.data(),buffer.size(),0);if(count<=0)break;request.append(buffer.data(),static_cast<std::size_t>(count));}\n  std::istringstream line(request);std::string requestMethod,pathValue,version;line>>requestMethod>>pathValue>>version;std::string body=encode_error(\"unsupported\");\n  const std::string prefix=\"/api/v1/records/\";if(requestMethod==\"GET\"&&pathValue.starts_with(prefix)){const int id=std::stoi(pathValue.substr(prefix.size()));sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT id FROM records WHERE id=?\",-1,&statement,nullptr);sqlite3_bind_int(statement,1,id);body=encode_success(id);sqlite3_finalize(statement);}\n  sqlite3_stmt* metric=nullptr;sqlite3_prepare_v2(db,\"INSERT INTO metrics(path) VALUES(?)\",-1,&metric,nullptr);sqlite3_bind_text(metric,1,pathValue.c_str(),-1,SQLITE_TRANSIENT);sqlite3_step(metric);sqlite3_finalize(metric);\n  const std::string response=\"HTTP/1.1 200 OK\\r\\nContent-Type: text/plain\\r\\nContent-Length: \"+std::to_string(body.size())+\"\\r\\nConnection: close\\r\\n\\r\\n\"+body;send_all(peer,response);close(peer);close(listener);});\n const int client=socket(AF_INET,SOCK_STREAM,0);connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address));const std::string target=\"/api/v1/records/\"+std::to_string(requestedId);send_all(client,method+\" \"+target+\" HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n\");\n std::string response;std::array<char,512> buffer{};for(;;){const auto count=recv(client,buffer.data(),buffer.size(),0);if(count<=0)break;response.append(buffer.data(),static_cast<std::size_t>(count));}close(client);server.join();\n const auto separator=response.find(\"\\r\\n\\r\\n\");const std::string body=separator==std::string::npos?encode_error(\"transport\"):response.substr(separator+4);\n sqlite3_stmt* countStatement=nullptr;sqlite3_prepare_v2(db,\"SELECT COUNT(*) FROM metrics\",-1,&countStatement,nullptr);sqlite3_step(countStatement);const int metrics=sqlite3_column_int(countStatement,0);sqlite3_finalize(countStatement);sqlite3_close(db);\n std::cout<<body<<\" metrics=\"<<metrics<<\"\\n\";\n}\n",
+          "api_contract.hpp": "#pragma once\n#include <string>\ninline std::string encode_success(int id){return \"v1|ok|\"+std::to_string(id);}\ninline std::string encode_error(const std::string& reason){return \"v1|error|\"+reason;}\n",
+          "client.ts": "export type ApiResult={kind:\"ok\";id:number}|{kind:\"error\";reason:string};\nexport function decodeEnvelope(text:string):ApiResult{const [version,status,value]=text.trim().split(\"|\");if(version!==\"v1\")return{kind:\"error\",reason:\"unsupported-version\"};if(status===\"ok\"&&value!==undefined&&Number.isInteger(Number(value)))return{kind:\"ok\",id:Number(value)};return{kind:\"error\",reason:value??\"malformed\"};}\n",
+          "App.tsx": "import {useState} from \"react\";\nimport {decodeEnvelope,type ApiResult} from \"./client\";\nexport function App(){const [state,setState]=useState<ApiResult>({kind:\"error\",reason:\"idle\"});async function load(id:number){const response=await fetch(\"/api/v1/records/\"+id);setState(decodeEnvelope(await response.text()));}return <main><button onClick={()=>void load(7)}>Load record</button><output>{state.kind===\"ok\"?state.id:state.reason}</output></main>;}\n",
+          "contract.test.ts": "import {decodeEnvelope} from \"./client.ts\";\nconst success=decodeEnvelope(\"v1|ok|7\");const missing=decodeEnvelope(\"v1|error|missing\");const incompatible=decodeEnvelope(\"v2|ok|7\");if(success.kind!==\"ok\"||missing.kind!==\"error\"||incompatible.kind!==\"error\")throw new Error(\"contract regression\");\n",
+          "tests.cpp": "#include <fstream>\n#include <string>\nstd::string read(const char* path){std::ifstream in(path);return{std::istreambuf_iterator<char>(in),{}};}\nint main(){const auto portfolio=read(PORTFOLIO_PATH);const auto client=read(CLIENT_PATH);const auto app=read(APP_PATH);const auto service=read(MAIN_PATH);auto has=[](const std::string& text,const char* value){return text.find(value)!=std::string::npos;};return has(portfolio,\"build: cmake-http-sqlite\")&&has(portfolio,\"test: http-sqlite-react\")&&has(portfolio,\"benchmark: producer-envelope\")&&has(portfolio,\"retrospective: schema-drift\")&&has(client,\"decodeEnvelope\")&&has(client,\"unsupported-version\")&&has(app,\"useState<ApiResult>\")&&has(app,\"/api/v1/records/\")&&has(service,\"sqlite3_prepare_v2\")&&has(service,\"INADDR_LOOPBACK\")&&has(service,\"accept(\")?0:1;}\n",
+          "PORTFOLIO.md": "# Web Service Contract\n\nbuild: cmake-http-sqlite\ntest: http-sqlite-react\nbenchmark: producer-envelope\nretrospective: schema-drift\n",
+          "package.json": "{\n  \"name\": \"web-service-contract-client\",\n  \"private\": true,\n  \"version\": \"1.0.0\",\n  \"type\": \"module\",\n  \"packageManager\": \"npm@11.5.1\",\n  \"scripts\": {\n    \"build\": \"vite build\",\n    \"test\": \"tsx component.test.tsx\"\n  },\n  \"dependencies\": {\n    \"react\": \"19.2.8\",\n    \"react-dom\": \"19.2.8\"\n  },\n  \"devDependencies\": {\n    \"tsx\": \"4.23.12\",\n    \"typescript\": \"6.0.3\",\n    \"vite\": \"8.2.2\"\n  }\n}\n",
+          "tsconfig.json": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2023\",\n    \"module\": \"ESNext\",\n    \"moduleResolution\": \"Bundler\",\n    \"strict\": true,\n    \"jsx\": \"react-jsx\",\n    \"noEmit\": true\n  },\n  \"include\": [\n    \"*.ts\",\n    \"*.tsx\"\n  ]\n}\n",
+          "index.html": "<!doctype html>\n<html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Web Service Contract</title></head><body><div id=\"root\"></div><script type=\"module\" src=\"/main.tsx\"></script></body></html>\n",
+          "main.tsx": "import {StrictMode} from \"react\";\nimport {createRoot} from \"react-dom/client\";\nimport {App} from \"./App\";\nconst root=document.querySelector(\"#root\");\nif(!root)throw new Error(\"missing #root\");\ncreateRoot(root).render(<StrictMode><App/></StrictMode>);\n",
+          "component.test.tsx": "import {renderToStaticMarkup} from \"react-dom/server\";\nimport {App} from \"./App\";\nconst markup=renderToStaticMarkup(<App/>);\nif(!markup.includes(\"Load record\")||!markup.includes(\"idle\"))throw new Error(\"App mount contract failed\");\nexport const componentTestPassed=true;\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "contract-release",
+        "type": "network-flow",
+        "fallback": "React fetch -> loopback TCP -> HTTP route -> SQLite prepared query -> versioned C++ envelope -> TypeScript runtime decoder -> discriminated React state -> compatibility test -> rollback"
+      }
+    ],
+    "printFallback": "画出生产者与消费者版本矩阵，以及不兼容变更的阻断位置。"
+  }
+}

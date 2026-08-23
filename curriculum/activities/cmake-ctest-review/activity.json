@@ -56,14 +56,6 @@
         "stdin": "",
         "expectedStdout": "target-ready\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "repeat app after CTest",
-        "stdin": "",
-        "expectedStdout": "target-ready\n",
-        "failureCategory": "the application target must remain independently runnable after CTest"
-      }
     ]
   },
   "evidencePolicy": {

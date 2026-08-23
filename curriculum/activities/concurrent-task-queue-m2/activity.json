@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "id": "concurrent-task-queue-m2",
+  "version": 2,
+  "kind": "project-milestone",
+  "title": "Project：并发任务队列 Milestone 2",
+  "project": {
+    "id": "concurrent-task-queue",
+    "title": "并发任务队列",
+    "milestone": 2,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个具有明确任务所有权、线程生命周期、关闭策略、故障诊断和工程发布证据的任务队列。"
+  },
+  "estimatedMinutes": 100,
+  "conceptIds": [
+    "thread-pool-lifecycle",
+    "concurrency-failure-diagnosis",
+    "deployment-contracts",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["concurrent-task-queue-m1", "production-readiness"],
+  "objectives": [
+    "交付可安装的固定 worker 线程池，并用 CTest 固定 exact-once、排空关闭、停止接收和故障复盘证据。"
+  ],
+  "victoryConditions": [
+    "CMake/Threads 构建、真实 queue-contract CTest、集成输入、相对批量基准和 Portfolio 全部通过。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake FindThreads",
+      "url": "https://cmake.org/cmake/help/latest/module/FindThreads.html"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference concurrency support",
+      "url": "https://en.cppreference.com/w/cpp/thread"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/concurrent-task-queue-m2/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "concurrent-task-queue",
+    "editablePaths": [
+      "CMakeLists.txt",
+      "main.cpp",
+      "task_queue.hpp",
+      "tests.cpp",
+      "PORTFOLIO.md"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(concurrent_task_queue LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nfind_package(Threads REQUIRED)\nadd_executable(concurrent-task-queue main.cpp)\ntarget_link_libraries(concurrent-task-queue PRIVATE Threads::Threads)\nenable_testing()\nadd_executable(task_queue_tests tests.cpp)\ntarget_link_libraries(task_queue_tests PRIVATE Threads::Threads)\ntarget_compile_definitions(task_queue_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME queue-contract COMMAND task_queue_tests)\ninstall(TARGETS concurrent-task-queue RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> tasks(n);for(int& value:tasks)std::cin>>value;const auto result=run_tasks(tasks);std::cout<<\"sum=\"<<result.sum<<\" workers=\"<<result.workers<<\" rejected=\"<<result.rejectedAfterClose<<\"\\n\";}\n",
+      "task_queue.hpp": "#pragma once\n#include <atomic>\n#include <condition_variable>\n#include <cstddef>\n#include <functional>\n#include <mutex>\n#include <queue>\n#include <thread>\n#include <utility>\n#include <vector>\nclass TaskQueue{\n std::mutex mutex_;\n std::condition_variable ready_;\n std::queue<std::function<void()>> tasks_;\n std::vector<std::thread> workers_;\n bool accepting_{true};\n void work(){for(;;){std::function<void()> task;{std::unique_lock lock(mutex_);ready_.wait(lock,[&]{return !accepting_||!tasks_.empty();});if(tasks_.empty())return;task=std::move(tasks_.front());tasks_.pop();}task();}}\npublic:\n explicit TaskQueue(std::size_t count){for(std::size_t index=0;index<count;++index)workers_.emplace_back([this]{work();});}\n TaskQueue(const TaskQueue&)=delete;\n TaskQueue& operator=(const TaskQueue&)=delete;\n bool submit(std::function<void()> task){{std::lock_guard lock(mutex_);if(!accepting_)return false;tasks_.push(std::move(task));}ready_.notify_one();return true;}\n void close(){ {std::lock_guard lock(mutex_);accepting_=false;}ready_.notify_all();for(auto& worker:workers_)if(worker.joinable())worker.join();workers_.clear();}\n std::size_t worker_count()const{return workers_.size();}\n ~TaskQueue(){close();}\n};\nstruct TaskQueueResult{long long sum;std::size_t workers;bool rejectedAfterClose;};\ninline TaskQueueResult run_tasks(const std::vector<int>& tasks){constexpr std::size_t workerCount=4;TaskQueue queue(workerCount);std::atomic<long long> sum{0};for(int value:tasks)queue.submit([&sum,value]{sum.fetch_add(value,std::memory_order_relaxed);});queue.close();const bool rejected=!queue.submit([]{});return{sum.load(std::memory_order_relaxed),workerCount,rejected};}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){const auto result=run_tasks({3,-2,5});std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return result.sum==6&&result.workers==4&&result.rejectedAfterClose&&has(\"build: cmake-threads\")&&has(\"test: exact-once-drain\")&&has(\"benchmark: bounded-workers\")&&has(\"retrospective: shutdown-race\")?0:1;}\n",
+      "PORTFOLIO.md": "# Concurrent Task Queue\n\nbuild: TODO\ntest: TODO\nbenchmark: TODO\nretrospective: TODO\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "sum=10 workers=4 rejected=1\n",
+    "timeoutMs": 10000,
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "concurrent-task-queue",
+      "testTarget": "task_queue_tests",
+      "ctest": true
+    },
+    "publicTests": [
+      {
+        "name": "release sum",
+        "stdin": "4 1 2 3 4\n",
+        "expectedStdout": "sum=10 workers=4 rejected=1\n"
+      }
+    ],
+    "performanceCheck": {
+      "name": "relative task batch growth",
+      "baselineStdin": "8 1 1 1 1 1 1 1 1\n",
+      "baselineExpectedStdout": "sum=8 workers=4 rejected=1\n",
+      "scaledStdin": "64 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1\n",
+      "scaledExpectedStdout": "sum=64 workers=4 rejected=1\n",
+      "repetitions": 3,
+      "maxMedianRatio": 20,
+      "failureCategory": "same-machine median queue time must stay within the declared batch-growth envelope"
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "concurrency-evidence",
+        "title": "记录可复现并发证据",
+        "kind": "nudge",
+        "content": "Portfolio 要指向真实 Threads 构建、exact-once drain CTest、有界 worker 基准和 shutdown race 复盘。"
+      },
+      {
+        "id": "diagnose-invariants",
+        "title": "复盘不只写现象",
+        "kind": "concept",
+        "content": "说明哪个生命周期不变量被破坏，以及新增测试如何固定它。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "将四个 TODO 改为 cmake-threads、exact-once-drain、bounded-workers 和 shutdown-race。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "queue-incident",
+        "prompt": "构造一次 shutdown 期间丢任务的事故时间线，并说明日志、指标、最小复现和修复后压力测试。",
+        "required": true
+      }
+    ],
+    "reviewIds": [
+      "concurrent-task-queues-review",
+      "production-readiness-review"
+    ],
+    "teacherRubric": {
+      "id": "task-queue-m2-rubric",
+      "prompt": "应覆盖 Threads 构建、exact-once 测试、worker/队列相对基准、关闭竞态复现和回归压力测试。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(concurrent_task_queue LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nfind_package(Threads REQUIRED)\nadd_executable(concurrent-task-queue main.cpp)\ntarget_link_libraries(concurrent-task-queue PRIVATE Threads::Threads)\nenable_testing()\nadd_executable(task_queue_tests tests.cpp)\ntarget_link_libraries(task_queue_tests PRIVATE Threads::Threads)\ntarget_compile_definitions(task_queue_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME queue-contract COMMAND task_queue_tests)\ninstall(TARGETS concurrent-task-queue RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> tasks(n);for(int& value:tasks)std::cin>>value;const auto result=run_tasks(tasks);std::cout<<\"sum=\"<<result.sum<<\" workers=\"<<result.workers<<\" rejected=\"<<result.rejectedAfterClose<<\"\\n\";}\n",
+      "task_queue.hpp": "#pragma once\n#include <atomic>\n#include <condition_variable>\n#include <cstddef>\n#include <functional>\n#include <mutex>\n#include <queue>\n#include <thread>\n#include <utility>\n#include <vector>\nclass TaskQueue{\n std::mutex mutex_;\n std::condition_variable ready_;\n std::queue<std::function<void()>> tasks_;\n std::vector<std::thread> workers_;\n bool accepting_{true};\n void work(){for(;;){std::function<void()> task;{std::unique_lock lock(mutex_);ready_.wait(lock,[&]{return !accepting_||!tasks_.empty();});if(tasks_.empty())return;task=std::move(tasks_.front());tasks_.pop();}task();}}\npublic:\n explicit TaskQueue(std::size_t count){for(std::size_t index=0;index<count;++index)workers_.emplace_back([this]{work();});}\n TaskQueue(const TaskQueue&)=delete;\n TaskQueue& operator=(const TaskQueue&)=delete;\n bool submit(std::function<void()> task){{std::lock_guard lock(mutex_);if(!accepting_)return false;tasks_.push(std::move(task));}ready_.notify_one();return true;}\n void close(){ {std::lock_guard lock(mutex_);accepting_=false;}ready_.notify_all();for(auto& worker:workers_)if(worker.joinable())worker.join();workers_.clear();}\n std::size_t worker_count()const{return workers_.size();}\n ~TaskQueue(){close();}\n};\nstruct TaskQueueResult{long long sum;std::size_t workers;bool rejectedAfterClose;};\ninline TaskQueueResult run_tasks(const std::vector<int>& tasks){constexpr std::size_t workerCount=4;TaskQueue queue(workerCount);std::atomic<long long> sum{0};for(int value:tasks)queue.submit([&sum,value]{sum.fetch_add(value,std::memory_order_relaxed);});queue.close();const bool rejected=!queue.submit([]{});return{sum.load(std::memory_order_relaxed),workerCount,rejected};}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){const auto result=run_tasks({3,-2,5});std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return result.sum==6&&result.workers==4&&result.rejectedAfterClose&&has(\"build: cmake-threads\")&&has(\"test: exact-once-drain\")&&has(\"benchmark: bounded-workers\")&&has(\"retrospective: shutdown-race\")?0:1;}\n",
+      "PORTFOLIO.md": "# Concurrent Task Queue\n\nbuild: cmake-threads\ntest: exact-once-drain\nbenchmark: bounded-workers\nretrospective: shutdown-race\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-shutdown-retrospective",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(concurrent_task_queue LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nfind_package(Threads REQUIRED)\nadd_executable(concurrent-task-queue main.cpp)\ntarget_link_libraries(concurrent-task-queue PRIVATE Threads::Threads)\nenable_testing()\nadd_executable(task_queue_tests tests.cpp)\ntarget_link_libraries(task_queue_tests PRIVATE Threads::Threads)\ntarget_compile_definitions(task_queue_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME queue-contract COMMAND task_queue_tests)\ninstall(TARGETS concurrent-task-queue RUNTIME DESTINATION bin)\n",
+          "main.cpp": "#include <iostream>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> tasks(n);for(int& value:tasks)std::cin>>value;const auto result=run_tasks(tasks);std::cout<<\"sum=\"<<result.sum<<\" workers=\"<<result.workers<<\" rejected=\"<<result.rejectedAfterClose<<\"\\n\";}\n",
+          "task_queue.hpp": "#pragma once\n#include <atomic>\n#include <condition_variable>\n#include <cstddef>\n#include <functional>\n#include <mutex>\n#include <queue>\n#include <thread>\n#include <utility>\n#include <vector>\nclass TaskQueue{\n std::mutex mutex_;\n std::condition_variable ready_;\n std::queue<std::function<void()>> tasks_;\n std::vector<std::thread> workers_;\n bool accepting_{true};\n void work(){for(;;){std::function<void()> task;{std::unique_lock lock(mutex_);ready_.wait(lock,[&]{return !accepting_||!tasks_.empty();});if(tasks_.empty())return;task=std::move(tasks_.front());tasks_.pop();}task();}}\npublic:\n explicit TaskQueue(std::size_t count){for(std::size_t index=0;index<count;++index)workers_.emplace_back([this]{work();});}\n TaskQueue(const TaskQueue&)=delete;\n TaskQueue& operator=(const TaskQueue&)=delete;\n bool submit(std::function<void()> task){{std::lock_guard lock(mutex_);if(!accepting_)return false;tasks_.push(std::move(task));}ready_.notify_one();return true;}\n void close(){ {std::lock_guard lock(mutex_);accepting_=false;}ready_.notify_all();for(auto& worker:workers_)if(worker.joinable())worker.join();workers_.clear();}\n std::size_t worker_count()const{return workers_.size();}\n ~TaskQueue(){close();}\n};\nstruct TaskQueueResult{long long sum;std::size_t workers;bool rejectedAfterClose;};\ninline TaskQueueResult run_tasks(const std::vector<int>& tasks){constexpr std::size_t workerCount=4;TaskQueue queue(workerCount);std::atomic<long long> sum{0};for(int value:tasks)queue.submit([&sum,value]{sum.fetch_add(value,std::memory_order_relaxed);});queue.close();const bool rejected=!queue.submit([]{});return{sum.load(std::memory_order_relaxed),workerCount,rejected};}\n",
+          "tests.cpp": "#include <fstream>\n#include <string>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){const auto result=run_tasks({3,-2,5});std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return result.sum==6&&result.workers==4&&result.rejectedAfterClose&&has(\"build: cmake-threads\")&&has(\"test: exact-once-drain\")&&has(\"benchmark: bounded-workers\")&&has(\"retrospective: shutdown-race\")?0:1;}\n",
+          "PORTFOLIO.md": "# Concurrent Task Queue\n\nbuild: cmake-threads\ntest: exact-once-drain\nbenchmark: bounded-workers\nretrospective: TODO\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "queue-release-evidence",
+        "type": "lifetime-timeline",
+        "fallback": "accept task -> enqueue under mutex -> wake fixed worker -> execute exactly once -> stop admission -> drain pending tasks -> join workers -> reject late submit -> retrospective"
+      }
+    ],
+    "printFallback": "把线程生命周期、任务状态和发布证据放在同一条时间线上。"
+  }
+}

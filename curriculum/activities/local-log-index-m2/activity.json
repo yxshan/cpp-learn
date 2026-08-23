@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "id": "local-log-index-m2",
+  "version": 2,
+  "kind": "project-milestone",
+  "title": "Project：本地日志索引 Milestone 2",
+  "project": {
+    "id": "local-log-index",
+    "title": "本地日志索引",
+    "milestone": 2,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个具备查询模型、可复现构建、测试、基准计划与故障复盘的本地日志分析工具。"
+  },
+  "estimatedMinutes": 90,
+  "conceptIds": [
+    "sql-index-plans",
+    "deployment-contracts",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["local-log-index-m1", "production-readiness"],
+  "objectives": [
+    "把日志索引包装为 CMake/CTest 工程，并提交可验证的 Portfolio 运行说明。"
+  ],
+  "victoryConditions": [
+    "clean build、CTest、CLI 集成测试和 Portfolio 文档检查全部通过。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake Testing and CTest",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/Testing%20and%20CTest.html"
+    },
+    {
+      "kind": "reference",
+      "title": "CMake install",
+      "url": "https://cmake.org/cmake/help/latest/command/install.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/local-log-index-m2/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "local-log-index",
+    "editablePaths": [
+      "CMakeLists.txt",
+      "main.cpp",
+      "log_index.hpp",
+      "tests.cpp",
+      "PORTFOLIO.md"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(local_log_index LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(local-log-index main.cpp)\nenable_testing()\nadd_executable(local_log_index_tests tests.cpp)\ntarget_compile_definitions(local_log_index_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME portfolio COMMAND local_log_index_tests)\ninstall(TARGETS local-log-index RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"log_index.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> codes(n);for(int& code:codes)std::cin>>code;std::cout<<\"errors=\"<<count_server_errors(codes)<<'\\n';}\n",
+      "log_index.hpp": "#pragma once\n#include <vector>\ninline int count_server_errors(const std::vector<int>& codes){int count=0;for(int code:codes)if(code>=500&&code<600)++count;return count;}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nint main(){std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return has(\"build: cmake\")&&has(\"test: ctest\")&&has(\"benchmark: relative-scan\")&&has(\"retrospective: boundary-regression\")?0:1;}\n",
+      "PORTFOLIO.md": "# Local Log Index\n\nbuild: TODO\ntest: TODO\nbenchmark: TODO\nretrospective: TODO\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "errors=2\n",
+    "timeoutMs": 10000,
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "local-log-index",
+      "testTarget": "local_log_index_tests",
+      "ctest": true
+    },
+    "publicTests": [
+      {
+        "name": "packaged query",
+        "stdin": "5 200 500 503 404 201\n",
+        "expectedStdout": "errors=2\n"
+      }
+    ],
+    "performanceCheck": {
+      "name": "relative log scan growth",
+      "baselineStdin": "8 500 200 503 404 599 201 302 418\n",
+      "baselineExpectedStdout": "errors=3\n",
+      "scaledStdin": "64 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418 500 200 503 404 599 201 302 418\n",
+      "scaledExpectedStdout": "errors=24\n",
+      "repetitions": 3,
+      "maxMedianRatio": 20,
+      "failureCategory": "same-machine median scan time must stay within the declared linear-growth envelope"
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "portfolio-sections",
+        "title": "先补齐四类证据",
+        "kind": "nudge",
+        "content": "Portfolio 需要构建、测试、相对基准和失败复盘四部分。"
+      },
+      {
+        "id": "reproducible-commands",
+        "title": "写可复现命令而非结论",
+        "kind": "concept",
+        "content": "每部分都应让下一位读者能够在本机重新验证。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "将四个 TODO 分别改为 cmake、ctest、relative-scan 和 boundary-regression。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "log-index-retrospective",
+        "prompt": "写一段失败复盘：哪个边界变更会把 4xx 误算为 5xx，你如何发现、止损并添加回归测试？",
+        "required": true
+      }
+    ],
+    "reviewIds": [
+      "persistence-query-plans-review",
+      "production-readiness-review"
+    ],
+    "teacherRubric": {
+      "id": "log-index-m2-rubric",
+      "prompt": "Portfolio 应包含 clean build、CTest、安装目标、相对扫描基线、边界故障时间线和具体回归测试。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(local_log_index LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(local-log-index main.cpp)\nenable_testing()\nadd_executable(local_log_index_tests tests.cpp)\ntarget_compile_definitions(local_log_index_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME portfolio COMMAND local_log_index_tests)\ninstall(TARGETS local-log-index RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"log_index.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> codes(n);for(int& code:codes)std::cin>>code;std::cout<<\"errors=\"<<count_server_errors(codes)<<'\\n';}\n",
+      "log_index.hpp": "#pragma once\n#include <vector>\ninline int count_server_errors(const std::vector<int>& codes){int count=0;for(int code:codes)if(code>=500&&code<600)++count;return count;}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nint main(){std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return has(\"build: cmake\")&&has(\"test: ctest\")&&has(\"benchmark: relative-scan\")&&has(\"retrospective: boundary-regression\")?0:1;}\n",
+      "PORTFOLIO.md": "# Local Log Index\n\nbuild: cmake\ntest: ctest\nbenchmark: relative-scan\nretrospective: boundary-regression\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-retrospective",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(local_log_index LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(local-log-index main.cpp)\nenable_testing()\nadd_executable(local_log_index_tests tests.cpp)\ntarget_compile_definitions(local_log_index_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME portfolio COMMAND local_log_index_tests)\ninstall(TARGETS local-log-index RUNTIME DESTINATION bin)\n",
+          "main.cpp": "#include <iostream>\n#include <vector>\n#include \"log_index.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> codes(n);for(int& code:codes)std::cin>>code;std::cout<<\"errors=\"<<count_server_errors(codes)<<'\\n';}\n",
+          "log_index.hpp": "#pragma once\n#include <vector>\ninline int count_server_errors(const std::vector<int>& codes){int count=0;for(int code:codes)if(code>=500&&code<600)++count;return count;}\n",
+          "tests.cpp": "#include <fstream>\n#include <string>\nint main(){std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});return text.find(\"retrospective: boundary-regression\")!=std::string::npos?0:1;}\n",
+          "PORTFOLIO.md": "# Local Log Index\n\nbuild: cmake\ntest: ctest\nbenchmark: relative-scan\nretrospective: TODO\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "portfolio-evidence",
+        "type": "algorithm-trace",
+        "fallback": "source contract -> clean configure -> build target -> CTest portfolio checks -> integration inputs -> install target -> benchmark plan -> retrospective"
+      }
+    ],
+    "printFallback": "列出另一个工程师从 clone 到复现构建、测试、基准和已知故障所需的最小步骤。"
+  }
+}

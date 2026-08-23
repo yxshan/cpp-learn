@@ -963,11 +963,36 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
         stderr: "",
         timedOut: false,
         outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "v22.23.2\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "git version 2.51.0\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout:
+          "web-frontend sha256=abc123 vite=8.2.2 react=19.2.8 react-dom=19.2.8\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
       });
     const report = await createNativeJudge({
       run,
       cmake: "cmake",
       ctest: "ctest",
+      nodeRuntime: "/runtime/node",
+      gitRuntime: "/runtime/git",
+      webFrontendHarness: "/runtime/verify-react-project.mjs",
       inspectTool,
     }).execute({
       jobId: "job_cmake_ctest",
@@ -995,6 +1020,7 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
           target: "app",
           testTarget: "app-tests",
           ctest: true,
+          runtimeTools: ["node", "git", "web-frontend"],
         },
       },
       snapshot: {
@@ -1013,7 +1039,16 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
       1,
       expect.objectContaining({
         executable: "cmake",
-        args: ["-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Release"],
+        args: [
+          "-S",
+          ".",
+          "-B",
+          "build",
+          "-DCMAKE_BUILD_TYPE=Release",
+          "-DCPP_LEARN_NODE=/runtime/node",
+          "-DCPP_LEARN_GIT=/runtime/git",
+          "-DCPP_LEARN_WEB_FRONTEND=/runtime/verify-react-project.mjs",
+        ],
       }),
     );
     expect(inspectTool).toHaveBeenNthCalledWith(
@@ -1032,6 +1067,27 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
         args: ["--version"],
         timeoutMs: 2_000,
         maxOutputBytes: 16 * 1024,
+      }),
+    );
+    expect(inspectTool).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        executable: "/runtime/node",
+        args: ["--version"],
+      }),
+    );
+    expect(inspectTool).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        executable: "/runtime/git",
+        args: ["--version"],
+      }),
+    );
+    expect(inspectTool).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining({
+        executable: "/runtime/node",
+        args: ["/runtime/verify-react-project.mjs", "--fingerprint"],
       }),
     );
     expect(run).toHaveBeenNthCalledWith(
@@ -1060,6 +1116,10 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
         buildSystem: "cmake/ctest",
         cmake: "cmake version 4.1.0",
         ctest: "ctest version 4.1.0",
+        node: "v22.23.2",
+        git: "git version 2.51.0",
+        webFrontend:
+          "web-frontend sha256=abc123 vite=8.2.2 react=19.2.8 react-dom=19.2.8",
       },
       stages: [
         { kind: "configure", outcome: "pass" },
@@ -1069,6 +1129,106 @@ describe("[T-JUDGE-008] declarative CMake and CTest profile", () => {
       ],
     });
   });
+
+  it.each([
+    {
+      failureName: "missing",
+      failure: {
+        exitCode: 127,
+        stdout: "",
+        stderr: "git unavailable",
+        timedOut: false,
+        outputLimitExceeded: false,
+      },
+    },
+    {
+      failureName: "timed out",
+      failure: {
+        exitCode: null,
+        stdout: "",
+        stderr: "",
+        timedOut: true,
+        outputLimitExceeded: false,
+      },
+    },
+  ])(
+    "[T-JUDGE-009] classifies a $failureName runtime-tool inspection as a system error before configure",
+    async ({ failure, failureName }) => {
+      const run = vi.fn();
+      const available = (stdout: string) => ({
+        exitCode: 0,
+        stdout,
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      });
+      const inspectTool = vi
+        .fn()
+        .mockResolvedValueOnce(available("cmake version 4.1.0\n"))
+        .mockResolvedValueOnce(available("ctest version 4.1.0\n"))
+        .mockResolvedValueOnce(failure);
+
+      const report = await createNativeJudge({
+        run,
+        inspectTool,
+        gitRuntime: "/runtime/git",
+      }).execute({
+        jobId: `job_${failureName.replaceAll(" ", "_")}_git`,
+        mode: "grade",
+        activity: {
+          id: "git-project",
+          version: 1,
+          kind: "project-milestone",
+          title: "Git project",
+          estimatedMinutes: 20,
+          conceptIds: ["git-diagnostics"],
+          markdown: "",
+          workspace: { editablePaths: ["CMakeLists.txt", "main.cpp"] },
+        },
+        spec: {
+          activityId: "git-project",
+          activityVersion: 1,
+          judgeVersion: 1,
+          expectedStdout: "ok\n",
+          timeoutMs: 2_000,
+          buildProfile: {
+            kind: "cmake",
+            target: "app",
+            testTarget: "tests",
+            ctest: true,
+            runtimeTools: ["git"],
+          },
+        },
+        snapshot: {
+          id: `snap_${failureName.replaceAll(" ", "_")}_git`,
+          activityId: "git-project",
+          digest: `${failureName}-git-digest`,
+          files: {
+            "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\n",
+            "main.cpp": "int main() {}\n",
+          },
+        },
+      });
+
+      expect(report).toMatchObject({
+        verdict: "judge_system_error",
+        toolchain: {
+          buildSystem: "cmake/ctest",
+          cmake: "cmake version 4.1.0",
+          ctest: "ctest version 4.1.0",
+        },
+        stages: [{ kind: "configure", outcome: "system_error" }],
+      });
+      expect(inspectTool).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          executable: "/runtime/git",
+          args: ["--version"],
+        }),
+      );
+      expect(run).not.toHaveBeenCalled();
+    },
+  );
 
   it("preserves cancellation while inspecting build-tool versions", async () => {
     const run = vi.fn();

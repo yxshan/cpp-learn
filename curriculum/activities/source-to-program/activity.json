@@ -42,14 +42,6 @@
         "expectedStdout": "Hello, C++!\n"
       }
     ],
-    "privateTests": [
-      {
-        "name": "stable execution",
-        "stdin": "",
-        "expectedStdout": "Hello, C++!\n",
-        "failureCategory": "program output is not stable"
-      }
-    ],
     "sanitizers": ["address", "undefined"]
   },
   "evidencePolicy": {

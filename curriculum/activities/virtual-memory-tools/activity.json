@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "virtual-memory-tools",
+  "version": 1,
+  "kind": "lesson",
+  "title": "虚拟内存、mmap 与 Linux 观测工具",
+  "estimatedMinutes": 40,
+  "conceptIds": ["virtual-memory-pages", "linux-observability"],
+  "prerequisiteIds": ["posix-files-processes"],
+  "objectives": [
+    "用 mmap 建立匿名映射并按页触碰，解释虚拟地址、页和驻留内存的区别。"
+  ],
+  "victoryConditions": [
+    "对请求页数创建、逐页触碰并释放映射，输出确定的页计数。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "POSIX mmap",
+      "url": "https://pubs.opengroup.org/onlinepubs/9699919799/functions/mmap.html"
+    },
+    {
+      "kind": "reference",
+      "title": "Linux proc pid maps",
+      "url": "https://man7.org/linux/man-pages/man5/proc_pid_maps.5.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/virtual-memory-tools/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"TODO\\n\";}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "pages=3 touched=3\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "core behavior",
+        "stdin": "3\n",
+        "expectedStdout": "pages=3 touched=3\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "完整实现步骤：读取 pageCount，用 sysconf(_SC_PAGESIZE) 得到 pageSize；以 pageCount * pageSize 作为长度调用 mmap，权限为 PROT_READ | PROT_WRITE，标志为 MAP_PRIVATE | MAP_ANONYMOUS；检查 MAP_FAILED 后，循环写入每一页起始偏移 mapping[index * pageSize] 并累计 touched；所有成功路径在输出 pages/touched 前调用 munmap，失败路径输出映射错误且不解引用地址。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "为什么 mmap 成功不等于全部物理页已经驻留？你会用哪些 Linux/macOS 工具验证页故障和映射变化？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["virtual-memory-tools-review"],
+    "teacherRubric": {
+      "id": "virtual-memory-tools-rubric",
+      "prompt": "应准确解释 virtual-memory-pages、linux-observability 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <sys/mman.h>\n#include <unistd.h>\n#include <cstddef>\n#include <iostream>\nint main(){std::size_t pages{};std::cin>>pages;const auto pageSize=static_cast<std::size_t>(sysconf(_SC_PAGESIZE));const auto bytes=pages*pageSize;void* mapping=mmap(nullptr,bytes,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANON,-1,0);if(mapping==MAP_FAILED){std::cout<<\"mapping=failed\\n\";return 0;}auto* memory=static_cast<volatile unsigned char*>(mapping);std::size_t touched=0;for(std::size_t index=0;index<pages;++index){memory[index*pageSize]=static_cast<unsigned char>(index);++touched;}munmap(mapping,bytes);std::cout<<\"pages=\"<<pages<<\" touched=\"<<touched<<\"\\n\";}\n"
+    },
+    "mutations": [
+      {
+        "id": "boundary-regression",
+        "files": {
+          "main.cpp": "#include <sys/mman.h>\n#include <unistd.h>\n#include <cstddef>\n#include <iostream>\nint main(){std::size_t pages{};std::cin>>pages;const auto pageSize=static_cast<std::size_t>(sysconf(_SC_PAGESIZE));const auto bytes=pages*pageSize;void* mapping=mmap(nullptr,bytes,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANON,-1,0);if(mapping==MAP_FAILED){std::cout<<\"mapping=failed\\n\";return 0;}auto* memory=static_cast<volatile unsigned char*>(mapping);std::size_t touched=0;for(std::size_t index=0;index<pages;++index){if(pages!=1){memory[index*pageSize]=static_cast<unsigned char>(index);++touched;}}munmap(mapping,bytes);std::cout<<\"pages=\"<<pages<<\" touched=\"<<touched<<\"\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "virtual-memory-tools-trace",
+        "type": "memory-visualization",
+        "fallback": "reserve virtual range -> mmap page table entries -> first write faults page in -> RSS grows -> inspect maps or vmmap -> munmap releases mapping"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

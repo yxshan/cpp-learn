@@ -41,14 +41,6 @@
         "stdin": "3 1 2 1\n",
         "expectedStdout": "1 2 3\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "all duplicate",
-        "stdin": "5 5 5 5\n",
-        "expectedStdout": "5\n",
-        "failureCategory": "logical tail after unique must be erased"
-      }
     ]
   },
   "evidencePolicy": {

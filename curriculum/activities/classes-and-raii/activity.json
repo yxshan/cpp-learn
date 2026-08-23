@@ -43,14 +43,6 @@
         "stdin": "",
         "expectedStdout": "active\nreleased\ndone\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "deterministic destruction",
-        "stdin": "",
-        "expectedStdout": "active\nreleased\ndone\n",
-        "failureCategory": "destructor must run at the scope boundary"
-      }
     ]
   },
   "evidencePolicy": {

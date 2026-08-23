@@ -36,14 +36,10 @@
     "expectedStdout": "9\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "non-null", "stdin": "1 9\n", "expectedStdout": "9\n" }
-    ],
-    "privateTests": [
       {
-        "name": "null fallback",
-        "stdin": "0 99\n",
-        "expectedStdout": "7\n",
-        "failureCategory": "null observers must use the fallback path"
+        "name": "non-null",
+        "stdin": "1 9\n",
+        "expectedStdout": "9\n"
       }
     ],
     "sanitizers": ["address", "undefined"]

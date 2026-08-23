@@ -49,14 +49,6 @@
         "stdin": "5\nset alice 1\nget alice\nset alice 2\nget alice\nget bob\n",
         "expectedStdout": "1\n2\nmissing\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "erase and missing lookup",
-        "stdin": "4\nset hidden 9\nerase hidden\nget hidden\nget absent\n",
-        "expectedStdout": "missing\nmissing\n",
-        "failureCategory": "erased and never-inserted keys must both be absent from the index"
-      }
     ]
   },
   "evidencePolicy": {

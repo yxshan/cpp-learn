@@ -21,7 +21,10 @@
       "url": "https://en.cppreference.com/w/cpp/algorithm/swap"
     }
   ],
-  "content": { "format": "markdown", "path": "activities/safe-swap/lesson.md" },
+  "content": {
+    "format": "markdown",
+    "path": "activities/safe-swap/lesson.md"
+  },
   "workspace": {
     "editablePaths": ["main.cpp"],
     "starterFiles": {
@@ -33,14 +36,10 @@
     "expectedStdout": "9 2\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "reorder", "stdin": "2 9\n", "expectedStdout": "9 2\n" }
-    ],
-    "privateTests": [
       {
-        "name": "already ordered",
-        "stdin": "7 -1\n",
-        "expectedStdout": "7 -1\n",
-        "failureCategory": "ordered values must remain stable"
+        "name": "reorder",
+        "stdin": "2 9\n",
+        "expectedStdout": "9 2\n"
       }
     ]
   },

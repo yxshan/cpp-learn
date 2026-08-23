@@ -46,14 +46,6 @@
         "stdin": "10 40\n",
         "expectedStdout": "over-boundary\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "near-boundary growth",
-        "stdin": "10 31\n",
-        "expectedStdout": "within-boundary\n",
-        "failureCategory": "classification must use the declared scaled-to-baseline boundary"
-      }
     ]
   },
   "evidencePolicy": {

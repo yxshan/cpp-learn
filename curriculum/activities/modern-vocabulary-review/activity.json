@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "id": "modern-vocabulary-review",
+  "version": 1,
+  "kind": "review",
+  "title": "延迟复习：用现代词汇表达缺失与分支",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-modern-vocabulary", "ranges-pipelines"],
+  "prerequisiteIds": ["modern-vocabulary"],
+  "objectives": [
+    "在新输入上独立恢复：用 ranges 管道筛选数据，并用 optional 与 variant 显式表达缺失结果和分支。"
+  ],
+  "victoryConditions": ["正数集合输出最大值与总和；空结果不使用哨兵值。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference ranges library",
+      "url": "https://en.cppreference.com/w/cpp/ranges"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines ES.105",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Res-magic"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/modern-vocabulary-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"TODO\\n\";}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "max=8 sum=14\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "transfer case",
+        "stdin": "4 -2 5 1 8\n",
+        "expectedStdout": "max=8 sum=14\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 21
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "完整实现步骤：读取数量与 vector；用 views::filter 和返回 value > zero 的 lambda 建立非拥有正数视图；以空 optional 保存 maximum，并在遍历中同时累加 sum、用 std::max 更新 maximum；最后把 maximum 转成 variant<int,string>（缺失分支为 none），再用 visit 输出显式分支与 sum。view 的生命周期不能超过原 vector。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "为什么 optional 比魔法数更安全？ranges view 的非拥有语义会带来什么生命周期约束？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "modern-vocabulary",
+    "teacherRubric": {
+      "id": "modern-vocabulary-review-rubric",
+      "prompt": "应准确解释 cpp-modern-vocabulary、ranges-pipelines 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <optional>\n#include <ranges>\n#include <string>\n#include <variant>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(n);for(int& value:values)std::cin>>value;auto positive=values|std::views::filter([](int value){return value>0;});std::optional<int> maximum;int sum=0;for(int value:positive){sum+=value;maximum=maximum?std::max(*maximum,value):value;}std::variant<int,std::string> result=maximum?std::variant<int,std::string>{*maximum}:std::variant<int,std::string>{std::string{\"none\"}};std::cout<<\"max=\";std::visit([](const auto& value){std::cout<<value;},result);std::cout<<\" sum=\"<<sum<<\"\\n\";}\n"
+    },
+    "mutations": [
+      {
+        "id": "boundary-regression",
+        "files": {
+          "main.cpp": "#include <algorithm>\n#include <iostream>\n#include <optional>\n#include <ranges>\n#include <string>\n#include <variant>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(n);for(int& value:values)std::cin>>value;auto positive=values|std::views::filter([](int value){return value>0;});std::optional<int> maximum=0;int sum=0;for(int value:positive){sum+=value;maximum=std::max(*maximum,value);}std::variant<int,std::string> result=*maximum;std::cout<<\"max=\";std::visit([](const auto& value){std::cout<<value;},result);std::cout<<\" sum=\"<<sum<<\"\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "modern-vocabulary-review-trace",
+        "type": "container-visualization",
+        "fallback": "source values -> ranges filter view -> lambda predicate -> optional maximum -> variant result -> visit explicit branch"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

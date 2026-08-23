@@ -41,14 +41,6 @@
         "stdin": "3 1 2\n",
         "expectedStdout": "1 2 3\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "duplicates",
-        "stdin": "5 -1 5\n",
-        "expectedStdout": "-1 5 5\n",
-        "failureCategory": "sorting must preserve duplicate values"
-      }
     ]
   },
   "evidencePolicy": {

@@ -5,6 +5,7 @@ import {
 import type { CurriculumReadiness } from "@cpp-learn/contracts";
 import type {
   ActivityDetail,
+  ActivityProjectSummary,
   ActivitySource,
   GeneratedPropertyTest,
   HintKind,
@@ -29,6 +30,7 @@ export interface Activity {
   readonly version: number;
   readonly kind: "lesson" | "exercise" | "review" | "project-milestone";
   readonly title: string;
+  readonly project?: ActivityProjectSummary;
   readonly estimatedMinutes: number;
   readonly conceptIds: readonly string[];
   readonly prerequisiteIds: readonly string[];
@@ -164,6 +166,26 @@ export function validateCatalog(
   );
   const activityIndexes = new Map<string, number>();
   for (const [index, activity] of validActivities.entries()) {
+    if (activity.kind === "project-milestone") {
+      if (
+        !activity.project ||
+        !activity.workspace.persistenceId ||
+        activity.project.id !== activity.workspace.persistenceId
+      ) {
+        issues.push({
+          path: `/${index}/project`,
+          message:
+            "Project Milestone requires Project metadata matching Workspace persistenceId",
+          keyword: "project-metadata",
+        });
+      }
+    } else if (activity.project) {
+      issues.push({
+        path: `/${index}/project`,
+        message: "only Project Milestones may declare Project metadata",
+        keyword: "project-metadata",
+      });
+    }
     const sourceKinds = new Set(activity.sources.map((source) => source.kind));
     if (!sourceKinds.has("primary") || !sourceKinds.has("reference")) {
       issues.push({
@@ -420,6 +442,45 @@ export function validateCatalog(
     });
   }
 
+  const projectGroups = new Map<
+    string,
+    (Activity & { project: ActivityProjectSummary })[]
+  >();
+  for (const activity of validActivities) {
+    if (activity.kind !== "project-milestone" || !activity.project) continue;
+    const milestones = projectGroups.get(activity.project.id) ?? [];
+    milestones.push(activity as Activity & { project: ActivityProjectSummary });
+    projectGroups.set(activity.project.id, milestones);
+  }
+  for (const [projectId, milestones] of projectGroups) {
+    const expectedCount = milestones[0]?.project.milestoneCount ?? 0;
+    const expectedTitle = milestones[0]?.project.title;
+    const expectedOutcome = milestones[0]?.project.portfolioOutcome;
+    const positions = milestones
+      .map((activity) => activity.project.milestone)
+      .sort((left, right) => left - right);
+    const expectedPositions = Array.from(
+      { length: expectedCount },
+      (_, index) => index + 1,
+    );
+    if (
+      milestones.length !== expectedCount ||
+      milestones.some(
+        (activity) =>
+          activity.project.milestoneCount !== expectedCount ||
+          activity.project.title !== expectedTitle ||
+          activity.project.portfolioOutcome !== expectedOutcome,
+      ) ||
+      positions.some((position, index) => position !== expectedPositions[index])
+    ) {
+      issues.push({
+        path: "/project",
+        message: `Project ${projectId} must declare one coherent contiguous Milestone sequence`,
+        keyword: "project-metadata",
+      });
+    }
+  }
+
   for (const [index, activity] of validActivities.entries()) {
     if (
       activity.kind !== "review" &&
@@ -474,6 +535,23 @@ function resolveInsideCatalogRoot(
 
 export interface FilesystemCurriculumProbeDependencies {
   readonly catalogPath: string;
+  readonly privateJudgePath: string;
+}
+
+interface PrivateJudgeRegistry {
+  readonly schemaVersion: 1;
+  readonly activities: Readonly<Record<string, readonly PrivateJudgeTest[]>>;
+}
+
+function isPrivateJudgeRegistry(value: unknown): value is PrivateJudgeRegistry {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    candidate["schemaVersion"] === 1 &&
+    typeof candidate["activities"] === "object" &&
+    candidate["activities"] !== null &&
+    !Array.isArray(candidate["activities"])
+  );
 }
 
 async function loadActivities(
@@ -486,12 +564,62 @@ async function loadActivities(
     throw new Error("Catalog manifest is invalid");
 
   const catalogRoot = dirname(dependencies.catalogPath);
-  const candidates = await Promise.all(
+  const publicCandidates = await Promise.all(
     catalog.activityManifests.map(async (manifestPath) => {
       const path = resolveInsideCatalogRoot(catalogRoot, manifestPath);
       return JSON.parse(await readFile(path, "utf8")) as unknown;
     }),
   );
+  for (const candidate of publicCandidates) {
+    if (
+      typeof candidate === "object" &&
+      candidate !== null &&
+      typeof (candidate as Record<string, unknown>)["judge"] === "object" &&
+      (candidate as { judge: Record<string, unknown> }).judge !== null &&
+      "privateTests" in (candidate as { judge: Record<string, unknown> }).judge
+    ) {
+      throw new Error(
+        "Public Activity manifests must not contain private Judge tests",
+      );
+    }
+  }
+  const registry = JSON.parse(
+    await readFile(dependencies.privateJudgePath, "utf8"),
+  ) as unknown;
+  if (!isPrivateJudgeRegistry(registry)) {
+    throw new Error("Private Judge registry is invalid");
+  }
+  const publicActivityIds = new Set(
+    publicCandidates.flatMap((candidate) =>
+      typeof candidate === "object" &&
+      candidate !== null &&
+      typeof (candidate as Record<string, unknown>)["id"] === "string"
+        ? [(candidate as { id: string }).id]
+        : [],
+    ),
+  );
+  const unknownPrivateActivity = Object.keys(registry.activities).find(
+    (activityId) => !publicActivityIds.has(activityId),
+  );
+  if (unknownPrivateActivity) {
+    throw new Error(
+      `Private Judge registry references unknown Activity: ${unknownPrivateActivity}`,
+    );
+  }
+  const candidates = publicCandidates.map((candidate) => {
+    if (typeof candidate !== "object" || candidate === null) return candidate;
+    const activity = candidate as Record<string, unknown>;
+    const activityId = typeof activity["id"] === "string" ? activity["id"] : "";
+    const privateTests = registry.activities[activityId];
+    if (!privateTests) return candidate;
+    return {
+      ...activity,
+      judge: {
+        ...(activity["judge"] as Record<string, unknown>),
+        privateTests,
+      },
+    };
+  });
   const validation = validateCatalog(candidates);
   if (!validation.ok) {
     throw new Error(
@@ -573,6 +701,7 @@ export function createFilesystemCurriculum(
       version: activity.version,
       kind: activity.kind,
       title: activity.title,
+      ...(activity.project ? { project: activity.project } : {}),
       estimatedMinutes: activity.estimatedMinutes,
       conceptIds: activity.conceptIds,
       prerequisiteIds: activity.prerequisiteIds,

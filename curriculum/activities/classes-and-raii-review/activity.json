@@ -36,14 +36,10 @@
     "expectedStdout": "7\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "deposit", "stdin": "5\n", "expectedStdout": "7\n" }
-    ],
-    "privateTests": [
       {
-        "name": "zero deposit",
-        "stdin": "0\n",
-        "expectedStdout": "2\n",
-        "failureCategory": "state updates must compose"
+        "name": "deposit",
+        "stdin": "5\n",
+        "expectedStdout": "7\n"
       }
     ]
   },

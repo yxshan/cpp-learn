@@ -36,14 +36,10 @@
     "expectedStdout": "25\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "positive square", "stdin": "5\n", "expectedStdout": "25\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative square",
-        "stdin": "-7\n",
-        "expectedStdout": "49\n",
-        "failureCategory": "function must work for signed inputs"
+        "name": "positive square",
+        "stdin": "5\n",
+        "expectedStdout": "25\n"
       }
     ]
   },

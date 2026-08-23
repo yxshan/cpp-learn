@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.0 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -25,8 +25,8 @@ packages/
   contracts/                versioned commands, queries, DTOs, events
   content-schema/           JSON Schemas and validators
   ui/                       visual system and typed lesson blocks
-curriculum/                 public versioned content
-judge-private/              private pedagogical tests
+curriculum/                 public versioned content; no private Judge inputs
+judge-private/              server-only pedagogical-test registry
 student-workspaces/         learner-editable files
 data/                       events, projections, snapshots, logs
 ```
@@ -91,6 +91,13 @@ interface Activity {
   version: number;
   kind: "lesson" | "exercise" | "review" | "project-milestone";
   title: string;
+  project?: {
+    id: ProjectId;
+    title: string;
+    milestone: number;
+    milestoneCount: number;
+    portfolioOutcome: string;
+  };
   estimatedMinutes: number;
   conceptIds: ConceptId[];
   prerequisiteIds: ActivityId[];
@@ -103,12 +110,15 @@ interface Activity {
 
 Validation returns all detected errors in one report where possible. Catalog activation is all-or-nothing: invalid required content cannot create a partially active Track.
 
+The filesystem Adapter loads public Activity manifests and the server-only `judge-private/tests.json` registry separately. It rejects a public manifest containing `privateTests`, rejects private entries for unknown Activities, merges them only inside the Curriculum Module, and maps browser/API responses through the public model above.
+
 ### Content versioning
 
 - Patch: wording, references, and non-semantic hint corrections.
 - Minor activity version: starter or public-test change that may affect Attempts.
 - Major schema version: breaking manifest format change with migration.
 - Historical Attempts retain the content and judge versions used at the time.
+- Adding or changing Project identity, Milestone sequence, Workspace identity, or portfolio outcome is semantic and requires an Activity version increment.
 
 ## 4. Workspace Module
 
@@ -180,6 +190,8 @@ The fixed build profiles are:
 
 - `direct`: C++20 compilation with optional `-pthread` and allowlisted `sqlite3` linkage.
 - `cmake`: clean configure, option-safe named application and test targets, optional CTest, then the normal Judge tests; reports include CMake and CTest version fingerprints.
+
+A CMake profile may request a closed set of runtime capabilities: `node` for executable TypeScript contracts, `git` for an isolated diagnostic-history fixture, and `web-frontend` for the platform-owned Vite/React build-and-mount harness. The composition root/Judge resolves each identifier to a trusted absolute executable or harness path and injects it as a CMake definition using an argument array. Activity content cannot supply or override paths, environment-variable names, package-install commands, or arbitrary configure arguments. Before CMake configure, the bounded inspection runner obtains Node/Git versions and a Web harness fingerprint containing its SHA-256 digest plus pinned Vite/React versions. Missing, timed-out, or incompatible capabilities produce a system/toolchain verdict rather than a Learner test failure, and all fingerprints are persisted in the immutable Judge Report. The Web harness builds the learner's clean Workspace into a disposable directory, mounts its component test through Vite SSR, and removes its output afterward.
 
 System labs receive a unique temporary root through `cwd` and `TMPDIR`. Child process groups are killed on timeout/cancellation, and the root is recursively removed after every terminal report.
 

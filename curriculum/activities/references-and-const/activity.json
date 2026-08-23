@@ -36,14 +36,10 @@
     "expectedStdout": "9 4\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "swap", "stdin": "4 9\n", "expectedStdout": "9 4\n" }
-    ],
-    "privateTests": [
       {
-        "name": "signed swap",
-        "stdin": "-1 8\n",
-        "expectedStdout": "8 -1\n",
-        "failureCategory": "the caller objects were not both exchanged"
+        "name": "swap",
+        "stdin": "4 9\n",
+        "expectedStdout": "9 4\n"
       }
     ]
   },

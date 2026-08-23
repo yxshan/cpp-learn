@@ -38,6 +38,7 @@ export interface ActivityDetail {
   readonly version: number;
   readonly kind: "lesson" | "exercise" | "review" | "project-milestone";
   readonly title: string;
+  readonly project?: ActivityProjectSummary;
   readonly estimatedMinutes: number;
   readonly conceptIds: readonly string[];
   readonly prerequisiteIds?: readonly string[];
@@ -51,6 +52,14 @@ export interface ActivityDetail {
     readonly editablePaths: readonly string[];
   };
   readonly learning?: ActivityLearningSummary;
+}
+
+export interface ActivityProjectSummary {
+  readonly id: string;
+  readonly title: string;
+  readonly milestone: number;
+  readonly milestoneCount: number;
+  readonly portfolioOutcome: string;
 }
 
 export interface ActivitySource {
@@ -112,6 +121,7 @@ export interface ActivitiesResult {
     readonly version: number;
     readonly kind: ActivityDetail["kind"];
     readonly title: string;
+    readonly project?: ActivityProjectSummary;
     readonly estimatedMinutes: number;
     readonly conceptIds: readonly string[];
     readonly prerequisiteIds: readonly string[];
@@ -177,6 +187,7 @@ export type JudgeBuildProfile =
       readonly target: string;
       readonly testTarget: string;
       readonly ctest: boolean;
+      readonly runtimeTools?: readonly ("git" | "node" | "web-frontend")[];
     };
 
 export interface JudgeSpec {
@@ -260,6 +271,9 @@ export interface JudgeReport {
     readonly buildSystem?: "cmake/ctest";
     readonly cmake?: string;
     readonly ctest?: string;
+    readonly node?: string;
+    readonly git?: string;
+    readonly webFrontend?: string;
   };
   readonly buildFlags?: readonly string[];
   readonly seeds?: readonly number[];
@@ -419,6 +433,14 @@ export interface ProgressResult {
     readonly state: ConceptState;
     readonly explanation: string;
     readonly supportingEvidenceIds: readonly string[];
+    readonly evidence?: readonly {
+      readonly evidenceId: string;
+      readonly activityId: string;
+      readonly occurredAt: string;
+      readonly source: EvidenceRecordedEvent["source"];
+      readonly outcome: EvidenceRecordedEvent["outcome"];
+      readonly independence: AttemptIndependence;
+    }[];
     readonly nextReviewAt?: string;
   }[];
 }

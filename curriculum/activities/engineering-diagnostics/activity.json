@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "id": "engineering-diagnostics",
+  "version": 2,
+  "kind": "lesson",
+  "title": "Git、静态分析与性能剖析闭环",
+  "estimatedMinutes": 55,
+  "conceptIds": ["engineering-diagnostics", "profiling-evidence"],
+  "prerequisiteIds": ["cmake-testing-debugging"],
+  "objectives": [
+    "在 CMake/CTest 中实际执行 warnings-as-errors 静态分析门禁、可复现 Git bisect fixture 与确定性热点计数。"
+  ],
+  "victoryConditions": [
+    "Reference 在干净目录通过严格编译告警、真实 git bisect run、profile/bisect 工件校验与行为测试。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "Git bisect documentation",
+      "url": "https://git-scm.com/docs/git-bisect"
+    },
+    {
+      "kind": "reference",
+      "title": "Clang-Tidy documentation",
+      "url": "https://clang.llvm.org/extra/clang-tidy/"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/engineering-diagnostics/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": [
+      "CMakeLists.txt",
+      "main.cpp",
+      "tests.cpp",
+      "PROFILE.md",
+      "BISECT.md",
+      "git_bisect.cmake",
+      "check_regression.cmake"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(engineering_diagnostics LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(engineering-diagnostics main.cpp)\ntarget_compile_options(engineering-diagnostics PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\nenable_testing()\nadd_executable(engineering-diagnostics-tests tests.cpp)\ntarget_compile_options(engineering-diagnostics-tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\ntarget_compile_definitions(engineering-diagnostics-tests PRIVATE PROFILE_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/PROFILE.md\" BISECT_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/BISECT.md\")\nadd_test(NAME diagnostics-evidence COMMAND engineering-diagnostics-tests)\nif(NOT CPP_LEARN_GIT)\nmessage(FATAL_ERROR \"trusted Git runtime is required\")\nendif()\nadd_test(NAME reproducible-git-bisect COMMAND ${CMAKE_COMMAND} -DGIT=${CPP_LEARN_GIT} -DFIXTURE_ROOT=${CMAKE_CURRENT_BINARY_DIR}/bisect-fixture -DCHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/check_regression.cmake -P ${CMAKE_CURRENT_SOURCE_DIR}/git_bisect.cmake)\n",
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"TODO\\n\";}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nstd::string read(const char* path){std::ifstream input(path);return{std::istreambuf_iterator<char>(input),{}};}\nint main(){const auto profile=read(PROFILE_PATH);const auto bisect=read(BISECT_PATH);auto has=[](const std::string& text,const char* value){return text.find(value)!=std::string::npos;};return has(profile,\"static-analysis: warnings-as-errors\")&&has(profile,\"baseline-comparisons: four\")&&has(profile,\"scaled-comparisons: nine\")&&has(profile,\"hotspot: linear-scan\")&&has(bisect,\"first-bad: quadratic-regression\")&&has(bisect,\"command: git bisect run\")?0:1;}\n",
+      "PROFILE.md": "# Profiling evidence\n\nTODO\n",
+      "BISECT.md": "# Regression localization\n\nTODO\n",
+      "git_bisect.cmake": "if(NOT DEFINED GIT OR NOT DEFINED FIXTURE_ROOT OR NOT DEFINED CHECK_SCRIPT)\n  message(FATAL_ERROR \"missing trusted bisect fixture inputs\")\nendif()\nfile(REMOVE_RECURSE \"${FIXTURE_ROOT}\")\nfile(MAKE_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" init WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE result OUTPUT_QUIET ERROR_QUIET)\nif(NOT result EQUAL 0)\n  message(FATAL_ERROR \"git init failed\")\nendif()\nexecute_process(COMMAND \"${GIT}\" config user.email learner@example.invalid WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" config user.name \"C++ Learn Fixture\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nfile(WRITE \"${FIXTURE_ROOT}/state.txt\" \"linear-baseline\\n\")\nexecute_process(COMMAND \"${GIT}\" add state.txt WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" commit -m linear-baseline WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" rev-parse HEAD WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_VARIABLE good OUTPUT_STRIP_TRAILING_WHITESPACE)\nfile(WRITE \"${FIXTURE_ROOT}/state.txt\" \"quadratic-regression\\n\")\nexecute_process(COMMAND \"${GIT}\" commit -am quadratic-regression WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" rev-parse HEAD WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_VARIABLE bad OUTPUT_STRIP_TRAILING_WHITESPACE)\nexecute_process(COMMAND \"${GIT}\" bisect start \"${bad}\" \"${good}\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE start_result OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" bisect run \"${CMAKE_COMMAND}\" -DSTATE=${FIXTURE_ROOT}/state.txt -P \"${CHECK_SCRIPT}\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE bisect_result OUTPUT_VARIABLE bisect_output ERROR_VARIABLE bisect_error)\nexecute_process(COMMAND \"${GIT}\" bisect reset WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nif(NOT start_result EQUAL 0 OR NOT bisect_result EQUAL 0 OR NOT bisect_output MATCHES \"first bad commit\")\n  message(FATAL_ERROR \"git bisect did not reproduce the first bad commit: ${bisect_error}\")\nendif()\n",
+      "check_regression.cmake": "file(READ \"${STATE}\" state)\nif(state MATCHES \"quadratic-regression\")\n  message(FATAL_ERROR \"performance regression reproduced\")\nendif()\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "min=0 comparisons=4\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "core behavior",
+        "stdin": "5 4 3 2 1 0\n",
+        "expectedStdout": "min=0 comparisons=4\n"
+      }
+    ],
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "engineering-diagnostics",
+      "testTarget": "engineering-diagnostics-tests",
+      "ctest": true,
+      "runtimeTools": ["git"]
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "在 CMake 为 app/tests 同时开启 Wall、Wextra、Wpedantic、Wconversion、Wshadow 与 Werror；main 读取 n 个整数，空输入输出 none，否则从第二项开始线性扫描并令 comparisons 等于实际比较次数。PROFILE.md 记录 warnings-as-errors、four/nine 两组计数和 linear-scan 热点；BISECT.md 记录 git bisect run 定位 quadratic-regression。CTest 还必须创建两提交的隔离 Git fixture 并真正执行 bisect run。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "如何用 Git bisect、回归测试、clang-tidy 与 profiler 形成一条可复现的性能故障调查链？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["engineering-diagnostics-review"],
+    "teacherRubric": {
+      "id": "engineering-diagnostics-rubric",
+      "prompt": "应准确解释 engineering-diagnostics、profiling-evidence 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(engineering_diagnostics LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(engineering-diagnostics main.cpp)\ntarget_compile_options(engineering-diagnostics PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\nenable_testing()\nadd_executable(engineering-diagnostics-tests tests.cpp)\ntarget_compile_options(engineering-diagnostics-tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\ntarget_compile_definitions(engineering-diagnostics-tests PRIVATE PROFILE_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/PROFILE.md\" BISECT_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/BISECT.md\")\nadd_test(NAME diagnostics-evidence COMMAND engineering-diagnostics-tests)\nif(NOT CPP_LEARN_GIT)\nmessage(FATAL_ERROR \"trusted Git runtime is required\")\nendif()\nadd_test(NAME reproducible-git-bisect COMMAND ${CMAKE_COMMAND} -DGIT=${CPP_LEARN_GIT} -DFIXTURE_ROOT=${CMAKE_CURRENT_BINARY_DIR}/bisect-fixture -DCHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/check_regression.cmake -P ${CMAKE_CURRENT_SOURCE_DIR}/git_bisect.cmake)\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(static_cast<std::size_t>(n));for(int& value:values)std::cin>>value;if(values.empty()){std::cout<<\"min=none comparisons=0\\n\";return 0;}int minimum=values.front();std::size_t comparisons=0;for(std::size_t index=1;index<values.size();++index){++comparisons;if(values[index]<minimum)minimum=values[index];}std::cout<<\"min=\"<<minimum<<\" comparisons=\"<<comparisons<<\"\\n\";}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nstd::string read(const char* path){std::ifstream input(path);return{std::istreambuf_iterator<char>(input),{}};}\nint main(){const auto profile=read(PROFILE_PATH);const auto bisect=read(BISECT_PATH);auto has=[](const std::string& text,const char* value){return text.find(value)!=std::string::npos;};return has(profile,\"static-analysis: warnings-as-errors\")&&has(profile,\"baseline-comparisons: four\")&&has(profile,\"scaled-comparisons: nine\")&&has(profile,\"hotspot: linear-scan\")&&has(bisect,\"first-bad: quadratic-regression\")&&has(bisect,\"command: git bisect run\")?0:1;}\n",
+      "PROFILE.md": "# Profiling evidence\n\nstatic-analysis: warnings-as-errors\nbaseline-comparisons: four\nscaled-comparisons: nine\nhotspot: linear-scan\ndecision: retain-linear-algorithm\n",
+      "BISECT.md": "# Regression localization\n\ncommand: git bisect run\ngood: linear-baseline\nbad: quadratic-regression\nfirst-bad: quadratic-regression\nfollow-up: add-regression-test-before-fix\n",
+      "git_bisect.cmake": "if(NOT DEFINED GIT OR NOT DEFINED FIXTURE_ROOT OR NOT DEFINED CHECK_SCRIPT)\n  message(FATAL_ERROR \"missing trusted bisect fixture inputs\")\nendif()\nfile(REMOVE_RECURSE \"${FIXTURE_ROOT}\")\nfile(MAKE_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" init WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE result OUTPUT_QUIET ERROR_QUIET)\nif(NOT result EQUAL 0)\n  message(FATAL_ERROR \"git init failed\")\nendif()\nexecute_process(COMMAND \"${GIT}\" config user.email learner@example.invalid WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" config user.name \"C++ Learn Fixture\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nfile(WRITE \"${FIXTURE_ROOT}/state.txt\" \"linear-baseline\\n\")\nexecute_process(COMMAND \"${GIT}\" add state.txt WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" commit -m linear-baseline WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" rev-parse HEAD WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_VARIABLE good OUTPUT_STRIP_TRAILING_WHITESPACE)\nfile(WRITE \"${FIXTURE_ROOT}/state.txt\" \"quadratic-regression\\n\")\nexecute_process(COMMAND \"${GIT}\" commit -am quadratic-regression WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" rev-parse HEAD WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_VARIABLE bad OUTPUT_STRIP_TRAILING_WHITESPACE)\nexecute_process(COMMAND \"${GIT}\" bisect start \"${bad}\" \"${good}\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE start_result OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" bisect run \"${CMAKE_COMMAND}\" -DSTATE=${FIXTURE_ROOT}/state.txt -P \"${CHECK_SCRIPT}\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE bisect_result OUTPUT_VARIABLE bisect_output ERROR_VARIABLE bisect_error)\nexecute_process(COMMAND \"${GIT}\" bisect reset WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nif(NOT start_result EQUAL 0 OR NOT bisect_result EQUAL 0 OR NOT bisect_output MATCHES \"first bad commit\")\n  message(FATAL_ERROR \"git bisect did not reproduce the first bad commit: ${bisect_error}\")\nendif()\n",
+      "check_regression.cmake": "file(READ \"${STATE}\" state)\nif(state MATCHES \"quadratic-regression\")\n  message(FATAL_ERROR \"performance regression reproduced\")\nendif()\n"
+    },
+    "mutations": [
+      {
+        "id": "profile-counter-off-by-one",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(engineering_diagnostics LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(engineering-diagnostics main.cpp)\ntarget_compile_options(engineering-diagnostics PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\nenable_testing()\nadd_executable(engineering-diagnostics-tests tests.cpp)\ntarget_compile_options(engineering-diagnostics-tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\ntarget_compile_definitions(engineering-diagnostics-tests PRIVATE PROFILE_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/PROFILE.md\" BISECT_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/BISECT.md\")\nadd_test(NAME diagnostics-evidence COMMAND engineering-diagnostics-tests)\nif(NOT CPP_LEARN_GIT)\nmessage(FATAL_ERROR \"trusted Git runtime is required\")\nendif()\nadd_test(NAME reproducible-git-bisect COMMAND ${CMAKE_COMMAND} -DGIT=${CPP_LEARN_GIT} -DFIXTURE_ROOT=${CMAKE_CURRENT_BINARY_DIR}/bisect-fixture -DCHECK_SCRIPT=${CMAKE_CURRENT_SOURCE_DIR}/check_regression.cmake -P ${CMAKE_CURRENT_SOURCE_DIR}/git_bisect.cmake)\n",
+          "main.cpp": "#include <iostream>\n#include <vector>\nint main(){int n{};std::cin>>n;std::vector<int> values(static_cast<std::size_t>(n));for(int& value:values)std::cin>>value;if(values.empty()){std::cout<<\"min=none comparisons=0\\n\";return 0;}int minimum=values.front();std::size_t comparisons=1;for(std::size_t index=1;index<values.size();++index){++comparisons;if(values[index]<minimum)minimum=values[index];}std::cout<<\"min=\"<<minimum<<\" comparisons=\"<<comparisons<<\"\\n\";}\n",
+          "tests.cpp": "#include <fstream>\n#include <string>\nstd::string read(const char* path){std::ifstream input(path);return{std::istreambuf_iterator<char>(input),{}};}\nint main(){const auto profile=read(PROFILE_PATH);const auto bisect=read(BISECT_PATH);auto has=[](const std::string& text,const char* value){return text.find(value)!=std::string::npos;};return has(profile,\"static-analysis: warnings-as-errors\")&&has(profile,\"baseline-comparisons: four\")&&has(profile,\"scaled-comparisons: nine\")&&has(profile,\"hotspot: linear-scan\")&&has(bisect,\"first-bad: quadratic-regression\")&&has(bisect,\"command: git bisect run\")?0:1;}\n",
+          "PROFILE.md": "# Profiling evidence\n\nstatic-analysis: warnings-as-errors\nbaseline-comparisons: four\nscaled-comparisons: nine\nhotspot: linear-scan\ndecision: retain-linear-algorithm\n",
+          "BISECT.md": "# Regression localization\n\ncommand: git bisect run\ngood: linear-baseline\nbad: quadratic-regression\nfirst-bad: quadratic-regression\nfollow-up: add-regression-test-before-fix\n",
+          "git_bisect.cmake": "if(NOT DEFINED GIT OR NOT DEFINED FIXTURE_ROOT OR NOT DEFINED CHECK_SCRIPT)\n  message(FATAL_ERROR \"missing trusted bisect fixture inputs\")\nendif()\nfile(REMOVE_RECURSE \"${FIXTURE_ROOT}\")\nfile(MAKE_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" init WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE result OUTPUT_QUIET ERROR_QUIET)\nif(NOT result EQUAL 0)\n  message(FATAL_ERROR \"git init failed\")\nendif()\nexecute_process(COMMAND \"${GIT}\" config user.email learner@example.invalid WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" config user.name \"C++ Learn Fixture\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nfile(WRITE \"${FIXTURE_ROOT}/state.txt\" \"linear-baseline\\n\")\nexecute_process(COMMAND \"${GIT}\" add state.txt WORKING_DIRECTORY \"${FIXTURE_ROOT}\")\nexecute_process(COMMAND \"${GIT}\" commit -m linear-baseline WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" rev-parse HEAD WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_VARIABLE good OUTPUT_STRIP_TRAILING_WHITESPACE)\nfile(WRITE \"${FIXTURE_ROOT}/state.txt\" \"quadratic-regression\\n\")\nexecute_process(COMMAND \"${GIT}\" commit -am quadratic-regression WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" rev-parse HEAD WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_VARIABLE bad OUTPUT_STRIP_TRAILING_WHITESPACE)\nexecute_process(COMMAND \"${GIT}\" bisect start \"${bad}\" \"${good}\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE start_result OUTPUT_QUIET)\nexecute_process(COMMAND \"${GIT}\" bisect run \"${CMAKE_COMMAND}\" -DSTATE=${FIXTURE_ROOT}/state.txt -P \"${CHECK_SCRIPT}\" WORKING_DIRECTORY \"${FIXTURE_ROOT}\" RESULT_VARIABLE bisect_result OUTPUT_VARIABLE bisect_output ERROR_VARIABLE bisect_error)\nexecute_process(COMMAND \"${GIT}\" bisect reset WORKING_DIRECTORY \"${FIXTURE_ROOT}\" OUTPUT_QUIET)\nif(NOT start_result EQUAL 0 OR NOT bisect_result EQUAL 0 OR NOT bisect_output MATCHES \"first bad commit\")\n  message(FATAL_ERROR \"git bisect did not reproduce the first bad commit: ${bisect_error}\")\nendif()\n",
+          "check_regression.cmake": "file(READ \"${STATE}\" state)\nif(state MATCHES \"quadratic-regression\")\n  message(FATAL_ERROR \"performance regression reproduced\")\nendif()\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "engineering-diagnostics-trace",
+        "type": "algorithm-trace",
+        "fallback": "small Git commit -> failing regression test -> compiler warnings -> clang-tidy finding -> deterministic counter -> sampling profiler -> hotspot hypothesis -> measured fix"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

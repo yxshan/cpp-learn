@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "concurrent-task-queues",
+  "version": 1,
+  "kind": "lesson",
+  "title": "任务队列、协作取消与有界关闭",
+  "estimatedMinutes": 45,
+  "conceptIds": ["thread-pool-lifecycle", "concurrency-failure-diagnosis"],
+  "prerequisiteIds": ["threads-atomics", "systems-runtime-review"],
+  "objectives": [
+    "定义生产者停止、队列排空、工作线程退出和 join 的完整生命周期。"
+  ],
+  "victoryConditions": [
+    "多个 thread 完成后输出所有任务之和，且主线程只在 join 后观察结果。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference: std::thread",
+      "url": "https://en.cppreference.com/w/cpp/thread/thread"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines concurrency",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-concurrency"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/concurrent-task-queues/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <atomic>\n#include <iostream>\n#include <thread>\n#include <vector>\nint main(){int n{};std::cin>>n;std::atomic<long long> sum{0};std::vector<std::thread> workers;for(int i=0,value;i<n&&std::cin>>value;++i){workers.emplace_back([&,value]{/* TODO */});}for(auto& worker:workers)worker.join();std::cout<<\"sum=\"<<sum.load()<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "sum=10\n",
+    "timeoutMs": 4000,
+    "buildProfile": {
+      "kind": "direct",
+      "threadSupport": true
+    },
+    "publicTests": [
+      {
+        "name": "drained tasks",
+        "stdin": "4 1 2 3 4\n",
+        "expectedStdout": "sum=10\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "task-value",
+        "title": "按值捕获任务",
+        "kind": "nudge",
+        "content": "每个工作线程应持有自己的 value，而不是引用循环变量。"
+      },
+      {
+        "id": "synchronized-sum",
+        "title": "共享聚合需要同步",
+        "kind": "concept",
+        "content": "用原子读改写把任务结果合并到 sum。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "在线程函数中调用 sum.fetch_add(value);，然后显式 join 每个 worker。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "shutdown-protocol",
+        "prompt": "一个线程池的 graceful shutdown 为什么需要停止接收、排空队列、通知 worker 和 join 四个不同步骤？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["concurrent-task-queues-review"],
+    "teacherRubric": {
+      "id": "task-queue-rubric",
+      "prompt": "回答应覆盖准入边界、队列所有权、唤醒条件、协作取消、排空策略和线程回收。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <atomic>\n#include <iostream>\n#include <thread>\n#include <vector>\nint main(){int n{};std::cin>>n;std::atomic<long long> sum{0};std::vector<std::thread> workers;for(int i=0,value;i<n&&std::cin>>value;++i)workers.emplace_back([&,value]{sum.fetch_add(value);});for(auto& worker:workers)worker.join();std::cout<<\"sum=\"<<sum.load()<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "drops-task-results",
+        "files": {
+          "main.cpp": "#include <atomic>\n#include <iostream>\n#include <thread>\n#include <vector>\nint main(){int n{};std::cin>>n;std::atomic<long long> sum{0};std::vector<std::thread> workers;for(int i=0,value;i<n&&std::cin>>value;++i)workers.emplace_back([value]{(void)value;});for(auto& worker:workers)worker.join();std::cout<<\"sum=\"<<sum.load()<<'\\n';}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "queue-shutdown",
+        "type": "lifetime-timeline",
+        "fallback": "accept tasks -> bounded queue -> workers consume -> stop admission -> drain or cancel -> notify waiters -> join workers -> publish result"
+      }
+    ],
+    "printFallback": "画出运行态到停止态的状态机，并标记谁拥有队列和工作线程。"
+  }
+}

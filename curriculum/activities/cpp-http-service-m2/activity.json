@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "id": "cpp-http-service-m2",
+  "version": 3,
+  "kind": "project-milestone",
+  "title": "Project：C++ HTTP 服务 Milestone 2",
+  "project": {
+    "id": "cpp-http-service",
+    "title": "C++ HTTP 服务",
+    "milestone": 2,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个绑定动态 loopback 端口、承受并发请求、用 SQLite 保留请求指标并具备可回滚发布证据的 C++ HTTP 服务。"
+  },
+  "estimatedMinutes": 100,
+  "conceptIds": [
+    "http-service-contract",
+    "observability-incident-response",
+    "deployment-contracts",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["cpp-http-service-m1", "production-readiness"],
+  "objectives": [
+    "交付可构建、测试、安装、并发负载、SQLite 指标持久化和故障复盘的本地 HTTP 服务。"
+  ],
+  "victoryConditions": [
+    "命名服务目标、CTest、动态 loopback 并发负载、SQLite 请求计数和 Portfolio 证据全部通过。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "CMake install",
+      "url": "https://cmake.org/cmake/help/latest/command/install.html"
+    },
+    {
+      "kind": "reference",
+      "title": "Google SRE monitoring",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cpp-http-service-m2/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "cpp-http-service",
+    "editablePaths": [
+      "CMakeLists.txt",
+      "main.cpp",
+      "service.hpp",
+      "tests.cpp",
+      "PORTFOLIO.md"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_http_service LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nfind_package(Threads REQUIRED)\nfind_package(SQLite3 REQUIRED)\nadd_executable(cpp-http-service main.cpp)\ntarget_link_libraries(cpp-http-service PRIVATE Threads::Threads SQLite::SQLite3)\nenable_testing()\nadd_executable(http_service_tests tests.cpp)\ntarget_compile_definitions(http_service_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME portfolio COMMAND http_service_tests)\ninstall(TARGETS cpp-http-service RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <arpa/inet.h>\n#include <atomic>\n#include <iostream>\n#include <sqlite3.h>\n#include <string>\n#include <sys/socket.h>\n#include <thread>\n#include <unistd.h>\n#include <vector>\n#include \"service.hpp\"\nbool send_all(int fd,const std::string& data){std::size_t sent=0;while(sent<data.size()){auto count=write(fd,data.data()+sent,data.size()-sent);if(count<=0)return false;sent+=static_cast<std::size_t>(count);}return true;}\nint main(){int clients{},requestsPerClient{};if(!(std::cin>>clients>>requestsPerClient)||clients<1||clients>16||requestsPerClient<1||requestsPerClient>100)return 2;int total=clients*requestsPerClient;sqlite3* database{};if(sqlite3_open(\":memory:\",&database)!=SQLITE_OK)return 3;if(sqlite3_exec(database,\"CREATE TABLE request_metrics(status INTEGER NOT NULL)\",nullptr,nullptr,nullptr)!=SQLITE_OK)return 4;int server=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;if(server<0||bind(server,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0)return 5;socklen_t addressSize=sizeof(address);if(getsockname(server,reinterpret_cast<sockaddr*>(&address),&addressSize)<0||listen(server,128)<0)return 6;std::atomic<int> errors{0};std::thread acceptor([&]{for(int index=0;index<total;++index){int peer=accept(server,nullptr,nullptr);if(peer<0){errors.fetch_add(1);continue;}char buffer[256]{};auto count=read(peer,buffer,sizeof(buffer));std::string request(buffer,count>0?static_cast<std::size_t>(count):0);auto response=route(request.find(\"GET /health \")!=std::string::npos?\"/health\":\"/missing\");std::string wire=\"HTTP/1.1 \"+std::to_string(response.status)+(response.status==200?\" OK\":\" Not Found\")+\"\\r\\nContent-Length: \"+std::to_string(response.body.size())+\"\\r\\nConnection: close\\r\\n\\r\\n\"+response.body;if(!send_all(peer,wire))errors.fetch_add(1);if(sqlite3_exec(database,(\"INSERT INTO request_metrics VALUES(\"+std::to_string(response.status)+\")\").c_str(),nullptr,nullptr,nullptr)!=SQLITE_OK)errors.fetch_add(1);close(peer);}});std::vector<std::thread> workers;for(int clientIndex=0;clientIndex<clients;++clientIndex)workers.emplace_back([&]{for(int requestIndex=0;requestIndex<requestsPerClient;++requestIndex){int client=socket(AF_INET,SOCK_STREAM,0);if(client<0||connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0){errors.fetch_add(1);if(client>=0)close(client);continue;}std::string request=\"GET /health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\";if(!send_all(client,request)){errors.fetch_add(1);close(client);continue;}char response[256]{};auto count=read(client,response,sizeof(response));if(count<=0||std::string(response,static_cast<std::size_t>(count)).find(\"HTTP/1.1 200\")!=0)errors.fetch_add(1);close(client);}});for(auto& worker:workers)worker.join();acceptor.join();sqlite3_stmt* statement{};int stored=-1;if(sqlite3_prepare_v2(database,\"SELECT COUNT(*) FROM request_metrics\",-1,&statement,nullptr)==SQLITE_OK&&sqlite3_step(statement)==SQLITE_ROW)stored=sqlite3_column_int(statement,0);sqlite3_finalize(statement);sqlite3_close(database);close(server);std::cout<<\"requests=\"<<total<<\" errors=\"<<errors.load()<<\" stored=\"<<stored<<'\\n';}\n",
+      "service.hpp": "#pragma once\n#include <string>\nstruct Response{int status;std::string body;};\ninline Response route(const std::string&){return Response{503,\"todo\"};}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nint main(){std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return has(\"build: cmake\")&&has(\"test: loopback-http\")&&has(\"benchmark: concurrent-loopback\")&&has(\"persistence: sqlite-metrics\")&&has(\"retrospective: unknown-route-alert\")?0:1;}\n",
+      "PORTFOLIO.md": "# C++ HTTP Service\n\nbuild: TODO\ntest: TODO\nbenchmark: TODO\npersistence: TODO\nretrospective: TODO\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "requests=2 errors=0 stored=2\n",
+    "timeoutMs": 10000,
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "cpp-http-service",
+      "testTarget": "http_service_tests",
+      "ctest": true
+    },
+    "publicTests": [
+      {
+        "name": "loopback health load",
+        "stdin": "1 2\n",
+        "expectedStdout": "requests=2 errors=0 stored=2\n"
+      }
+    ],
+    "performanceCheck": {
+      "name": "concurrent loopback load growth",
+      "baselineStdin": "2 4\n",
+      "baselineExpectedStdout": "requests=8 errors=0 stored=8\n",
+      "scaledStdin": "8 8\n",
+      "scaledExpectedStdout": "requests=64 errors=0 stored=64\n",
+      "repetitions": 3,
+      "maxMedianRatio": 20,
+      "failureCategory": "same-machine median service time must remain bounded as concurrent loopback load grows"
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "four-evidence-lines",
+        "title": "补齐发布证据",
+        "kind": "nudge",
+        "content": "Portfolio 需要记录构建、loopback HTTP、并发基准、SQLite 指标和未知路由事故。"
+      },
+      {
+        "id": "observability-contract",
+        "title": "把监控绑定到用户行为",
+        "kind": "concept",
+        "content": "健康检查和未知路由必须有不同状态与可聚合分类。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "修复 /health 路由，并记录 cmake、loopback-http、concurrent-loopback、sqlite-metrics 和 unknown-route-alert。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "http-incident",
+        "prompt": "写出未知路由突然变成 200 时的用户影响、监控信号、回滚条件、根因假设和回归测试。",
+        "required": true
+      }
+    ],
+    "reviewIds": [
+      "network-service-design-review",
+      "production-readiness-review"
+    ],
+    "teacherRubric": {
+      "id": "http-service-m2-rubric",
+      "prompt": "应包含可复现发布命令、真实 loopback HTTP、并发数/请求数/同机中位数、SQLite 请求指标、黄金信号和错误分类回归。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_http_service LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nfind_package(Threads REQUIRED)\nfind_package(SQLite3 REQUIRED)\nadd_executable(cpp-http-service main.cpp)\ntarget_link_libraries(cpp-http-service PRIVATE Threads::Threads SQLite::SQLite3)\nenable_testing()\nadd_executable(http_service_tests tests.cpp)\ntarget_compile_definitions(http_service_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME portfolio COMMAND http_service_tests)\ninstall(TARGETS cpp-http-service RUNTIME DESTINATION bin)\n",
+      "main.cpp": "#include <arpa/inet.h>\n#include <atomic>\n#include <iostream>\n#include <sqlite3.h>\n#include <string>\n#include <sys/socket.h>\n#include <thread>\n#include <unistd.h>\n#include <vector>\n#include \"service.hpp\"\nbool send_all(int fd,const std::string& data){std::size_t sent=0;while(sent<data.size()){auto count=write(fd,data.data()+sent,data.size()-sent);if(count<=0)return false;sent+=static_cast<std::size_t>(count);}return true;}\nint main(){int clients{},requestsPerClient{};if(!(std::cin>>clients>>requestsPerClient)||clients<1||clients>16||requestsPerClient<1||requestsPerClient>100)return 2;int total=clients*requestsPerClient;sqlite3* database{};if(sqlite3_open(\":memory:\",&database)!=SQLITE_OK)return 3;if(sqlite3_exec(database,\"CREATE TABLE request_metrics(status INTEGER NOT NULL)\",nullptr,nullptr,nullptr)!=SQLITE_OK)return 4;int server=socket(AF_INET,SOCK_STREAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;if(server<0||bind(server,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0)return 5;socklen_t addressSize=sizeof(address);if(getsockname(server,reinterpret_cast<sockaddr*>(&address),&addressSize)<0||listen(server,128)<0)return 6;std::atomic<int> errors{0};std::thread acceptor([&]{for(int index=0;index<total;++index){int peer=accept(server,nullptr,nullptr);if(peer<0){errors.fetch_add(1);continue;}char buffer[256]{};auto count=read(peer,buffer,sizeof(buffer));std::string request(buffer,count>0?static_cast<std::size_t>(count):0);auto response=route(request.find(\"GET /health \")!=std::string::npos?\"/health\":\"/missing\");std::string wire=\"HTTP/1.1 \"+std::to_string(response.status)+(response.status==200?\" OK\":\" Not Found\")+\"\\r\\nContent-Length: \"+std::to_string(response.body.size())+\"\\r\\nConnection: close\\r\\n\\r\\n\"+response.body;if(!send_all(peer,wire))errors.fetch_add(1);if(sqlite3_exec(database,(\"INSERT INTO request_metrics VALUES(\"+std::to_string(response.status)+\")\").c_str(),nullptr,nullptr,nullptr)!=SQLITE_OK)errors.fetch_add(1);close(peer);}});std::vector<std::thread> workers;for(int clientIndex=0;clientIndex<clients;++clientIndex)workers.emplace_back([&]{for(int requestIndex=0;requestIndex<requestsPerClient;++requestIndex){int client=socket(AF_INET,SOCK_STREAM,0);if(client<0||connect(client,reinterpret_cast<sockaddr*>(&address),sizeof(address))<0){errors.fetch_add(1);if(client>=0)close(client);continue;}std::string request=\"GET /health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\";if(!send_all(client,request)){errors.fetch_add(1);close(client);continue;}char response[256]{};auto count=read(client,response,sizeof(response));if(count<=0||std::string(response,static_cast<std::size_t>(count)).find(\"HTTP/1.1 200\")!=0)errors.fetch_add(1);close(client);}});for(auto& worker:workers)worker.join();acceptor.join();sqlite3_stmt* statement{};int stored=-1;if(sqlite3_prepare_v2(database,\"SELECT COUNT(*) FROM request_metrics\",-1,&statement,nullptr)==SQLITE_OK&&sqlite3_step(statement)==SQLITE_ROW)stored=sqlite3_column_int(statement,0);sqlite3_finalize(statement);sqlite3_close(database);close(server);std::cout<<\"requests=\"<<total<<\" errors=\"<<errors.load()<<\" stored=\"<<stored<<'\\n';}\n",
+      "service.hpp": "#pragma once\n#include <string>\nstruct Response{int status;std::string body;};\ninline Response route(const std::string& path){return path==\"/health\"?Response{200,\"ok\"}:Response{404,\"not-found\"};}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\nint main(){std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});auto has=[&](const char* value){return text.find(value)!=std::string::npos;};return has(\"build: cmake\")&&has(\"test: loopback-http\")&&has(\"benchmark: concurrent-loopback\")&&has(\"persistence: sqlite-metrics\")&&has(\"retrospective: unknown-route-alert\")?0:1;}\n",
+      "PORTFOLIO.md": "# C++ HTTP Service\n\nbuild: cmake\ntest: loopback-http\nbenchmark: concurrent-loopback\npersistence: sqlite-metrics\nretrospective: unknown-route-alert\n"
+    },
+    "mutations": [
+      {
+        "id": "missing-benchmark",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(cpp_http_service LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(cpp-http-service main.cpp)\nenable_testing()\nadd_executable(http_service_tests tests.cpp)\ntarget_compile_definitions(http_service_tests PRIVATE PORTFOLIO_PATH=\\\"${CMAKE_CURRENT_SOURCE_DIR}/PORTFOLIO.md\\\")\nadd_test(NAME portfolio COMMAND http_service_tests)\ninstall(TARGETS cpp-http-service RUNTIME DESTINATION bin)\n",
+          "main.cpp": "#include <iostream>\n#include <string>\n#include \"service.hpp\"\nint main(){std::string path;std::cin>>path;auto response=route(path);std::cout<<\"status=\"<<response.status<<\" body=\"<<response.body<<'\\n';}\n",
+          "service.hpp": "#pragma once\n#include <string>\nstruct Response{int status;std::string body;};\ninline Response route(const std::string& path){return path==\"/health\"?Response{200,\"ok\"}:Response{404,\"not-found\"};}\n",
+          "tests.cpp": "#include <fstream>\n#include <string>\nint main(){std::ifstream in(PORTFOLIO_PATH);std::string text((std::istreambuf_iterator<char>(in)),{});return text.find(\"benchmark: loopback-baseline\")!=std::string::npos?0:1;}\n",
+          "PORTFOLIO.md": "# C++ HTTP Service\n\nbuild: cmake\ntest: route-contract\nbenchmark: TODO\nretrospective: unknown-route-alert\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "service-release",
+        "type": "network-flow",
+        "fallback": "bind dynamic loopback port -> accept HTTP -> route health -> write SQLite metric -> run concurrent clients -> compare median throughput -> inspect golden signals -> rollback or continue -> retrospective"
+      }
+    ],
+    "printFallback": "画出从纯路由核心到可发布服务工件的验证链。"
+  }
+}

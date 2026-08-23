@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | CJS-001 |
-| Version | 1.0 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Curriculum and Platform Maintainer |
 | Last updated | 2026-08-23 |
@@ -45,13 +45,21 @@ Optional Tracks include advanced templates, coroutines, storage engines, RPC/dis
   "schemaVersion": 1,
   "id": "cpp.references.01",
   "version": 1,
-  "kind": "exercise",
+  "kind": "project-milestone",
   "title": "References are not JavaScript object references",
+  "project": {
+    "id": "modern-cpp-cli",
+    "title": "Modern C++ CLI",
+    "milestone": 1,
+    "milestoneCount": 3,
+    "portfolioOutcome": "A reproducible CLI portfolio artifact."
+  },
   "estimatedMinutes": 35,
   "conceptIds": ["cpp.references.use", "cpp.const.read"],
   "prerequisiteIds": ["cpp.functions.basic"],
   "content": { "lesson": "lesson.md" },
   "workspace": {
+    "persistenceId": "modern-cpp-cli",
     "starter": "starter",
     "editable": ["solution.cpp"]
   },
@@ -68,7 +76,11 @@ Optional Tracks include advanced templates, coroutines, storage engines, RPC/dis
 }
 ```
 
+The `project` object is required only for `project-milestone` Activities. Its ID must match `workspace.persistenceId`; every Project must declare one contiguous Milestone sequence with a stable title, count, and portfolio outcome.
+
 The manifest selects fixed judge capabilities. It cannot embed arbitrary shell commands.
+
+Fixed private-test inputs and expected outputs are not Activity-manifest fields. They live in the server-only `judge-private/tests.json` registry keyed by Activity ID. Catalog activation rejects private values inside `curriculum/`, rejects registry entries for unknown Activities, and validates the internally merged definition before use.
 
 ## 5. Interactive lesson blocks
 
@@ -119,6 +131,8 @@ The initial system Module is POSIX-compatible on the reference macOS environment
 Configures a clean build, builds named targets, executes CTest or integration probes, and verifies regression behavior across Milestones.
 
 The manifest names one application target and one test target using identifiers that cannot be parsed as command options. It cannot provide arbitrary configure/build commands or shell hooks. Reports capture the inspected CMake and CTest version lines.
+
+The optional `runtimeTools` list is a closed capability set: `node`, `git`, and `web-frontend`. The composition root/Judge resolves them respectively to the trusted Node executable, Git executable, and platform-owned Vite/React build-and-mount harness, then injects those absolute paths into CMake through an argument array. Before configure it performs bounded version/fingerprint probes; the immutable report records Node/Git versions and the Web harness SHA-256 plus Vite/React versions. A missing or incompatible declared capability is a system/toolchain failure, not a Learner CTest failure. Activity manifests cannot provide runtime paths, environment-variable names, dependency-install commands, or arbitrary configure arguments. `web-frontend` must validate a pinned `package.json`, perform a production TSX build from the clean Workspace, execute a component mount test, and remove disposable output.
 
 ## 7. Judge pipeline
 
@@ -181,11 +195,12 @@ Long-term target:
 - 20–30 system labs.
 - 4–5 progressive Projects.
 
-Initial validated release:
+Validated Stage 6 release:
 
-- 10–12 Lessons.
-- 15–20 Exercises/Reviews.
-- One progressive Project.
+- 70 Lessons, Exercises, Reviews, and Project Milestones.
+- 5 progressive Projects with 11 persistent Milestones.
+- 10 career Modules, each with a delayed Review: network-service contracts, persistence/query plans, concurrent task queues, production readiness, modern optional/variant/ranges vocabulary, Git/static-analysis/profiling diagnostics, virtual memory/Linux tools, UDP/non-blocking event loops, caching/PostgreSQL boundaries, and deadlock/memory-model reasoning.
+- Final career Project Milestones use clean CMake builds, named targets, CTest, integration inputs, same-machine relative performance checks, Portfolio documentation, and qualitative failure-retrospective rubrics.
 
 Content is expanded only after the platform can lint, judge, migrate, and trace it.
 
@@ -195,4 +210,4 @@ Content is expanded only after the platform can lint, judge, migrate, and trace 
 - Local key-value store or log index.
 - C++ HTTP service with persistence and observability.
 - Thread pool/task queue and failure diagnostics.
-- React/TypeScript front end with C++ service and SQLite/PostgreSQL.
+- React/TypeScript front end with a versioned C++ service boundary and persistence integration.

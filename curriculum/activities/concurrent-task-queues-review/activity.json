@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "concurrent-task-queues-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：选择排空还是取消",
+  "estimatedMinutes": 20,
+  "conceptIds": [
+    "thread-pool-lifecycle",
+    "concurrency-failure-diagnosis",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["concurrent-task-queues"],
+  "objectives": ["根据关闭策略计算最终完成的任务数。"],
+  "victoryConditions": ["drain 完成全部排队任务，cancel 只保留已完成任务。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference concurrency support",
+      "url": "https://en.cppreference.com/w/cpp/thread"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference stop_token",
+      "url": "https://en.cppreference.com/w/cpp/thread/stop_token"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/concurrent-task-queues-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){int completed{},queued{};std::string policy;std::cin>>completed>>queued>>policy;int finalCount=completed;/* TODO */std::cout<<\"completed=\"<<finalCount<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "completed=7\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "drain queue",
+        "stdin": "3 4 drain\n",
+        "expectedStdout": "completed=7\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 10
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "policy-branch",
+        "title": "先识别策略",
+        "kind": "nudge",
+        "content": "只有 drain 会把 queued 加到结果。"
+      },
+      {
+        "id": "truthful-metric",
+        "title": "指标必须描述真实完成",
+        "kind": "concept",
+        "content": "被取消的排队任务不能计入 completed。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "if(policy == \"drain\") finalCount += queued;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "shutdown-tradeoff",
+        "prompt": "在线部署、用户请求和离线批处理三种场景中，何时选择 drain，何时选择 cancel？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "concurrent-task-queues",
+    "teacherRubric": {
+      "id": "shutdown-review-rubric",
+      "prompt": "回答应权衡延迟上限、数据完整性、幂等重试、部署窗口和资源回收。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){int completed{},queued{};std::string policy;std::cin>>completed>>queued>>policy;int finalCount=completed;if(policy==\"drain\")finalCount+=queued;std::cout<<\"completed=\"<<finalCount<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "always-drains",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\nint main(){int completed{},queued{};std::string policy;std::cin>>completed>>queued>>policy;std::cout<<\"completed=\"<<completed+queued<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "shutdown-policy",
+        "type": "algorithm-trace",
+        "fallback": "stop requested -> reject new work -> choose drain or cancel -> update truthful counters -> notify -> join -> report"
+      }
+    ],
+    "printFallback": "比较 drain 与 cancel 两条关闭路径的任务状态和指标。"
+  }
+}

@@ -322,6 +322,14 @@ describe("[T-LEARN-003] explainable Concept transitions", () => {
           state: "demonstrated",
           explanation: expect.stringContaining("independent"),
           supportingEvidenceIds: ["evidence_cmd_grade_1_compile-link-run"],
+          evidence: [
+            expect.objectContaining({
+              evidenceId: "evidence_cmd_grade_1_compile-link-run",
+              activityId: "learning-loop",
+              outcome: "pass",
+              independence: "independent",
+            }),
+          ],
         },
       ],
     });

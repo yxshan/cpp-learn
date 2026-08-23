@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "id": "concurrent-task-queue-m1",
+  "version": 1,
+  "kind": "project-milestone",
+  "title": "Project：并发任务队列 Milestone 1",
+  "project": {
+    "id": "concurrent-task-queue",
+    "title": "并发任务队列",
+    "milestone": 1,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个具有明确任务所有权、线程生命周期、关闭策略、故障诊断和工程发布证据的任务队列。"
+  },
+  "estimatedMinutes": 80,
+  "conceptIds": [
+    "thread-pool-lifecycle",
+    "concurrency-failure-diagnosis",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["concurrent-task-queues"],
+  "objectives": [
+    "实现由固定 worker、受互斥量保护的任务队列、条件变量唤醒和停止接收状态组成的线程池。"
+  ],
+  "victoryConditions": [
+    "四个 worker 排空所有任务、稳定聚合负数，并在 close 后拒绝新任务。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference std::thread",
+      "url": "https://en.cppreference.com/w/cpp/thread/thread"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines CP",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-concurrency"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/concurrent-task-queue-m1/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "concurrent-task-queue",
+    "editablePaths": ["main.cpp", "task_queue.hpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> tasks(n);for(int& value:tasks)std::cin>>value;const auto result=run_tasks(tasks);std::cout<<\"sum=\"<<result.sum<<\" workers=\"<<result.workers<<\" rejected=\"<<result.rejectedAfterClose<<\"\\n\";}\n",
+      "task_queue.hpp": "#pragma once\n#include <cstddef>\n#include <vector>\nstruct TaskQueueResult{long long sum;std::size_t workers;bool rejectedAfterClose;};\ninline TaskQueueResult run_tasks(const std::vector<int>&){return{0,4,false};}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "sum=10 workers=4 rejected=1\n",
+    "timeoutMs": 4000,
+    "buildProfile": {
+      "kind": "direct",
+      "threadSupport": true
+    },
+    "publicTests": [
+      {
+        "name": "parallel sum",
+        "stdin": "4 1 2 3 4\n",
+        "expectedStdout": "sum=10 workers=4 rejected=1\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "atomic-result",
+        "title": "共享结果需要同步",
+        "kind": "nudge",
+        "content": "维护一个受 mutex 保护的 task queue；submit 入队后用 condition_variable 唤醒一个固定 worker。"
+      },
+      {
+        "id": "join-before-load",
+        "title": "先结束线程再读取",
+        "kind": "concept",
+        "content": "close 先停止接收，再 notify_all；worker 只有在队列为空且已停止接收时退出，最后 join 建立完成边界。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "实现 4 个固定 worker、mutex + condition_variable 队列、accepting 状态；close 排空后 join，close 后 submit 返回 false。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "queue-versus-thread",
+        "prompt": "说明固定 worker、队列互斥、条件变量谓词和 close 排空协议分别保护哪个并发不变量。",
+        "required": true
+      }
+    ],
+    "reviewIds": ["concurrent-task-queues-review"],
+    "teacherRubric": {
+      "id": "task-queue-m1-rubric",
+      "prompt": "回答应涉及线程创建成本、有界队列、固定 worker、条件变量、背压和 graceful shutdown。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> tasks(n);for(int& value:tasks)std::cin>>value;const auto result=run_tasks(tasks);std::cout<<\"sum=\"<<result.sum<<\" workers=\"<<result.workers<<\" rejected=\"<<result.rejectedAfterClose<<\"\\n\";}\n",
+      "task_queue.hpp": "#pragma once\n#include <atomic>\n#include <condition_variable>\n#include <cstddef>\n#include <functional>\n#include <mutex>\n#include <queue>\n#include <thread>\n#include <utility>\n#include <vector>\nclass TaskQueue{\n std::mutex mutex_;\n std::condition_variable ready_;\n std::queue<std::function<void()>> tasks_;\n std::vector<std::thread> workers_;\n bool accepting_{true};\n void work(){for(;;){std::function<void()> task;{std::unique_lock lock(mutex_);ready_.wait(lock,[&]{return !accepting_||!tasks_.empty();});if(tasks_.empty())return;task=std::move(tasks_.front());tasks_.pop();}task();}}\npublic:\n explicit TaskQueue(std::size_t count){for(std::size_t index=0;index<count;++index)workers_.emplace_back([this]{work();});}\n TaskQueue(const TaskQueue&)=delete;\n TaskQueue& operator=(const TaskQueue&)=delete;\n bool submit(std::function<void()> task){{std::lock_guard lock(mutex_);if(!accepting_)return false;tasks_.push(std::move(task));}ready_.notify_one();return true;}\n void close(){ {std::lock_guard lock(mutex_);accepting_=false;}ready_.notify_all();for(auto& worker:workers_)if(worker.joinable())worker.join();workers_.clear();}\n std::size_t worker_count()const{return workers_.size();}\n ~TaskQueue(){close();}\n};\nstruct TaskQueueResult{long long sum;std::size_t workers;bool rejectedAfterClose;};\ninline TaskQueueResult run_tasks(const std::vector<int>& tasks){constexpr std::size_t workerCount=4;TaskQueue queue(workerCount);std::atomic<long long> sum{0};for(int value:tasks)queue.submit([&sum,value]{sum.fetch_add(value,std::memory_order_relaxed);});queue.close();const bool rejected=!queue.submit([]{});return{sum.load(std::memory_order_relaxed),workerCount,rejected};}\n"
+    },
+    "mutations": [
+      {
+        "id": "ignores-negative-tasks",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <vector>\n#include \"task_queue.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> tasks(n);for(int& value:tasks)std::cin>>value;const auto result=run_tasks(tasks);std::cout<<\"sum=\"<<result.sum<<\" workers=\"<<result.workers<<\" rejected=\"<<result.rejectedAfterClose<<\"\\n\";}\n",
+          "task_queue.hpp": "#pragma once\n#include <atomic>\n#include <condition_variable>\n#include <cstddef>\n#include <functional>\n#include <mutex>\n#include <queue>\n#include <thread>\n#include <utility>\n#include <vector>\nclass TaskQueue{\n std::mutex mutex_;\n std::condition_variable ready_;\n std::queue<std::function<void()>> tasks_;\n std::vector<std::thread> workers_;\n bool accepting_{true};\n void work(){for(;;){std::function<void()> task;{std::unique_lock lock(mutex_);ready_.wait(lock,[&]{return !accepting_||!tasks_.empty();});if(tasks_.empty())return;task=std::move(tasks_.front());tasks_.pop();}task();}}\npublic:\n explicit TaskQueue(std::size_t count){for(std::size_t index=0;index<count;++index)workers_.emplace_back([this]{work();});}\n TaskQueue(const TaskQueue&)=delete;\n TaskQueue& operator=(const TaskQueue&)=delete;\n bool submit(std::function<void()> task){{std::lock_guard lock(mutex_);if(!accepting_)return false;tasks_.push(std::move(task));}ready_.notify_one();return true;}\n void close(){ {std::lock_guard lock(mutex_);accepting_=false;}ready_.notify_all();for(auto& worker:workers_)if(worker.joinable())worker.join();workers_.clear();}\n std::size_t worker_count()const{return workers_.size();}\n ~TaskQueue(){close();}\n};\nstruct TaskQueueResult{long long sum;std::size_t workers;bool rejectedAfterClose;};\ninline TaskQueueResult run_tasks(const std::vector<int>& tasks){constexpr std::size_t workerCount=4;TaskQueue queue(workerCount);std::atomic<long long> sum{0};for(int value:tasks)queue.submit([&sum,value]{if(value>0)sum.fetch_add(value,std::memory_order_relaxed);});queue.close();const bool rejected=!queue.submit([]{});return{sum.load(std::memory_order_relaxed),workerCount,rejected};}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "task-ownership",
+        "type": "lifetime-timeline",
+        "fallback": "submit owns task -> mutex protects queue -> condition variable wakes fixed worker -> worker pops exactly once -> close stops admission -> queue drains -> workers join -> later submit rejected"
+      }
+    ],
+    "printFallback": "标出任务值、工作线程和聚合结果各自的所有者与销毁时机。"
+  }
+}

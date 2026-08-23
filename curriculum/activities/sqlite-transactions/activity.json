@@ -41,16 +41,15 @@
     "version": 1,
     "expectedStdout": "rows=1\n",
     "timeoutMs": 4000,
-    "buildProfile": { "kind": "direct", "libraries": ["sqlite3"] },
+    "buildProfile": {
+      "kind": "direct",
+      "libraries": ["sqlite3"]
+    },
     "publicTests": [
-      { "name": "committed row", "stdin": "", "expectedStdout": "rows=1\n" }
-    ],
-    "privateTests": [
       {
-        "name": "isolated database",
+        "name": "committed row",
         "stdin": "",
-        "expectedStdout": "rows=1\n",
-        "failureCategory": "each Grade must create and query one committed row in its own database"
+        "expectedStdout": "rows=1\n"
       }
     ]
   },

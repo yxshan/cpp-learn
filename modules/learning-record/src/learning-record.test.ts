@@ -362,7 +362,7 @@ describe("[T-RECORD-002] Stage 3 Evidence projection rebuild", () => {
 });
 
 describe("[T-DATA-001] explicit local backup and restore", () => {
-  it("round-trips learning data and Workspaces through a checksummed archive", async () => {
+  it("round-trips portfolio history while excluding private judge material", async () => {
     const root = await mkdtemp(join(tmpdir(), "cpp-learn-backup-"));
     temporaryRoots.push(root);
     const dataRoot = join(root, "data");
@@ -370,11 +370,48 @@ describe("[T-DATA-001] explicit local backup and restore", () => {
     const outputPath = join(root, "backup.json");
     const record = createJsonlLearningRecord({ dataRoot });
     await record.initialize();
-    await record.append(completedGrade("evt_backup"));
-    await mkdir(join(workspaceRoot, "source-to-program"), { recursive: true });
+    const baseGrade = completedGrade("evt_backup");
+    const projectGrade: AttemptCompletedEvent = {
+      ...baseGrade,
+      activityId: "cpp-http-service-m2",
+      attemptId: "attempt_backup_http",
+      conceptIds: ["http-service-contract", "production-artifact"],
+      report: {
+        ...baseGrade.report,
+        activity: {
+          id: "cpp-http-service-m2",
+          version: 3,
+          judgeVersion: 1,
+        },
+      },
+    };
+    const projectEvidence: LearningRecordEvent = {
+      schemaVersion: 1,
+      eventId: "evt_backup_evidence",
+      type: "evidence.recorded",
+      occurredAt: "2026-08-23T08:00:00.013Z",
+      evidenceId: "evidence_backup_http",
+      conceptId: "http-service-contract",
+      activityId: "cpp-http-service-m2",
+      attemptId: "attempt_backup_http",
+      source: "automated_grade",
+      outcome: "pass",
+      independence: "independent",
+      supportingEventIds: [projectGrade.eventId],
+    };
+    await record.append(projectGrade);
+    await record.append(projectEvidence);
+    await mkdir(join(workspaceRoot, "cpp-http-service"), { recursive: true });
     await writeFile(
-      join(workspaceRoot, "source-to-program", "main.cpp"),
-      "int main() { return 0; }\n",
+      join(workspaceRoot, "cpp-http-service", "PORTFOLIO.md"),
+      "# HTTP service\n\nbuild: clean CMake\ntest: CTest\nbenchmark: loopback baseline\nretrospective: unknown route\n",
+      "utf8",
+    );
+    const privateJudgeRoot = join(root, "judge-private");
+    await mkdir(privateJudgeRoot, { recursive: true });
+    await writeFile(
+      join(privateJudgeRoot, "http-service.json"),
+      "PRIVATE_JUDGE_SENTINEL\n",
       "utf8",
     );
     const archive = createLocalDataArchive({
@@ -384,9 +421,28 @@ describe("[T-DATA-001] explicit local backup and restore", () => {
     });
 
     const exported = await archive.exportTo(outputPath);
+    const serializedArchive = await readFile(outputPath, "utf8");
+    const archiveDocument = JSON.parse(serializedArchive) as {
+      files: { path: string; content: string }[];
+    };
+    const decodedFiles = archiveDocument.files.map((file) => ({
+      path: file.path,
+      content: Buffer.from(file.content, "base64").toString("utf8"),
+    }));
+    const eventHistory = decodedFiles.find(
+      (file) => file.path === "events.jsonl",
+    );
+    expect(decodedFiles.map((file) => file.path)).toContain(
+      "cpp-http-service/PORTFOLIO.md",
+    );
+    expect(eventHistory?.content).toContain("cpp-http-service-m2");
+    expect(eventHistory?.content).toContain("evidence_backup_http");
+    expect(decodedFiles.map((file) => file.content).join("\n")).not.toContain(
+      "PRIVATE_JUDGE_SENTINEL",
+    );
     await writeFile(join(dataRoot, "events.jsonl"), "damaged", "utf8");
     await writeFile(
-      join(workspaceRoot, "source-to-program", "main.cpp"),
+      join(workspaceRoot, "cpp-http-service", "PORTFOLIO.md"),
       "damaged\n",
       "utf8",
     );
@@ -401,16 +457,15 @@ describe("[T-DATA-001] explicit local backup and restore", () => {
       schemaVersion: 1,
       restoredFiles: exported.fileCount,
     });
-    expect(
-      await readFile(
-        join(workspaceRoot, "source-to-program", "main.cpp"),
-        "utf8",
-      ),
-    ).toBe("int main() { return 0; }\n");
+    await expect(
+      readFile(join(workspaceRoot, "cpp-http-service", "PORTFOLIO.md"), "utf8"),
+    ).resolves.toContain("benchmark: loopback baseline");
     const restarted = createJsonlLearningRecord({ dataRoot });
     await restarted.initialize();
-    await expect(restarted.list()).resolves.toEqual([
-      completedGrade("evt_backup"),
+    await expect(restarted.list()).resolves.toEqual([projectGrade]);
+    await expect(restarted.events()).resolves.toEqual([
+      projectGrade,
+      projectEvidence,
     ]);
   });
 

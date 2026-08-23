@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "cache-persistence",
+  "version": 1,
+  "kind": "lesson",
+  "title": "SQLite、PostgreSQL 边界与缓存一致性",
+  "estimatedMinutes": 40,
+  "conceptIds": ["cache-consistency", "persistence-boundaries"],
+  "prerequisiteIds": ["persistence-query-plans"],
+  "objectives": [
+    "用 SQLite prepared statement 实现 read-through cache，并缓存存在与缺失结果。"
+  ],
+  "victoryConditions": [
+    "同一键读取两次只访问数据库一次，缺失结果也不会形成穿透。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "SQLite C interface",
+      "url": "https://www.sqlite.org/c3ref/intro.html"
+    },
+    {
+      "kind": "reference",
+      "title": "PostgreSQL transaction isolation",
+      "url": "https://www.postgresql.org/docs/current/transaction-iso.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cache-persistence/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"TODO\\n\";}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "value=cpp db_queries=1\n",
+    "timeoutMs": 3000,
+    "buildProfile": {
+      "kind": "direct",
+      "libraries": ["sqlite3"]
+    },
+    "publicTests": [
+      {
+        "name": "core behavior",
+        "stdin": "7\n",
+        "expectedStdout": "value=cpp db_queries=1\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "完整实现步骤：打开内存 SQLite 并创建 records；缓存类型使用 unordered_map<int, optional<string>>，因此命中时能区分已有值与已确认缺失；fetch 先查 map，未命中才递增 queries、prepare SELECT、bind key、step 并把行值写入 optional，finalize 后无论 optional 是否有值都执行 cache[key] = result；连续调用 fetch 两次，关闭数据库，再输出第二次结果与实际查询次数。迁移 PostgreSQL 时仍保留这一接口，但要另行定义失效、事务可见性与连接失败策略。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "为什么缺失结果也可能需要缓存？从 SQLite 单进程迁移到 PostgreSQL 服务端时，缓存一致性和故障面会怎样变化？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["cache-persistence-review"],
+    "teacherRubric": {
+      "id": "cache-persistence-rubric",
+      "prompt": "应准确解释 cache-consistency、persistence-boundaries 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <sqlite3.h>\n#include <iostream>\n#include <optional>\n#include <string>\n#include <unordered_map>\nint main(){int id{};std::cin>>id;sqlite3* db=nullptr;sqlite3_open(\":memory:\",&db);sqlite3_exec(db,\"CREATE TABLE records(id INTEGER PRIMARY KEY,value TEXT); INSERT INTO records VALUES(7,'cpp');\",nullptr,nullptr,nullptr);std::unordered_map<int,std::optional<std::string>> cache;int queries=0;auto fetch=[&](int key){if(auto found=cache.find(key);found!=cache.end())return found->second;++queries;sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT value FROM records WHERE id=?\",-1,&statement,nullptr);sqlite3_bind_int(statement,1,key);std::optional<std::string> value;if(sqlite3_step(statement)==SQLITE_ROW)value=std::string(reinterpret_cast<const char*>(sqlite3_column_text(statement,0)));sqlite3_finalize(statement);cache[key]=value;return value;};fetch(id);const auto second=fetch(id);sqlite3_close(db);std::cout<<\"value=\"<<(second?*second:\"missing\")<<\" db_queries=\"<<queries<<\"\\n\";}\n"
+    },
+    "mutations": [
+      {
+        "id": "boundary-regression",
+        "files": {
+          "main.cpp": "#include <sqlite3.h>\n#include <iostream>\n#include <optional>\n#include <string>\n#include <unordered_map>\nint main(){int id{};std::cin>>id;sqlite3* db=nullptr;sqlite3_open(\":memory:\",&db);sqlite3_exec(db,\"CREATE TABLE records(id INTEGER PRIMARY KEY,value TEXT); INSERT INTO records VALUES(7,'cpp');\",nullptr,nullptr,nullptr);std::unordered_map<int,std::optional<std::string>> cache;int queries=0;auto fetch=[&](int key){if(auto found=cache.find(key);found!=cache.end())return found->second;++queries;sqlite3_stmt* statement=nullptr;sqlite3_prepare_v2(db,\"SELECT value FROM records WHERE id=?\",-1,&statement,nullptr);sqlite3_bind_int(statement,1,key);std::optional<std::string> value;if(sqlite3_step(statement)==SQLITE_ROW)value=std::string(reinterpret_cast<const char*>(sqlite3_column_text(statement,0)));sqlite3_finalize(statement);if(value)cache[key]=value;return value;};fetch(id);const auto second=fetch(id);sqlite3_close(db);std::cout<<\"value=\"<<(second?*second:\"missing\")<<\" db_queries=\"<<queries<<\"\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "cache-persistence-trace",
+        "type": "lifetime-timeline",
+        "fallback": "cache lookup -> miss -> prepared SQLite query -> optional value or missing -> cache both outcomes -> second lookup hits -> choose invalidation policy"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

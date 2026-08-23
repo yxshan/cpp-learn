@@ -36,14 +36,10 @@
     "expectedStdout": "4\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "average", "stdin": "3 4 5\n", "expectedStdout": "4\n" }
-    ],
-    "privateTests": [
       {
-        "name": "signed average",
-        "stdin": "-3 0 3\n",
-        "expectedStdout": "0\n",
-        "failureCategory": "average must use every signed input"
+        "name": "average",
+        "stdin": "3 4 5\n",
+        "expectedStdout": "4\n"
       }
     ]
   },

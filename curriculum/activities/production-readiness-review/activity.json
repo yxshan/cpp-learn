@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "production-readiness-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：从发布指标选择止损动作",
+  "estimatedMinutes": 25,
+  "conceptIds": [
+    "load-testing",
+    "observability-incident-response",
+    "deployment-contracts",
+    "interview-system-design",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["production-readiness"],
+  "objectives": ["根据发布后的错误增量选择 continue 或 rollback。"],
+  "victoryConditions": ["错误数上升时 rollback，稳定时 continue。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "Google SRE monitoring principles",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/"
+    },
+    {
+      "kind": "reference",
+      "title": "CMake testing with CTest",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/Testing%20and%20CTest.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/production-readiness-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){int before{},after{};std::cin>>before>>after;const char* action=\"continue\";/* TODO */std::cout<<\"action=\"<<action<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "action=rollback\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "regressed release",
+        "stdin": "2 12\n",
+        "expectedStdout": "action=rollback\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 14,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "compare-baseline",
+        "title": "与基线比较",
+        "kind": "nudge",
+        "content": "判断 after 是否高于 before。"
+      },
+      {
+        "id": "reversible-action",
+        "title": "先选可逆止损",
+        "kind": "concept",
+        "content": "发布后明显回归时，先恢复已知稳定版本再继续诊断。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "action = after > before ? \"rollback\" : \"continue\";"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "incident-interview",
+        "prompt": "面试中如何用需求、容量估算、瓶颈、可观测性、故障模式和权衡解释一个 C++ Web 服务设计？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "production-readiness",
+    "teacherRubric": {
+      "id": "production-review-rubric",
+      "prompt": "回答应形成结构化设计叙事，包含假设、接口、数据、并发、容量、故障与演进，而非只罗列技术名词。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint main(){int before{},after{};std::cin>>before>>after;const char* action=after>before?\"rollback\":\"continue\";std::cout<<\"action=\"<<action<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "always-rolls-back",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){int before{},after{};std::cin>>before>>after;std::cout<<\"action=rollback\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "release-decision",
+        "type": "algorithm-trace",
+        "fallback": "known baseline -> canary -> compare correctness and golden signals -> continue when stable or rollback on regression -> preserve evidence -> diagnose"
+      }
+    ],
+    "printFallback": "写出一次 canary 发布的进入条件、继续条件和回滚条件。"
+  }
+}

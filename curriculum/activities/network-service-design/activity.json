@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "network-service-design",
+  "version": 1,
+  "kind": "lesson",
+  "title": "服务协议边界、消息帧与背压",
+  "estimatedMinutes": 40,
+  "conceptIds": ["tcp-framing-backpressure", "http-service-contract"],
+  "prerequisiteIds": ["loopback-http", "complexity-growth-check"],
+  "objectives": [
+    "把字节流、消息边界、HTTP 语义和资源上限组合为可验证的服务契约。"
+  ],
+  "victoryConditions": [
+    "程序仅在声明长度与载荷长度一致且不超过上限时接受消息。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "RFC 9112: HTTP/1.1 message framing",
+      "url": "https://www.rfc-editor.org/rfc/rfc9112.html"
+    },
+    {
+      "kind": "reference",
+      "title": "RFC 9110: HTTP semantics",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/network-service-design/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::size_t declared{};std::string payload;std::cin>>declared>>payload;bool accepted=false;/* TODO: validate frame */std::cout<<(accepted?\"accepted\":\"rejected\")<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "accepted\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "complete frame",
+        "stdin": "4 ping\n",
+        "expectedStdout": "accepted\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 5
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "compare-length",
+        "title": "先验证边界",
+        "kind": "nudge",
+        "content": "比较声明长度和实际载荷长度，再考虑业务内容。"
+      },
+      {
+        "id": "bound-memory",
+        "title": "把资源上限写进契约",
+        "kind": "concept",
+        "content": "即使长度一致，也要拒绝超过服务允许上限的消息。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "accepted = declared == payload.size() && declared <= 16;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "stream-versus-message",
+        "prompt": "为什么 TCP 提供可靠字节流仍不足以定义一条完整业务消息？背压应该限制什么？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["network-service-design-review"],
+    "teacherRubric": {
+      "id": "network-boundary-rubric",
+      "prompt": "回答应区分字节流与消息帧，并涉及长度边界、内存上限、慢客户端与错误处理。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::size_t declared{};std::string payload;std::cin>>declared>>payload;bool accepted=declared==payload.size()&&declared<=16;std::cout<<(accepted?\"accepted\":\"rejected\")<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "trusts-declared-length",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::size_t declared{};std::string payload;std::cin>>declared>>payload;std::cout<<(declared<=16?\"accepted\":\"rejected\")<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "framing-flow",
+        "type": "network-flow",
+        "fallback": "socket bytes -> parse declared length -> enforce service limit -> wait for complete payload -> dispatch handler -> bounded response"
+      }
+    ],
+    "printFallback": "画出从无边界字节流到有上限业务消息的解析状态机。"
+  }
+}

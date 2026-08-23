@@ -36,14 +36,10 @@
     "expectedStdout": "45\n",
     "timeoutMs": 5000,
     "publicTests": [
-      { "name": "small sum", "stdin": "10\n", "expectedStdout": "45\n" }
-    ],
-    "privateTests": [
       {
-        "name": "independent functional sum",
-        "stdin": "11\n",
-        "expectedStdout": "55\n",
-        "failureCategory": "the optimized implementation must preserve the arithmetic-series result"
+        "name": "small sum",
+        "stdin": "10\n",
+        "expectedStdout": "45\n"
       }
     ],
     "performanceCheck": {

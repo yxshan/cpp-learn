@@ -41,14 +41,6 @@
         "stdin": "",
         "expectedStdout": "status=200\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "response boundary verification",
-        "stdin": "",
-        "expectedStdout": "status=200\n",
-        "failureCategory": "protocol-boundary"
-      }
     ]
   },
   "evidencePolicy": {

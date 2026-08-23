@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "id": "cpp-http-service-m1",
+  "version": 1,
+  "kind": "project-milestone",
+  "title": "Project：C++ HTTP 服务 Milestone 1",
+  "project": {
+    "id": "cpp-http-service",
+    "title": "C++ HTTP 服务",
+    "milestone": 1,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个绑定动态 loopback 端口、承受并发请求、用 SQLite 保留请求指标并具备可回滚发布证据的 C++ HTTP 服务。"
+  },
+  "estimatedMinutes": 75,
+  "conceptIds": ["http-service-contract", "production-artifact"],
+  "prerequisiteIds": ["network-service-design"],
+  "objectives": ["把健康检查与未找到响应封装为独立服务核心。"],
+  "victoryConditions": [
+    "/health 返回 200 和 ok，未知路径返回 404 和 not-found。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "RFC 9110 HTTP semantics",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html"
+    },
+    {
+      "kind": "reference",
+      "title": "RFC 9112 HTTP/1.1",
+      "url": "https://www.rfc-editor.org/rfc/rfc9112.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cpp-http-service-m1/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "cpp-http-service",
+    "editablePaths": ["main.cpp", "service.hpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"service.hpp\"\nint main(){std::string path;std::cin>>path;Response response=route(path);std::cout<<\"status=\"<<response.status<<\" body=\"<<response.body<<'\\n';}\n",
+      "service.hpp": "#pragma once\n#include <string>\nstruct Response{int status;std::string body;};\ninline Response route(const std::string&){return {500,\"todo\"};}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "status=200 body=ok\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "health contract",
+        "stdin": "/health\n",
+        "expectedStdout": "status=200 body=ok\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "health-branch",
+        "title": "先实现健康检查",
+        "kind": "nudge",
+        "content": "精确匹配 /health，并返回成功状态。"
+      },
+      {
+        "id": "stable-fallback",
+        "title": "未知资源使用稳定失败",
+        "kind": "concept",
+        "content": "默认响应应是 404，而不是异常或成功空体。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "return path == \"/health\" ? Response{200,\"ok\"} : Response{404,\"not-found\"};"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "service-seams",
+        "prompt": "为什么先把 route 写成纯函数，再接 loopback socket，会更容易测试协议、业务和资源生命周期？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["network-service-design-review"],
+    "teacherRubric": {
+      "id": "http-service-m1-rubric",
+      "prompt": "回答应区分传输适配器、路由/业务核心、响应契约和系统资源清理。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"service.hpp\"\nint main(){std::string path;std::cin>>path;Response response=route(path);std::cout<<\"status=\"<<response.status<<\" body=\"<<response.body<<'\\n';}\n",
+      "service.hpp": "#pragma once\n#include <string>\nstruct Response{int status;std::string body;};\ninline Response route(const std::string& path){return path==\"/health\"?Response{200,\"ok\"}:Response{404,\"not-found\"};}\n"
+    },
+    "mutations": [
+      {
+        "id": "unknown-is-success",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\n#include \"service.hpp\"\nint main(){std::string path;std::cin>>path;auto response=route(path);std::cout<<\"status=\"<<response.status<<\" body=\"<<response.body<<'\\n';}\n",
+          "service.hpp": "#pragma once\n#include <string>\nstruct Response{int status;std::string body;};\ninline Response route(const std::string&){return {200,\"ok\"};}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "service-seams",
+        "type": "network-flow",
+        "fallback": "socket adapter -> parsed path -> pure route core -> response value -> HTTP serializer -> metrics -> connection close"
+      }
+    ],
+    "printFallback": "画出传输适配器与纯路由核心的依赖方向。"
+  }
+}

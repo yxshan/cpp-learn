@@ -22,7 +22,16 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
       name: /Project：CLI 数据管理器 Milestone 3/,
     }),
   ).toBeVisible();
-  await expect(page.getByText("阶段 05 · 算法与系统")).toBeVisible();
+  await expect(page.getByText("阶段 06 · 职业项目路径")).toBeVisible();
+  await expect(page.getByText("70 个学习活动")).toBeVisible();
+  const projects = page.locator("#projects");
+  await expect(
+    projects.getByRole("heading", { name: "工程项目作品集" }),
+  ).toBeVisible();
+  await expect(projects.locator(".project-card")).toHaveCount(5);
+  await expect(
+    projects.getByRole("heading", { name: "Web 与 C++ 服务契约" }),
+  ).toBeVisible();
 
   await page.getByRole("button", { name: "开始第一课" }).click();
   await expect(page).toHaveURL(/activity=source-to-program/);
@@ -210,4 +219,49 @@ test("[T-A11Y-001] critical catalog and lesson navigation works by keyboard", as
   await expect(
     page.getByRole("heading", { name: "延迟复习：编译与运行" }),
   ).toBeVisible();
+});
+
+test("[T-UI-004] Project evidence navigation and interactive traces stay usable on narrow screens", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("link", { name: "项目", exact: true }).click();
+  await expect(
+    page.locator("#projects").getByText("PORTFOLIO / 5 PROGRESSIVE PROJECTS"),
+  ).toBeVisible();
+  const anchorPosition = await page.evaluate(() => ({
+    sectionTop: document.querySelector("#projects")?.getBoundingClientRect()
+      .top,
+    headerBottom: document.querySelector(".sidebar")?.getBoundingClientRect()
+      .bottom,
+    innerWidth: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(anchorPosition.scrollWidth).toBe(anchorPosition.innerWidth);
+  expect(anchorPosition.sectionTop).toBeGreaterThanOrEqual(
+    anchorPosition.headerBottom ?? 0,
+  );
+
+  await page
+    .locator("#projects")
+    .getByRole("button", { name: /本地日志索引 Milestone 1/ })
+    .click();
+  await expect(page).toHaveURL(/activity=local-log-index-m1/);
+  await expect(
+    page.getByRole("heading", { name: "Portfolio Project 2：本地日志索引" }),
+  ).toBeVisible();
+
+  await page.goto("/?activity=network-service-design");
+  const trace = page.locator(".network-trace");
+  await expect(trace.locator(":scope > li")).toHaveCount(6);
+  await expect(trace.locator(":scope > li.current strong")).toHaveText(
+    "socket bytes",
+  );
+  await page.getByRole("button", { name: "下一步", exact: true }).click();
+  await expect(page.getByText("当前步骤 2 / 6")).toBeVisible();
+
+  await page.goto("/?activity=concurrent-task-queues");
+  await expect(page.locator(".lifetime-trace")).toBeVisible();
+  await expect(page.locator(".network-trace")).toHaveCount(0);
 });

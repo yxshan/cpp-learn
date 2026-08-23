@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.5 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -141,3 +141,17 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-UI-001 | Desktop Lesson scrolling keeps `window.scrollY` and editor position fixed; 390-pixel viewport has no document-level horizontal overflow | Passed |
 | T-UI-002 | Playwright edits source, rejects browser Back, verifies the Workspace remains, then accepts Back and returns to overview | Passed |
 | T-UI-003 | Playwright delays an obsolete Activity/Workspace response during rapid next navigation and verifies it cannot replace the current Workspace | Passed |
+
+## 13. Executable Stage 6 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-CONTENT-008 | `modules/curriculum/src/curriculum.test.ts` requires 70 Activities, all Required Track career Modules, 5 coherent Projects, 11 ordered Milestones, Project/Workspace identity agreement, and a relative performance check on every final Project Milestone | Passed |
+| T-JUDGE-007, T-JUDGE-008 | `scripts/check-content.ts` Grades every starter, reference, and mutation through direct or CMake/CTest profiles; all five final Project Milestones also execute same-machine relative performance checks; the Web final performs a clean Vite TSX build and mounts its React component test through the allowlisted harness | Passed |
+| T-CONTENT-009 | Engineering diagnostics CTest executes warnings-as-errors, a disposable two-commit `git bisect run`, and profile/bisect artifact checks; the delayed Review compiles the revised candidate and verifies concrete code-review findings and closure evidence | Passed |
+| T-CONTENT-010 | Curriculum validation enforces two ordered graded hints, a final implementation-specific solution, and private-input/output leak rejection for all Hint tiers | Passed |
+| T-JUDGE-009 | Judge tests bound runtime-tool preflight, persist Node/Git/Web dependency fingerprints, and classify a missing declared tool as `judge_system_error` before configure | Passed |
+| T-E2E-001, T-E2E-004 | `e2e/first-learning-loop.spec.ts` verifies the 70-Activity catalog, five Project cards, Project-to-Workspace navigation, and the existing real Chromium/Clang learning loop | Passed |
+| T-LEARN-002 | `progress.get` returns persisted Evidence with its source Activity ID, and the Project view counts only passing evidence from that Project's Milestones | Passed |
+| T-DATA-001 | `modules/learning-record/src/learning-record.test.ts` round-trips a Project `PORTFOLIO.md` and learning history through a checksummed archive while excluding a private-Judge sentinel outside learner roots | Passed |
+| T-UI-004 | Playwright verifies narrow-screen Project anchor visibility, zero horizontal overflow, Project-to-Workspace navigation, and distinct network/lifetime interactive traces | Passed |

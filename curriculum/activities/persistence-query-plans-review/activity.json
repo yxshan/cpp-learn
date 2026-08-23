@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "persistence-query-plans-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：提交或回滚一组写操作",
+  "estimatedMinutes": 20,
+  "conceptIds": [
+    "sql-index-plans",
+    "transaction-boundaries",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["persistence-query-plans"],
+  "objectives": ["用临时状态模拟事务，使失败批次不污染已提交状态。"],
+  "victoryConditions": ["commit 保留批次和，rollback 丢弃批次和。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "SQLite transaction control",
+      "url": "https://www.sqlite.org/lang_transaction.html"
+    },
+    {
+      "kind": "reference",
+      "title": "PostgreSQL EXPLAIN",
+      "url": "https://www.postgresql.org/docs/current/using-explain.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/persistence-query-plans-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){int n{};std::string action;std::cin>>n;long long pending=0;for(int i=0,value;i<n&&std::cin>>value;++i)pending+=value;std::cin>>action;long long committed=pending;/* TODO rollback */std::cout<<\"value=\"<<committed<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "value=6\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "commit batch",
+        "stdin": "3 1 2 3 commit\n",
+        "expectedStdout": "value=6\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 10
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "separate-state",
+        "title": "区分临时与已提交状态",
+        "kind": "nudge",
+        "content": "批次求和先只存在 pending 中。"
+      },
+      {
+        "id": "commit-condition",
+        "title": "提交是显式边界",
+        "kind": "concept",
+        "content": "只有 action 表示提交时，pending 才能成为 committed。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "把 committed 初始化为 action == \"commit\" ? pending : 0;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "atomic-batch",
+        "prompt": "为什么事务失败后保留部分写入比整批失败更难恢复和推理？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "persistence-query-plans",
+    "teacherRubric": {
+      "id": "transaction-review-rubric",
+      "prompt": "回答应涉及原子性、不变量、重试、幂等性和可观察状态。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){int n{};std::string action;std::cin>>n;long long pending=0;for(int i=0,value;i<n&&std::cin>>value;++i)pending+=value;std::cin>>action;long long committed=action==\"commit\"?pending:0;std::cout<<\"value=\"<<committed<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "always-commits",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\nint main(){int n{},value{};long long sum=0;std::cin>>n;for(int i=0;i<n;++i){std::cin>>value;sum+=value;}std::string action;std::cin>>action;std::cout<<\"value=\"<<sum<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "transaction-state",
+        "type": "lifetime-timeline",
+        "fallback": "begin -> accumulate pending writes -> validate -> commit publishes all or rollback discards all -> next transaction"
+      }
+    ],
+    "printFallback": "分别画出 commit 和 rollback 时 pending 与 committed 的状态变化。"
+  }
+}

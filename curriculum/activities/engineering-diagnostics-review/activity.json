@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "id": "engineering-diagnostics-review",
+  "version": 2,
+  "kind": "review",
+  "title": "延迟复习：性能回归代码审查",
+  "estimatedMinutes": 40,
+  "conceptIds": ["engineering-diagnostics", "profiling-evidence"],
+  "prerequisiteIds": ["engineering-diagnostics"],
+  "objectives": [
+    "对带空输入崩溃、无谓复制和计数偏差的候选实现做可执行 code review，并用测试与 profile 证据关闭意见。"
+  ],
+  "victoryConditions": [
+    "修复候选实现，通过严格告警和空/单元素/常规输入测试，并提交包含三个具体 finding、结论和验证计划的 REVIEW.md。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "Git bisect documentation",
+      "url": "https://git-scm.com/docs/git-bisect"
+    },
+    {
+      "kind": "reference",
+      "title": "Clang-Tidy documentation",
+      "url": "https://clang.llvm.org/extra/clang-tidy/"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/engineering-diagnostics-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": [
+      "CMakeLists.txt",
+      "candidate.hpp",
+      "main.cpp",
+      "tests.cpp",
+      "REVIEW.md"
+    ],
+    "starterFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(code_review_lab LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(engineering-diagnostics-review main.cpp)\ntarget_compile_options(engineering-diagnostics-review PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\nenable_testing()\nadd_executable(engineering-diagnostics-review-tests tests.cpp)\ntarget_compile_options(engineering-diagnostics-review-tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\ntarget_compile_definitions(engineering-diagnostics-review-tests PRIVATE REVIEW_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/REVIEW.md\")\nadd_test(NAME code-review-evidence COMMAND engineering-diagnostics-review-tests)\n",
+      "candidate.hpp": "#pragma once\n#include <optional>\n#include <vector>\nstruct ProfileResult{std::optional<int> minimum;std::size_t comparisons;};\ninline ProfileResult profile_min(std::vector<int> values){int minimum=values.front();std::size_t comparisons=1;for(std::size_t index=1;index<values.size();++index){++comparisons;if(values[index]<minimum)minimum=values[index];}return{minimum,comparisons};}\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"candidate.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> values(static_cast<std::size_t>(n));for(int& value:values)std::cin>>value;const auto result=profile_min(values);std::cout<<\"min=\";if(result.minimum)std::cout<<*result.minimum;else std::cout<<\"none\";std::cout<<\" comparisons=\"<<result.comparisons<<\"\\n\";}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\n#include <vector>\n#include \"candidate.hpp\"\nstd::string read_review(){std::ifstream input(REVIEW_PATH);return{std::istreambuf_iterator<char>(input),{}};}\nint main(){const auto empty=profile_min(std::vector<int>{});const auto single=profile_min(std::vector<int>{8});const auto values=profile_min(std::vector<int>{4,2,7});const auto review=read_review();auto has=[&](const char* value){return review.find(value)!=std::string::npos;};return !empty.minimum&&empty.comparisons==0&&single.minimum==8&&single.comparisons==0&&values.minimum==2&&values.comparisons==2&&has(\"finding-1: empty input dereferences front\")&&has(\"finding-2: vector copied by value\")&&has(\"finding-3: comparison counter starts at one\")&&has(\"decision: request-changes\")&&has(\"test: empty-and-singleton\")&&has(\"profile: remove-input-copy\")?0:1;}\n",
+      "REVIEW.md": "# Code review\n\nTODO\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "min=0 comparisons=4\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "reviewed implementation",
+        "stdin": "5 4 3 2 1 0\n",
+        "expectedStdout": "min=0 comparisons=4\n"
+      }
+    ],
+    "buildProfile": {
+      "kind": "cmake",
+      "target": "engineering-diagnostics-review",
+      "testTarget": "engineering-diagnostics-review-tests",
+      "ctest": true
+    }
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 21
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "将 profile_min 改为接收 span<const int>；先处理 empty 并返回 nullopt/zero；从第二项开始扫描，comparisons 从 zero 递增。REVIEW.md 必须逐条写出 empty front 崩溃、vector 按值复制、计数从 one 开始三个 finding，结论 request-changes，并以 empty-and-singleton 测试和 remove-input-copy profile 作为关闭证据。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "一次合格 code review 如何把 correctness、资源成本、静态分析告警、profile 证据和回归测试关联到具体改动？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "engineering-diagnostics",
+    "teacherRubric": {
+      "id": "engineering-diagnostics-review-rubric",
+      "prompt": "应准确解释 engineering-diagnostics、profiling-evidence 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(code_review_lab LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(engineering-diagnostics-review main.cpp)\ntarget_compile_options(engineering-diagnostics-review PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\nenable_testing()\nadd_executable(engineering-diagnostics-review-tests tests.cpp)\ntarget_compile_options(engineering-diagnostics-review-tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\ntarget_compile_definitions(engineering-diagnostics-review-tests PRIVATE REVIEW_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/REVIEW.md\")\nadd_test(NAME code-review-evidence COMMAND engineering-diagnostics-review-tests)\n",
+      "candidate.hpp": "#pragma once\n#include <optional>\n#include <span>\nstruct ProfileResult{std::optional<int> minimum;std::size_t comparisons;};\ninline ProfileResult profile_min(std::span<const int> values){if(values.empty())return{std::nullopt,0};int minimum=values.front();std::size_t comparisons=0;for(std::size_t index=1;index<values.size();++index){++comparisons;if(values[index]<minimum)minimum=values[index];}return{minimum,comparisons};}\n",
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"candidate.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> values(static_cast<std::size_t>(n));for(int& value:values)std::cin>>value;const auto result=profile_min(values);std::cout<<\"min=\";if(result.minimum)std::cout<<*result.minimum;else std::cout<<\"none\";std::cout<<\" comparisons=\"<<result.comparisons<<\"\\n\";}\n",
+      "tests.cpp": "#include <fstream>\n#include <string>\n#include <vector>\n#include \"candidate.hpp\"\nstd::string read_review(){std::ifstream input(REVIEW_PATH);return{std::istreambuf_iterator<char>(input),{}};}\nint main(){const auto empty=profile_min(std::vector<int>{});const auto single=profile_min(std::vector<int>{8});const auto values=profile_min(std::vector<int>{4,2,7});const auto review=read_review();auto has=[&](const char* value){return review.find(value)!=std::string::npos;};return !empty.minimum&&empty.comparisons==0&&single.minimum==8&&single.comparisons==0&&values.minimum==2&&values.comparisons==2&&has(\"finding-1: empty input dereferences front\")&&has(\"finding-2: vector copied by value\")&&has(\"finding-3: comparison counter starts at one\")&&has(\"decision: request-changes\")&&has(\"test: empty-and-singleton\")&&has(\"profile: remove-input-copy\")?0:1;}\n",
+      "REVIEW.md": "# Code review\n\nfinding-1: empty input dereferences front\nfinding-2: vector copied by value\nfinding-3: comparison counter starts at one\ndecision: request-changes\ntest: empty-and-singleton\nprofile: remove-input-copy\n"
+    },
+    "mutations": [
+      {
+        "id": "review-misses-empty-boundary",
+        "files": {
+          "CMakeLists.txt": "cmake_minimum_required(VERSION 3.20)\nproject(code_review_lab LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nadd_executable(engineering-diagnostics-review main.cpp)\ntarget_compile_options(engineering-diagnostics-review PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\nenable_testing()\nadd_executable(engineering-diagnostics-review-tests tests.cpp)\ntarget_compile_options(engineering-diagnostics-review-tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror)\ntarget_compile_definitions(engineering-diagnostics-review-tests PRIVATE REVIEW_PATH=\"${CMAKE_CURRENT_SOURCE_DIR}/REVIEW.md\")\nadd_test(NAME code-review-evidence COMMAND engineering-diagnostics-review-tests)\n",
+          "candidate.hpp": "#pragma once\n#include <optional>\n#include <vector>\nstruct ProfileResult{std::optional<int> minimum;std::size_t comparisons;};\ninline ProfileResult profile_min(std::vector<int> values){int minimum=values.front();std::size_t comparisons=1;for(std::size_t index=1;index<values.size();++index){++comparisons;if(values[index]<minimum)minimum=values[index];}return{minimum,comparisons};}\n",
+          "main.cpp": "#include <iostream>\n#include <vector>\n#include \"candidate.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> values(static_cast<std::size_t>(n));for(int& value:values)std::cin>>value;const auto result=profile_min(values);std::cout<<\"min=\";if(result.minimum)std::cout<<*result.minimum;else std::cout<<\"none\";std::cout<<\" comparisons=\"<<result.comparisons<<\"\\n\";}\n",
+          "tests.cpp": "#include <fstream>\n#include <string>\n#include <vector>\n#include \"candidate.hpp\"\nstd::string read_review(){std::ifstream input(REVIEW_PATH);return{std::istreambuf_iterator<char>(input),{}};}\nint main(){const auto empty=profile_min(std::vector<int>{});const auto single=profile_min(std::vector<int>{8});const auto values=profile_min(std::vector<int>{4,2,7});const auto review=read_review();auto has=[&](const char* value){return review.find(value)!=std::string::npos;};return !empty.minimum&&empty.comparisons==0&&single.minimum==8&&single.comparisons==0&&values.minimum==2&&values.comparisons==2&&has(\"finding-1: empty input dereferences front\")&&has(\"finding-2: vector copied by value\")&&has(\"finding-3: comparison counter starts at one\")&&has(\"decision: request-changes\")&&has(\"test: empty-and-singleton\")&&has(\"profile: remove-input-copy\")?0:1;}\n",
+          "REVIEW.md": "# Code review\n\nfinding-1: empty input dereferences front\nfinding-2: vector copied by value\nfinding-3: comparison counter starts at one\ndecision: request-changes\ntest: empty-and-singleton\nprofile: remove-input-copy\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "engineering-diagnostics-review-trace",
+        "type": "algorithm-trace",
+        "fallback": "candidate diff -> correctness finding -> cost/profile finding -> warnings-as-errors -> focused regression test -> request changes -> verified revision"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

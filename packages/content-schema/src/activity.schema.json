@@ -31,6 +31,7 @@
       "enum": ["lesson", "exercise", "review", "project-milestone"]
     },
     "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "project": { "$ref": "#/$defs/project" },
     "estimatedMinutes": { "type": "integer", "minimum": 1, "maximum": 480 },
     "conceptIds": {
       "type": "array",
@@ -216,6 +217,35 @@
     }
   },
   "$defs": {
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "milestone",
+        "milestoneCount",
+        "portfolioOutcome"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "milestone": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "milestoneCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "portfolioOutcome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
@@ -415,7 +445,12 @@
               "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.+-]*$",
               "maxLength": 120
             },
-            "ctest": { "type": "boolean" }
+            "ctest": { "type": "boolean" },
+            "runtimeTools": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "enum": ["git", "node", "web-frontend"] }
+            }
           }
         }
       ]

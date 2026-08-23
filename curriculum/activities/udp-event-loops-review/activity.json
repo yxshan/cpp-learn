@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "udp-event-loops-review",
+  "version": 1,
+  "kind": "review",
+  "title": "延迟复习：从可读事件恢复数据报边界",
+  "estimatedMinutes": 25,
+  "conceptIds": ["udp-datagrams", "nonblocking-event-loop"],
+  "prerequisiteIds": ["udp-event-loops"],
+  "objectives": [
+    "在新输入上独立恢复：在动态回环端口发送 UDP 数据报，用非阻塞 socket 与 poll 处理可读事件。"
+  ],
+  "victoryConditions": [
+    "事件循环只在可读后接收一个完整数据报，并报告精确载荷长度。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "POSIX poll",
+      "url": "https://pubs.opengroup.org/onlinepubs/9699919799/functions/poll.html"
+    },
+    {
+      "kind": "reference",
+      "title": "Linux udp manual",
+      "url": "https://man7.org/linux/man-pages/man7/udp.7.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/udp-event-loops-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"TODO\\n\";}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "event=readable bytes=4 payload=ping\n",
+    "timeoutMs": 4000,
+    "publicTests": [
+      {
+        "name": "transfer case",
+        "stdin": "ping\n",
+        "expectedStdout": "event=readable bytes=4 payload=ping\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 21
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "完整实现步骤：创建发送端和接收端两个 AF_INET/SOCK_DGRAM socket；把接收端绑定到 INADDR_LOOPBACK 与动态端口，用 getsockname 取得实际地址；通过 fcntl(F_GETFL/F_SETFL) 加上 O_NONBLOCK；发送端用 sendto 写入整条消息，接收端以 poll 等待 POLLIN，随后只调用一次 recvfrom 读取一个数据报，按返回字节数构造 payload；最后关闭两个描述符并输出 readable、bytes 与 payload。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "UDP 的消息边界解决了什么，又没有解决什么？readiness 与完成一个业务请求有什么区别？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "udp-event-loops",
+    "teacherRubric": {
+      "id": "udp-event-loops-review-rubric",
+      "prompt": "应准确解释 udp-datagrams、nonblocking-event-loop 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <arpa/inet.h>\n#include <fcntl.h>\n#include <netinet/in.h>\n#include <poll.h>\n#include <sys/socket.h>\n#include <unistd.h>\n#include <array>\n#include <iostream>\n#include <string>\nint main(){std::string payload;std::cin>>payload;const int receiver=socket(AF_INET,SOCK_DGRAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;bind(receiver,reinterpret_cast<sockaddr*>(&address),sizeof(address));socklen_t length=sizeof(address);getsockname(receiver,reinterpret_cast<sockaddr*>(&address),&length);fcntl(receiver,F_SETFL,O_NONBLOCK);const int sender=socket(AF_INET,SOCK_DGRAM,0);sendto(sender,payload.data(),payload.size(),0,reinterpret_cast<sockaddr*>(&address),sizeof(address));pollfd event{receiver,POLLIN,0};const int ready=poll(&event,1,1000);std::array<char,128> buffer{};const auto received=ready>0?recvfrom(receiver,buffer.data(),buffer.size(),0,nullptr,nullptr):-1;close(sender);close(receiver);if(received<0){std::cout<<\"event=timeout\\n\";return 0;}std::cout<<\"event=readable bytes=\"<<received<<\" payload=\"<<std::string(buffer.data(),static_cast<std::size_t>(received))<<\"\\n\";}\n"
+    },
+    "mutations": [
+      {
+        "id": "boundary-regression",
+        "files": {
+          "main.cpp": "#include <arpa/inet.h>\n#include <fcntl.h>\n#include <netinet/in.h>\n#include <poll.h>\n#include <sys/socket.h>\n#include <unistd.h>\n#include <array>\n#include <iostream>\n#include <string>\nint main(){std::string payload;std::cin>>payload;const int receiver=socket(AF_INET,SOCK_DGRAM,0);sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);address.sin_port=0;bind(receiver,reinterpret_cast<sockaddr*>(&address),sizeof(address));socklen_t length=sizeof(address);getsockname(receiver,reinterpret_cast<sockaddr*>(&address),&length);fcntl(receiver,F_SETFL,O_NONBLOCK);const int sender=socket(AF_INET,SOCK_DGRAM,0);sendto(sender,payload.data(),payload.size(),0,reinterpret_cast<sockaddr*>(&address),sizeof(address));pollfd event{receiver,POLLIN,0};poll(&event,1,1000);std::array<char,128> buffer{};const auto received=recvfrom(receiver,buffer.data(),buffer.size(),0,nullptr,nullptr);close(sender);close(receiver);const auto reported=payload.size()==4?received:received-1;std::cout<<\"event=readable bytes=\"<<reported<<\" payload=\"<<std::string(buffer.data(),static_cast<std::size_t>(received))<<\"\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "udp-event-loops-review-trace",
+        "type": "network-flow",
+        "fallback": "bind UDP dynamic port -> set O_NONBLOCK -> send one datagram -> poll readiness -> recvfrom one message -> preserve datagram boundary -> return to event loop"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

@@ -7,6 +7,7 @@ import { createNativeJudge } from "@cpp-learn/judge";
 
 const curriculum = createFilesystemCurriculum({
   catalogPath: resolve("curriculum", "catalog.json"),
+  privateJudgePath: resolve("judge-private", "tests.json"),
 });
 const readiness = await curriculum.readiness();
 
@@ -17,7 +18,19 @@ if (!readiness.ready) {
 }
 
 const judge = createNativeJudge();
-const cases = await curriculum.listVerificationCases();
+const activityFlag = process.argv.indexOf("--activity");
+const selectedActivityId =
+  activityFlag >= 0 ? process.argv[activityFlag + 1] : undefined;
+if (activityFlag >= 0 && !selectedActivityId) {
+  throw new Error("--activity requires an Activity identifier");
+}
+const allCases = await curriculum.listVerificationCases();
+const cases = selectedActivityId
+  ? allCases.filter((candidate) => candidate.activity.id === selectedActivityId)
+  : allCases;
+if (selectedActivityId && cases.length === 0) {
+  throw new Error(`Unknown Activity: ${selectedActivityId}`);
+}
 const workspaces = await curriculum.listWorkspaceActivities();
 let mutationCount = 0;
 let starterCount = 0;
@@ -61,8 +74,14 @@ for (const candidate of cases) {
   }
   const reference = await execute("reference", candidate.referenceFiles);
   if (reference.verdict !== "automated_pass") {
+    const diagnostics = reference.stages
+      .map(
+        (stage) =>
+          `${stage.kind}: ${stage.outcome}${stage.feedback ? ` (${stage.feedback})` : ""}`,
+      )
+      .join("\n");
     throw new Error(
-      `Reference solution failed for ${candidate.activity.id}: ${reference.verdict}`,
+      `Reference solution failed for ${candidate.activity.id}: ${reference.verdict}\n${diagnostics}`,
     );
   }
   for (const mutation of candidate.mutations) {

@@ -36,14 +36,10 @@
     "expectedStdout": "9\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "maximum", "stdin": "2 9 4\n", "expectedStdout": "9\n" }
-    ],
-    "privateTests": [
       {
-        "name": "all negative",
-        "stdin": "-5 -2 -8\n",
-        "expectedStdout": "-2\n",
-        "failureCategory": "maximum must work for negative ranges"
+        "name": "maximum",
+        "stdin": "2 9 4\n",
+        "expectedStdout": "9\n"
       }
     ]
   },

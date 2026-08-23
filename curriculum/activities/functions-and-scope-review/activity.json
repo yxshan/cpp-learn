@@ -36,14 +36,10 @@
     "expectedStdout": "27\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "cube", "stdin": "3\n", "expectedStdout": "27\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative cube",
-        "stdin": "-2\n",
-        "expectedStdout": "-8\n",
-        "failureCategory": "cube must preserve the sign"
+        "name": "cube",
+        "stdin": "3\n",
+        "expectedStdout": "27\n"
       }
     ]
   },

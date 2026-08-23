@@ -236,6 +236,9 @@ export interface NativeJudgeDependencies {
   readonly compilerFingerprint?: string;
   readonly cmake?: string;
   readonly ctest?: string;
+  readonly nodeRuntime?: string;
+  readonly gitRuntime?: string;
+  readonly webFrontendHarness?: string;
   readonly inspectTool?: BoundedProcessRunner;
   readonly maxOutputBytes?: number;
 }
@@ -378,6 +381,15 @@ function failedProcessVerdict(
           : undefined;
 }
 
+function failedToolInspectionVerdict(
+  result: BoundedProcessResult,
+): "cancelled" | "judge_system_error" | undefined {
+  if (result.cancelled) return "cancelled";
+  return result.outputLimitExceeded || result.timedOut || result.exitCode !== 0
+    ? "judge_system_error"
+    : undefined;
+}
+
 export function createNativeJudge(
   dependencies: NativeJudgeDependencies = {},
 ): Judge {
@@ -388,6 +400,11 @@ export function createNativeJudge(
   const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
   const cmake = dependencies.cmake ?? "cmake";
   const ctest = dependencies.ctest ?? "ctest";
+  const nodeRuntime = dependencies.nodeRuntime ?? process.execPath;
+  const gitRuntime = dependencies.gitRuntime ?? "/usr/bin/git";
+  const webFrontendHarness =
+    dependencies.webFrontendHarness ??
+    join(process.cwd(), "scripts", "verify-react-project.mjs");
   const inspectTool = dependencies.inspectTool ?? run;
   const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
 
@@ -400,6 +417,9 @@ export function createNativeJudge(
       let executionRoot: string | undefined;
       let cmakeFingerprint: string | undefined;
       let ctestFingerprint: string | undefined;
+      let nodeFingerprint: string | undefined;
+      let gitFingerprint: string | undefined;
+      let webFrontendFingerprint: string | undefined;
       try {
         if (
           request.activity.id !== request.spec.activityId ||
@@ -444,26 +464,85 @@ export function createNativeJudge(
             environment,
             ...cancellation,
           };
-          const [cmakeVersion, ctestVersion] = await Promise.all([
-            inspectTool({
-              ...inspectionRequest,
-              executable: cmake,
-              args: ["--version"],
-            }),
-            inspectTool({
-              ...inspectionRequest,
-              executable: ctest,
-              args: ["--version"],
-            }),
-          ]);
+          const runtimeTools =
+            request.spec.buildProfile.runtimeTools ?? ([] as const);
+          const needsNode =
+            runtimeTools.includes("node") ||
+            runtimeTools.includes("web-frontend");
+          const cmakeInspection = inspectTool({
+            ...inspectionRequest,
+            executable: cmake,
+            args: ["--version"],
+          });
+          const ctestInspection = inspectTool({
+            ...inspectionRequest,
+            executable: ctest,
+            args: ["--version"],
+          });
+          const runtimeInspections = [
+            ...(needsNode
+              ? [
+                  inspectTool({
+                    ...inspectionRequest,
+                    executable: nodeRuntime,
+                    args: ["--version"],
+                  }).then((result) => ({ kind: "node" as const, result })),
+                ]
+              : []),
+            ...(runtimeTools.includes("git")
+              ? [
+                  inspectTool({
+                    ...inspectionRequest,
+                    executable: gitRuntime,
+                    args: ["--version"],
+                  }).then((result) => ({ kind: "git" as const, result })),
+                ]
+              : []),
+            ...(runtimeTools.includes("web-frontend")
+              ? [
+                  inspectTool({
+                    ...inspectionRequest,
+                    executable: nodeRuntime,
+                    args: [webFrontendHarness, "--fingerprint"],
+                  }).then((result) => ({
+                    kind: "web-frontend" as const,
+                    result,
+                  })),
+                ]
+              : []),
+          ];
+          const [cmakeVersion, ctestVersion, inspectedRuntimeTools] =
+            await Promise.all([
+              cmakeInspection,
+              ctestInspection,
+              Promise.all(runtimeInspections),
+            ]);
           cmakeFingerprint = cmakeVersion.stdout.split(/\r?\n/, 1)[0]?.trim();
           ctestFingerprint = ctestVersion.stdout.split(/\r?\n/, 1)[0]?.trim();
+          for (const inspection of inspectedRuntimeTools) {
+            const fingerprint = inspection.result.stdout
+              .split(/\r?\n/, 1)[0]
+              ?.trim();
+            if (inspection.kind === "node") nodeFingerprint = fingerprint;
+            if (inspection.kind === "git") gitFingerprint = fingerprint;
+            if (inspection.kind === "web-frontend")
+              webFrontendFingerprint = fingerprint;
+          }
+          const runtimeInspectionFailure = inspectedRuntimeTools
+            .map(({ result }) => failedToolInspectionVerdict(result))
+            .find((failure) => failure !== undefined);
+          const missingRuntimeFingerprint = inspectedRuntimeTools.some(
+            ({ result }) => !result.stdout.split(/\r?\n/, 1)[0]?.trim(),
+          );
           const inspectionFailure =
-            failedProcessVerdict(cmakeVersion, "judge_system_error") ??
-            failedProcessVerdict(ctestVersion, "judge_system_error") ??
+            failedToolInspectionVerdict(cmakeVersion) ??
+            failedToolInspectionVerdict(ctestVersion) ??
+            runtimeInspectionFailure ??
             (!cmakeFingerprint || !ctestFingerprint
               ? "judge_system_error"
-              : undefined);
+              : missingRuntimeFingerprint
+                ? "judge_system_error"
+                : undefined);
           if (inspectionFailure) {
             verdict = inspectionFailure;
             buildToolsReady = false;
@@ -475,7 +554,7 @@ export function createNativeJudge(
                   : "fail",
                 monotonicClock() - inspectionStarted,
                 undefined,
-                { feedback: "Build-tool version inspection failed." },
+                { feedback: "Declared toolchain inspection failed." },
               ),
             );
           }
@@ -488,7 +567,24 @@ export function createNativeJudge(
           const configureStarted = monotonicClock();
           const configure = await run({
             executable: cmake,
-            args: ["-S", ".", "-B", "build", "-DCMAKE_BUILD_TYPE=Release"],
+            args: [
+              "-S",
+              ".",
+              "-B",
+              "build",
+              "-DCMAKE_BUILD_TYPE=Release",
+              ...(request.spec.buildProfile.runtimeTools?.includes("node")
+                ? [`-DCPP_LEARN_NODE=${nodeRuntime}`]
+                : []),
+              ...(request.spec.buildProfile.runtimeTools?.includes("git")
+                ? [`-DCPP_LEARN_GIT=${gitRuntime}`]
+                : []),
+              ...(request.spec.buildProfile.runtimeTools?.includes(
+                "web-frontend",
+              )
+                ? [`-DCPP_LEARN_WEB_FRONTEND=${webFrontendHarness}`]
+                : []),
+            ],
             cwd: executionRoot,
             timeoutMs: request.spec.timeoutMs,
             maxOutputBytes,
@@ -1032,6 +1128,11 @@ export function createNativeJudge(
                 buildSystem: "cmake/ctest" as const,
                 ...(cmakeFingerprint && ctestFingerprint
                   ? { cmake: cmakeFingerprint, ctest: ctestFingerprint }
+                  : {}),
+                ...(nodeFingerprint ? { node: nodeFingerprint } : {}),
+                ...(gitFingerprint ? { git: gitFingerprint } : {}),
+                ...(webFrontendFingerprint
+                  ? { webFrontend: webFrontendFingerprint }
                   : {}),
               }
             : {}),

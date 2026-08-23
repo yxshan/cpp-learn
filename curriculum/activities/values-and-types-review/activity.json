@@ -36,14 +36,10 @@
     "expectedStdout": "7\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "difference", "stdin": "10 3\n", "expectedStdout": "7\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative difference",
-        "stdin": "2 5\n",
-        "expectedStdout": "-3\n",
-        "failureCategory": "subtraction must preserve operand order"
+        "name": "difference",
+        "stdin": "10 3\n",
+        "expectedStdout": "7\n"
       }
     ]
   },

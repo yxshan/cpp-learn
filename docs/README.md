@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -35,7 +35,8 @@ Read in this order:
 17. [Stage 4 Implementation Report](17-STAGE-4-IMPLEMENTATION-REPORT.md)
 18. [Stage 5 Implementation Report](18-STAGE-5-IMPLEMENTATION-REPORT.md)
 19. [Stage 5.1 Implementation Report](19-STAGE-5.1-IMPLEMENTATION-REPORT.md)
-20. [Domain Context](CONTEXT.md)
+20. [Stage 6 Implementation Report](20-STAGE-6-IMPLEMENTATION-REPORT.md)
+21. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -44,6 +45,7 @@ Core learner references:
 - [Build, Test, and Debug](reference/BUILD_TEST_DEBUG.md)
 - [Deterministic Algorithm Testing](reference/DETERMINISTIC_ALGORITHM_TESTING.md)
 - [Local System Labs](reference/LOCAL_SYSTEM_LABS.md)
+- [Production C++ Service Evidence](reference/PRODUCTION_CPP_SERVICE.md)
 
 ## Architecture decisions
 

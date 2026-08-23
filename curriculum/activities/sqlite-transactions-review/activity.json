@@ -39,16 +39,15 @@
     "version": 1,
     "expectedStdout": "rows=0\n",
     "timeoutMs": 4000,
-    "buildProfile": { "kind": "direct", "libraries": ["sqlite3"] },
+    "buildProfile": {
+      "kind": "direct",
+      "libraries": ["sqlite3"]
+    },
     "publicTests": [
-      { "name": "rolled back row", "stdin": "", "expectedStdout": "rows=0\n" }
-    ],
-    "privateTests": [
       {
-        "name": "rollback state verification",
+        "name": "rolled back row",
         "stdin": "",
-        "expectedStdout": "rows=0\n",
-        "failureCategory": "transaction-state"
+        "expectedStdout": "rows=0\n"
       }
     ]
   },

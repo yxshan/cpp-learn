@@ -36,14 +36,10 @@
     "expectedStdout": "2\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "smaller", "stdin": "8 2\n", "expectedStdout": "2\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative smaller",
-        "stdin": "-3 4\n",
-        "expectedStdout": "-3\n",
-        "failureCategory": "comparison must preserve signed ordering"
+        "name": "smaller",
+        "stdin": "8 2\n",
+        "expectedStdout": "2\n"
       }
     ]
   },

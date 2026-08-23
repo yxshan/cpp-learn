@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "id": "production-readiness",
+  "version": 1,
+  "kind": "lesson",
+  "title": "负载测试、可观测性与可回滚部署",
+  "estimatedMinutes": 45,
+  "conceptIds": [
+    "load-testing",
+    "observability-incident-response",
+    "deployment-contracts",
+    "interview-system-design"
+  ],
+  "prerequisiteIds": [
+    "network-service-design",
+    "persistence-query-plans",
+    "concurrent-task-queues"
+  ],
+  "objectives": [
+    "用明确分母计算错误率，并把负载、指标、发布与事故响应连接成闭环。"
+  ],
+  "victoryConditions": ["错误率达到百分之一时触发 alert，低于阈值时保持 ok。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "Google SRE: Monitoring Distributed Systems",
+      "url": "https://sre.google/sre-book/monitoring-distributed-systems/"
+    },
+    {
+      "kind": "reference",
+      "title": "CMake install command",
+      "url": "https://cmake.org/cmake/help/latest/command/install.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/production-readiness/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){long long requests{},errors{};std::cin>>requests>>errors;bool alert=false;/* TODO: avoid integer division */std::cout<<(alert?\"alert\":\"ok\")<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "alert\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "one percent errors",
+        "stdin": "1000 10\n",
+        "expectedStdout": "alert\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "cross-multiply",
+        "title": "避免整数除法丢精度",
+        "kind": "nudge",
+        "content": "比较 errors 乘一百与 requests，而不是先做整除。"
+      },
+      {
+        "id": "valid-denominator",
+        "title": "先验证指标分母",
+        "kind": "concept",
+        "content": "没有请求时错误率没有业务意义，应保持非告警。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "alert = requests > 0 && errors * 100 >= requests;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "release-loop",
+        "prompt": "请把一次可回滚发布串成：基线、负载、四个黄金信号、告警、止损、根因与复盘。",
+        "required": true
+      }
+    ],
+    "reviewIds": ["production-readiness-review"],
+    "teacherRubric": {
+      "id": "production-readiness-rubric",
+      "prompt": "回答应涉及流量、延迟、错误、饱和度，区分症状与原因，并给出回滚触发条件和无责复盘产物。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\nint main(){long long requests{},errors{};std::cin>>requests>>errors;bool alert=requests>0&&errors*100>=requests;std::cout<<(alert?\"alert\":\"ok\")<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "rounds-error-rate",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main(){long long requests{},errors{};std::cin>>requests>>errors;bool alert=requests>0&&errors*1000/requests>=9;std::cout<<(alert?\"alert\":\"ok\")<<'\\n';}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "incident-loop",
+        "type": "algorithm-trace",
+        "fallback": "baseline -> bounded load -> traffic latency errors saturation -> alert -> mitigate or rollback -> diagnose -> retrospective -> new regression test"
+      }
+    ],
+    "printFallback": "画出从发布到告警、止损、根因分析和回归测试的反馈环。"
+  }
+}

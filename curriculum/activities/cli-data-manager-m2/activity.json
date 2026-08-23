@@ -1,9 +1,16 @@
 {
   "schemaVersion": 1,
   "id": "cli-data-manager-m2",
-  "version": 2,
+  "version": 3,
   "kind": "project-milestone",
   "title": "Project：CLI 数据管理器 Milestone 2",
+  "project": {
+    "id": "cli-data-manager",
+    "title": "现代 C++ CLI 数据管理器",
+    "milestone": 2,
+    "milestoneCount": 3,
+    "portfolioOutcome": "一个具备多文件模型、持久工作区、CMake/CTest、相对写入基准与失败复盘的现代 C++ CLI 项目。"
+  },
   "estimatedMinutes": 75,
   "conceptIds": ["cpp-classes", "cpp-stl-containers", "cpp-multi-file"],
   "prerequisiteIds": ["cli-data-manager-m1"],
@@ -51,14 +58,6 @@
         "name": "one record",
         "stdin": "alice 42\n",
         "expectedStdout": "size=1\n"
-      }
-    ],
-    "privateTests": [
-      {
-        "name": "stable store",
-        "stdin": "bob -3\n",
-        "expectedStdout": "size=1\n",
-        "failureCategory": "store size must reflect inserted records"
       }
     ]
   },

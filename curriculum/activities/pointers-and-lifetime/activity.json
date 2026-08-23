@@ -36,14 +36,10 @@
     "expectedStdout": "42\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "increment", "stdin": "41\n", "expectedStdout": "42\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative increment",
-        "stdin": "-2\n",
-        "expectedStdout": "-1\n",
-        "failureCategory": "pointer operation must use the input object"
+        "name": "increment",
+        "stdin": "41\n",
+        "expectedStdout": "42\n"
       }
     ],
     "sanitizers": ["address", "undefined"]

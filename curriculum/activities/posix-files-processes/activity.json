@@ -36,14 +36,10 @@
     "expectedStdout": "bytes=9\n",
     "timeoutMs": 3000,
     "publicTests": [
-      { "name": "managed child", "stdin": "", "expectedStdout": "bytes=9\n" }
-    ],
-    "privateTests": [
       {
-        "name": "repeatable cleanup",
+        "name": "managed child",
         "stdin": "",
-        "expectedStdout": "bytes=9\n",
-        "failureCategory": "file and child lifecycle must be deterministic"
+        "expectedStdout": "bytes=9\n"
       }
     ]
   },

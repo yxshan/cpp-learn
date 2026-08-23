@@ -36,14 +36,10 @@
     "expectedStdout": "11\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "move owner", "stdin": "11\n", "expectedStdout": "11\n" }
-    ],
-    "privateTests": [
       {
-        "name": "zero value",
-        "stdin": "0\n",
-        "expectedStdout": "0\n",
-        "failureCategory": "moved owner must preserve the object"
+        "name": "move owner",
+        "stdin": "11\n",
+        "expectedStdout": "11\n"
       }
     ]
   },

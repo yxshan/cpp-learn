@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -149,6 +149,8 @@ Acceptance:
 - The complete real-browser learning loop still passes with no browser errors.
 
 ## 9. Stage 6: Career track completion
+
+**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 6 Implementation Report](20-STAGE-6-IMPLEMENTATION-REPORT.md).
 
 Deliver:
 

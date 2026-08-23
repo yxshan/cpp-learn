@@ -42,14 +42,6 @@
         "expectedStdout": "Build first, run second.\n"
       }
     ],
-    "privateTests": [
-      {
-        "name": "stable review execution",
-        "stdin": "",
-        "expectedStdout": "Build first, run second.\n",
-        "failureCategory": "review output is not stable"
-      }
-    ],
     "sanitizers": ["address", "undefined"]
   },
   "evidencePolicy": {

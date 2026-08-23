@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "id": "local-log-index-m1",
+  "version": 1,
+  "kind": "project-milestone",
+  "title": "Project：本地日志索引 Milestone 1",
+  "project": {
+    "id": "local-log-index",
+    "title": "本地日志索引",
+    "milestone": 1,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个具备查询模型、可复现构建、测试、基准计划与故障复盘的本地日志分析工具。"
+  },
+  "estimatedMinutes": 70,
+  "conceptIds": ["sql-index-plans", "production-artifact"],
+  "prerequisiteIds": ["persistence-query-plans"],
+  "objectives": ["建立日志状态码模型，并在线性扫描中得到可验证的错误计数。"],
+  "victoryConditions": ["读取状态码序列并输出 5xx 数量。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "RFC 9110 status codes",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html"
+    },
+    {
+      "kind": "reference",
+      "title": "SQLite Query Planning",
+      "url": "https://www.sqlite.org/queryplanner.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/local-log-index-m1/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "local-log-index",
+    "editablePaths": ["main.cpp", "log_index.hpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"log_index.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> codes(n);for(int& code:codes)std::cin>>code;std::cout<<\"errors=\"<<count_server_errors(codes)<<'\\n';}\n",
+      "log_index.hpp": "#pragma once\n#include <vector>\ninline int count_server_errors(const std::vector<int>& codes){return 0;}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "errors=2\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "mixed statuses",
+        "stdin": "5 200 500 503 404 201\n",
+        "expectedStdout": "errors=2\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "status-range",
+        "title": "先写分类谓词",
+        "kind": "nudge",
+        "content": "服务器错误从 500 开始，在 600 之前结束。"
+      },
+      {
+        "id": "single-pass",
+        "title": "一次扫描即可",
+        "kind": "concept",
+        "content": "遍历 codes，并只在谓词成立时增加计数。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "for(int code:codes) if(code>=500&&code<600) ++count; return count;"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "index-evolution",
+        "prompt": "如果日志从内存向量增长到百万行文件或 SQLite 表，你会怎样保持同一查询契约并替换访问路径？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["persistence-query-plans-review"],
+    "teacherRubric": {
+      "id": "log-index-m1-rubric",
+      "prompt": "回答应区分稳定查询接口与可替换存储/索引实现，并提到数据规模和测量。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <vector>\n#include \"log_index.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> codes(n);for(int& code:codes)std::cin>>code;std::cout<<\"errors=\"<<count_server_errors(codes)<<'\\n';}\n",
+      "log_index.hpp": "#pragma once\n#include <vector>\ninline int count_server_errors(const std::vector<int>& codes){int count=0;for(int code:codes)if(code>=500&&code<600)++count;return count;}\n"
+    },
+    "mutations": [
+      {
+        "id": "counts-all-failures",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <vector>\n#include \"log_index.hpp\"\nint main(){int n{};std::cin>>n;std::vector<int> codes(n);for(int& code:codes)std::cin>>code;std::cout<<\"errors=\"<<count_server_errors(codes)<<'\\n';}\n",
+          "log_index.hpp": "#pragma once\n#include <vector>\ninline int count_server_errors(const std::vector<int>& codes){int count=0;for(int code:codes)if(code>=400)++count;return count;}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "log-index-pipeline",
+        "type": "algorithm-trace",
+        "fallback": "raw status lines -> parse records -> classify 5xx -> aggregate count -> later replace scan with persistent index"
+      }
+    ],
+    "printFallback": "画出查询接口保持不变而存储和访问路径逐步演进的边界。"
+  }
+}

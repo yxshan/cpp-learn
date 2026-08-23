@@ -1123,6 +1123,7 @@ export function createLearningPlatform(
               version: activity.version,
               kind: activity.kind,
               title: activity.title,
+              ...(activity.project ? { project: activity.project } : {}),
               estimatedMinutes: activity.estimatedMinutes,
               conceptIds: activity.conceptIds,
               prerequisiteIds: activity.prerequisiteIds ?? [],
@@ -1177,6 +1178,10 @@ export function createLearningPlatform(
         case "concept.get": {
           const concepts = await conceptProjection();
           const reviews = await reviewProjection();
+          const evidence = (await learningEvents()).filter(
+            (event): event is EvidenceRecordedEvent =>
+              event.type === "evidence.recorded",
+          );
           const entries = [...concepts.entries()]
             .filter(
               ([conceptId]) =>
@@ -1187,9 +1192,22 @@ export function createLearningPlatform(
               const nextReview = reviews.find(
                 (review) => review.conceptId === conceptId,
               );
+              const conceptEvidence = evidence
+                .filter((event) => event.conceptId === conceptId)
+                .map((event) => ({
+                  evidenceId: event.evidenceId,
+                  activityId: event.activityId,
+                  occurredAt: event.occurredAt,
+                  source: event.source,
+                  outcome: event.outcome,
+                  independence: event.independence,
+                }));
               return {
                 conceptId,
                 ...value,
+                ...(conceptEvidence.length > 0
+                  ? { evidence: conceptEvidence }
+                  : {}),
                 ...(nextReview ? { nextReviewAt: nextReview.dueAt } : {}),
               };
             });

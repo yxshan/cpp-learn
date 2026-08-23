@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "memory-model-deadlocks",
+  "version": 1,
+  "kind": "lesson",
+  "title": "死锁、原子顺序与内存模型",
+  "estimatedMinutes": 40,
+  "conceptIds": ["deadlock-prevention", "cpp-memory-model"],
+  "prerequisiteIds": ["concurrent-task-queues"],
+  "objectives": [
+    "用 scoped_lock 一次获取多把锁，并用 release/acquire 发布启动状态。"
+  ],
+  "victoryConditions": ["相反方向并发转账不会死锁，守恒总额与完成计数稳定。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "cppreference memory order",
+      "url": "https://en.cppreference.com/w/cpp/atomic/memory_order"
+    },
+    {
+      "kind": "reference",
+      "title": "C++ Core Guidelines CP.21",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rconc-lock"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/memory-model-deadlocks/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\nint main(){std::cout<<\"TODO\\n\";}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "total=200 completed=8\n",
+    "timeoutMs": 3000,
+    "buildProfile": {
+      "kind": "direct",
+      "threadSupport": true
+    },
+    "publicTests": [
+      {
+        "name": "core behavior",
+        "stdin": "4\n",
+        "expectedStdout": "total=200 completed=8\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "locate-invariant",
+        "title": "先找不变量",
+        "kind": "nudge",
+        "content": "先写出输入、状态所有者和必须保持的结果，再定位对应标准库或系统接口。"
+      },
+      {
+        "id": "separate-mechanism-policy",
+        "title": "区分机制与策略",
+        "kind": "concept",
+        "content": "接口只提供同步或表达机制；边界、失效、错误与资源上限仍由程序定义。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "完整实现步骤：把两个余额及各自 mutex 放进 Account；主线程用 release store 发布启动状态，worker 用 acquire load 观察；每次转账以同一个 scoped_lock 同时持有两个 mutex，检查余额后成对扣减/增加，绝不在只持有一把锁时等待另一把；完成后用 relaxed fetch_add 更新只用于计数的原子量；启动两条线程、join 后在锁保护下求总额并输出 total/completed。release/acquire 负责启动发布，余额一致性由 mutex 负责，relaxed 只承担统计。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "explain-transfer",
+        "prompt": "描述一个锁顺序反转形成的等待环，并解释 release/acquire 与 relaxed 计数分别保证什么。",
+        "required": true
+      }
+    ],
+    "reviewIds": ["memory-model-deadlocks-review"],
+    "teacherRubric": {
+      "id": "memory-model-deadlocks-rubric",
+      "prompt": "应准确解释 deadlock-prevention、cpp-memory-model 的不变量、故障边界和验证证据。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <atomic>\n#include <iostream>\n#include <mutex>\n#include <thread>\nint main(){int iterations{};std::cin>>iterations;int left=100;int right=100;std::mutex leftMutex;std::mutex rightMutex;std::atomic<bool> start{false};std::atomic<int> completed{0};auto transfer=[&](bool forward){while(!start.load(std::memory_order_acquire))std::this_thread::yield();for(int index=0;index<iterations;++index){std::scoped_lock lock(leftMutex,rightMutex);if(forward&&left>0){--left;++right;}else if(!forward&&right>0){--right;++left;}completed.fetch_add(1,std::memory_order_relaxed);}};std::thread first(transfer,true);std::thread second(transfer,false);start.store(true,std::memory_order_release);first.join();second.join();std::cout<<\"total=\"<<left+right<<\" completed=\"<<completed.load()<<\"\\n\";}\n"
+    },
+    "mutations": [
+      {
+        "id": "boundary-regression",
+        "files": {
+          "main.cpp": "#include <atomic>\n#include <iostream>\n#include <mutex>\n#include <thread>\nint main(){int iterations{};std::cin>>iterations;int left=100;int right=100;std::mutex leftMutex;std::mutex rightMutex;std::atomic<bool> start{false};std::atomic<int> completed{0};auto transfer=[&](bool forward){while(!start.load(std::memory_order_acquire))std::this_thread::yield();for(int index=0;index<iterations;++index){std::scoped_lock lock(leftMutex,rightMutex);if(forward&&left>0){--left;++right;}else if(!forward&&right>0){--right;++left;}}completed.fetch_add(1);};std::thread first(transfer,true);std::thread second(transfer,false);start.store(true,std::memory_order_release);first.join();second.join();std::cout<<\"total=\"<<left+right<<\" completed=\"<<completed.load()<<\"\\n\";}\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "memory-model-deadlocks-trace",
+        "type": "lifetime-timeline",
+        "fallback": "construct shared state -> start workers -> release publish -> acquire observe -> scoped_lock both mutexes -> preserve invariant -> join -> observe atomics"
+      }
+    ],
+    "printFallback": "按顺序标出状态所有者、关键边界、失败路径和最终可观察证据。"
+  }
+}

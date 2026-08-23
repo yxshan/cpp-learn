@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { createFilesystemCurriculum, validateCatalog } from "./index.js";
@@ -180,6 +181,50 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
           path: expect.stringContaining("buildProfile/target"),
           keyword: "pattern",
         }),
+      ]),
+    });
+  });
+
+  it("requires coherent Project metadata for every Project Milestone", () => {
+    const missingMetadata = activity("project-milestone", []);
+    const missingResult = validateCatalog([
+      {
+        ...missingMetadata,
+        kind: "project-milestone",
+        workspace: {
+          ...missingMetadata.workspace,
+          persistenceId: "portfolio-project",
+        },
+      },
+    ]);
+    expect(missingResult).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "project-metadata" }),
+      ]),
+    });
+
+    const mismatchedResult = validateCatalog([
+      {
+        ...missingMetadata,
+        kind: "project-milestone",
+        workspace: {
+          ...missingMetadata.workspace,
+          persistenceId: "portfolio-project",
+        },
+        project: {
+          id: "different-project",
+          title: "Portfolio Project",
+          milestone: 1,
+          milestoneCount: 1,
+          portfolioOutcome: "A reproducible project artifact.",
+        },
+      },
+    ]);
+    expect(mismatchedResult).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ keyword: "project-metadata" }),
       ]),
     });
   });
@@ -543,6 +588,7 @@ describe("[T-CONTENT-006] Stage 4 initial Modern C++ release", () => {
   it("keeps the initial 10 Lessons, 15 Exercises/Reviews, and two Project Milestones available", async () => {
     const curriculum = createFilesystemCurriculum({
       catalogPath: resolve("curriculum", "catalog.json"),
+      privateJudgePath: resolve("judge-private", "tests.json"),
     });
 
     const activities = await curriculum.listActivities();
@@ -567,6 +613,7 @@ describe("[T-CONTENT-007] Stage 5 algorithms and systems release", () => {
   it("keeps generated, performance, CMake, and Project persistence details behind Curriculum interfaces", async () => {
     const curriculum = createFilesystemCurriculum({
       catalogPath: resolve("curriculum", "catalog.json"),
+      privateJudgePath: resolve("judge-private", "tests.json"),
     });
 
     await expect(
@@ -605,7 +652,7 @@ describe("[T-CONTENT-007] Stage 5 algorithms and systems release", () => {
       ),
     ).toBe(true);
     const activities = await curriculum.listActivities();
-    expect(activities).toHaveLength(42);
+    expect(activities.length).toBeGreaterThanOrEqual(42);
     expect(activities).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "hash-index-invariants" }),
@@ -618,5 +665,151 @@ describe("[T-CONTENT-007] Stage 5 algorithms and systems release", () => {
     expect(publicActivities).not.toContain("propertyTests");
     expect(publicActivities).not.toContain("performanceCheck");
     expect(publicActivities).not.toContain("buildProfile");
+  });
+});
+
+describe("[T-CONTENT-008] Stage 6 career-track release", () => {
+  it("keeps private Judge values outside public Activity manifests", async () => {
+    const catalogPath = resolve("curriculum", "catalog.json");
+    const catalog = JSON.parse(await readFile(catalogPath, "utf8")) as {
+      readonly activityManifests: readonly string[];
+    };
+    const manifests = await Promise.all(
+      catalog.activityManifests.map((path) =>
+        readFile(resolve("curriculum", path), "utf8"),
+      ),
+    );
+    expect(manifests.join("\n")).not.toContain('"privateTests"');
+
+    const privateRegistry = await readFile(
+      resolve("judge-private", "tests.json"),
+      "utf8",
+    );
+    expect(privateRegistry).toContain('"source-to-program"');
+    const curriculum = createFilesystemCurriculum({
+      catalogPath,
+      privateJudgePath: resolve("judge-private", "tests.json"),
+    });
+    await expect(curriculum.getJudge("source-to-program")).resolves.toEqual(
+      expect.objectContaining({
+        privateTests: [expect.objectContaining({ name: "stable execution" })],
+      }),
+    );
+  });
+
+  it("publishes five coherent Projects and the complete career curriculum", async () => {
+    const curriculum = createFilesystemCurriculum({
+      catalogPath: resolve("curriculum", "catalog.json"),
+      privateJudgePath: resolve("judge-private", "tests.json"),
+    });
+
+    const activities = await curriculum.listActivities();
+    expect(activities).toHaveLength(70);
+    const milestones = activities.filter(
+      (activity) => activity.kind === "project-milestone",
+    );
+    const projectIds = new Set(
+      milestones.map((activity) => activity.project?.id),
+    );
+    expect(projectIds).toEqual(
+      new Set([
+        "cli-data-manager",
+        "local-log-index",
+        "cpp-http-service",
+        "concurrent-task-queue",
+        "web-service-contract",
+      ]),
+    );
+    expect(milestones).toHaveLength(11);
+    for (const activityId of [
+      "cli-data-manager-m3",
+      "local-log-index-m2",
+      "cpp-http-service-m2",
+      "concurrent-task-queue-m2",
+      "web-service-contract-m2",
+    ]) {
+      expect(
+        (await curriculum.getJudge(activityId))?.performanceCheck,
+      ).toBeDefined();
+    }
+    expect(activities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "network-service-design" }),
+        expect.objectContaining({ id: "persistence-query-plans" }),
+        expect.objectContaining({ id: "concurrent-task-queues" }),
+        expect.objectContaining({ id: "production-readiness" }),
+        expect.objectContaining({ id: "modern-vocabulary" }),
+        expect.objectContaining({ id: "engineering-diagnostics" }),
+        expect.objectContaining({ id: "virtual-memory-tools" }),
+        expect.objectContaining({ id: "udp-event-loops" }),
+        expect.objectContaining({ id: "cache-persistence" }),
+        expect.objectContaining({ id: "memory-model-deadlocks" }),
+      ]),
+    );
+  });
+
+  it("ships executable engineering/Web evidence and substantive final disclosures", async () => {
+    const catalog = JSON.parse(
+      await readFile(resolve("curriculum", "catalog.json"), "utf8"),
+    ) as { readonly activityManifests: readonly string[] };
+    const documents = await Promise.all(
+      catalog.activityManifests.map(async (manifestPath) =>
+        JSON.parse(await readFile(resolve("curriculum", manifestPath), "utf8")),
+      ),
+    );
+    const byId = new Map(
+      documents.map((document) => [document.id as string, document]),
+    );
+    const requiredPairs = [
+      "modern-vocabulary",
+      "modern-vocabulary-review",
+      "engineering-diagnostics",
+      "engineering-diagnostics-review",
+      "virtual-memory-tools",
+      "virtual-memory-tools-review",
+      "udp-event-loops",
+      "udp-event-loops-review",
+      "cache-persistence",
+      "cache-persistence-review",
+      "memory-model-deadlocks",
+      "memory-model-deadlocks-review",
+    ];
+    for (const activityId of requiredPairs) {
+      const solution = byId
+        .get(activityId)
+        ?.learning.hints.find(
+          (hint: { readonly kind: string }) => hint.kind === "solution",
+        );
+      expect(solution?.content.length, activityId).toBeGreaterThan(180);
+      expect(solution?.content, activityId).not.toContain(
+        "使用课程指定的标准接口实现最小闭环",
+      );
+    }
+
+    const diagnostics = byId.get("engineering-diagnostics");
+    expect(diagnostics?.workspace.starterFiles["CMakeLists.txt"]).toContain(
+      "-Werror",
+    );
+    expect(diagnostics?.workspace.starterFiles["git_bisect.cmake"]).toContain(
+      "bisect run",
+    );
+    expect(
+      byId.get("engineering-diagnostics-review")?.workspace.starterFiles[
+        "REVIEW.md"
+      ],
+    ).toContain("TODO");
+
+    const webFinal = byId.get("web-service-contract-m2");
+    expect(webFinal?.workspace.starterFiles).toEqual(
+      expect.objectContaining({
+        "package.json": expect.stringContaining('"vite build"'),
+        "tsconfig.json": expect.stringContaining('"react-jsx"'),
+        "component.test.tsx": expect.stringContaining("renderToStaticMarkup"),
+      }),
+    );
+    expect(webFinal?.judge.buildProfile.runtimeTools).toEqual([
+      "node",
+      "web-frontend",
+    ]);
   });
 });

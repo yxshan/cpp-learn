@@ -45,14 +45,6 @@
         "stdin": "5\n1 2 1 3 2\n",
         "expectedStdout": "unique=3\n"
       }
-    ],
-    "privateTests": [
-      {
-        "name": "one repeated value",
-        "stdin": "4\n7 7 7 7\n",
-        "expectedStdout": "unique=1\n",
-        "failureCategory": "repeated equal values must preserve set uniqueness"
-      }
     ]
   },
   "evidencePolicy": {

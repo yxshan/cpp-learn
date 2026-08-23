@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "id": "web-service-contract-m1",
+  "version": 1,
+  "kind": "project-milestone",
+  "title": "Project：Web 与 C++ 服务契约 Milestone 1",
+  "project": {
+    "id": "web-service-contract",
+    "title": "Web 与 C++ 服务契约",
+    "milestone": 1,
+    "milestoneCount": 2,
+    "portfolioOutcome": "一个包含 React/TypeScript 消费端、运行时解码、版本化 C++ 服务边界、兼容发布说明与故障复盘的全栈项目。"
+  },
+  "estimatedMinutes": 75,
+  "conceptIds": [
+    "http-service-contract",
+    "interview-system-design",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["cpp-http-service-m1", "persistence-query-plans"],
+  "objectives": ["定义前端可稳定消费的版本化文本响应，并区分成功与缺失资源。"],
+  "victoryConditions": [
+    "GET 已有资源返回 v1|ok|id，未知命令返回 v1|error|unsupported。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "RFC 9110 representations",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html"
+    },
+    {
+      "kind": "reference",
+      "title": "TypeScript Handbook narrowing",
+      "url": "https://www.typescriptlang.org/docs/handbook/2/narrowing.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/web-service-contract-m1/lesson.md"
+  },
+  "workspace": {
+    "persistenceId": "web-service-contract",
+    "editablePaths": ["main.cpp", "api_contract.hpp", "client.ts", "App.tsx"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"api_contract.hpp\"\nint main(){std::string command;int id{};std::cin>>command>>id;std::cout<<encode_response(command,id)<<'\\n';}\n",
+      "api_contract.hpp": "#pragma once\n#include <string>\ninline std::string encode_response(const std::string&,int){return \"v1|error|todo\";}\n",
+      "client.ts": "export type ApiResult={kind:\"ok\";id:number}|{kind:\"error\";reason:string};\nexport function decodeEnvelope(text:string):ApiResult{const [version,status,value]=text.trim().split(\"|\");if(version!==\"v1\")return{kind:\"error\",reason:\"unsupported-version\"};if(status===\"ok\"&&value!==undefined&&Number.isInteger(Number(value)))return{kind:\"ok\",id:Number(value)};return{kind:\"error\",reason:value??\"malformed\"};}\n",
+      "App.tsx": "import {useState} from \"react\";\nimport {decodeEnvelope,type ApiResult} from \"./client\";\nexport function App(){const [state,setState]=useState<ApiResult>({kind:\"error\",reason:\"idle\"});async function load(id:number){const response=await fetch(\"/api/v1/records/\"+id);setState(decodeEnvelope(await response.text()));}return <main><button onClick={()=>void load(7)}>Load record</button><output>{state.kind===\"ok\"?state.id:state.reason}</output></main>;}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "v1|ok|7\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "versioned success",
+        "stdin": "GET 7\n",
+        "expectedStdout": "v1|ok|7\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "version-prefix",
+        "title": "所有分支共享版本",
+        "kind": "nudge",
+        "content": "成功和失败响应都从同一个 v1 前缀开始。"
+      },
+      {
+        "id": "discriminated-envelope",
+        "title": "让调用方先判别状态",
+        "kind": "concept",
+        "content": "第二个字段固定为 ok 或 error，前端才能安全缩小类型。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "GET 分支拼接版本、ok 和 id；其他命令返回同版本下的 error 与 unsupported 三段 envelope。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "js-cpp-contract",
+        "prompt": "你会怎样把这个 C++ 响应映射为 TypeScript 判别联合，并处理未来 v2、未知字段与错误状态？",
+        "required": true
+      }
+    ],
+    "reviewIds": [
+      "network-service-design-review",
+      "production-readiness-review"
+    ],
+    "teacherRubric": {
+      "id": "web-contract-m1-rubric",
+      "prompt": "回答应包含运行时校验、判别字段、向后兼容、未知版本处理和错误边界。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n#include \"api_contract.hpp\"\nint main(){std::string command;int id{};std::cin>>command>>id;std::cout<<encode_response(command,id)<<'\\n';}\n",
+      "api_contract.hpp": "#pragma once\n#include <string>\ninline std::string encode_response(const std::string& command,int id){return command==\"GET\"?\"v1|ok|\"+std::to_string(id):\"v1|error|unsupported\";}\n",
+      "client.ts": "export type ApiResult={kind:\"ok\";id:number}|{kind:\"error\";reason:string};\nexport function decodeEnvelope(text:string):ApiResult{const [version,status,value]=text.trim().split(\"|\");if(version!==\"v1\")return{kind:\"error\",reason:\"unsupported-version\"};if(status===\"ok\"&&value!==undefined&&Number.isInteger(Number(value)))return{kind:\"ok\",id:Number(value)};return{kind:\"error\",reason:value??\"malformed\"};}\n",
+      "App.tsx": "import {useState} from \"react\";\nimport {decodeEnvelope,type ApiResult} from \"./client\";\nexport function App(){const [state,setState]=useState<ApiResult>({kind:\"error\",reason:\"idle\"});async function load(id:number){const response=await fetch(\"/api/v1/records/\"+id);setState(decodeEnvelope(await response.text()));}return <main><button onClick={()=>void load(7)}>Load record</button><output>{state.kind===\"ok\"?state.id:state.reason}</output></main>;}\n"
+    },
+    "mutations": [
+      {
+        "id": "unversioned-error",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\n#include \"api_contract.hpp\"\nint main(){std::string command;int id{};std::cin>>command>>id;std::cout<<encode_response(command,id)<<'\\n';}\n",
+          "api_contract.hpp": "#pragma once\n#include <string>\ninline std::string encode_response(const std::string& command,int id){return command==\"GET\"?\"v1|ok|\"+std::to_string(id):\"error\";}\n",
+          "client.ts": "export type ApiResult={kind:\"ok\";id:number}|{kind:\"error\";reason:string};\nexport function decodeEnvelope(text:string):ApiResult{const [version,status,value]=text.trim().split(\"|\");if(version!==\"v1\")return{kind:\"error\",reason:\"unsupported-version\"};if(status===\"ok\"&&value!==undefined&&Number.isInteger(Number(value)))return{kind:\"ok\",id:Number(value)};return{kind:\"error\",reason:value??\"malformed\"};}\n",
+          "App.tsx": "import {useState} from \"react\";\nimport {decodeEnvelope,type ApiResult} from \"./client\";\nexport function App(){const [state,setState]=useState<ApiResult>({kind:\"error\",reason:\"idle\"});async function load(id:number){const response=await fetch(\"/api/v1/records/\"+id);setState(decodeEnvelope(await response.text()));}return <main><button onClick={()=>void load(7)}>Load record</button><output>{state.kind===\"ok\"?state.id:state.reason}</output></main>;}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "fullstack-contract",
+        "type": "network-flow",
+        "fallback": "React action -> typed request -> HTTP adapter -> C++ route -> versioned response -> runtime decoder -> discriminated TypeScript state -> UI"
+      }
+    ],
+    "printFallback": "画出数据从 React 事件进入 C++ 服务再回到类型化 UI 状态的边界。"
+  }
+}

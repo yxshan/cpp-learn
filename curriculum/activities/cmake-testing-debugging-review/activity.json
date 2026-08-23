@@ -38,14 +38,10 @@
     "expectedStdout": "10\n",
     "timeoutMs": 3000,
     "publicTests": [
-      { "name": "double", "stdin": "5\n", "expectedStdout": "10\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative double",
-        "stdin": "-4\n",
-        "expectedStdout": "-8\n",
-        "failureCategory": "definition must handle signed parameters"
+        "name": "double",
+        "stdin": "5\n",
+        "expectedStdout": "10\n"
       }
     ]
   },

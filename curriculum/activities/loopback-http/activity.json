@@ -37,16 +37,15 @@
     "version": 1,
     "expectedStdout": "status=200\n",
     "timeoutMs": 5000,
-    "buildProfile": { "kind": "direct", "threadSupport": true },
+    "buildProfile": {
+      "kind": "direct",
+      "threadSupport": true
+    },
     "publicTests": [
-      { "name": "local HTTP", "stdin": "", "expectedStdout": "status=200\n" }
-    ],
-    "privateTests": [
       {
-        "name": "repeatable dynamic port",
+        "name": "local HTTP",
         "stdin": "",
-        "expectedStdout": "status=200\n",
-        "failureCategory": "loopback request must succeed without a fixed port"
+        "expectedStdout": "status=200\n"
       }
     ]
   },

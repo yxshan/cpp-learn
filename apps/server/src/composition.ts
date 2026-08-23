@@ -41,6 +41,7 @@ export async function createProductionPlatform(
   const { dataRoot, workspaceRoot } = productionPaths(options);
   const curriculum = createFilesystemCurriculum({
     catalogPath: join(projectRoot, "curriculum", "catalog.json"),
+    privateJudgePath: join(projectRoot, "judge-private", "tests.json"),
   });
   const record = createJsonlLearningRecord({ dataRoot });
   await record.initialize();
@@ -61,6 +62,11 @@ export async function createProductionPlatform(
     judge: createNativeJudge({
       compiler,
       compilerFingerprint: toolchain.compiler ?? "clang++ unavailable",
+      webFrontendHarness: join(
+        projectRoot,
+        "scripts",
+        "verify-react-project.mjs",
+      ),
     }),
     record: {
       append: (event) => record.append(event),

@@ -35,20 +35,15 @@
     "version": 1,
     "expectedStdout": "count=4000\n",
     "timeoutMs": 3000,
-    "buildProfile": { "kind": "direct", "threadSupport": true },
+    "buildProfile": {
+      "kind": "direct",
+      "threadSupport": true
+    },
     "publicTests": [
       {
         "name": "joined workers",
         "stdin": "",
         "expectedStdout": "count=4000\n"
-      }
-    ],
-    "privateTests": [
-      {
-        "name": "repeatable atomic count",
-        "stdin": "",
-        "expectedStdout": "count=4000\n",
-        "failureCategory": "all worker increments must be synchronized before observation"
       }
     ]
   },

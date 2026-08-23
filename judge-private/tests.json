@@ -1,0 +1,549 @@
+{
+  "schemaVersion": 1,
+  "activities": {
+    "classes-and-raii-review": [
+      {
+        "name": "zero deposit",
+        "stdin": "0\n",
+        "expectedStdout": "2\n",
+        "failureCategory": "state updates must compose"
+      }
+    ],
+    "classes-and-raii": [
+      {
+        "name": "deterministic destruction",
+        "stdin": "",
+        "expectedStdout": "active\nreleased\ndone\n",
+        "failureCategory": "destructor must run at the scope boundary"
+      }
+    ],
+    "cli-data-manager-m1": [
+      {
+        "name": "signed score",
+        "stdin": "bob -3\n",
+        "expectedStdout": "bob=-3\n",
+        "failureCategory": "record formatting must preserve supplied fields"
+      }
+    ],
+    "cli-data-manager-m2": [
+      {
+        "name": "stable store",
+        "stdin": "bob -3\n",
+        "expectedStdout": "size=1\n",
+        "failureCategory": "store size must reflect inserted records"
+      }
+    ],
+    "cli-data-manager-m3": [
+      {
+        "name": "repeatable clean build",
+        "stdin": "3 bob -3 ana 8 lee 5\n",
+        "expectedStdout": "size=3\n",
+        "failureCategory": "the named CMake target must remain usable after CTest"
+      }
+    ],
+    "cmake-ctest-review": [
+      {
+        "name": "repeat app after CTest",
+        "stdin": "",
+        "expectedStdout": "target-ready\n",
+        "failureCategory": "the application target must remain independently runnable after CTest"
+      }
+    ],
+    "cmake-testing-debugging-review": [
+      {
+        "name": "negative double",
+        "stdin": "-4\n",
+        "expectedStdout": "-8\n",
+        "failureCategory": "definition must handle signed parameters"
+      }
+    ],
+    "cmake-testing-debugging": [
+      {
+        "name": "repeatable build",
+        "stdin": "",
+        "expectedStdout": "42\n",
+        "failureCategory": "multi-file target must produce stable behavior"
+      }
+    ],
+    "complexity-growth-check": [
+      {
+        "name": "independent functional sum",
+        "stdin": "11\n",
+        "expectedStdout": "55\n",
+        "failureCategory": "the optimized implementation must preserve the arithmetic-series result"
+      }
+    ],
+    "complexity-growth-review": [
+      {
+        "name": "near-boundary growth",
+        "stdin": "10 31\n",
+        "expectedStdout": "within-boundary\n",
+        "failureCategory": "classification must use the declared scaled-to-baseline boundary"
+      }
+    ],
+    "concurrent-task-queue-m1": [
+      {
+        "name": "signed parallel sum",
+        "stdin": "5 -8 2 10 -3 1\n",
+        "expectedStdout": "sum=2 workers=4 rejected=1\n",
+        "failureCategory": "all accepted tasks must contribute exactly once before shutdown completes"
+      }
+    ],
+    "concurrent-task-queue-m2": [
+      {
+        "name": "release signed sum",
+        "stdin": "5 -8 2 10 -3 1\n",
+        "expectedStdout": "sum=2 workers=4 rejected=1\n",
+        "failureCategory": "the packaged queue must preserve exact-once task contribution"
+      }
+    ],
+    "concurrent-task-queues-review": [
+      {
+        "name": "cancel queue",
+        "stdin": "5 9 cancel\n",
+        "expectedStdout": "completed=5\n",
+        "failureCategory": "cancel policy must not report queued work as completed"
+      }
+    ],
+    "concurrent-task-queues": [
+      {
+        "name": "signed tasks",
+        "stdin": "5 -4 8 -2 1 3\n",
+        "expectedStdout": "sum=6\n",
+        "failureCategory": "every accepted task must finish before the final result is observed"
+      }
+    ],
+    "copy-move-ownership-review": [
+      {
+        "name": "zero value",
+        "stdin": "0\n",
+        "expectedStdout": "0\n",
+        "failureCategory": "moved owner must preserve the object"
+      }
+    ],
+    "copy-move-ownership": [
+      {
+        "name": "signed value",
+        "stdin": "-5\n",
+        "expectedStdout": "-5\n",
+        "failureCategory": "ownership wrapper must preserve the stored value"
+      }
+    ],
+    "cpp-http-service-m1": [
+      {
+        "name": "unknown resource",
+        "stdin": "/missing\n",
+        "expectedStdout": "status=404 body=not-found\n",
+        "failureCategory": "unknown resources must produce a stable not-found response contract"
+      }
+    ],
+    "cpp-http-service-m2": [
+      {
+        "name": "concurrent persisted load",
+        "stdin": "2 3\n",
+        "expectedStdout": "requests=6 errors=0 stored=6\n",
+        "failureCategory": "the release service must complete concurrent loopback requests and persist every metric"
+      }
+    ],
+    "functions-and-scope-review": [
+      {
+        "name": "negative cube",
+        "stdin": "-2\n",
+        "expectedStdout": "-8\n",
+        "failureCategory": "cube must preserve the sign"
+      }
+    ],
+    "functions-and-scope": [
+      {
+        "name": "negative square",
+        "stdin": "-7\n",
+        "expectedStdout": "49\n",
+        "failureCategory": "function must work for signed inputs"
+      }
+    ],
+    "generic-minimum": [
+      {
+        "name": "negative minimum",
+        "stdin": "-1 3 -8\n",
+        "expectedStdout": "-8\n",
+        "failureCategory": "all three generic arguments must participate"
+      }
+    ],
+    "hash-index-invariants-review": [
+      {
+        "name": "one repeated value",
+        "stdin": "4\n7 7 7 7\n",
+        "expectedStdout": "unique=1\n",
+        "failureCategory": "repeated equal values must preserve set uniqueness"
+      }
+    ],
+    "hash-index-invariants": [
+      {
+        "name": "erase and missing lookup",
+        "stdin": "4\nset hidden 9\nerase hidden\nget hidden\nget absent\n",
+        "expectedStdout": "missing\nmissing\n",
+        "failureCategory": "erased and never-inserted keys must both be absent from the index"
+      }
+    ],
+    "local-log-index-m1": [
+      {
+        "name": "boundary statuses",
+        "stdin": "4 499 500 599 600\n",
+        "expectedStdout": "errors=2\n",
+        "failureCategory": "server-error classification must include only the complete 5xx status range"
+      }
+    ],
+    "local-log-index-m2": [
+      {
+        "name": "packaged boundaries",
+        "stdin": "4 499 500 599 600\n",
+        "expectedStdout": "errors=2\n",
+        "failureCategory": "the packaged binary must preserve the verified status classification"
+      }
+    ],
+    "loopback-http-review": [
+      {
+        "name": "response boundary verification",
+        "stdin": "",
+        "expectedStdout": "status=200\n",
+        "failureCategory": "protocol-boundary"
+      }
+    ],
+    "loopback-http": [
+      {
+        "name": "repeatable dynamic port",
+        "stdin": "",
+        "expectedStdout": "status=200\n",
+        "failureCategory": "loopback request must succeed without a fixed port"
+      }
+    ],
+    "network-service-design-review": [
+      {
+        "name": "unknown route",
+        "stdin": "POST /items\n",
+        "expectedStdout": "route=not-found\n",
+        "failureCategory": "unknown method-target pairs must use the explicit fallback route"
+      }
+    ],
+    "network-service-design": [
+      {
+        "name": "truncated frame",
+        "stdin": "8 short\n",
+        "expectedStdout": "rejected\n",
+        "failureCategory": "a service must reject incomplete or oversized message frames"
+      }
+    ],
+    "numeric-summary": [
+      {
+        "name": "signed average",
+        "stdin": "-3 0 3\n",
+        "expectedStdout": "0\n",
+        "failureCategory": "average must use every signed input"
+      }
+    ],
+    "owned-value": [
+      {
+        "name": "negative owned",
+        "stdin": "-3\n",
+        "expectedStdout": "-6\n",
+        "failureCategory": "ownership transfer must preserve signed value"
+      }
+    ],
+    "persistence-query-plans-review": [
+      {
+        "name": "rollback batch",
+        "stdin": "3 5 7 9 rollback\n",
+        "expectedStdout": "value=0\n",
+        "failureCategory": "a rolled-back batch must not leak pending writes into committed state"
+      }
+    ],
+    "persistence-query-plans": [
+      {
+        "name": "missing lookup",
+        "stdin": "3 2 4 6 5\n",
+        "expectedStdout": "found=0\n",
+        "failureCategory": "the lookup index must distinguish absent keys without inventing rows"
+      }
+    ],
+    "pointers-and-lifetime-review": [
+      {
+        "name": "null fallback",
+        "stdin": "0 99\n",
+        "expectedStdout": "7\n",
+        "failureCategory": "null observers must use the fallback path"
+      }
+    ],
+    "pointers-and-lifetime": [
+      {
+        "name": "negative increment",
+        "stdin": "-2\n",
+        "expectedStdout": "-1\n",
+        "failureCategory": "pointer operation must use the input object"
+      }
+    ],
+    "posix-files-processes": [
+      {
+        "name": "repeatable cleanup",
+        "stdin": "",
+        "expectedStdout": "bytes=9\n",
+        "failureCategory": "file and child lifecycle must be deterministic"
+      }
+    ],
+    "production-readiness-review": [
+      {
+        "name": "stable release",
+        "stdin": "4 4\n",
+        "expectedStdout": "action=continue\n",
+        "failureCategory": "a stable canary must not be rolled back without a measured regression"
+      }
+    ],
+    "production-readiness": [
+      {
+        "name": "below threshold",
+        "stdin": "1000 9\n",
+        "expectedStdout": "ok\n",
+        "failureCategory": "alert thresholds must use the declared request denominator without rounding up"
+      }
+    ],
+    "references-and-const-review": [
+      {
+        "name": "negative values",
+        "stdin": "-2 -9\n",
+        "expectedStdout": "-2\n",
+        "failureCategory": "comparison must work below zero"
+      }
+    ],
+    "references-and-const": [
+      {
+        "name": "signed swap",
+        "stdin": "-1 8\n",
+        "expectedStdout": "8 -1\n",
+        "failureCategory": "the caller objects were not both exchanged"
+      }
+    ],
+    "safe-swap": [
+      {
+        "name": "already ordered",
+        "stdin": "7 -1\n",
+        "expectedStdout": "7 -1\n",
+        "failureCategory": "ordered values must remain stable"
+      }
+    ],
+    "sorted-unique": [
+      {
+        "name": "all duplicate",
+        "stdin": "5 5 5 5\n",
+        "expectedStdout": "5\n",
+        "failureCategory": "logical tail after unique must be erased"
+      }
+    ],
+    "source-to-program-review": [
+      {
+        "name": "stable review execution",
+        "stdin": "",
+        "expectedStdout": "Build first, run second.\n",
+        "failureCategory": "review output is not stable"
+      }
+    ],
+    "source-to-program": [
+      {
+        "name": "stable execution",
+        "stdin": "",
+        "expectedStdout": "Hello, C++!\n",
+        "failureCategory": "program output is not stable"
+      }
+    ],
+    "sqlite-transactions-review": [
+      {
+        "name": "rollback state verification",
+        "stdin": "",
+        "expectedStdout": "rows=0\n",
+        "failureCategory": "transaction-state"
+      }
+    ],
+    "sqlite-transactions": [
+      {
+        "name": "isolated database",
+        "stdin": "",
+        "expectedStdout": "rows=1\n",
+        "failureCategory": "each Grade must create and query one committed row in its own database"
+      }
+    ],
+    "stl-containers-algorithms-review": [
+      {
+        "name": "all negative",
+        "stdin": "-5 -2 -8\n",
+        "expectedStdout": "-2\n",
+        "failureCategory": "maximum must work for negative ranges"
+      }
+    ],
+    "stl-containers-algorithms": [
+      {
+        "name": "duplicates",
+        "stdin": "5 -1 5\n",
+        "expectedStdout": "-1 5 5\n",
+        "failureCategory": "sorting must preserve duplicate values"
+      }
+    ],
+    "systems-runtime-review": [
+      {
+        "name": "resource lifecycle verification",
+        "stdin": "",
+        "expectedStdout": "bytes=6,threads=1\n",
+        "failureCategory": "resource-lifecycle"
+      }
+    ],
+    "templates-and-concepts-review": [
+      {
+        "name": "negative smaller",
+        "stdin": "-3 4\n",
+        "expectedStdout": "-3\n",
+        "failureCategory": "comparison must preserve signed ordering"
+      }
+    ],
+    "templates-and-concepts": [
+      {
+        "name": "negative larger",
+        "stdin": "-9 -2\n",
+        "expectedStdout": "-2\n",
+        "failureCategory": "generic comparison must not assume non-negative values"
+      }
+    ],
+    "threads-atomics": [
+      {
+        "name": "repeatable atomic count",
+        "stdin": "",
+        "expectedStdout": "count=4000\n",
+        "failureCategory": "all worker increments must be synchronized before observation"
+      }
+    ],
+    "values-and-types-review": [
+      {
+        "name": "negative difference",
+        "stdin": "2 5\n",
+        "expectedStdout": "-3\n",
+        "failureCategory": "subtraction must preserve operand order"
+      }
+    ],
+    "values-and-types": [
+      {
+        "name": "signed values",
+        "stdin": "10 -4\n",
+        "expectedStdout": "6\n",
+        "failureCategory": "signed integer input is not handled generally"
+      }
+    ],
+    "web-service-contract-m1": [
+      {
+        "name": "unsupported command",
+        "stdin": "DELETE 3\n",
+        "expectedStdout": "v1|error|unsupported\n",
+        "failureCategory": "unsupported operations must preserve the versioned error envelope"
+      }
+    ],
+    "web-service-contract-m2": [
+      {
+        "name": "missing record through HTTP and SQLite",
+        "stdin": "GET 3\n",
+        "expectedStdout": "v1|error|missing metrics=1\n",
+        "failureCategory": "the integrated service must derive missing records from persistence instead of fabricating success"
+      }
+    ],
+    "modern-vocabulary": [
+      {
+        "name": "hidden boundary",
+        "stdin": "3 -4 -2 -9\n",
+        "expectedStdout": "max=none sum=0\n",
+        "failureCategory": "Lambda、optional、variant 与 ranges must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "modern-vocabulary-review": [
+      {
+        "name": "delayed transfer boundary",
+        "stdin": "3 -4 -2 -9\n",
+        "expectedStdout": "max=none sum=0\n",
+        "failureCategory": "Lambda、optional、variant 与 ranges must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "engineering-diagnostics": [
+      {
+        "name": "hidden boundary",
+        "stdin": "1 9\n",
+        "expectedStdout": "min=9 comparisons=0\n",
+        "failureCategory": "Git、静态分析与性能剖析闭环 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "engineering-diagnostics-review": [
+      {
+        "name": "delayed transfer boundary",
+        "stdin": "1 9\n",
+        "expectedStdout": "min=9 comparisons=0\n",
+        "failureCategory": "Git、静态分析与性能剖析闭环 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "virtual-memory-tools": [
+      {
+        "name": "hidden boundary",
+        "stdin": "1\n",
+        "expectedStdout": "pages=1 touched=1\n",
+        "failureCategory": "虚拟内存、mmap 与 Linux 观测工具 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "virtual-memory-tools-review": [
+      {
+        "name": "delayed transfer boundary",
+        "stdin": "1\n",
+        "expectedStdout": "pages=1 touched=1\n",
+        "failureCategory": "虚拟内存、mmap 与 Linux 观测工具 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "udp-event-loops": [
+      {
+        "name": "hidden boundary",
+        "stdin": "event\n",
+        "expectedStdout": "event=readable bytes=5 payload=event\n",
+        "failureCategory": "UDP、非阻塞 I/O 与事件循环 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "udp-event-loops-review": [
+      {
+        "name": "delayed transfer boundary",
+        "stdin": "event\n",
+        "expectedStdout": "event=readable bytes=5 payload=event\n",
+        "failureCategory": "UDP、非阻塞 I/O 与事件循环 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "cache-persistence": [
+      {
+        "name": "hidden boundary",
+        "stdin": "3\n",
+        "expectedStdout": "value=missing db_queries=1\n",
+        "failureCategory": "SQLite、PostgreSQL 边界与缓存一致性 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "cache-persistence-review": [
+      {
+        "name": "delayed transfer boundary",
+        "stdin": "3\n",
+        "expectedStdout": "value=missing db_queries=1\n",
+        "failureCategory": "SQLite、PostgreSQL 边界与缓存一致性 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "memory-model-deadlocks": [
+      {
+        "name": "hidden boundary",
+        "stdin": "1\n",
+        "expectedStdout": "total=200 completed=2\n",
+        "failureCategory": "死锁、原子顺序与内存模型 must preserve the hidden boundary without exposing its input"
+      }
+    ],
+    "memory-model-deadlocks-review": [
+      {
+        "name": "delayed transfer boundary",
+        "stdin": "1\n",
+        "expectedStdout": "total=200 completed=2\n",
+        "failureCategory": "死锁、原子顺序与内存模型 must preserve the hidden boundary without exposing its input"
+      }
+    ]
+  }
+}

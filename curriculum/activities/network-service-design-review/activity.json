@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "network-service-design-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：从请求行恢复服务路由",
+  "estimatedMinutes": 20,
+  "conceptIds": [
+    "tcp-framing-backpressure",
+    "http-service-contract",
+    "production-artifact"
+  ],
+  "prerequisiteIds": ["network-service-design"],
+  "objectives": ["脱离原实现，根据 method 与 target 恢复最小路由契约。"],
+  "victoryConditions": [
+    "GET /health 映射为 health，其余请求映射为 not-found。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "RFC 9110 methods and status codes",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html"
+    },
+    {
+      "kind": "reference",
+      "title": "RFC 9112 message format",
+      "url": "https://www.rfc-editor.org/rfc/rfc9112.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/network-service-design-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::string method,target;std::cin>>method>>target;std::string route=\"todo\";/* TODO */std::cout<<\"route=\"<<route<<'\\n';}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "route=health\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "health route",
+        "stdin": "GET /health\n",
+        "expectedStdout": "route=health\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 10
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "match-pair",
+        "title": "匹配两个字段",
+        "kind": "nudge",
+        "content": "路由条件同时包含 method 和 target。"
+      },
+      {
+        "id": "fallback-route",
+        "title": "默认路径必须显式",
+        "kind": "concept",
+        "content": "不要让未知输入意外落入成功处理器。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "route = method == \"GET\" && target == \"/health\" ? \"health\" : \"not-found\";"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "status-contract",
+        "prompt": "未知路由为什么应返回稳定、可观测的失败契约，而不是关闭连接或返回成功？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "network-service-design",
+    "teacherRubric": {
+      "id": "network-review-rubric",
+      "prompt": "回答应联系客户端契约、状态码、监控分类和可测试性。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::string method,target;std::cin>>method>>target;std::string route=method==\"GET\"&&target==\"/health\"?\"health\":\"not-found\";std::cout<<\"route=\"<<route<<'\\n';}\n"
+    },
+    "mutations": [
+      {
+        "id": "accepts-any-request",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\nint main(){std::string method,target;std::cin>>method>>target;std::cout<<\"route=health\\n\";}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "request-routing",
+        "type": "network-flow",
+        "fallback": "request line -> parse method and target -> route table -> handler or not-found -> status and body"
+      }
+    ],
+    "printFallback": "写出请求解析、路由匹配和默认失败处理的顺序。"
+  }
+}

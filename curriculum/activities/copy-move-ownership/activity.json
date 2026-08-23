@@ -36,14 +36,10 @@
     "expectedStdout": "42\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "owned value", "stdin": "42\n", "expectedStdout": "42\n" }
-    ],
-    "privateTests": [
       {
-        "name": "signed value",
-        "stdin": "-5\n",
-        "expectedStdout": "-5\n",
-        "failureCategory": "ownership wrapper must preserve the stored value"
+        "name": "owned value",
+        "stdin": "42\n",
+        "expectedStdout": "42\n"
       }
     ]
   },

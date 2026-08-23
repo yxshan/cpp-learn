@@ -36,14 +36,10 @@
     "expectedStdout": "12\n",
     "timeoutMs": 2000,
     "publicTests": [
-      { "name": "double owned", "stdin": "6\n", "expectedStdout": "12\n" }
-    ],
-    "privateTests": [
       {
-        "name": "negative owned",
-        "stdin": "-3\n",
-        "expectedStdout": "-6\n",
-        "failureCategory": "ownership transfer must preserve signed value"
+        "name": "double owned",
+        "stdin": "6\n",
+        "expectedStdout": "12\n"
       }
     ]
   },

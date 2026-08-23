@@ -44,20 +44,15 @@
     "version": 1,
     "expectedStdout": "bytes=6,threads=1\n",
     "timeoutMs": 3000,
-    "buildProfile": { "kind": "direct", "threadSupport": true },
+    "buildProfile": {
+      "kind": "direct",
+      "threadSupport": true
+    },
     "publicTests": [
       {
         "name": "resource review",
         "stdin": "",
         "expectedStdout": "bytes=6,threads=1\n"
-      }
-    ],
-    "privateTests": [
-      {
-        "name": "resource lifecycle verification",
-        "stdin": "",
-        "expectedStdout": "bytes=6,threads=1\n",
-        "failureCategory": "resource-lifecycle"
       }
     ]
   },
