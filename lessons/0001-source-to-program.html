@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>第一课：从源码到程序</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Lesson 0001 · 预计 30–40 分钟</p>
+    <h1>从源码到程序</h1>
+    <p class="lead">你的第一个目标不是记住 C++ 语法，而是亲手完成一次“修改源码 → 编译 → 运行 → 根据反馈修正”的闭环。</p>
+
+    <div class="callout">
+      <strong>本课胜利条件：</strong>补全练习程序，运行自动检查并看到“检查通过”；然后不用查资料回答最后三个问题。
+    </div>
+
+    <h2>01 · 和 JavaScript 最大的第一个区别</h2>
+    <p>写前端时，你经常把 <code>.js</code> 文件交给浏览器或 Node.js。C++ 源文件通常不能直接执行，需要先生成适合当前机器运行的可执行文件。</p>
+
+    <table>
+      <thead><tr><th>JavaScript 心智模型</th><th>C++ 心智模型</th></tr></thead>
+      <tbody>
+        <tr><td><code>node app.js</code></td><td><code>clang++ main.cpp -o app</code>，然后 <code>./app</code></td></tr>
+        <tr><td>运行时读取并执行代码</td><td>运行前先完成编译和链接</td></tr>
+        <tr><td>很多类型问题到运行时才暴露</td><td>很多类型问题在编译时就被拒绝</td></tr>
+      </tbody>
+    </table>
+
+    <div class="flow" aria-label="C++ 构建流程">
+      <span>main.cpp<br>你写的文本</span>
+      <span>编译<br>检查与翻译</span>
+      <span>链接<br>生成可执行文件</span>
+      <span>运行<br>操作系统启动</span>
+    </div>
+
+    <p>真实工具链还有预处理、目标文件等细节，今天先把它压缩成这四步。需要快速回忆时打开<a href="../reference/compile-run-debug.html">编译与运行速查</a>。</p>
+
+    <h2>02 · 读懂练习里的最少语法</h2>
+    <pre><code>int minutes{};
+constexpr int session_minutes{25};
+
+const int complete_sessions{minutes / session_minutes};
+const int remaining_minutes{minutes % session_minutes};</code></pre>
+
+    <ul>
+      <li><code>int minutes{}</code>：创建一个整数，并用 0 初始化。</li>
+      <li><code>constexpr</code>：这个值在编译期就是常量，这里固定为 25。</li>
+      <li><code>const</code>：初始化后不再修改。</li>
+      <li><code>/</code>：两个整数相除时得到完整份数；<code>%</code> 得到余数。</li>
+    </ul>
+
+    <p>先不用背这些关键词。你只要能根据名字和上下文说出四个变量分别代表什么。</p>
+
+    <details>
+      <summary>为什么代码里到处有 <code>std::</code>？</summary>
+      <p><code>std</code> 是 C++ 标准库使用的命名空间。<code>std::string</code>、<code>std::cout</code> 和 <code>std::cin</code> 表示从标准库中取这些名字。今天不要用 <code>using namespace std;</code> 隐藏它，我们先把来源写清楚。</p>
+    </details>
+
+    <h2>03 · 动手完成程序</h2>
+    <p>打开 <code>exercises/0001-first-program/main.cpp</code>，找到 <code>TODO</code>。只补输出部分，不改已有计算。</p>
+
+    <p>目标交互：</p>
+    <pre><code>你的名字：Lin
+今天可学习多少分钟：90
+欢迎，Lin！
+你可以完成 3 个完整番茄钟，还剩 15 分钟。</code></pre>
+
+    <p>你会需要输出流的链式写法：</p>
+    <pre><code>std::cout &lt;&lt; "文字" &lt;&lt; variable &lt;&lt; "\n";</code></pre>
+
+    <p>在项目根目录运行自动检查：</p>
+    <pre><code>./exercises/0001-first-program/check.sh</code></pre>
+
+    <p>第一次不通过很正常。错误信息不是失败判决，而是工具链给你的反馈。优先处理输出中的<strong>第一条错误</strong>。</p>
+
+    <details>
+      <summary>卡住 10 分钟后再打开：提示 1</summary>
+      <p>需要写两条 <code>std::cout</code> 语句。第一条依次连接固定文字、变量 <code>name</code> 和换行。</p>
+    </details>
+
+    <details>
+      <summary>使用提示 1 后仍卡住：提示 2</summary>
+      <pre><code>std::cout &lt;&lt; "欢迎，" &lt;&lt; name &lt;&lt; "！\n";</code></pre>
+      <p>第二行照这个结构，依次连接 <code>complete_sessions</code> 和 <code>remaining_minutes</code>。</p>
+    </details>
+
+    <h2>04 · 主动制造一次错误</h2>
+    <p>检查通过后，把第一条输出最后的分号临时删除，再运行检查。观察错误中出现的：</p>
+    <ul>
+      <li>文件名</li>
+      <li>行号和列号</li>
+      <li><code>error:</code> 后面的描述</li>
+      <li><code>^</code> 指向的位置</li>
+    </ul>
+    <p>然后恢复分号并再次确认检查通过。你刚刚完成了第一次受控调试。</p>
+
+    <h2>05 · 闭卷检索</h2>
+    <p>不要回看上文，直接用自己的话回答：</p>
+    <ol class="checklist">
+      <li><code>main.cpp</code> 与 <code>first_program</code> 分别是什么？</li>
+      <li>编译错误与运行错误最核心的区别是什么？</li>
+      <li><code>-o first_program</code> 在编译命令中做了什么？</li>
+    </ol>
+
+    <details>
+      <summary>回答后再展开：核对关键词</summary>
+      <p>源码文本 / 可执行文件；是否成功生成并启动程序；指定输出文件名。表达不必相同，但含义应覆盖这些关键词。</p>
+    </details>
+
+    <h2>06 · 交作业</h2>
+    <p>把下面两项发给我：</p>
+    <ol>
+      <li>告诉我检查是否通过；如果没通过，贴出完整错误。</li>
+      <li>贴出三道闭卷题的回答。</li>
+    </ol>
+    <p>我会先评估你的理解，再决定下一课是进入静态类型，还是先补一次编译反馈练习。任何地方不清楚，都可以直接问我，不需要等到做完。</p>
+
+    <h2>主要来源</h2>
+    <ul>
+      <li><a href="https://clang.llvm.org/docs/UsersManual.html">Clang Compiler User’s Manual</a>：编译器驱动、诊断和警告选项。</li>
+      <li><a href="https://en.cppreference.com/w/cpp/language/main_function.html">cppreference：main function</a>：C++ 程序入口。</li>
+      <li><a href="https://en.cppreference.com/w/cpp/io/cout.html">cppreference：std::cout</a>：标准输出流。</li>
+    </ul>
+
+    <footer>课程 0001 · 对应任务：从前端基础迁移到 C++ 互联网软件开发</footer>
+  </main>
+</body>
+</html>

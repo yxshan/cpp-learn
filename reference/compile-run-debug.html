@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C++ 编译与运行速查</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <p class="eyebrow">C++ Quick Reference · 0001</p>
+    <h1>编译与运行速查</h1>
+    <p class="lead">源码不是程序。先让编译器和链接器生成可执行文件，再由操作系统运行它。</p>
+
+    <div class="flow" aria-label="从源码到运行中的程序">
+      <span>main.cpp<br>源码</span>
+      <span>编译<br>检查并翻译</span>
+      <span>链接<br>组合成程序</span>
+      <span>运行<br>产生进程</span>
+    </div>
+
+    <h2>本项目的基础命令</h2>
+    <pre><code>clang++ -std=c++20 -Wall -Wextra -Wpedantic main.cpp -o app
+./app</code></pre>
+
+    <table>
+      <thead><tr><th>部分</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>clang++</code></td><td>调用支持 C++ 的 Clang 驱动程序</td></tr>
+        <tr><td><code>-std=c++20</code></td><td>使用 C++20 语言模式</td></tr>
+        <tr><td><code>-Wall -Wextra -Wpedantic</code></td><td>开启一组有价值的警告</td></tr>
+        <tr><td><code>main.cpp</code></td><td>输入的 C++ 源文件</td></tr>
+        <tr><td><code>-o app</code></td><td>把生成的可执行文件命名为 app</td></tr>
+        <tr><td><code>./app</code></td><td>运行当前目录中的 app</td></tr>
+      </tbody>
+    </table>
+
+    <h2>三类结果</h2>
+    <ul>
+      <li><strong>编译错误：</strong>没有生成新程序，先读第一条错误及其文件、行、列。</li>
+      <li><strong>警告：</strong>生成程序前发现可疑代码；学习阶段不要忽略。</li>
+      <li><strong>运行错误：</strong>已经生成程序，但执行时崩溃、卡住或产生错误结果。</li>
+    </ul>
+
+    <p>参考：<a href="https://clang.llvm.org/docs/UsersManual.html">Clang Compiler User’s Manual</a></p>
+  </main>
+</body>
+</html>

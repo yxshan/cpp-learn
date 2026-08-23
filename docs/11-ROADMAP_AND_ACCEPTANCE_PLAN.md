@@ -1,0 +1,153 @@
+# Roadmap and Acceptance Plan
+
+| Field | Value |
+|---|---|
+| Document ID | ROADMAP-001 |
+| Version | 1.0 |
+| Status | Baseline |
+| Owner | Project Maintainer |
+| Last updated | 2026-08-23 |
+
+## 1. Delivery policy
+
+Delivery is capability-gated, not calendar-gated. A stage is complete only when its acceptance evidence is reproducible on the reference environment and linked in the traceability matrix.
+
+## 2. Stage 0: Engineering baseline
+
+Deliver:
+
+- npm-workspaces repository skeleton.
+- Shared contracts and JSON Schemas.
+- Learning Platform, Curriculum, Workspace, Judge, and Learning Record Module shells.
+- Web/server/CLI composition roots.
+- CI quality gates and document checks.
+
+Acceptance:
+
+- Modules compile and are testable through declared Interfaces.
+- Web and CLI execute a shared health/query fixture.
+- Invalid content and invalid paths fail contract tests.
+- Documentation and ADR index are current.
+
+## 3. Stage 1: Web vertical slice
+
+Deliver:
+
+```text
+Dashboard → first Lesson → Monaco edit → save → Run → Grade
+→ Judge Report → learning event → dashboard refresh
+```
+
+Also deliver `serve`, `check`, `status`, and `doctor` CLI operations and migrate the existing first Lesson.
+
+Acceptance:
+
+- Same Source Snapshot has equivalent Web and CLI verdict.
+- Run never changes Concept State.
+- Grade survives server restart with history intact.
+- Workspace save conflicts do not overwrite code.
+- Playwright covers the complete path.
+
+## 4. Stage 2: Reliable Judge and records
+
+Deliver:
+
+- Multi-file Workspaces and immutable Source Snapshots.
+- Public/private tests, timeout, output limit, ASan, and UBSan.
+- Structured diagnostics, cancellation, worker crash handling.
+- Append-only events, SQLite projections, rebuild, export, and restore.
+
+Acceptance:
+
+- Every required Judge verdict has a golden fixture.
+- Worker crash does not stop the server or append false Evidence.
+- Duplicate report ingestion is idempotent.
+- Rebuilt projections match pre-rebuild state.
+- Private material is absent from browser payloads, logs, and Teacher Packs.
+
+## 5. Stage 3: Learning loop
+
+Deliver:
+
+- Ordered hints and assistance tracking.
+- Reflections and Teacher Observations.
+- Concept Evidence, state explanations, Review scheduling, and variants.
+- Knowledge Map and Review Queue.
+
+Acceptance:
+
+- Full-solution exposure cannot create `demonstrated` Evidence.
+- Public-test pass alone remains `practiced` or lower.
+- Independent delayed Review can create `retained`.
+- Every state transition links to supporting Evidence and explanation.
+
+## 6. Stage 4: Modern C++ curriculum release
+
+Deliver initially:
+
+- 10–12 Lessons.
+- 15–20 Exercises/Review variants.
+- One progressive Project.
+- Core reference documents and interactive blocks.
+
+Then expand through types, references, pointers, lifetime, RAII, classes, STL, copy/move, smart pointers, templates, tests, and CMake.
+
+Acceptance:
+
+- All required content passes lint and reference-solution checks.
+- Known incorrect solutions exercise intended failure categories.
+- Every core Concept has an Evidence policy and delayed Review.
+- Existing Learner Workspaces survive content upgrades.
+
+## 7. Stage 5: Algorithms and systems
+
+Deliver:
+
+- Deterministic property tests and relative performance checks.
+- Data-structure and algorithm Modules.
+- Files, processes, threads, loopback sockets, HTTP, and SQLite labs.
+- CMake/CTest project workflows.
+- Optional Linux/container verification.
+
+Acceptance:
+
+- Random failures reproduce from recorded seeds.
+- System labs clean up files, processes, ports, and databases.
+- Performance checks are same-machine relative comparisons.
+- Linux-only outcomes are labeled and not inferred from macOS.
+
+## 8. Stage 6: Career track completion
+
+Deliver:
+
+- Network, database, concurrency, performance, and deployment Modules.
+- 4–5 progressive Projects.
+- Project rubrics, load testing, incident exercises, and interview review.
+- Advanced visualizations that materially improve understanding.
+
+Acceptance:
+
+- Projects have reproducible builds, tests, documentation, benchmarks, and failure retrospectives.
+- Knowledge Map traces Project evidence back to Concepts.
+- Export contains a coherent learner-owned portfolio history without private judge material.
+
+## 9. Global definition of done
+
+- Requirement implemented and traced.
+- Module/contract/integration/E2E tests pass as applicable.
+- Security and privacy impacts reviewed.
+- Migration and rollback considered.
+- User-facing errors and documentation updated.
+- No known S1/S2 defects in the released scope.
+- Acceptance evidence is reproducible and archived with the release.
+
+## 10. Deferred decisions
+
+- Desktop packaging.
+- Specific SQLite Node Adapter.
+- Container runtime and remote Linux runner.
+- Specific AI provider versus MCP-only integration.
+- Multi-user/cloud support.
+- Public curriculum plugin ecosystem.
+
+These remain behind defined seams and are decided only when a concrete second Adapter or product requirement exists.
