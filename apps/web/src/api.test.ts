@@ -11,8 +11,8 @@ const bootstrap: BootstrapResult = {
   services: {
     curriculum: { ready: true, activityCount: 1 },
     toolchain: { ready: true, compiler: "Apple Clang 15" },
-    record: { ready: true }
-  }
+    record: { ready: true },
+  },
 };
 
 describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
@@ -20,13 +20,26 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
     const request = vi.fn().mockResolvedValue(
       new Response(JSON.stringify(bootstrap), {
         status: 200,
-        headers: { "content-type": "application/json" }
-      })
+        headers: { "content-type": "application/json" },
+      }),
     );
 
     await expect(getBootstrap(request)).resolves.toEqual(bootstrap);
     expect(request).toHaveBeenCalledWith("/api/v1/bootstrap", {
-      headers: { accept: "application/json" }
+      headers: { accept: "application/json" },
     });
+  });
+
+  it("rejects a versioned payload that does not satisfy the transport schema", async () => {
+    const request = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ schemaVersion: 1, ready: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await expect(getBootstrap(request)).rejects.toThrow(
+      "Bootstrap response violates the transport contract",
+    );
   });
 });

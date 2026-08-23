@@ -10,18 +10,36 @@ export interface ProcessResult {
 
 export type ProcessExecutor = (
   executable: string,
-  args: readonly string[]
+  args: readonly string[],
 ) => Promise<ProcessResult>;
 
 export interface NativeToolchainProbeDependencies {
   readonly execute: ProcessExecutor;
 }
 
+export type JudgeStageKind = "prepare" | "compile" | "test" | "analyze";
+
+export interface JudgeStageContext {
+  readonly jobId: string;
+  readonly snapshotId: string;
+}
+
+export interface JudgeStageResult {
+  readonly kind: JudgeStageKind;
+  readonly outcome: "pass" | "fail" | "system_error";
+  readonly durationMs: number;
+}
+
+export interface JudgeStage {
+  readonly kind: JudgeStageKind;
+  execute(context: JudgeStageContext): Promise<JudgeStageResult>;
+}
+
 export const executeProcess: ProcessExecutor = async (executable, args) =>
   new Promise((resolve, reject) => {
     const child = spawn(executable, args, {
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"]
+      stdio: ["ignore", "pipe", "pipe"],
     });
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
@@ -33,13 +51,13 @@ export const executeProcess: ProcessExecutor = async (executable, args) =>
       resolve({
         exitCode,
         stdout: Buffer.concat(stdout).toString("utf8"),
-        stderr: Buffer.concat(stderr).toString("utf8")
+        stderr: Buffer.concat(stderr).toString("utf8"),
       });
     });
   });
 
 export function createNativeToolchainProbe(
-  dependencies: NativeToolchainProbeDependencies
+  dependencies: NativeToolchainProbeDependencies,
 ): () => Promise<ToolchainReadiness> {
   return async () => {
     try {
@@ -48,7 +66,7 @@ export function createNativeToolchainProbe(
       if (result.exitCode !== 0 || !compiler) {
         return {
           ready: false,
-          issues: ["clang++ did not return a usable version"]
+          issues: ["clang++ did not return a usable version"],
         };
       }
       return { ready: true, compiler };

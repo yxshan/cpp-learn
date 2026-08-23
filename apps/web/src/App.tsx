@@ -59,7 +59,8 @@ export function App() {
     } catch (error) {
       setState({
         status: "error",
-        message: error instanceof Error ? error.message : "无法连接本地学习服务"
+        message:
+          error instanceof Error ? error.message : "无法连接本地学习服务",
       });
     }
   }, []);
@@ -106,7 +107,10 @@ export function App() {
 
         <div className="sidebar-footer">
           <span className="local-pulse" />
-          <div><strong>本地模式</strong><span>数据保存在此设备</span></div>
+          <div>
+            <strong>本地模式</strong>
+            <span>数据保存在此设备</span>
+          </div>
         </div>
       </aside>
 
@@ -118,9 +122,12 @@ export function App() {
           </div>
           <div className="topbar-actions">
             <span className={`overall-status ${data?.ready ? "is-ready" : ""}`}>
-              <i />{data?.ready ? "环境已就绪" : "正在检查环境"}
+              <i />
+              {data?.ready ? "环境已就绪" : "正在检查环境"}
             </span>
-            <button className="avatar" aria-label="本地学习者">L</button>
+            <button className="avatar" aria-label="本地学习者">
+              L
+            </button>
           </div>
         </header>
 
@@ -128,18 +135,41 @@ export function App() {
           <div className="stage-copy">
             <span className="stage-chip">STAGE 0 · ENGINEERING BASELINE</span>
             <h2 id="stage-title">先把地基打稳，再写第一行学习代码。</h2>
-            <p>共享核心、Web、CLI、课程校验与本地记录正在组成同一个可靠的学习环境。</p>
+            <p>
+              共享核心、Web、CLI、课程校验与本地记录正在组成同一个可靠的学习环境。
+            </p>
             <div className="stage-actions">
               <button className="primary-button" onClick={() => void refresh()}>
                 {state.status === "loading" ? "正在检测…" : "重新检测环境"}
               </button>
-              <span>阶段进度 <strong>1 / 7</strong></span>
+              <span>
+                阶段进度 <strong>1 / 7</strong>
+              </span>
             </div>
           </div>
           <div className="code-window" aria-label="C++ 示例代码">
-            <div className="window-bar"><i /><i /><i /><span>main.cpp</span></div>
-            <pre><code><span className="code-purple">#include</span> <span className="code-green">&lt;iostream&gt;</span>{"\n\n"}<span className="code-blue">int</span> main() {"{"}{"\n"}  std::cout &lt;&lt; <span className="code-green">"Hello, future."</span>;{"\n"}  <span className="code-purple">return</span> <span className="code-orange">0</span>;{"\n"}{"}"}</code></pre>
-            <div className="terminal-line"><span>$</span> clang++ -std=c++20 main.cpp <i>✓</i></div>
+            <div className="window-bar">
+              <i />
+              <i />
+              <i />
+              <span>main.cpp</span>
+            </div>
+            <pre>
+              <code>
+                <span className="code-purple">#include</span>{" "}
+                <span className="code-green">&lt;iostream&gt;</span>
+                {"\n\n"}
+                <span className="code-blue">int</span> main() {"{"}
+                {"\n"} std::cout &lt;&lt;{" "}
+                <span className="code-green">"Hello, future."</span>;{"\n"}{" "}
+                <span className="code-purple">return</span>{" "}
+                <span className="code-orange">0</span>;{"\n"}
+                {"}"}
+              </code>
+            </pre>
+            <div className="terminal-line">
+              <span>$</span> clang++ -std=c++20 main.cpp <i>✓</i>
+            </div>
           </div>
         </section>
 
@@ -153,14 +183,25 @@ export function App() {
 
         <section id="environment" className="section-block">
           <div className="section-heading">
-            <div><p className="eyebrow">SYSTEM READINESS</p><h2>工程环境</h2></div>
-            <span className="last-check">{data ? `检测于 ${new Date(data.generatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}` : "检测中"}</span>
+            <div>
+              <p className="eyebrow">SYSTEM READINESS</p>
+              <h2>工程环境</h2>
+            </div>
+            <span className="last-check">
+              {data
+                ? `检测于 ${new Date(data.generatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
+                : "检测中"}
+            </span>
           </div>
           <div className="status-grid">
             <StatusCard
               eyebrow="CURRICULUM"
               title="课程目录"
-              detail={data ? `${data.services.curriculum.activityCount} 个活动已通过结构校验` : "正在读取课程清单"}
+              detail={
+                data
+                  ? `${data.services.curriculum.activityCount} 个活动已通过结构校验`
+                  : "正在读取课程清单"
+              }
               ready={data?.services.curriculum.ready ?? false}
               icon={<AppIcon>01</AppIcon>}
             />
@@ -184,18 +225,37 @@ export function App() {
         <section id="current" className="learning-grid section-block">
           <article className="current-card">
             <div className="section-heading compact">
-              <div><p className="eyebrow">UP NEXT</p><h2>第一课已就绪</h2></div>
-              <span className="time-pill">约 35 分钟</span>
+              <div>
+                <p className="eyebrow">NEXT INCREMENT</p>
+                <h2>首个学习闭环</h2>
+              </div>
+              <span className="time-pill">STAGE 1</span>
             </div>
             <div className="lesson-row">
-              <div className="lesson-number">01</div>
+              <div className="lesson-number">→</div>
               <div className="lesson-copy">
-                <span className="lesson-kind">基础 · 编译模型</span>
-                <h3>从源代码到可执行程序</h3>
-                <p>从你熟悉的 JavaScript 出发，建立 C++ 编译、链接和运行的第一套心智模型。</p>
-                <div className="lesson-tags"><span>main</span><span>clang++</span><span>C++20</span></div>
+                <span className="lesson-kind">
+                  {data?.services.curriculum.activityCount ?? 0}{" "}
+                  个课程活动已通过契约
+                </span>
+                <h3>阅读、编辑、运行、判题与记录</h3>
+                <p>
+                  下一阶段将由课程模块提供内容，由工作区和 Judge
+                  组成完整闭环；Web 页面只负责展示平台返回的状态。
+                </p>
+                <div className="lesson-tags">
+                  <span>Lesson</span>
+                  <span>Workspace</span>
+                  <span>Judge</span>
+                </div>
               </div>
-              <button className="lesson-button" disabled title="Stage 1 将开放课程工作区">Stage 1 开放 <span>→</span></button>
+              <button
+                className="lesson-button"
+                disabled
+                title="Stage 1 将开放课程工作区"
+              >
+                尚未开放 <span>→</span>
+              </button>
             </div>
           </article>
 
@@ -203,10 +263,34 @@ export function App() {
             <p className="eyebrow">YOUR PATH</p>
             <h2>现代 C++ 工程路线</h2>
             <div className="path-list">
-              <div className="path-item active"><i>1</i><div><strong>工程基线</strong><span>进行中</span></div></div>
-              <div className="path-item"><i>2</i><div><strong>语言与内存模型</strong><span>下一阶段</span></div></div>
-              <div className="path-item"><i>3</i><div><strong>STL 与工程化</strong><span>尚未解锁</span></div></div>
-              <div className="path-item"><i>4</i><div><strong>服务端专项</strong><span>方向待选择</span></div></div>
+              <div className="path-item active">
+                <i>1</i>
+                <div>
+                  <strong>工程基线</strong>
+                  <span>进行中</span>
+                </div>
+              </div>
+              <div className="path-item">
+                <i>2</i>
+                <div>
+                  <strong>语言与内存模型</strong>
+                  <span>下一阶段</span>
+                </div>
+              </div>
+              <div className="path-item">
+                <i>3</i>
+                <div>
+                  <strong>STL 与工程化</strong>
+                  <span>尚未解锁</span>
+                </div>
+              </div>
+              <div className="path-item">
+                <i>4</i>
+                <div>
+                  <strong>服务端专项</strong>
+                  <span>方向待选择</span>
+                </div>
+              </div>
             </div>
           </article>
         </section>
@@ -219,4 +303,3 @@ export function App() {
     </div>
   );
 }
-

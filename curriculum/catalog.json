@@ -1,7 +1,4 @@
 {
   "schemaVersion": 1,
-  "activityManifests": [
-    "activities/source-to-program/activity.json"
-  ]
+  "activityManifests": ["activities/source-to-program/activity.json"]
 }
-

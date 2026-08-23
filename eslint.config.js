@@ -10,14 +10,14 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         console: "readonly",
-        process: "readonly"
-      }
-    }
+        process: "readonly",
+      },
+    },
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {
-      "@typescript-eslint/consistent-type-imports": "error"
-    }
-  }
+      "@typescript-eslint/consistent-type-imports": "error",
+    },
+  },
 );

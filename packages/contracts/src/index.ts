@@ -1,3 +1,7 @@
+import Ajv from "ajv";
+
+import bootstrapResultSchema from "./bootstrap-result.schema.json" with { type: "json" };
+
 export const SCHEMA_VERSION = 1 as const;
 
 export interface CurriculumReadiness {
@@ -30,8 +34,33 @@ export interface BootstrapResult {
 
 export type LearningQuery = { readonly type: "bootstrap.get" };
 export type QueryResult = BootstrapResult;
+export type LearningCommand = never;
+export type CommandResult = never;
+export type JobId = string;
 
-export interface LearningPlatform {
-  query(query: LearningQuery): Promise<QueryResult>;
+export interface PlatformEvent {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly jobId: JobId;
+  readonly sequence: number;
+  readonly type: string;
 }
 
+export interface LearningPlatform {
+  dispatch(command: LearningCommand): Promise<CommandResult>;
+  query(query: LearningQuery): Promise<QueryResult>;
+  events(jobId: JobId): AsyncIterable<PlatformEvent>;
+}
+
+const validateBootstrapResult = new Ajv({
+  allErrors: true,
+  strict: true,
+}).compile(bootstrapResultSchema);
+
+export function parseBootstrapResult(value: unknown): BootstrapResult {
+  if (!validateBootstrapResult(value)) {
+    throw new Error("Bootstrap response violates the transport contract");
+  }
+  return value as unknown as BootstrapResult;
+}
+
+export { bootstrapResultSchema };

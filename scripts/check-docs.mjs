@@ -3,11 +3,13 @@ import { dirname, resolve } from "node:path";
 
 async function markdownFiles(root) {
   const entries = await readdir(root, { withFileTypes: true });
-  const nested = await Promise.all(entries.map(async (entry) => {
-    const path = resolve(root, entry.name);
-    if (entry.isDirectory()) return markdownFiles(path);
-    return entry.isFile() && entry.name.endsWith(".md") ? [path] : [];
-  }));
+  const nested = await Promise.all(
+    entries.map(async (entry) => {
+      const path = resolve(root, entry.name);
+      if (entry.isDirectory()) return markdownFiles(path);
+      return entry.isFile() && entry.name.endsWith(".md") ? [path] : [];
+    }),
+  );
   return nested.flat();
 }
 
@@ -32,12 +34,19 @@ for (const file of files) {
 }
 
 const requirementPattern = /\b(?:FR|NFR|BR)-\d{3}\b/g;
-const specification = await readFile(resolve("docs/02-SOFTWARE_REQUIREMENTS_SPECIFICATION.md"), "utf8");
-const traceability = await readFile(resolve("docs/12-REQUIREMENTS_TRACEABILITY_MATRIX.md"), "utf8");
+const specification = await readFile(
+  resolve("docs/02-SOFTWARE_REQUIREMENTS_SPECIFICATION.md"),
+  "utf8",
+);
+const traceability = await readFile(
+  resolve("docs/12-REQUIREMENTS_TRACEABILITY_MATRIX.md"),
+  "utf8",
+);
 const requirementIds = new Set(specification.match(requirementPattern) ?? []);
 const tracedIds = new Set(traceability.match(requirementPattern) ?? []);
 for (const requirementId of requirementIds) {
-  if (!tracedIds.has(requirementId)) errors.push(`Untraced requirement: ${requirementId}`);
+  if (!tracedIds.has(requirementId))
+    errors.push(`Untraced requirement: ${requirementId}`);
 }
 
 if (errors.length > 0) {
@@ -46,4 +55,3 @@ if (errors.length > 0) {
 } else {
   console.log(`Documentation checks passed (${files.length} Markdown files).`);
 }
-

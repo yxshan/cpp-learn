@@ -1,0 +1,56 @@
+{
+  "$id": "https://cpp-learn.local/schemas/bootstrap-result.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "generatedAt", "ready", "services"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedAt": { "type": "string" },
+    "ready": { "type": "boolean" },
+    "services": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["curriculum", "toolchain", "record"],
+      "properties": {
+        "curriculum": { "$ref": "#/$defs/curriculumReadiness" },
+        "toolchain": { "$ref": "#/$defs/toolchainReadiness" },
+        "record": { "$ref": "#/$defs/recordReadiness" }
+      }
+    }
+  },
+  "$defs": {
+    "issues": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "curriculumReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready", "activityCount"],
+      "properties": {
+        "ready": { "type": "boolean" },
+        "activityCount": { "type": "integer", "minimum": 0 },
+        "issues": { "$ref": "#/$defs/issues" }
+      }
+    },
+    "toolchainReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready"],
+      "properties": {
+        "ready": { "type": "boolean" },
+        "compiler": { "type": "string" },
+        "issues": { "$ref": "#/$defs/issues" }
+      }
+    },
+    "recordReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready"],
+      "properties": {
+        "ready": { "type": "boolean" },
+        "issues": { "$ref": "#/$defs/issues" }
+      }
+    }
+  }
+}

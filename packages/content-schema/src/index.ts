@@ -27,9 +27,8 @@ export function validateActivity(value: unknown): readonly ValidationIssue[] {
   return (validateActivitySchema.errors ?? []).map((error) => ({
     path: issuePath(error),
     message: error.message ?? "invalid value",
-    keyword: error.keyword
+    keyword: error.keyword,
   }));
 }
 
 export { activitySchema };
-

@@ -16,7 +16,7 @@
 - Curriculum JSON Schema with all-errors validation and one migrated declarative Lesson.
 - Workspace editable-path contract rejecting traversal, absolute, backslash, and undeclared paths.
 - Native Clang toolchain readiness Adapter using argument-array process execution.
-- Local JSONL Learning Record readiness Adapter.
+- Local JSONL Learning Record initialization and read-only readiness Adapter.
 - Fastify HTTP, React Web, and CLI presentation Adapters.
 - Local launch instructions and executable `cpplearn doctor` entry point.
 
@@ -29,8 +29,8 @@ No learner program is executed in Stage 0. Judge jobs, editable Workspaces, Atte
 | Modules compile through declared Interfaces | `npm run typecheck` | Passed |
 | Web and CLI consume the shared bootstrap DTO | `T-CONTRACT-001` tests | Passed |
 | Invalid content fails contract validation | `T-CONTENT-001` | Passed |
-| Invalid paths fail the Workspace contract | `T-SEC-001` | Passed |
-| Documentation and traceability remain current | `npm run check:docs` | Passed |
+| Invalid paths and symlink escapes fail the Workspace contract | `T-SEC-001` | Passed |
+| Documentation, traceability, and production curriculum remain current | `npm run check:docs`; `npm run check:content` | Passed |
 | Production Web assets build | `npm run build` | Passed |
 | Reference toolchain and data root are ready | `./cpplearn doctor --json` | Passed |
 
@@ -40,7 +40,7 @@ The accepted full gate was:
 npm run check
 ```
 
-Observed result on the reference environment: 23 controlled Markdown files checked, 8 test files and 14 tests passed, TypeScript and ESLint passed, and Vite produced production assets.
+Observed result on the reference environment: 23 controlled Markdown files checked, the production curriculum passed validation, formatting/TypeScript/ESLint passed, all automated tests passed, and Vite produced production assets.
 
 ## 3. Manual Web evidence
 

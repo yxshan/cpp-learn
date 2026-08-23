@@ -7,16 +7,18 @@ export interface ServerDependencies {
   readonly logger?: boolean;
 }
 
-export function createServer(dependencies: ServerDependencies): FastifyInstance {
+export function createServer(
+  dependencies: ServerDependencies,
+): FastifyInstance {
   const server = Fastify({ logger: dependencies.logger ?? false });
 
   server.get("/api/v1/health", async () => ({
     schemaVersion: 1,
-    status: "ok"
+    status: "ok",
   }));
 
   server.get("/api/v1/bootstrap", async () =>
-    dependencies.platform.query({ type: "bootstrap.get" })
+    dependencies.platform.query({ type: "bootstrap.get" }),
   );
 
   return server;

@@ -5,10 +5,7 @@
   "kind": "lesson",
   "title": "从源代码到可执行程序",
   "estimatedMinutes": 35,
-  "conceptIds": [
-    "compile-link-run",
-    "cpp-program-structure"
-  ],
+  "conceptIds": ["compile-link-run", "cpp-program-structure"],
   "prerequisiteIds": [],
   "content": {
     "format": "markdown",
@@ -18,4 +15,3 @@
     "automatedPass": false
   }
 }
-

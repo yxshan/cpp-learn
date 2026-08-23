@@ -5,7 +5,7 @@ import { runCli } from "./cli.js";
 
 process.exitCode = await runCli({
   argv: process.argv.slice(2),
-  platform: createProductionPlatform(),
+  platform: await createProductionPlatform(),
   stdout: (text) => process.stdout.write(text),
-  stderr: (text) => process.stderr.write(text)
+  stderr: (text) => process.stderr.write(text),
 });

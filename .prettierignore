@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+docs/
+lessons/
+reference/
+exercises/
+learning-records/
+assets/
+*.md
+package-lock.json
+

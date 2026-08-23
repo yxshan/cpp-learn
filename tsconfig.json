@@ -17,6 +17,13 @@
     "types": ["node", "vitest/globals"],
     "skipLibCheck": true
   },
-  "include": ["apps/**/*.ts", "apps/**/*.tsx", "modules/**/*.ts", "packages/**/*.ts", "scripts/**/*.mjs", "vitest.config.ts", "eslint.config.js"]
+  "include": [
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "modules/**/*.ts",
+    "packages/**/*.ts",
+    "scripts/**/*.mjs",
+    "vitest.config.ts",
+    "eslint.config.js"
+  ]
 }
-

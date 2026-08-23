@@ -1,6 +1,6 @@
 import {
   validateActivity,
-  type ValidationIssue
+  type ValidationIssue,
 } from "@cpp-learn/content-schema";
 import type { CurriculumReadiness } from "@cpp-learn/contracts";
 import { readFile } from "node:fs/promises";
@@ -10,8 +10,25 @@ export type CatalogValidationResult =
   | { readonly ok: true; readonly activityCount: number }
   | { readonly ok: false; readonly issues: readonly ValidationIssue[] };
 
+export interface Activity {
+  readonly schemaVersion: 1;
+  readonly id: string;
+  readonly version: number;
+  readonly kind: "lesson" | "exercise" | "review" | "project-milestone";
+  readonly title: string;
+  readonly estimatedMinutes: number;
+  readonly conceptIds: readonly string[];
+  readonly prerequisiteIds: readonly string[];
+  readonly content: { readonly format: "markdown"; readonly path: string };
+  readonly evidencePolicy: { readonly automatedPass: boolean };
+}
+
+export interface Curriculum {
+  readiness(): Promise<CurriculumReadiness>;
+}
+
 export function validateCatalog(
-  activities: readonly unknown[]
+  activities: readonly unknown[],
 ): CatalogValidationResult {
   const issues = activities.flatMap((activity) => validateActivity(activity));
 
@@ -34,12 +51,15 @@ function isCatalogManifest(value: unknown): value is CatalogManifest {
     candidate["schemaVersion"] === 1 &&
     Array.isArray(candidate["activityManifests"]) &&
     candidate["activityManifests"].every(
-      (path) => typeof path === "string" && path.endsWith(".json")
+      (path) => typeof path === "string" && path.endsWith(".json"),
     )
   );
 }
 
-function resolveInsideCatalogRoot(catalogRoot: string, manifestPath: string): string {
+function resolveInsideCatalogRoot(
+  catalogRoot: string,
+  manifestPath: string,
+): string {
   const resolvedPath = resolve(catalogRoot, manifestPath);
   const pathFromRoot = relative(catalogRoot, resolvedPath);
   if (
@@ -58,15 +78,19 @@ export interface FilesystemCurriculumProbeDependencies {
 }
 
 export function createFilesystemCurriculumProbe(
-  dependencies: FilesystemCurriculumProbeDependencies
+  dependencies: FilesystemCurriculumProbeDependencies,
 ): () => Promise<CurriculumReadiness> {
   return async () => {
     try {
       const catalog = JSON.parse(
-        await readFile(dependencies.catalogPath, "utf8")
+        await readFile(dependencies.catalogPath, "utf8"),
       ) as unknown;
       if (!isCatalogManifest(catalog)) {
-        return { ready: false, activityCount: 0, issues: ["Catalog manifest is invalid"] };
+        return {
+          ready: false,
+          activityCount: 0,
+          issues: ["Catalog manifest is invalid"],
+        };
       }
 
       const catalogRoot = dirname(dependencies.catalogPath);
@@ -74,7 +98,7 @@ export function createFilesystemCurriculumProbe(
         catalog.activityManifests.map(async (manifestPath) => {
           const path = resolveInsideCatalogRoot(catalogRoot, manifestPath);
           return JSON.parse(await readFile(path, "utf8")) as unknown;
-        })
+        }),
       );
       const validation = validateCatalog(activities);
       if (!validation.ok) {
@@ -82,17 +106,35 @@ export function createFilesystemCurriculumProbe(
           ready: false,
           activityCount: 0,
           issues: validation.issues.map(
-            (issue) => `${issue.path}: ${issue.message}`
-          )
+            (issue) => `${issue.path}: ${issue.message}`,
+          ),
         };
       }
+
+      await Promise.all(
+        (activities as readonly Activity[]).map(async (activity) => {
+          const contentPath = resolveInsideCatalogRoot(
+            catalogRoot,
+            activity.content.path,
+          );
+          await readFile(contentPath, "utf8");
+        }),
+      );
       return { ready: true, activityCount: validation.activityCount };
     } catch (error) {
       return {
         ready: false,
         activityCount: 0,
-        issues: [error instanceof Error ? error.message : "Curriculum is unavailable"]
+        issues: [
+          error instanceof Error ? error.message : "Curriculum is unavailable",
+        ],
       };
     }
   };
+}
+
+export function createFilesystemCurriculum(
+  dependencies: FilesystemCurriculumProbeDependencies,
+): Curriculum {
+  return { readiness: createFilesystemCurriculumProbe(dependencies) };
 }

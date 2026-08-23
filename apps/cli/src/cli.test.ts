@@ -11,14 +11,18 @@ const bootstrap: BootstrapResult = {
   services: {
     curriculum: { ready: true, activityCount: 1 },
     toolchain: { ready: false, issues: ["clang++ is unavailable"] },
-    record: { ready: true }
-  }
+    record: { ready: true },
+  },
 };
 
 describe("[T-CONTRACT-001] CLI doctor Adapter", () => {
   it("writes exactly one shared versioned result in JSON mode", async () => {
     const platform: LearningPlatform = {
-      query: vi.fn().mockResolvedValue(bootstrap)
+      async dispatch() {
+        throw new Error("No commands in this fixture");
+      },
+      async *events() {},
+      query: vi.fn().mockResolvedValue(bootstrap),
     };
     const stdout = vi.fn();
     const stderr = vi.fn();
@@ -27,7 +31,7 @@ describe("[T-CONTRACT-001] CLI doctor Adapter", () => {
       argv: ["doctor", "--json"],
       platform,
       stdout,
-      stderr
+      stderr,
     });
 
     expect(exitCode).toBe(3);

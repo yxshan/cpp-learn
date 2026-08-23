@@ -17,7 +17,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check:docs": "node scripts/check-docs.mjs",
-    "check": "npm run check:docs && npm run lint && npm run typecheck && npm test && npm run build",
+    "check:content": "node --experimental-strip-types scripts/check-content.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run check:docs && npm run check:content && npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
     "cpplearn": "tsx apps/cli/src/index.ts"
   },
   "engines": {
@@ -31,6 +34,7 @@
     "@vitejs/plugin-react": "6.1.0",
     "@vitest/coverage-v8": "4.1.11",
     "eslint": "10.9.0",
+    "prettier": "3.9.6",
     "tsx": "4.23.12",
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",

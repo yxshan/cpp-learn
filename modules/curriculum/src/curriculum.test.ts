@@ -15,8 +15,8 @@ describe("[T-CONTENT-001] Curriculum catalog validation", () => {
         conceptIds: [],
         prerequisiteIds: [],
         content: { format: "shell", path: "../lesson.sh" },
-        evidencePolicy: { automatedPass: false }
-      }
+        evidencePolicy: { automatedPass: false },
+      },
     ]);
 
     expect(result.ok).toBe(false);
@@ -29,8 +29,8 @@ describe("[T-CONTENT-001] Curriculum catalog validation", () => {
           expect.objectContaining({ path: "/kind" }),
           expect.objectContaining({ path: "/title" }),
           expect.objectContaining({ path: "/estimatedMinutes" }),
-          expect.objectContaining({ path: "/conceptIds" })
-        ])
+          expect.objectContaining({ path: "/conceptIds" }),
+        ]),
       );
     }
   });

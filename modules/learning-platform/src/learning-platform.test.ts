@@ -9,8 +9,8 @@ describe("[T-MODULE-001] LearningPlatform bootstrap query", () => {
       probes: {
         curriculum: async () => ({ ready: true, activityCount: 1 }),
         toolchain: async () => ({ ready: true, compiler: "Apple Clang 15" }),
-        record: async () => ({ ready: true })
-      }
+        record: async () => ({ ready: true }),
+      },
     });
 
     await expect(platform.query({ type: "bootstrap.get" })).resolves.toEqual({
@@ -20,8 +20,14 @@ describe("[T-MODULE-001] LearningPlatform bootstrap query", () => {
       services: {
         curriculum: { ready: true, activityCount: 1 },
         toolchain: { ready: true, compiler: "Apple Clang 15" },
-        record: { ready: true }
-      }
+        record: { ready: true },
+      },
     });
+    expect(typeof platform.dispatch).toBe("function");
+    expect(typeof platform.events).toBe("function");
+    const events = [];
+    for await (const event of platform.events("job_missing"))
+      events.push(event);
+    expect(events).toEqual([]);
   });
 });

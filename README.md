@@ -36,6 +36,6 @@ CLI 环境检查：
 npm run check
 ```
 
-该命令依次检查文档链接与需求追踪、Lint、TypeScript、单元/契约测试和 Web 生产构建。
+该命令依次检查文档链接与需求追踪、生产课程树、格式、Lint、TypeScript、单元/契约测试和 Web 生产构建。
 
 产品与工程设计基线见 [`docs/README.md`](docs/README.md)。

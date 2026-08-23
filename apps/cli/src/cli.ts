@@ -8,7 +8,7 @@ export interface CliDependencies {
 }
 
 function formatDoctorReport(
-  report: Awaited<ReturnType<LearningPlatform["query"]>>
+  report: Awaited<ReturnType<LearningPlatform["query"]>>,
 ): string {
   const symbol = (ready: boolean): string => (ready ? "✓" : "✗");
   return [
@@ -16,7 +16,7 @@ function formatDoctorReport(
     `${symbol(report.services.curriculum.ready)} Curriculum: ${report.services.curriculum.activityCount} activities`,
     `${symbol(report.services.toolchain.ready)} Toolchain: ${report.services.toolchain.compiler ?? "unavailable"}`,
     `${symbol(report.services.record.ready)} Learning record`,
-    ""
+    "",
   ].join("\n");
 }
 
