@@ -265,3 +265,56 @@ test("[T-UI-004] Project evidence navigation and interactive traces stay usable 
   await expect(page.locator(".lifetime-trace")).toBeVisible();
   await expect(page.locator(".network-trace")).toHaveCount(0);
 });
+
+test("[T-UI-005] C++ starter code is formatted and editor tools can format or reset the active file", async ({
+  page,
+}) => {
+  await page.goto("/?activity=modern-vocabulary");
+  await expect(
+    page.getByRole("heading", { name: "Lambda、optional、variant 与 ranges" }),
+  ).toBeVisible();
+
+  const visibleLines = page.locator(".monaco-editor .view-line");
+  await expect(visibleLines).toHaveCount(6);
+  await expect(page.getByRole("button", { name: "格式化代码" })).toBeEnabled();
+  await expect(
+    page.getByRole("button", { name: "重置当前文件" }),
+  ).toBeEnabled();
+
+  const editor = page.locator(".monaco-editor textarea").first();
+  await editor.click({ force: true });
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.insertText("int main(){int answer=42;return answer;}");
+  await page.getByRole("button", { name: "格式化代码" }).click();
+  await expect(
+    page.getByText("已格式化 main.cpp；保存后写入工作区"),
+  ).toBeVisible();
+  await expect(visibleLines).toHaveCount(5);
+
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain("恢复为课程初始代码");
+    await dialog.accept();
+  });
+  await page.getByRole("button", { name: "重置当前文件" }).click();
+  await expect(
+    page.getByText("已重置 main.cpp；保存后写入工作区"),
+  ).toBeVisible();
+  await expect(visibleLines).toHaveCount(6);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const editorToolsFit = await page.evaluate(() => {
+    const panel = document
+      .querySelector(".coding-panel")
+      ?.getBoundingClientRect();
+    const buttons = [...document.querySelectorAll(".editor-tools button")];
+    return Boolean(
+      panel &&
+      buttons.length === 2 &&
+      buttons.every((button) => {
+        const bounds = button.getBoundingClientRect();
+        return bounds.left >= panel.left && bounds.right <= panel.right;
+      }),
+    );
+  });
+  expect(editorToolsFit).toBe(true);
+});

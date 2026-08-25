@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Delivery policy
 
@@ -165,7 +165,24 @@ Acceptance:
 - Knowledge Map traces Project evidence back to Concepts.
 - Export contains a coherent learner-owned portfolio history without private judge material.
 
-## 10. Global definition of done
+## 10. Stage 6.1: C++ editor ergonomics
+
+**Status:** Accepted on 2026-08-25. Reproducible evidence is recorded in the [Stage 6.1 Implementation Report](21-STAGE-6.1-IMPLEMENTATION-REPORT.md).
+
+Deliver:
+
+- Conventionally formatted C++ starter code in the Lesson editor.
+- Active-file Format and confirmed Reset controls.
+- A read-only starter baseline without silent replacement of learner work.
+
+Acceptance:
+
+- String and comment contents survive deterministic formatting.
+- Previously edited learner files are not automatically formatted or reset.
+- Format and Reset remain buffer-only until Save, Run, or Grade persists them.
+- The real-browser regression covers initial formatting, explicit formatting, and confirmed reset.
+
+## 11. Global definition of done
 
 - Requirement implemented and traced.
 - Module/contract/integration/E2E tests pass as applicable.
@@ -175,7 +192,7 @@ Acceptance:
 - No known S1/S2 defects in the released scope.
 - Acceptance evidence is reproducible and archived with the release.
 
-## 11. Deferred decisions
+## 12. Deferred decisions
 
 - Desktop packaging.
 - Specific SQLite Node Adapter.

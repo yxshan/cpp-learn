@@ -47,6 +47,7 @@ export interface WorkspaceView {
   readonly activityId: ActivityId;
   readonly revision: number;
   readonly files: Readonly<Record<string, string>>;
+  readonly starterFiles: Readonly<Record<string, string>>;
 }
 
 export interface SaveWorkspaceRequest {
@@ -96,6 +97,7 @@ export interface InMemoryWorkspaceActivity {
 
 interface InMemoryActivityState {
   readonly editablePaths: readonly string[];
+  readonly starterFiles: Readonly<Record<string, string>>;
   revision: number;
   files: Record<string, string>;
 }
@@ -146,6 +148,7 @@ export function createInMemoryWorkspace(
       activity.activityId,
       {
         editablePaths: activity.editablePaths,
+        starterFiles: copyFiles(activity.starterFiles),
         revision: 0,
         files: copyFiles(activity.starterFiles),
       },
@@ -166,6 +169,7 @@ export function createInMemoryWorkspace(
         activityId,
         revision: activity.revision,
         files: copyFiles(activity.files),
+        starterFiles: copyFiles(activity.starterFiles),
       };
     },
     async save(request) {
@@ -368,6 +372,7 @@ export function createFilesystemWorkspace(
 
   return {
     async open(activityId) {
+      const definition = requireDefinition(activityId);
       const state = await serializeSave(activityId, () =>
         stateForUnlocked(activityId),
       );
@@ -375,6 +380,7 @@ export function createFilesystemWorkspace(
         activityId,
         revision: state.revision,
         files: copyFiles(state.files),
+        starterFiles: copyFiles(definition.starterFiles),
       };
     },
     async save(request) {

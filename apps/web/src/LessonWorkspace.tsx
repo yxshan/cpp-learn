@@ -20,9 +20,26 @@ import {
   saveWorkspace,
   submitReflection,
 } from "./api.js";
+import { formatCppSource, isCppSourcePath } from "./cpp-format.js";
 
 self.MonacoEnvironment = { getWorker: () => new EditorWorker() };
 loader.config({ monaco });
+
+function prepareInitialSources(
+  workspace: WorkspaceView,
+  editablePaths: readonly string[],
+): Record<string, string> {
+  const files = { ...workspace.files };
+  const isUntouchedStarter = editablePaths.every(
+    (path) => files[path] === workspace.starterFiles[path],
+  );
+  if (!isUntouchedStarter) return files;
+
+  for (const path of editablePaths) {
+    if (isCppSourcePath(path)) files[path] = formatCppSource(files[path] ?? "");
+  }
+  return files;
+}
 
 function InteractiveBlock({
   block,
@@ -195,9 +212,16 @@ export function LessonWorkspace({
       .then(([activityResult, workspaceResult]) => {
         if (cancelled) return;
         if (!activityResult.activity) throw new Error("课程不存在");
+        const initialSources = prepareInitialSources(
+          workspaceResult.workspace,
+          activityResult.activity.workspace.editablePaths,
+        );
         setActivity(activityResult.activity);
-        setWorkspace(workspaceResult.workspace);
-        setSources({ ...workspaceResult.workspace.files });
+        setWorkspace({
+          ...workspaceResult.workspace,
+          files: initialSources,
+        });
+        setSources(initialSources);
         setActivePath(
           activityResult.activity.workspace.editablePaths[0] ?? "main.cpp",
         );
@@ -346,6 +370,52 @@ export function LessonWorkspace({
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "取消失败");
     }
+  };
+
+  const replaceActiveSource = (
+    content: string,
+    successMessage: string,
+  ): void => {
+    if (!workspace || !activity) return;
+    const nextSources = { ...sources, [activePath]: content };
+    const dirty = activity.workspace.editablePaths.some(
+      (path) => nextSources[path] !== workspace.files[path],
+    );
+    setSources(nextSources);
+    setReport(undefined);
+    setIsDirty(dirty);
+    onDirtyChange(dirty);
+    setMessage(successMessage);
+  };
+
+  const formatActiveFile = (): void => {
+    if (!isCppSourcePath(activePath)) return;
+    const currentSource = sources[activePath] ?? "";
+    const formattedSource = formatCppSource(currentSource);
+    if (formattedSource === currentSource) {
+      setMessage(`${activePath} 已符合 C++ 格式`);
+      return;
+    }
+    replaceActiveSource(
+      formattedSource,
+      `已格式化 ${activePath}；保存后写入工作区`,
+    );
+  };
+
+  const resetActiveFile = (): void => {
+    const starterSource = workspace?.starterFiles[activePath];
+    if (starterSource === undefined) return;
+    if (
+      !window.confirm(
+        `确定将 ${activePath} 恢复为课程初始代码吗？当前未保存修改会被替换。`,
+      )
+    ) {
+      return;
+    }
+    const resetSource = isCppSourcePath(activePath)
+      ? formatCppSource(starterSource)
+      : starterSource;
+    replaceActiveSource(resetSource, `已重置 ${activePath}；保存后写入工作区`);
   };
 
   return (
@@ -551,7 +621,26 @@ export function LessonWorkspace({
                 </button>
               ))}
             </div>
-            <span>revision {workspace?.revision ?? 0}</span>
+            <div className="editor-tools">
+              <button
+                type="button"
+                disabled={Boolean(busy) || !isCppSourcePath(activePath)}
+                onClick={formatActiveFile}
+              >
+                格式化代码
+              </button>
+              <button
+                type="button"
+                disabled={
+                  Boolean(busy) ||
+                  workspace?.starterFiles[activePath] === undefined
+                }
+                onClick={resetActiveFile}
+              >
+                重置当前文件
+              </button>
+              <span>revision {workspace?.revision ?? 0}</span>
+            </div>
           </div>
           <Editor
             height="100%"
@@ -559,12 +648,17 @@ export function LessonWorkspace({
             theme="vs-dark"
             value={sources[activePath] ?? ""}
             onChange={(value) => {
-              setSources((current) => ({
-                ...current,
+              if (!workspace || !activity) return;
+              const nextSources = {
+                ...sources,
                 [activePath]: value ?? "",
-              }));
-              setIsDirty(true);
-              onDirtyChange(true);
+              };
+              const dirty = activity.workspace.editablePaths.some(
+                (path) => nextSources[path] !== workspace.files[path],
+              );
+              setSources(nextSources);
+              setIsDirty(dirty);
+              onDirtyChange(dirty);
             }}
             options={{
               automaticLayout: true,

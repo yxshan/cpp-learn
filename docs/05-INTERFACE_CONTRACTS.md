@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Contract policy
 
@@ -70,6 +70,26 @@ Save request:
 ```
 
 Conflict response uses HTTP `409` and returns the latest revision without overwriting.
+
+Workspace query response:
+
+```json
+{
+  "schemaVersion": 1,
+  "workspace": {
+    "activityId": "modern-vocabulary",
+    "revision": 3,
+    "files": { "main.cpp": "int main() { return 0; }\n" },
+    "starterFiles": { "main.cpp": "int main(){std::cout<<\"TODO\\n\";}\n" }
+  }
+}
+```
+
+`starterFiles` is a read-only reset baseline from the current Activity
+definition. It does not imply that learner `files` match the baseline, and it
+is never accepted in the save request. Web Format and Reset operations change
+the local editor buffer first; existing PATCH revision rules remain the only
+persistence path.
 
 ### Run and Grade
 

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Package layout
 
@@ -133,6 +133,10 @@ interface Workspace {
 }
 ```
 
+`WorkspaceView` exposes both the mutable learner `files` and an immutable copy
+of the current Activity's `starterFiles`. The starter copy is a presentation
+reset baseline; it is never persisted back into learner files by `open`.
+
 ### Invariants
 
 - Starter initialization is idempotent.
@@ -222,6 +226,13 @@ Projection schemas are disposable and carry their own migration version.
 ### Web Adapter
 
 The Web Adapter validates transport contracts, translates them to Learning Commands/Queries, and maps results to HTTP. It may manage authentication in a future multi-user product, but no teaching rule belongs in routes or React state.
+
+The Lesson editor formats C/C++ files with a token-aware, deterministic
+formatter. Automatic presentation formatting is limited to a Workspace whose
+editable files still exactly match its starter baseline, so existing learner
+code is not silently rewritten. Explicit Format and Reset actions update only
+the browser buffer, clear stale Judge output, update unsaved-change state, and
+require Save, Run, or Grade before persistence. Reset requires confirmation.
 
 ### CLI Adapter
 

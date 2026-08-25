@@ -132,6 +132,7 @@ export interface WorkspaceView {
   readonly activityId: string;
   readonly revision: number;
   readonly files: Readonly<Record<string, string>>;
+  readonly starterFiles: Readonly<Record<string, string>>;
 }
 
 export interface WorkspaceResult {

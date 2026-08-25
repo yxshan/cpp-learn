@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Purpose
 
@@ -155,3 +155,11 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-LEARN-002 | `progress.get` returns persisted Evidence with its source Activity ID, and the Project view counts only passing evidence from that Project's Milestones | Passed |
 | T-DATA-001 | `modules/learning-record/src/learning-record.test.ts` round-trips a Project `PORTFOLIO.md` and learning history through a checksummed archive while excluding a private-Judge sentinel outside learner roots | Passed |
 | T-UI-004 | Playwright verifies narrow-screen Project anchor visibility, zero horizontal overflow, Project-to-Workspace navigation, and distinct network/lifetime interactive traces | Passed |
+
+## 14. Executable Stage 6.1 evidence
+
+| Test ID | Executable evidence | Status |
+|---|---|---|
+| T-EDITOR-001 | `apps/web/src/cpp-format.test.ts` verifies deterministic C++ formatting, literal/comment preservation, `for`-header handling, idempotence, and source-path detection | Passed |
+| T-WORK-001 | `modules/workspace/src/workspace.test.ts` verifies the immutable starter baseline remains distinct from saved learner files and follows the current Activity version | Passed |
+| T-UI-005 | Playwright verifies formatted starter presentation, active-file Format, confirmed Reset, and buffer-only persistence messaging in the real Monaco editor | Passed |

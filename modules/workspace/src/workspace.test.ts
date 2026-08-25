@@ -78,6 +78,7 @@ describe("[T-MODULE-001] Workspace Interface", () => {
     await expect(workspace.open("first-program")).resolves.toMatchObject({
       revision: 0,
       files: { "main.cpp": "int main() {}\n" },
+      starterFiles: { "main.cpp": "int main() {}\n" },
     });
     const starterSnapshot = await workspace.snapshot("first-program");
     await expect(
@@ -97,6 +98,7 @@ describe("[T-MODULE-001] Workspace Interface", () => {
     await expect(workspace.open("first-program")).resolves.toMatchObject({
       revision: 1,
       files: { "main.cpp": "int main() { return 0; }\n" },
+      starterFiles: { "main.cpp": "int main() {}\n" },
     });
     const savedSnapshot = await workspace.snapshot("first-program");
     await expect(
@@ -139,6 +141,7 @@ describe("[T-WORK-001] filesystem Workspace", () => {
     await expect(restarted.open("first-program")).resolves.toMatchObject({
       revision: 1,
       files: { "main.cpp": "int main() { return 0; }\n" },
+      starterFiles: { "main.cpp": "int main() {}\n" },
     });
     await expect(restarted.readSnapshot(snapshot.id)).resolves.toMatchObject({
       id: snapshot.id,
@@ -196,6 +199,10 @@ describe("[T-WORK-001] filesystem Workspace", () => {
       revision: 2,
       files: {
         "main.cpp": "int main() { return 42; }\n",
+        "support.cpp": "int answer() { return 42; }\n",
+      },
+      starterFiles: {
+        "main.cpp": "int main() { return 0; }\n",
         "support.cpp": "int answer() { return 42; }\n",
       },
     });
