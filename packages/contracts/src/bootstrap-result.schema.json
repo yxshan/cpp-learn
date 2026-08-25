@@ -84,14 +84,18 @@
             "ready": { "const": true },
             "catalogVersion": {},
             "entryCount": {},
-            "activationDurationMs": {}
+            "activationDurationMs": {},
+            "issueCodes": false
           },
           "required": ["catalogVersion", "entryCount", "activationDurationMs"]
         },
         {
           "properties": {
             "ready": { "const": false },
-            "issueCodes": {}
+            "issueCodes": {},
+            "catalogVersion": false,
+            "entryCount": false,
+            "activationDurationMs": false
           },
           "required": ["issueCodes"]
         }
