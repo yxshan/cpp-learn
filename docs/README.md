@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 2.1 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -42,7 +42,8 @@ Read in this order:
 24. [C++ API Reference Implementation Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md)
 25. [Stage 6.2 Phase 1 Implementation Report](25-STAGE-6.2-PHASE-1-IMPLEMENTATION-REPORT.md)
 26. [Stage 6.2 Phase 2 Implementation Report](26-STAGE-6.2-PHASE-2-IMPLEMENTATION-REPORT.md)
-27. [Domain Context](CONTEXT.md)
+27. [Stage 6.2 Phase 3 Batch 1 Implementation Report](27-STAGE-6.2-PHASE-3-BATCH-1-IMPLEMENTATION-REPORT.md)
+28. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -52,6 +53,10 @@ Core learner references:
 - [Deterministic Algorithm Testing](reference/DETERMINISTIC_ALGORITHM_TESTING.md)
 - [Local System Labs](reference/LOCAL_SYSTEM_LABS.md)
 - [Production C++ Service Evidence](reference/PRODUCTION_CPP_SERVICE.md)
+
+API Reference research baselines:
+
+- [Phase 3 Batch 1 primary-source research](reference/API_REFERENCE_PHASE3_BATCH1_RESEARCH.md)
 
 ## Architecture decisions
 

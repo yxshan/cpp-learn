@@ -21,6 +21,7 @@ export const referenceKindLabels: Readonly<
   landing: "概览",
   header: "头文件",
   type: "类型",
+  object: "对象",
   function: "函数",
   member: "成员",
   concept: "概念",

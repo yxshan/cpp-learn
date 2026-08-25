@@ -9,7 +9,7 @@ import {
 } from "./index.js";
 
 const validEntry = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   id: "std-vector",
   version: 1,
   slug: "standard-library/containers/vector",
@@ -115,8 +115,19 @@ describe("[T-REF-001] Reference manifest schemas", () => {
   it("keeps schema vocabularies aligned with the shared runtime contract", () => {
     const properties = referenceEntrySchema.properties;
     expect(properties.kind.enum).toEqual([...REFERENCE_ENTRY_KINDS]);
+    expect(REFERENCE_ENTRY_KINDS).toContain("object");
     expect(referenceEntrySchema.$defs.standard.enum).toEqual([
       ...CPP_STANDARDS,
     ]);
+  });
+
+  it("rejects the superseded Entry schema version", () => {
+    expect(
+      validateReferenceEntryManifest({ ...validEntry, schemaVersion: 1 }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "/schemaVersion", keyword: "const" }),
+      ]),
+    );
   });
 });

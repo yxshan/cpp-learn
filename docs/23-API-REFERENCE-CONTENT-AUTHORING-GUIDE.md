@@ -242,3 +242,23 @@ The first 15 Entries should exercise the full model rather than maximize count:
 
 The next expansion targets 80–120 Entries across containers, algorithms,
 strings, memory, utilities, I/O, filesystem, time, and concurrency.
+
+## 12. Coverage report
+
+Run `npm run report:reference` from the repository root after adding or
+reclassifying Entries. The command validates and activates the same filesystem
+catalog used by the application, then emits a machine-readable JSON report.
+
+The report covers:
+
+- Entry totals and the number of Entries with examples and primary sources;
+- Entry counts by navigation category, Entry kind, and introduction standard;
+- source counts and unique Entry coverage for primary, secondary, and vendor
+  sources;
+- example counts by kind, declared language standard, and current local
+  verification status.
+
+`not-checked` means that the catalog instance used for the report has not been
+given a local toolchain verification result. It does not mean that an example
+failed. `npm run check:reference` remains the release gate that compiles and,
+where applicable, runs every declared example.

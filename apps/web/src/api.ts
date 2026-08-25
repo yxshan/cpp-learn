@@ -1,4 +1,5 @@
 import {
+  REFERENCE_SCHEMA_VERSION,
   parseBootstrapResult,
   type ActivityExecutionCommandResult,
   type ActivityResult,
@@ -49,6 +50,7 @@ async function requestJson<T>(
   url: string,
   init: RequestInit,
   request: Request,
+  expectedSchemaVersion = 1,
 ): Promise<T> {
   const response = await request(url, init);
   if (!response.ok) {
@@ -59,7 +61,7 @@ async function requestJson<T>(
     typeof value !== "object" ||
     value === null ||
     !("schemaVersion" in value) ||
-    value.schemaVersion !== 1
+    value.schemaVersion !== expectedSchemaVersion
   ) {
     throw new Error("Response violates the versioned transport contract");
   }
@@ -73,6 +75,7 @@ export async function getReferenceNavigation(
     "/api/v1/reference",
     { headers: { accept: "application/json" } },
     request,
+    REFERENCE_SCHEMA_VERSION,
   );
 }
 
@@ -90,6 +93,7 @@ export async function searchReference(
     `/api/v1/reference/search?${parameters.toString()}`,
     { headers: { accept: "application/json" } },
     request,
+    REFERENCE_SCHEMA_VERSION,
   );
 }
 
@@ -101,6 +105,7 @@ export async function resolveReferenceSlug(
     `/api/v1/reference/resolve?slug=${encodeURIComponent(slug)}`,
     { headers: { accept: "application/json" } },
     request,
+    REFERENCE_SCHEMA_VERSION,
   );
 }
 
@@ -112,6 +117,7 @@ export async function getReferenceEntry(
     `/api/v1/reference/entries/${encodeURIComponent(entryId)}`,
     { headers: { accept: "application/json" } },
     request,
+    REFERENCE_SCHEMA_VERSION,
   );
 }
 

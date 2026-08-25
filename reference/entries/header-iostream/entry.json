@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "id": "header-iostream",
+  "version": 1,
+  "slug": "standard-library/headers/iostream",
+  "kind": "header",
+  "title": "<iostream>",
+  "summary": "声明 std::cin、std::cout 等预定义标准输入输出流对象。",
+  "symbol": "<iostream>",
+  "header": "<iostream>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["iostream header", "输入输出头文件", "控制台输入输出"],
+  "categories": ["io"],
+  "relatedEntryIds": ["std-cout", "std-cin"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-iostream/content.md"
+  },
+  "examples": [
+    {
+      "id": "use-standard-streams",
+      "path": "entries/header-iostream/examples/use-standard-streams.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "streams: cin and cout\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: iostream synopsis",
+      "url": "https://eel.is/c++draft/iostream.syn",
+      "standardSection": "[iostream.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: iostream objects overview",
+      "url": "https://eel.is/c++draft/iostream.objects.overview",
+      "standardSection": "[iostream.objects.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft: iostream objects",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-iostreams.html",
+      "standardSection": "[lib.iostream.objects]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

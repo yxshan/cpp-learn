@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "id": "std-array",
+  "version": 1,
+  "slug": "standard-library/containers/array",
+  "kind": "type",
+  "title": "std::array",
+  "summary": "把编译期固定数量的元素包装成连续存储的标准容器。",
+  "symbol": "std::array",
+  "header": "<array>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["array", "固定数组", "定长容器"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["header-array", "std-vector"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-array/content.md"
+  },
+  "examples": [
+    {
+      "id": "fixed-scores",
+      "path": "entries/std-array/examples/fixed-scores.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3 4 9\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array overview",
+      "url": "https://eel.is/c++draft/array.overview",
+      "standardSection": "[array.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array members",
+      "url": "https://eel.is/c++draft/array.members",
+      "standardSection": "[array.members]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: zero-sized arrays",
+      "url": "https://eel.is/c++draft/array.zero",
+      "standardSection": "[array.zero]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: sequence container requirements",
+      "url": "https://eel.is/c++draft/sequence.reqmts",
+      "standardSection": "[sequence.reqmts]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 N3337: array",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
+      "standardSection": "[array]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

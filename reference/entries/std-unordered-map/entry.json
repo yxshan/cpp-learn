@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "id": "std-unordered-map",
+  "version": 1,
+  "slug": "standard-library/containers/unordered-map",
+  "kind": "type",
+  "title": "std::unordered_map",
+  "summary": "以哈希和键等价关系提供平均常数时间查找的键值容器。",
+  "symbol": "std::unordered_map",
+  "header": "<unordered_map>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["unordered_map", "哈希表", "无序映射", "键值表"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["header-unordered-map"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-unordered-map/content.md"
+  },
+  "examples": [
+    {
+      "id": "lookup-inventory",
+      "path": "entries/std-unordered-map/examples/lookup-inventory.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "pen=5\nfalse\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_map overview",
+      "url": "https://eel.is/c++draft/unord.map.overview",
+      "standardSection": "[unord.map.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered associative requirements",
+      "url": "https://eel.is/c++draft/unord.req",
+      "standardSection": "[unord.req]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_map element access",
+      "url": "https://eel.is/c++draft/unord.map.elem",
+      "standardSection": "[unord.map.elem]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered container exceptions",
+      "url": "https://eel.is/c++draft/unord.req.except",
+      "standardSection": "[unord.req.except]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 N3337: unordered_map",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
+      "standardSection": "[unord.map]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

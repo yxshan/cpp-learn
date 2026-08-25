@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 2,
+  "version": 3,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -16,7 +16,17 @@
     "entries/std-string-view/entry.json",
     "entries/std-optional/entry.json",
     "entries/std-make-unique/entry.json",
-    "entries/guide-choosing-sequence-container/entry.json"
+    "entries/guide-choosing-sequence-container/entry.json",
+    "entries/header-iostream/entry.json",
+    "entries/std-cout/entry.json",
+    "entries/std-cin/entry.json",
+    "entries/header-array/entry.json",
+    "entries/std-array/entry.json",
+    "entries/header-deque/entry.json",
+    "entries/std-deque/entry.json",
+    "entries/header-unordered-map/entry.json",
+    "entries/std-unordered-map/entry.json",
+    "entries/std-vector-reserve/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
@@ -49,6 +59,12 @@
       "title": "工具与值类别",
       "parentId": "standard-library",
       "order": 60
+    },
+    {
+      "id": "io",
+      "title": "输入与输出",
+      "parentId": "standard-library",
+      "order": 70
     }
   ],
   "redirects": [

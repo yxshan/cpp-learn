@@ -78,8 +78,8 @@ _Avoid_: Activity log, progress event
 
 **Reference Entry**:
 A versioned, addressable C++ lookup document owned by the Reference Module. It
-may describe a header, type, function, member, concept, guide, or landing area,
-but is not an Activity and produces no Evidence.
+may describe a header, type, object, function, member, concept, guide, or
+landing area, but is not an Activity and produces no Evidence.
 _Avoid_: Lesson, documentation Activity, copied cppreference page
 
 **Reference Example**:

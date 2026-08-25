@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "id": "std-cout",
+  "version": 1,
+  "slug": "standard-library/io/cout",
+  "kind": "object",
+  "title": "std::cout",
+  "summary": "与标准输出关联的预定义窄字符输出流对象。",
+  "symbol": "std::cout",
+  "header": "<iostream>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["cout", "标准输出", "控制台输出"],
+  "categories": ["io"],
+  "relatedEntryIds": ["header-iostream", "std-cin"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-cout/content.md"
+  },
+  "examples": [
+    {
+      "id": "write-formatted-value",
+      "path": "entries/std-cout/examples/write-formatted-value.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "items=3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: narrow stream objects",
+      "url": "https://eel.is/c++draft/narrow.stream.objects",
+      "standardSection": "[narrow.stream.objects]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: formatted output requirements",
+      "url": "https://eel.is/c++draft/ostream.formatted.reqmts",
+      "standardSection": "[ostream.formatted.reqmts]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: stream state flags",
+      "url": "https://eel.is/c++draft/iostate.flags",
+      "standardSection": "[iostate.flags]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: output stream manipulators",
+      "url": "https://eel.is/c++draft/ostream.manip",
+      "standardSection": "[ostream.manip]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft: iostream objects",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-iostreams.html",
+      "standardSection": "[lib.iostream.objects]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

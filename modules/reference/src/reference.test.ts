@@ -15,7 +15,7 @@ const entry = (
   id: string,
   overrides: Partial<ReferenceEntryManifest> = {},
 ): ReferenceEntryManifest => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id,
   version: 1,
   slug: `standard-library/${id}`,
@@ -89,7 +89,7 @@ describe("[T-REF-001] Reference catalog activation", () => {
       activationDurationMs: expect.any(Number),
     });
     await expect(reference.getEntry("std-vector")).resolves.toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       catalogVersion: 1,
       id: "std-vector",
       content: "# std-vector\n\n容器正文。\n",
@@ -217,7 +217,7 @@ describe("[T-REF-002] Reference graph and navigation", () => {
     });
 
     await expect(reference.getNavigation()).resolves.toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       catalogVersion: 1,
       categories: [
         { id: "containers", entryIds: ["std-vector"] },
@@ -227,13 +227,13 @@ describe("[T-REF-002] Reference graph and navigation", () => {
     await expect(
       reference.resolveSlug("standard-library/std-vector"),
     ).resolves.toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       entryId: "std-vector",
       canonicalSlug: "standard-library/std-vector",
       redirected: false,
     });
     await expect(reference.resolveSlug("library/vector")).resolves.toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       entryId: "std-vector",
       canonicalSlug: "standard-library/std-vector",
       redirected: true,
@@ -383,15 +383,15 @@ describe("[T-REF-003] deterministic Reference search", () => {
 export { catalog, entry, filesFor };
 
 describe("[T-REF-001] filesystem Reference Adapter", () => {
-  it("loads the 15-Entry Web vertical release catalog", async () => {
+  it("loads the expanded Phase 3 Reference catalog", async () => {
     const reference = createFilesystemReferenceCatalog({
       catalogPath: resolve("reference/catalog.json"),
     });
 
     await expect(reference.readiness()).resolves.toEqual({
       ready: true,
-      catalogVersion: 2,
-      entryCount: 15,
+      catalogVersion: 3,
+      entryCount: 25,
       activationDurationMs: expect.any(Number),
     });
     const navigation = await reference.getNavigation();
@@ -413,6 +413,16 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
         "std-find",
         "std-make-unique",
         "std-vector-push-back",
+        "header-iostream",
+        "std-cout",
+        "std-cin",
+        "header-array",
+        "std-array",
+        "header-deque",
+        "std-deque",
+        "header-unordered-map",
+        "std-unordered-map",
+        "std-vector-reserve",
         "guide-choosing-sequence-container",
       ].sort(),
     );

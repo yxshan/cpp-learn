@@ -49,11 +49,25 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toMatchObject({
-        schemaVersion: 1,
-        catalogVersion: 2,
+        schemaVersion: 2,
+        catalogVersion: 3,
         categories: expect.arrayContaining([
           expect.objectContaining({ id: "containers" }),
         ]),
+      });
+
+      const objectSearch = await server.inject({
+        method: "GET",
+        url: "/api/v1/reference/search?q=std%3A%3Acout&kind=object",
+      });
+      expect(objectSearch.statusCode).toBe(200);
+      expect(objectSearch.json()).toMatchObject({
+        schemaVersion: 2,
+        total: 2,
+        results: [
+          expect.objectContaining({ id: "std-cout", kind: "object" }),
+          expect.objectContaining({ id: "std-cin", kind: "object" }),
+        ],
       });
     } finally {
       await server.close();

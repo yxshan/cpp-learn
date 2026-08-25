@@ -367,26 +367,26 @@ describe("[T-REF-006] Reference API Adapter", () => {
   it("loads navigation, bounded search, slug resolution, and Entry detail", async () => {
     const responses = [
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         catalogVersion: 1,
         categories: [],
         supportedStandards: [],
       },
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         catalogVersion: 1,
         query: { text: "vector" },
         total: 0,
         results: [],
       },
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         entryId: "std-vector",
         canonicalSlug: "standard-library/containers/vector",
         redirected: true,
       },
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         catalogVersion: 1,
         id: "std-vector",
         slug: "standard-library/containers/vector",

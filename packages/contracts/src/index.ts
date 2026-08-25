@@ -4,6 +4,7 @@ import addFormats from "ajv-formats";
 import bootstrapResultSchema from "./bootstrap-result.schema.json" with { type: "json" };
 
 export const SCHEMA_VERSION = 1 as const;
+export const REFERENCE_SCHEMA_VERSION = 2 as const;
 
 export interface CurriculumReadiness {
   readonly ready: boolean;
@@ -47,6 +48,7 @@ export const REFERENCE_ENTRY_KINDS = [
   "landing",
   "header",
   "type",
+  "object",
   "function",
   "member",
   "concept",
@@ -98,7 +100,7 @@ export interface ReferenceExampleView {
 }
 
 export interface ReferenceEntryDetail {
-  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly schemaVersion: typeof REFERENCE_SCHEMA_VERSION;
   readonly catalogVersion: number;
   readonly id: string;
   readonly version: number;
@@ -156,7 +158,7 @@ export interface ReferenceSearchItem {
 }
 
 export interface ReferenceSearchResult {
-  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly schemaVersion: typeof REFERENCE_SCHEMA_VERSION;
   readonly catalogVersion: number;
   readonly query: ReferenceSearchQuery;
   readonly total: number;
@@ -164,14 +166,14 @@ export interface ReferenceSearchResult {
 }
 
 export interface ReferenceSlugResolution {
-  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly schemaVersion: typeof REFERENCE_SCHEMA_VERSION;
   readonly entryId: string;
   readonly canonicalSlug: string;
   readonly redirected: boolean;
 }
 
 export interface ReferenceNavigation {
-  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly schemaVersion: typeof REFERENCE_SCHEMA_VERSION;
   readonly catalogVersion: number;
   readonly categories: readonly {
     readonly id: string;

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-DES-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -24,8 +24,8 @@ reflection, Evidence policy, or learner-owned Workspace.
 
 ### Initial scope
 
-- C++ standard-library headers, types, functions, concepts, and selected
-  high-value members.
+- C++ standard-library headers, types, objects, functions, concepts, and
+  selected high-value members.
 - C++20 as the executable baseline, with `since`, `deprecated`, and later-
   standard metadata where relevant.
 - Offline catalog navigation, filtering, and ranked search.
@@ -46,8 +46,8 @@ reflection, Evidence policy, or learner-owned Workspace.
 ## 3. Domain terminology
 
 - **Reference Entry**: one versioned, addressable documentation item.
-- **Entry kind**: `landing`, `header`, `type`, `function`, `member`, `concept`,
-  or `guide`.
+- **Entry kind**: `landing`, `header`, `type`, `object`, `function`, `member`,
+  `concept`, or `guide`.
 - **Symbol**: the canonical C++ name, such as `std::vector` or
   `std::ranges::sort`.
 - **Standard status**: first standard, optional deprecation/removal standard,
@@ -156,6 +156,7 @@ type ReferenceEntryKind =
   | "landing"
   | "header"
   | "type"
+  | "object"
   | "function"
   | "member"
   | "concept"
@@ -210,7 +211,7 @@ interface ReferenceSource {
 }
 
 interface ReferenceEntryManifest {
-  schemaVersion: 1;
+  schemaVersion: 2;
   id: string;
   version: number;
   slug: string;
@@ -364,7 +365,7 @@ interface ReferenceSearchItem {
 }
 
 interface ReferenceSearchResult {
-  schemaVersion: 1;
+  schemaVersion: 2;
   catalogVersion: number;
   query: ReferenceSearchQuery;
   total: number;
@@ -372,7 +373,7 @@ interface ReferenceSearchResult {
 }
 
 interface ReferenceSlugResolution {
-  schemaVersion: 1;
+  schemaVersion: 2;
   entryId: string;
   canonicalSlug: string;
   redirected: boolean;
@@ -395,7 +396,7 @@ interface ReferenceEntryDetail
     ReferenceEntryManifest,
     "content" | "examples"
   > {
-  schemaVersion: 1;
+  schemaVersion: 2;
   catalogVersion: number;
   content: string;
   examples: ReferenceExampleView[];
@@ -403,7 +404,7 @@ interface ReferenceEntryDetail
 }
 
 interface ReferenceNavigation {
-  schemaVersion: 1;
+  schemaVersion: 2;
   catalogVersion: number;
   categories: {
     id: string;

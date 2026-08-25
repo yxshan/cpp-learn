@@ -62,6 +62,13 @@ GET /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
 GET /api/v1/reference/entries/:entryId
 ```
 
+Reference navigation, search, resolution, and detail payloads use
+`schemaVersion: 2`. The platform route remains under `/api/v1`; payload schema
+versions are independently checked by the Web Adapter. Reference schema v2
+adds the closed `object` Entry kind required for standard objects such as
+`std::cin` and `std::cout`. Entry manifests use the same Reference schema
+version; catalog manifests retain their independent schema v1.
+
 `GET /api/v1/reference` returns ordered category navigation and the supported
 C++ standards. Search accepts bounded `q`, `kind`, `category`, `standard`,
 `verified`, and `limit` parameters. A standard filter means “available when

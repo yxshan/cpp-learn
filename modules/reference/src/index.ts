@@ -5,6 +5,7 @@ import { performance } from "node:perf_hooks";
 
 import {
   CPP_STANDARDS,
+  REFERENCE_SCHEMA_VERSION,
   type CppStandard,
   type ReferenceEntryDetail,
   type ReferenceEntryKind,
@@ -22,6 +23,11 @@ import {
   validateReferenceCatalogManifest,
   validateReferenceEntryManifest,
 } from "@cpp-learn/reference-schema";
+
+export {
+  createReferenceCoverageReport,
+  type ReferenceCoverageReport,
+} from "./coverage.ts";
 
 export interface ReferenceCatalogManifest {
   readonly schemaVersion: 1;
@@ -50,7 +56,7 @@ export interface ReferenceExampleManifest {
 }
 
 export interface ReferenceEntryManifest {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: typeof REFERENCE_SCHEMA_VERSION;
   readonly id: string;
   readonly version: number;
   readonly slug: string;
@@ -419,7 +425,7 @@ function createReferenceCatalog(
         }),
       );
       return {
-        schemaVersion: 1,
+        schemaVersion: REFERENCE_SCHEMA_VERSION,
         catalogVersion: state.active.catalog.version,
         id: entry.id,
         version: entry.version,
@@ -458,7 +464,7 @@ function createReferenceCatalog(
       );
       if (activeEntry) {
         return {
-          schemaVersion: 1,
+          schemaVersion: REFERENCE_SCHEMA_VERSION,
           entryId: activeEntry.id,
           canonicalSlug: activeEntry.slug,
           redirected: false,
@@ -471,7 +477,7 @@ function createReferenceCatalog(
       const target = state.active.entriesById.get(redirect.toEntryId);
       if (!target) return undefined;
       return {
-        schemaVersion: 1,
+        schemaVersion: REFERENCE_SCHEMA_VERSION,
         entryId: target.id,
         canonicalSlug: target.slug,
         redirected: true,
@@ -490,7 +496,7 @@ function createReferenceCatalog(
       const state = await activation;
       if (!state.ready) {
         return {
-          schemaVersion: 1,
+          schemaVersion: REFERENCE_SCHEMA_VERSION,
           catalogVersion: 0,
           query,
           total: 0,
@@ -596,7 +602,7 @@ function createReferenceCatalog(
         );
       const limit = query.limit ?? 20;
       return {
-        schemaVersion: 1,
+        schemaVersion: REFERENCE_SCHEMA_VERSION,
         catalogVersion: state.active.catalog.version,
         query,
         total: ranked.length,
@@ -621,14 +627,14 @@ function createReferenceCatalog(
       const state = await activation;
       if (!state.ready) {
         return {
-          schemaVersion: 1,
+          schemaVersion: REFERENCE_SCHEMA_VERSION,
           catalogVersion: 0,
           categories: [],
           supportedStandards: CPP_STANDARDS,
         };
       }
       return {
-        schemaVersion: 1,
+        schemaVersion: REFERENCE_SCHEMA_VERSION,
         catalogVersion: state.active.catalog.version,
         categories: [...state.active.catalog.categories]
           .sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
@@ -787,7 +793,7 @@ export function createUnavailableReferenceCatalog(
     },
     async search(query) {
       return {
-        schemaVersion: 1,
+        schemaVersion: REFERENCE_SCHEMA_VERSION,
         catalogVersion: 0,
         query,
         total: 0,
@@ -796,7 +802,7 @@ export function createUnavailableReferenceCatalog(
     },
     async getNavigation() {
       return {
-        schemaVersion: 1,
+        schemaVersion: REFERENCE_SCHEMA_VERSION,
         catalogVersion: 0,
         categories: [],
         supportedStandards: CPP_STANDARDS,

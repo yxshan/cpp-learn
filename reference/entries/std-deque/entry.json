@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "id": "std-deque",
+  "version": 1,
+  "slug": "standard-library/containers/deque",
+  "kind": "type",
+  "title": "std::deque",
+  "summary": "支持随机访问并能在首尾常数时间插入和删除的序列容器。",
+  "symbol": "std::deque",
+  "header": "<deque>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["deque", "双端队列", "双端序列容器"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["header-deque", "std-vector", "guide-choosing-sequence-container"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-deque/content.md"
+  },
+  "examples": [
+    {
+      "id": "modify-both-ends",
+      "path": "entries/std-deque/examples/modify-both-ends.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "20 40 3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: deque overview",
+      "url": "https://eel.is/c++draft/deque.overview",
+      "standardSection": "[deque.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: deque modifiers",
+      "url": "https://eel.is/c++draft/deque.modifiers",
+      "standardSection": "[deque.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: sequence container requirements",
+      "url": "https://eel.is/c++draft/sequence.reqmts",
+      "standardSection": "[sequence.reqmts]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft: deque synopsis",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-containers.html",
+      "standardSection": "[lib.deque]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

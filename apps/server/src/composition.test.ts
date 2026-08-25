@@ -15,7 +15,7 @@ function referenceFixture() {
     },
     entries: [
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         id: "std-vector",
         version: 1,
         slug: "standard-library/containers/vector",

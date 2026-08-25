@@ -63,7 +63,7 @@ const unusedSnapshot = {
 
 function createReferenceFixture() {
   const vector: ReferenceEntryManifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: "std-vector",
     version: 1,
     slug: "standard-library/containers/vector",
@@ -181,22 +181,22 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
 
     expect(navigation.statusCode).toBe(200);
     expect(navigation.json()).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       categories: [{ id: "containers", entryIds: ["std-vector"] }],
     });
     expect(search.statusCode).toBe(200);
     expect(search.json()).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       results: [{ id: "std-vector" }],
     });
     expect(resolution.json()).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       entryId: "std-vector",
       canonicalSlug: "standard-library/containers/vector",
       redirected: true,
     });
     expect(detail.json()).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       id: "std-vector",
       content: "# std::vector\n",
     });
