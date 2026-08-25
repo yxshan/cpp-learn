@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | SRS-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. System context
 
@@ -81,6 +81,17 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 - **FR-071** The system shall support backup and restoration of Workspaces, events, projections, and configuration.
 - **FR-072** Platform and content upgrades shall not overwrite Learner Workspaces.
 
+### C++ API Reference
+
+- **FR-080** The system shall load and atomically activate versioned Reference Entries from validated declarative manifests, Markdown, and example files.
+- **FR-081** The Web Adapter shall provide Reference navigation and deterministic search by exact symbol, header, title, alias, Chinese term, category, Entry kind, and C++ standard filter.
+- **FR-082** A Reference Entry shall expose applicable header, namespace, standard availability, representative signatures, constraints, complexity, exception behavior, lifetime or invalidation rules, examples, related content, sources, and verification date.
+- **FR-083** The system shall maintain valid links among Reference Entries and from Reference Entries to Activities using stable identifiers.
+- **FR-084** Browsing, searching, and copying Reference content shall not initialize or modify an Activity Workspace, Attempt, Evidence, Concept state, Review, or Project state.
+- **FR-085** Ordinary Reference examples shall be compiled by content quality gates using their declared standard and the supported warning profile.
+- **FR-086** A later Reference Playground shall run selected examples through a temporary non-Activity identity without private tests or learning Evidence.
+- **FR-087** Every Reference Entry shall identify factual sources and any reused material shall carry compatible license, attribution, and modification metadata.
+
 ## 4. Non-functional requirements
 
 - **NFR-001 Locality**: default operation shall not require a cloud account or remote execution.
@@ -95,6 +106,9 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 - **NFR-010 Privacy**: learner code and history shall remain local unless the Learner explicitly exports or enables a remote Adapter.
 - **NFR-011 Reproducibility**: a Judge Report shall include activity version, judge version, toolchain fingerprint, source digest, and deterministic seed where applicable.
 - **NFR-012 Content quality**: required Activities shall define objectives, prerequisites, estimated time, victory conditions, sources, hints, Evidence policy, and Review variants.
+- **NFR-013 Reference performance**: for a 1,000-Entry activated catalog, warm Reference search should complete within 100 ms at p95 and Entry lookup within 50 ms on the reference machine.
+- **NFR-014 Reference locality**: installed Reference navigation, search, and content rendering shall not require remote network access.
+- **NFR-015 Reference maintainability**: Reference content shall use stable IDs, explicit versions, deterministic validation, original content by default, and a documented authoring workflow.
 
 ## 5. Business rules
 
@@ -105,6 +119,8 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 - **BR-005** `retained` requires delayed Evidence from a different context or Review variant.
 - **BR-006** One failed Review shortens the interval but does not erase older Evidence.
 - **BR-007** Private local tests are pedagogical concealment, not an anti-cheat security control.
+- **BR-008** Reading or searching Reference content never produces learning Evidence or Activity completion.
+- **BR-009** Running a Reference Example is operational feedback only and cannot change Concept state or Review scheduling.
 
 ## 6. External constraints
 
@@ -115,4 +131,3 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 ## 7. Acceptance
 
 Requirement acceptance is defined in [Roadmap and Acceptance Plan](11-ROADMAP_AND_ACCEPTANCE_PLAN.md) and linked in the [Requirements Traceability Matrix](12-REQUIREMENTS_TRACEABILITY_MATRIX.md).
-

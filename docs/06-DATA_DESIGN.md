@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Storage strategy
 
@@ -16,9 +16,11 @@ data/projections.sqlite    rebuildable query model
 data/snapshots/            immutable source snapshots
 student-workspaces/        mutable learner files
 data/exports/              explicit learner exports
+reference-content/         versioned Reference manifests, Markdown, examples
 ```
 
-Curriculum and private judge data are versioned repository content, not learner data.
+Curriculum, Reference, and private judge data are versioned repository content,
+not learner data.
 
 ## 2. Event envelope
 
@@ -183,3 +185,35 @@ Default export excludes private judge data, build caches, process logs containin
 - Backup/restore equivalence.
 - Projection equality before and after rebuild.
 
+## 12. Reference content data
+
+Reference content is immutable release input at runtime:
+
+```text
+reference-content/catalog.json
+reference-content/<category>/<entry>/entry.json
+reference-content/<category>/<entry>/content.md
+reference-content/<category>/<entry>/examples/*.cpp
+```
+
+Catalog activation derives an in-memory navigation tree and search index. Those
+derived structures are disposable and are not added to SQLite or the event log.
+They can be rebuilt from manifests and Markdown after every startup or content
+upgrade.
+
+Reference data invariants:
+
+- Entry ID and active slug are unique.
+- Manifest, content, and example paths remain inside `reference-content/`.
+- Related Entry and Activity IDs resolve before activation.
+- Entry and schema versions are positive and explicit.
+- Published and draft standard states are distinct values.
+- Sources include kind, title, URL, and optional standard section.
+- Reused material additionally records license, attribution, and modification
+  notes.
+- Example digest, declared standard, execution kind, and verification result
+  are reproducible release evidence rather than learner history.
+
+Reference content and derived indexes are excluded from learner backup and
+restore. An export may include stable Entry IDs referenced by a future learning
+artifact, but it does not copy the Reference catalog itself.

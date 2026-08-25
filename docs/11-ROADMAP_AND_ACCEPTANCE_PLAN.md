@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -182,7 +182,44 @@ Acceptance:
 - Format and Reset remain buffer-only until Save, Run, or Grade persists them.
 - The real-browser regression covers initial formatting, explicit formatting, and confirmed reset.
 
-## 11. Global definition of done
+## 11. Stage 6.2: C++ API Reference
+
+**Status:** Planned. Design and acceptance sources are the [Reference Module
+Design](22-API-REFERENCE-MODULE-DESIGN.md) and [Implementation
+Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md).
+
+Deliver the read-only vertical release:
+
+- Separate Reference Module, schema, filesystem and in-memory Adapters, shared
+  contracts, and degraded readiness.
+- Deterministic navigation, lookup, search, aliases, categories, C++ standard
+  filters, and stable Entry URLs.
+- Lazy-loaded Web Reference with accessible desktop and narrow-screen layouts.
+- 15 original, source-backed Entries across at least five categories.
+- Content gates for relationships, sources, licensing, terminology, and example
+  compilation.
+- Reference-to-Activity navigation without learner-state mutation.
+
+Then expand through 80–120 core standard-library Entries and bidirectional
+Activity links. A temporary non-Activity Playground and grounded AI assistance
+remain separately gated later phases.
+
+Acceptance:
+
+- Exact symbol, header, alias, Chinese title, prefix, and filtered searches are
+  deterministic and contract-tested.
+- Direct Entry/anchor URLs, browser history, keyboard operation, and a
+  390-pixel viewport pass Playwright coverage.
+- Ordinary examples compile under their declared standard with the warning
+  profile enabled.
+- Reading, searching, and copying Reference content produce no Workspace,
+  Attempt, Evidence, Concept, Review, or Project mutation.
+- Installed content works without external network access.
+- Invalid Reference content cannot activate, while Reference degradation does
+  not disable existing learning flows.
+- Sources and any reused-material attribution pass content validation.
+
+## 12. Global definition of done
 
 - Requirement implemented and traced.
 - Module/contract/integration/E2E tests pass as applicable.
@@ -192,7 +229,7 @@ Acceptance:
 - No known S1/S2 defects in the released scope.
 - Acceptance evidence is reproducible and archived with the release.
 
-## 12. Deferred decisions
+## 13. Deferred decisions
 
 - Desktop packaging.
 - Specific SQLite Node Adapter.
@@ -200,5 +237,7 @@ Acceptance:
 - Specific AI provider versus MCP-only integration.
 - Multi-user/cloud support.
 - Public curriculum plugin ecosystem.
+- External Reference synchronization or import pipeline.
+- The provider and interaction contract for grounded Reference AI assistance.
 
 These remain behind defined seams and are decided only when a concrete second Adapter or product requirement exists.

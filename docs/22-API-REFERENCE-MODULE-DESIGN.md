@@ -1,0 +1,404 @@
+# C++ API Reference Module Design
+
+| Field | Value |
+|---|---|
+| Document ID | REF-DES-001 |
+| Version | 0.1 |
+| Status | Draft |
+| Owner | Project Maintainer |
+| Last updated | 2026-08-25 |
+
+## 1. Purpose
+
+Define a local, searchable, learning-oriented C++ Reference that adopts the
+useful information architecture of MDN without copying its Web-specific domain
+model. The Reference must explain standard-library entities in Chinese, retain
+precise C++ semantics, link to Activities, and later open verified examples in
+an isolated Playground.
+
+The design introduces a `Reference` deep Module. It does not expand the
+`Curriculum` Activity model: a Reference Entry has no prerequisite, Judge,
+reflection, Evidence policy, or learner-owned Workspace.
+
+## 2. Scope
+
+### Initial scope
+
+- C++ standard-library headers, types, functions, concepts, and selected
+  high-value members.
+- C++20 as the executable baseline, with `since`, `deprecated`, and later-
+  standard metadata where relevant.
+- Offline catalog navigation, filtering, and ranked search.
+- Original Chinese explanations, verified examples, explicit sources, and
+  links to related Entries and Activities.
+- A read-only Web experience that does not change learning state.
+
+### Deferred scope
+
+- General C++ language syntax Reference.
+- POSIX, Boost, Qt, vendor SDKs, operating-system interfaces, and third-party
+  libraries.
+- Automated import, scraping, or translation of cppreference or MDN content.
+- Remote search infrastructure or a Reference database.
+- AI-generated canonical facts or automatic publication of AI-written content.
+- Example execution until the read-only catalog is accepted.
+
+## 3. Domain terminology
+
+- **Reference Entry**: one versioned, addressable documentation item.
+- **Entry kind**: `landing`, `header`, `type`, `function`, `member`, `concept`,
+  or `guide`.
+- **Symbol**: the canonical C++ name, such as `std::vector` or
+  `std::ranges::sort`.
+- **Standard status**: first standard, optional deprecation/removal standard,
+  and whether the local toolchain has verified the example.
+- **Reference Source**: an authoritative or secondary link used to verify a
+  factual statement; it is not copied content.
+- **Reference Example**: an original, deterministic C++ snippet associated
+  with one Entry.
+- **Playground**: a temporary, non-Activity code area used to compile or run a
+  Reference Example without producing learning Evidence.
+
+Stable Entry IDs use lowercase kebab-case and do not change when titles or
+slugs change. Symbols retain exact C++ spelling and case.
+
+## 4. Architecture
+
+```text
+┌──────────────────────┐       ┌────────────────────────┐
+│ Reference Web Adapter│──────▶│ Fastify HTTP Adapter   │
+└──────────────────────┘       └───────────┬────────────┘
+                                           ▼
+                                ┌────────────────────────┐
+                                │ Reference Module       │
+                                │ lookup/search/navigation│
+                                └───────────┬────────────┘
+                                            ▼
+                                ┌────────────────────────┐
+                                │ Filesystem Adapter     │
+                                │ JSON + Markdown        │
+                                └────────────────────────┘
+
+Curriculum Activity ──referenceIds──▶ Reference Entry
+Reference Example ──later──▶ temporary Playground ──▶ Judge execution seam
+```
+
+`apps/server` remains the only composition root. The Reference Module receives
+its catalog root and file reader as dependencies. It cannot write Workspaces,
+Learning Records, or Curriculum files.
+
+The initial production and test implementations both use the same filesystem
+content rules. An in-memory Adapter is justified for Module tests; no database
+Adapter is introduced until catalog scale or measured latency requires one.
+
+## 5. Module Interface
+
+```ts
+interface ReferenceCatalog {
+  readiness(): Promise<ReferenceReadiness>;
+  getEntry(idOrSlug: string): Promise<ReferenceEntryDetail | undefined>;
+  search(query: ReferenceSearchQuery): Promise<ReferenceSearchResult>;
+  getNavigation(): Promise<ReferenceNavigation>;
+}
+```
+
+### Interface invariants
+
+- Queries are read-only and deterministic for one activated catalog version.
+- Catalog activation is all-or-nothing after validation.
+- Unknown IDs and slugs return `undefined`; invalid search filters return a
+  validation error.
+- Search results use stable tie-breaking by normalized symbol and Entry ID.
+- Public results contain content and attribution only; filesystem paths and
+  authoring diagnostics remain server-side.
+- One Entry cannot declare a relationship to an unknown Entry or Activity.
+- A slug may change only with an explicit redirect entry; an ID never changes.
+
+The Module hides Markdown loading, normalization, indexing, ranking, link
+resolution, source validation, and navigation-tree construction behind this
+small Interface.
+
+## 6. Repository layout
+
+```text
+modules/
+  reference/                  Reference Module and tests
+packages/
+  reference-schema/           Entry JSON Schema and validator
+  contracts/                  versioned Reference query DTOs
+reference-content/
+  catalog.json
+  standard-library/
+    containers/
+      vector/
+        entry.json
+        content.md
+        examples/
+          basic.cpp
+apps/
+  server/                     HTTP Adapter and composition
+  web/src/reference/          lazy-loaded Reference Web Adapter
+```
+
+Reference content is repository-owned release material. It is not included in
+learner backup/restore because it can be restored from the application release.
+
+## 7. Entry model
+
+The normative JSON Schema will live in `packages/reference-schema`. The first
+schema version represents the following public shape:
+
+```ts
+type ReferenceEntryKind =
+  | "landing"
+  | "header"
+  | "type"
+  | "function"
+  | "member"
+  | "concept"
+  | "guide";
+
+interface ReferenceEntryManifest {
+  schemaVersion: 1;
+  id: string;
+  version: number;
+  slug: string;
+  kind: ReferenceEntryKind;
+  title: string;
+  symbol?: string;
+  header?: string;
+  namespace?: string;
+  since?: CppStandard;
+  deprecatedSince?: CppStandard;
+  removedSince?: CppStandard;
+  aliases: string[];
+  categories: string[];
+  relatedEntryIds: string[];
+  relatedActivityIds: string[];
+  content: { format: "markdown"; path: string };
+  examples: ReferenceExampleManifest[];
+  sources: ReferenceSource[];
+  verifiedAt: string;
+}
+```
+
+`CppStandard` is a closed value set initially covering `c++98`, `c++03`,
+`c++11`, `c++14`, `c++17`, `c++20`, `c++23`, and `c++26-draft`. Draft status
+must be visibly different from a published standard.
+
+Complexity, exception guarantees, iterator invalidation, thread safety,
+constraints, overload explanations, and feature-test macros remain structured
+Markdown sections in version 1. They become manifest fields only after a real
+query or rendering need demonstrates leverage.
+
+## 8. Content structure
+
+Entry kinds adapt MDN's landing/reference/subpage separation to C++:
+
+- A `landing` Entry organizes a library area such as Containers.
+- A `header` Entry describes one standard header and links its public entities.
+- A `type` Entry summarizes constructors, members, invariants, and invalidation.
+- Simple members remain addressable anchors within a type Entry.
+- A complex or high-frequency member may become a `member` Entry.
+- A `guide` is task-oriented and must link back to precise Reference Entries.
+
+Every non-landing Entry must include, where applicable:
+
+1. Summary and intended use.
+2. Header, namespace, and standard availability.
+3. Synopsis or representative signatures.
+4. Parameters and return value.
+5. Preconditions and constraints.
+6. Complexity and exception guarantee.
+7. Lifetime, invalidation, and thread-safety rules.
+8. At least one minimal original example.
+9. Common mistakes and JavaScript comparison when pedagogically useful.
+10. Related Entries, Activities, and factual sources.
+
+## 9. Search design
+
+The initial index is constructed in memory during catalog activation. It stores
+normalized symbol, title, header, aliases, categories, headings, and plain-text
+body tokens. Markdown HTML is never indexed as executable content.
+
+Ranking order:
+
+1. Exact Entry ID, symbol, or header match.
+2. Exact alias or title match.
+3. Symbol prefix match.
+4. Title and heading token match.
+5. Category and body token match.
+6. Stable symbol/ID tie-break.
+
+Normalization preserves `std::`, `<header>`, and underscores as searchable
+forms while also indexing stripped variants. The search query is bounded in
+length and result count. Version 1 does not use fuzzy edit-distance matching;
+curated aliases cover common Chinese and English terms with deterministic
+results.
+
+Supported filters:
+
+- Entry kind.
+- Category.
+- Standard version.
+- Local toolchain verification status.
+
+## 10. HTTP and Web presentation
+
+Planned query routes:
+
+```text
+GET /api/v1/reference
+GET /api/v1/reference/search?q=vector&standard=c%2B%2B20
+GET /api/v1/reference/entries/:entryId
+```
+
+The Web Adapter is lazy-loaded from the primary navigation. Its desktop layout
+uses a category sidebar, main article, and local table of contents. Narrow
+screens collapse the sidebar behind a labeled control and keep search, title,
+status, and article content within the viewport.
+
+Required interactions:
+
+- Keyboard-accessible global search with a real label.
+- Stable URL for Entry and heading anchors.
+- Back/forward navigation without losing the search query.
+- Visible standard, draft, deprecated, and local-support states that do not
+  rely on color alone.
+- Copy buttons that announce success without modifying code or records.
+- Links to related Activities that preserve unsaved-Workspace confirmation.
+
+## 11. Curriculum integration
+
+Activities may later add optional `referenceIds`. Curriculum validation checks
+that every ID exists in the activated Reference catalog. This is a relationship
+between Modules, not ownership transfer:
+
+- Curriculum owns when a Reference is relevant to an Activity.
+- Reference owns Entry content, navigation, and related-Entry relationships.
+- Learning Platform owns Activity navigation and Evidence.
+- Reference browsing produces no Activity start, completion, or Evidence event.
+
+The first implementation may derive Activity links from Reference manifests
+only. Adding `referenceIds` to Activity manifests is a later schema change when
+bidirectional links are required.
+
+## 12. Example verification and Playground
+
+### Read-only release
+
+Each example file is compiled by content CI with its declared standard and the
+reference warning profile. Compile-failure examples require an explicit kind
+and expected diagnostic category; they cannot silently fail the gate.
+
+### Later interactive release
+
+Opening an example creates a temporary Playground identity separate from every
+Activity Workspace. Playground Run:
+
+- uses an immutable Source Snapshot and the existing Judge execution seam;
+- never executes private tests or produces Evidence;
+- never changes Concept state, Review state, or Project progress;
+- uses a closed build profile and bounded stdin/runtime settings;
+- labels native execution limitations consistently with Activity Run;
+- can be discarded without affecting learner backups.
+
+Reference content cannot provide shell commands, arbitrary compiler paths,
+environment variables, or custom Judge stages.
+
+## 13. Versioning and activation
+
+- Patch: wording, source, alias, or non-semantic example explanation.
+- Entry version: signature, behavior, status, example, or relationship change.
+- Catalog version: navigation or required-set change.
+- Schema major: breaking manifest representation.
+
+Activation reads all manifests, validates the complete graph, builds the search
+index and navigation tree, and then atomically replaces the active in-memory
+catalog. A failed reload leaves the previous valid catalog active.
+
+`verifiedAt` records content verification time, not a guarantee that every
+vendor implementation matches the standard. Draft Entries require explicit
+re-verification before release.
+
+## 14. Sources, licensing, and authorship
+
+- Explanations and examples are original project content by default.
+- Sources are used to verify facts and are linked; source prose is not copied.
+- Each Entry requires at least one primary source, normally a published-standard
+  reference or current working-draft section, and may add cppreference or vendor
+  documentation as secondary context.
+- Reused text or code requires per-item license, attribution, source URL, and
+  modification notes. A catalog cannot activate if required attribution is
+  absent.
+- MDN visual identity, logos, and trade dress are not reused.
+- Automated scraping and machine translation are outside the production
+  content workflow.
+
+Authoring references:
+
+- [MDN page types](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Page_structures/Page_types)
+- [MDN API reference guidance](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Howto/Write_an_api_reference)
+- [MDN attribution and licensing](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Attrib_copyright_license)
+- [ISO C++ standard status](https://isocpp.org/std/the-standard)
+- [Current C++ working draft](https://eel.is/c%2B%2Bdraft/)
+- [cppreference licensing](https://en.cppreference.com/Cppreference%3AAbout)
+
+## 15. Security and privacy
+
+- Markdown uses the existing safe renderer; arbitrary HTML, MDX, scripts, and
+  event attributes are rejected.
+- External links receive the same safe-link behavior as Lesson sources.
+- Search input is data, never a filesystem path, regular expression, SQL, or
+  shell fragment.
+- Public DTOs omit repository paths and content-author diagnostics.
+- Reading and searching remain local and generate no learning-history events.
+- A later AI Adapter receives only the selected public Entry and approved
+  context, never private Judge data or unrelated learner files.
+
+## 16. Performance and observability
+
+For a catalog of 1,000 Entries on the reference machine:
+
+- Catalog activation target: under 1 second excluding example compilation.
+- Warm search p95 target: under 100 ms for a bounded 20-result query.
+- Entry query target: under 50 ms after activation.
+- Initial Web route must lazy-load so the Dashboard bundle does not include the
+  complete rendered Reference.
+
+Startup readiness reports Entry count, catalog version, activation duration,
+and safe validation summaries. Search logs may include duration and result
+count, but not raw free-form queries by default.
+
+## 17. Failure behavior
+
+- Invalid required content prevents a new Reference catalog from activating.
+- An unavailable Reference Module does not prevent existing Dashboard,
+  Activity, Workspace, or Grade flows from starting; bootstrap reports the
+  degraded capability.
+- An unknown related Activity or Entry is a content validation error.
+- Missing example toolchain support marks the example unverified for that local
+  toolchain; it does not rewrite normative standard status.
+- A Playground system error remains separate from learning verdicts.
+
+## 18. Acceptance criteria
+
+The initial Reference release is accepted when:
+
+- At least 15 representative Entries across five categories validate and load.
+- Exact symbol, header, alias, Chinese title, and filtered search are
+  deterministic and contract-tested.
+- Entry, navigation, and related-Entry links have no broken targets.
+- All ordinary examples compile under the declared local C++20 profile.
+- Reference browsing produces no Workspace or Learning Record mutation.
+- Direct URLs, browser history, keyboard navigation, and a 390-pixel viewport
+  pass Playwright coverage.
+- A production build works offline after local server startup.
+- Content sources and any reused-material attribution pass validation.
+
+## 19. Rollback
+
+The Reference is a read-only optional capability. Rolling back removes its Web
+route, HTTP routes, Module composition, and release content without migrating
+learner data. Activity manifests must not require Reference IDs until the
+Reference capability is part of the compatible release baseline.

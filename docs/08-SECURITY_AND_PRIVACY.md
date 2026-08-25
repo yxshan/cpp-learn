@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | SEC-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Security posture
 
@@ -19,6 +19,7 @@ The initial product is a single-user local application. The Learner and curricul
 - Private judge material and reference solutions.
 - Host filesystem, processes, credentials, and network access.
 - Integrity of Judge Reports and Concept-state Evidence.
+- Integrity, authorship, attribution, and source metadata of Reference content.
 - Platform dependencies and release artifacts.
 
 ## 3. Trust zones
@@ -109,7 +110,25 @@ Controls:
 - Review dependency changes and run vulnerability/license checks.
 - Pin release dependencies; do not execute package lifecycle scripts from untrusted content.
 - Validate curriculum schemas and reference solutions before activation.
+- Validate Reference manifests, confined content/example paths, Markdown,
+  relationships, sources, and reused-material attribution before activation.
 - Treat imported curriculum as code until reviewed.
+- Do not scrape, machine-translate, or automatically publish external Reference
+  content; original reviewed content is the default.
+
+### Reference rendering and search
+
+Controls:
+
+- Render Reference Markdown through the declarative safe renderer; reject raw
+  scripts, MDX, event attributes, and unsafe URL schemes.
+- Treat search text only as bounded data; never pass it to a filesystem lookup,
+  regular-expression constructor, SQL string, or shell.
+- Keep repository paths and authoring diagnostics out of public DTOs.
+- Mark external source links and apply safe new-tab behavior consistently.
+- Browsing, searching, and copying are read-only and append no learning event.
+- A later Playground uses a temporary non-Activity root, closed compiler
+  profile, output limits, timeout, cancellation, and process cleanup.
 
 ### Local HTTP exposure
 
@@ -144,6 +163,8 @@ Logs should use identifiers and summaries instead of full source. Crash reports 
 - Loopback binding and origin-validation tests.
 - Event tampering and duplicate-report tests.
 - Dependency and secret scanning in CI.
+- Reference path, Markdown, external-link, relationship, attribution, search-
+  bound, and no-learning-state-mutation tests.
 
 ## 8. Incident handling
 

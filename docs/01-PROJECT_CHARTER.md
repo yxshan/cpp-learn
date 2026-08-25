@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | CHARTER-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Purpose
 
@@ -35,6 +35,8 @@ The Learner should be able to use the platform during graduate study to acquire 
 - Git, CMake, CTest, testing, debugging, Sanitizers, static analysis, profiling.
 - Operating systems, Linux fundamentals, files, processes, threads, networking, HTTP, SQL, databases, concurrency, and performance.
 - Browser editor, lesson reader, judge feedback, dashboard, review queue, knowledge map, and project milestones.
+- Offline C++ standard-library Reference with ranked search, source-backed
+  explanations, verified examples, and links to relevant Activities.
 - Local event history, rebuildable projections, export, and backup.
 - Native macOS judge plus later optional Linux/container Adapter.
 
@@ -60,6 +62,8 @@ The Learner should be able to use the platform during graduate study to acquire 
 - Records survive restart and can rebuild all projections.
 - Every required Concept has an explicit Evidence policy and at least one Review variant.
 - Core content passes automated content lint and reference-solution checks.
+- Core Reference content passes schema, source, relationship, search, and
+  example-compilation checks without writing learner state.
 - The Learner completes staged Projects with reproducible builds, tests, and explanations.
 
 ## 7. Constraints and assumptions
@@ -75,4 +79,3 @@ The Learner should be able to use the platform during graduate study to acquire 
 - ADRs own hard-to-reverse decisions.
 - The traceability matrix links requirements, design, tests, and delivery stages.
 - Archived proposals are historical context and cannot override the baseline.
-

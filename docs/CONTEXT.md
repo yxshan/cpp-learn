@@ -74,6 +74,24 @@ _Avoid_: AI score, manual grade
 A human-readable note containing a durable insight, prior capability, corrected misconception, or mission change.
 _Avoid_: Activity log, progress event
 
+## Reference content
+
+**Reference Entry**:
+A versioned, addressable C++ lookup document owned by the Reference Module. It
+may describe a header, type, function, member, concept, guide, or landing area,
+but is not an Activity and produces no Evidence.
+_Avoid_: Lesson, documentation Activity, copied cppreference page
+
+**Reference Example**:
+An original deterministic source file attached to a Reference Entry and
+verified under a declared C++ standard.
+_Avoid_: Reference solution, hidden test, learner submission
+
+**Playground**:
+A temporary non-Activity code area for experimenting with a Reference Example.
+It may use the Judge execution seam but has no Attempt or Evidence policy.
+_Avoid_: Workspace, sandbox, Exercise
+
 ## Platform operations
 
 **Workspace**:
@@ -95,4 +113,3 @@ _Avoid_: Score, console output
 **Hint**:
 A recorded, ordered disclosure that reduces Attempt independence and never exposes private judge inputs verbatim.
 _Avoid_: Answer, solution
-

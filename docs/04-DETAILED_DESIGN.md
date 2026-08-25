@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -18,14 +18,17 @@ apps/
 modules/
   learning-platform/        teaching rules and orchestration
   curriculum/               content loading and validation
+  reference/                C++ Reference lookup, navigation, and search
   workspace/                learner files and snapshots
   judge/                    jobs, workers, stages, reports
   learning-record/          events and projections
 packages/
   contracts/                versioned commands, queries, DTOs, events
   content-schema/           JSON Schemas and validators
+  reference-schema/         Reference Entry schemas and validators
   ui/                       visual system and typed lesson blocks
 curriculum/                 public versioned content; no private Judge inputs
+reference-content/          public versioned Reference Entries and examples
 judge-private/              server-only pedagogical-test registry
 student-workspaces/         learner-editable files
 data/                       events, projections, snapshots, logs
@@ -274,3 +277,66 @@ Configuration precedence:
 4. safe default.
 
 Paths are resolved once by the composition root and passed as explicit dependencies.
+
+## 11. Reference Module
+
+The Reference Module is a read-only content Module separate from Curriculum and
+Learning Platform orchestration. It owns Reference Entry activation,
+navigation, lookup, deterministic search, source metadata, and relationship
+resolution.
+
+### Interface
+
+```ts
+interface ReferenceCatalog {
+  readiness(): Promise<ReferenceReadiness>;
+  getEntry(idOrSlug: string): Promise<ReferenceEntryDetail | undefined>;
+  search(query: ReferenceSearchQuery): Promise<ReferenceSearchResult>;
+  getNavigation(): Promise<ReferenceNavigation>;
+}
+```
+
+The filesystem Adapter reads a catalog plus JSON manifests, Markdown, and
+example files. An in-memory Adapter supplies Module and caller tests. Catalog
+activation validates the complete relationship graph, builds navigation and a
+bounded in-memory search index, and publishes the new catalog atomically. A
+failed reload retains the previous valid catalog.
+
+### Invariants
+
+- Entry IDs are stable; IDs and active slugs are unique.
+- Content and example paths are relative, normalized, and confined to the
+  configured Reference root.
+- Entry relationships and related Activity IDs resolve before activation.
+- Search ranking and tie-breaking are deterministic.
+- Markdown is declarative and rendered through the existing safe renderer;
+  arbitrary HTML, MDX, and scripts are rejected.
+- Runtime Reference queries never write Workspace or Learning Record state.
+- Standard status and local toolchain verification are represented separately.
+
+### Search implementation
+
+Activation normalizes and indexes Entry ID, symbol, header, title, aliases,
+categories, headings, and plain-text body tokens. Ranking favors exact symbol,
+header, ID, alias, and title matches before prefix, heading, category, and body
+matches. Version 1 uses curated aliases rather than fuzzy edit distance.
+
+Search accepts bounded text plus closed kind, category, standard, and local-
+verification filters. It returns summaries only; Entry Markdown is returned by
+`getEntry`.
+
+### Degraded capability
+
+Reference readiness is reported through bootstrap. Missing or invalid
+Reference content disables Reference routes with a safe capability error but
+does not block Dashboard, Activity, Workspace, Run, or Grade startup.
+
+### Future Playground seam
+
+A Reference Example may later create a temporary Playground Source Snapshot and
+use a closed Judge execution profile. The Playground has no Activity identity,
+private tests, Attempt, Evidence policy, Concept transition, or Review effect.
+This execution contract is deferred until the read-only Reference is accepted.
+
+The complete model, rollout, and rollback are defined in [C++ API Reference
+Module Design](22-API-REFERENCE-MODULE-DESIGN.md).

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | CJS-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Curriculum and Platform Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Curriculum objective
 
@@ -36,7 +36,8 @@ Optional Tracks include advanced templates, coroutines, storage engines, RPC/dis
 - **Exercise**: executable or reviewable artifact with a public contract and Evidence policy.
 - **Review**: delayed variant requiring recall or transfer.
 - **Project Milestone**: persistent realistic increment with automated and qualitative acceptance.
-- **Reference**: concise reusable material optimized for later lookup.
+- **Reference Entry**: concise reusable lookup material owned by the separate
+  Reference Module. It is not an Activity and has no Evidence policy.
 
 ## 4. Activity manifest
 

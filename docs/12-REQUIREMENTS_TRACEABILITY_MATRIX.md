@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -36,6 +36,12 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | FR-064 | DD §2; Roadmap Stage 1 | T-E2E-004 dashboard session entry and summaries | Stage 1–5.1 |
 | FR-070, FR-071 | DATA §10; DEVOPS §6 | T-DATA-001 export; T-DATA-002 backup/restore | Stage 2 |
 | FR-072 | DD §4; CJS §4 | T-WORK-006 content upgrade preservation | Stage 2–4 |
+| FR-080, FR-083 | REF-DES §4–7, §13; DD §11 | T-REF-001 schema/catalog activation; T-REF-002 relationship/navigation integrity | Stage 6.2 |
+| FR-081, FR-082 | REF-DES §8–10; IC §2 | T-REF-003 deterministic search/filters; T-REF-005 query contracts; T-REF-006 Reference browser flow | Stage 6.2 |
+| FR-084 | REF-DES §11; IC §2 | T-REF-007 no Workspace, record, or Evidence mutation | Stage 6.2 |
+| FR-085 | REF-DES §12; REF-AUTH §7 | T-REF-004 declared-standard example compilation | Stage 6.2 |
+| FR-086 | REF-DES §12; REF-PLAN §7 | T-REF-009 Playground identity, execution isolation, and cleanup | Stage 6.2 later phase |
+| FR-087 | REF-DES §14; REF-AUTH §9 | T-REF-010 source, attribution, and reused-material policy | Stage 6.2 |
 
 ## 3. Non-functional traceability
 
@@ -53,6 +59,9 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | NFR-010 | SEC §5 | T-PRIV-001 no-remote-traffic default; export consent | Stage 1–2 |
 | NFR-011 | DD §5; DATA §4 | T-JUDGE-008 report reproduction metadata | Stage 2 |
 | NFR-012 | CJS §10 | T-CONTENT-005 required-field and Review coverage | Stage 1–4 |
+| NFR-013 | REF-DES §9, §16; TQP §6 | T-REF-PERF-001 1,000-Entry warm search and lookup benchmark | Stage 6.2 |
+| NFR-014 | REF-DES §10, §15; TQP §6 | T-REF-008 offline production serving and outbound-request block | Stage 6.2 |
+| NFR-015 | REF-AUTH §2–10; TQP §4 | T-REF-001 schema/version checks; T-REF-010 source/attribution checks | Stage 6.2 |
 
 ## 4. Business-rule traceability
 
@@ -62,6 +71,8 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | BR-003, BR-004 | CJS §9 | T-LEARN-007 public-only and solution-exposure limits | Stage 3 |
 | BR-005, BR-006 | DATA §6; CJS §9 | T-LEARN-008 retained/delayed Evidence; review failure policy | Stage 3 |
 | BR-007 | SEC §4; CJS §8 | T-SEC-002 private-test concealment wording and redaction | Stage 2 |
+| BR-008 | REF-DES §11; SRS §5 | T-REF-007 read/search/copy learning-state isolation | Stage 6.2 |
+| BR-009 | REF-DES §12; SRS §5 | T-REF-009 Reference Example Run evidence isolation | Stage 6.2 later phase |
 
 ## 5. Maintenance rule
 
@@ -164,3 +175,18 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-WORK-001 | `modules/workspace/src/workspace.test.ts` verifies the immutable starter baseline remains distinct from saved learner files and follows the current Activity version | Passed |
 | T-UI-005 | Playwright verifies formatted starter presentation, active-file Format, confirmed Reset, and buffer-only persistence messaging in the real Monaco editor | Passed |
 | T-E2E-006 | `apps/server/src/config.test.ts`, the dedicated E2E composition root, and `e2e/first-learning-loop.spec.ts` verify explicit temporary storage roots and a pristine revision-zero starter without reading or mutating default learner data | Passed |
+
+## 15. Planned Stage 6.2 evidence
+
+| Test ID | Planned executable evidence | Status |
+|---|---|---|
+| T-REF-001 | `packages/reference-schema` fixtures and full-catalog activation tests | Planned |
+| T-REF-002 | `modules/reference` rejects duplicate IDs/slugs, unsafe paths, unknown relationships, and invalid navigation | Planned |
+| T-REF-003 | `modules/reference` exact symbol/header/alias/Chinese/prefix/filter ranking fixtures with stable tie-breaking | Planned |
+| T-REF-004 | Reference content gate compiles ordinary examples with the declared standard and warning profile | Planned |
+| T-REF-005 | Direct Module and Fastify Reference list/search/detail/degraded-readiness contract comparison | Planned |
+| T-REF-006 | Playwright direct URLs, history, keyboard search/navigation, status semantics, and 390-pixel layout | Planned |
+| T-REF-007 | Integration test snapshots Workspace and Learning Record before and after Reference browsing/copying | Planned |
+| T-REF-008 | Built Web/HTTP Reference flow passes with outbound network access blocked | Planned |
+| T-REF-009 | Later Playground tests cover temporary identity, timeout/cancel/output bounds, cleanup, and no Evidence | Deferred within Stage 6.2 |
+| T-REF-010 | Content lint requires factual sources and complete attribution for any reused material | Planned |

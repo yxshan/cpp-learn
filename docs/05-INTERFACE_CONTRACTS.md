@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -126,6 +126,85 @@ POST /api/v1/restores
 
 Both routes reject non-loopback Origins. Restore requires `confirm: true`, validates every path and checksum before mutation, activates staged data roots, retains the prior roots for recovery, and reports that the local service must be restarted.
 Archive request bodies have an explicit 64 MiB local safety limit; larger restores use the CLI adapter.
+
+### C++ API Reference
+
+```text
+GET /api/v1/reference
+GET /api/v1/reference/search
+GET /api/v1/reference/entries/:entryId
+```
+
+Reference routes are read-only. `GET /api/v1/reference` returns navigation,
+catalog version, categories, standards, and readiness metadata. Search accepts:
+
+```text
+q          bounded query text
+kind       optional closed Entry kind
+category   optional stable category ID
+standard   optional c++98 through c++23 or c++26-draft
+verified   optional local toolchain verification state
+limit      optional integer from 1 through 50; default 20
+```
+
+Search response:
+
+```json
+{
+  "schemaVersion": 1,
+  "query": "vector",
+  "total": 2,
+  "results": [
+    {
+      "id": "std-vector",
+      "slug": "standard-library/containers/vector",
+      "kind": "type",
+      "title": "std::vector",
+      "symbol": "std::vector",
+      "header": "<vector>",
+      "since": "c++98",
+      "summary": "连续存储、可动态扩容的序列容器。",
+      "matchedBy": ["symbol", "alias"]
+    }
+  ]
+}
+```
+
+Entry response:
+
+```json
+{
+  "schemaVersion": 1,
+  "entry": {
+    "id": "std-vector",
+    "version": 1,
+    "slug": "standard-library/containers/vector",
+    "kind": "type",
+    "title": "std::vector",
+    "symbol": "std::vector",
+    "header": "<vector>",
+    "namespace": "std",
+    "since": "c++98",
+    "status": "published",
+    "content": "# std::vector\n...",
+    "relatedEntryIds": ["std-array", "std-deque"],
+    "relatedActivityIds": ["stl-containers-algorithms"],
+    "examples": [],
+    "sources": [],
+    "verifiedAt": "2026-08-25"
+  }
+}
+```
+
+Search order is deterministic for one catalog version. An unknown Entry returns
+HTTP `404`. Invalid query length or filters return `400`. An unavailable or
+invalid Reference catalog returns `503` with `reference_unavailable`; it does
+not change platform-wide health. Public responses never expose repository
+paths, authoring diagnostics, or license-incompatible source material.
+
+Reference browsing has no command form and produces no Learning Record event.
+A future Playground receives separate versioned contracts before it may invoke
+the Judge execution seam.
 
 ### Hints, reflections, and progress
 
@@ -260,6 +339,8 @@ Exit codes:
 ## 7. Compatibility tests
 
 - Every HTTP route is tested against the shared contract schema.
+- Reference list, search, and Entry routes are compared with direct Reference
+  Module results, including deterministic order and degraded readiness.
 - CLI JSON output is compared with direct Learning Platform results.
 - SSE replay and final-report fallback are contract-tested.
 - Old event fixtures are loaded in migration tests before a release.

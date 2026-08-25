@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ARCH-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Architecture drivers
 
@@ -75,6 +75,14 @@ It owns session selection, Activity lifecycle, Evidence policy, hint independenc
 
 Owns versioned content, the Concept graph, Activity manifests, content validation, migrations, and public material lookup. A filesystem Adapter serves production; an in-memory Adapter serves tests.
 
+### Reference Module
+
+Owns versioned C++ Reference Entries, complete-catalog validation, navigation,
+lookup, deterministic ranked search, relationship resolution, source metadata,
+and example definitions. A filesystem Adapter serves production and an
+in-memory Adapter serves Module tests. It is read-only at runtime and does not
+participate in learning-state transitions.
+
 ### Workspace Module
 
 Owns starter initialization, editable path contracts, optimistic revisions, learner files, immutable Source Snapshots, and non-destructive content upgrades.
@@ -106,6 +114,8 @@ Learner clicks Grade
 ## 6. Data ownership
 
 - Curriculum owns content definitions and private references to judge configuration.
+- Reference owns Entry content, search index, navigation, factual sources, and
+  Reference-to-Activity relationships.
 - Workspace owns Learner-editable files and Source Snapshots.
 - Judge owns transient execution artifacts and immutable reports.
 - Learning Record owns history and derived Concept state.
@@ -117,6 +127,7 @@ No Module may write another Module's storage directly.
 
 - **Presentation seam**: Web Adapter, CLI Adapter, future MCP Adapter.
 - **Curriculum seam**: filesystem Adapter and in-memory Adapter.
+- **Reference seam**: filesystem Adapter and in-memory Adapter.
 - **Execution seam**: native process Adapter, fake Adapter, future container/Linux Adapter.
 - **Record seam**: JSONL/SQLite implementation and in-memory test Adapter.
 - **Teacher seam**: teacher-pack file Adapter initially; future MCP or remote AI Adapter.
@@ -148,6 +159,8 @@ Exact dependency versions are locked in `package-lock.json` during implementatio
 ## 10. Architecture limitations
 
 - Native Judge execution is not a security sandbox.
+- Reference availability may degrade independently; a missing or invalid
+  Reference catalog must not disable existing learning flows.
 - Local private tests are discoverable by a determined machine owner.
 - macOS cannot validate every Linux production behavior.
 - A single local process is sufficient for one Learner; scalability to multiple users is deliberately not designed.

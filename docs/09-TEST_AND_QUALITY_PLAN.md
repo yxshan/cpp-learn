@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-23 |
+| Last updated | 2026-08-25 |
 
 ## 1. Quality objectives
 
@@ -24,6 +24,8 @@ Test each deep Module through its Interface:
 
 - Learning Platform: command/query behavior, idempotency, transitions, scheduling.
 - Curriculum: schema, graph, version, content lint, migration.
+- Reference: schema, activation, navigation, deterministic search, sources,
+  relationships, and degraded readiness.
 - Workspace: revisions, path confinement, snapshots, upgrades.
 - Judge: job lifecycle, stage planning, cancellation, reports, redaction.
 - Learning Record: append, recovery, upcasting, rebuild, projections.
@@ -35,6 +37,7 @@ Tests must describe observable behavior and survive implementation refactors.
 Run the same behavior suite against:
 
 - Filesystem and in-memory Curriculum Adapters.
+- Filesystem and in-memory Reference Adapters.
 - Native and fake Judge Adapters where semantics overlap.
 - JSONL/SQLite and in-memory Learning Record Adapters.
 - Direct Learning Platform calls, HTTP routes, and CLI JSON.
@@ -46,6 +49,7 @@ Run the same behavior suite against:
 - CMake/CTest project Activities.
 - Event append followed by SQLite projection update and rebuild.
 - Teacher Pack generation and redaction.
+- Reference HTTP lookup/search against the activated filesystem catalog.
 
 ### End-to-end tests
 
@@ -58,6 +62,8 @@ Playwright validates:
 5. Grade with public/private/Sanitizer stages.
 6. Reflection, Evidence, Concept state, and Review scheduling.
 7. Restart and retained history.
+8. Reference navigation, search, direct Entry URLs, keyboard operation, and
+   narrow-screen rendering without learning-state mutation.
 
 End-to-end services use dedicated loopback ports and temporary data and
 Workspace roots. The test runner recreates those roots before the API opens its
@@ -96,6 +102,19 @@ Content CI validates:
 - Print/read-only fallback for interactive blocks.
 - Terminology consistency with [CONTEXT.md](CONTEXT.md).
 
+Reference content CI additionally validates:
+
+- Entry and catalog JSON Schema, stable IDs, versions, unique slugs, safe paths,
+  and closed standard/kind values.
+- Navigation, related-Entry, and related-Activity integrity.
+- Required sections, original-content policy, source URLs, verification date,
+  and reused-material attribution.
+- Deterministic search fixtures for exact symbol, header, alias, Chinese term,
+  prefix, filter, and tie-breaking behavior.
+- Every ordinary example compiles with its declared standard and warnings; Run
+  examples also satisfy bounded deterministic output.
+- Reference browsing and a future Playground cannot produce Activity Evidence.
+
 ## 5. Security tests
 
 Follow [Security and Privacy](08-SECURITY_AND_PRIVACY.md), including command injection, traversal, symlink escape, output flood, fork/child cleanup, loopback binding, redaction, and event integrity tests.
@@ -106,6 +125,8 @@ Follow [Security and Privacy](08-SECURITY_AND_PRIVACY.md), including command inj
 - Judge queue admission and first-event latency.
 - Long event-log rebuild time and memory use.
 - Browser keyboard navigation and semantic labeling.
+- Reference warm-search p95 and Entry lookup latency at a 1,000-Entry fixture.
+- Offline Reference production serving with outbound network requests blocked.
 - macOS reference toolchain matrix.
 - Optional Linux/container compatibility matrix.
 - Backup/restore and upgrade migration.
@@ -125,6 +146,7 @@ Required before merge:
 
 - Typecheck, lint, formatting, and Module/contract tests.
 - Content lint for changed Activities.
+- Reference lint and example compilation for changed Entries.
 - No unexplained snapshot changes.
 
 Required before release:

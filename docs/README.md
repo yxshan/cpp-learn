@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -37,7 +37,10 @@ Read in this order:
 19. [Stage 5.1 Implementation Report](19-STAGE-5.1-IMPLEMENTATION-REPORT.md)
 20. [Stage 6 Implementation Report](20-STAGE-6-IMPLEMENTATION-REPORT.md)
 21. [Stage 6.1 Implementation Report](21-STAGE-6.1-IMPLEMENTATION-REPORT.md)
-22. [Domain Context](CONTEXT.md)
+22. [C++ API Reference Module Design](22-API-REFERENCE-MODULE-DESIGN.md)
+23. [C++ API Reference Content Authoring Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md)
+24. [C++ API Reference Implementation Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md)
+25. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -55,6 +58,7 @@ Core learner references:
 - [ADR-0003: Event log with rebuildable SQLite projections](adr/0003-event-log-and-sqlite-projections.md)
 - [ADR-0004: Native judge first, container adapter later](adr/0004-native-judge-first.md)
 - [ADR-0005: Declarative curriculum content](adr/0005-declarative-curriculum-content.md)
+- [ADR-0006: Separate declarative C++ API Reference Module](adr/0006-separate-declarative-api-reference.md)
 
 ## Archive
 
