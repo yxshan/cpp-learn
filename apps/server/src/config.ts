@@ -3,6 +3,11 @@ export interface ServerAddress {
   readonly port: number;
 }
 
+export interface ServerStoragePaths {
+  readonly dataRoot?: string;
+  readonly workspaceRoot?: string;
+}
+
 type ServerEnvironment = Readonly<Record<string, string | undefined>>;
 
 export function resolveServerAddress(
@@ -19,4 +24,15 @@ export function resolveServerAddress(
   }
 
   return { host, port };
+}
+
+export function resolveServerStoragePaths(
+  environment: ServerEnvironment,
+): ServerStoragePaths {
+  const dataRoot = environment["CPP_LEARN_DATA_ROOT"];
+  const workspaceRoot = environment["CPP_LEARN_WORKSPACE_ROOT"];
+  return {
+    ...(dataRoot ? { dataRoot } : {}),
+    ...(workspaceRoot ? { workspaceRoot } : {}),
+  };
 }

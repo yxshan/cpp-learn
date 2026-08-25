@@ -4,16 +4,17 @@ import {
   createProductionDataArchive,
   createProductionPlatform,
 } from "./composition.js";
-import { resolveServerAddress } from "./config.js";
+import { resolveServerAddress, resolveServerStoragePaths } from "./config.js";
 import { createServer } from "./server.js";
 
 const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
 
 const { host, port } = resolveServerAddress(process.env);
+const storagePaths = resolveServerStoragePaths(process.env);
 
 const server = createServer({
-  platform: await createProductionPlatform(),
-  archive: createProductionDataArchive(),
+  platform: await createProductionPlatform(storagePaths),
+  archive: createProductionDataArchive(storagePaths),
   logger: true,
   webRoot,
 });

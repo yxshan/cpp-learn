@@ -39,6 +39,13 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
     page.getByRole("heading", { name: "从源代码到可执行程序" }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /上一节/ })).toBeDisabled();
+  await expect(page.getByText("revision 0")).toBeVisible();
+  const starterLines = page.locator(".monaco-editor .view-line");
+  await expect(starterLines).toHaveCount(8);
+  const starterText = (await starterLines.allTextContents())
+    .join("\n")
+    .replaceAll("\u00a0", " ");
+  expect(starterText).toContain("TODO: print");
 
   const lessonPanel = page.locator(".lesson-panel");
   const codingPanel = page.locator(".coding-panel");

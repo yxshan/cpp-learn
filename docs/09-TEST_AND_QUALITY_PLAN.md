@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -59,6 +59,12 @@ Playwright validates:
 6. Reflection, Evidence, Concept state, and Review scheduling.
 7. Restart and retained history.
 
+End-to-end services use dedicated loopback ports and temporary data and
+Workspace roots. The test runner recreates those roots before the API opens its
+SQLite store and never reuses a manually running learner service. A test must
+not read, reset, save, run, Grade, or project events in the default learner
+roots.
+
 ## 3. Judge verification
 
 Golden fixtures cover every verdict category. For each judge profile:
@@ -107,6 +113,8 @@ Follow [Security and Privacy](08-SECURITY_AND_PRIVACY.md), including command inj
 ## 7. Test data
 
 - Tests use temporary roots and deterministic clocks/IDs.
+- Browser tests pass explicit `CPP_LEARN_DATA_ROOT` and
+  `CPP_LEARN_WORKSPACE_ROOT` values to their dedicated API composition root.
 - Real learner data and private reflections are not test fixtures.
 - Golden source fixtures are minimal and purpose-specific.
 - Historical event fixtures are immutable once published for migration tests.

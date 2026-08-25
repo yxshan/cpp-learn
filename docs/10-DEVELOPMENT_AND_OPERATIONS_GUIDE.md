@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-23 |
@@ -34,7 +34,10 @@ npm run test:e2e
 ./cpplearn doctor
 ```
 
-These commands are executable. `npm run test:e2e` starts loopback API and Vite services for the controlled Chromium flow.
+These commands are executable. `npm run test:e2e` starts dedicated loopback API
+and Vite services for the controlled Chromium flow. They use temporary data and
+Workspace roots plus ports separate from the normal `127.0.0.1:4173` service;
+the test runner does not reuse an existing learner server.
 
 `npm run check:content` executes the system-lab references. It therefore needs normal local permission to create temporary files/processes, bind `127.0.0.1` on a dynamic port, link SQLite, and invoke CMake/CTest. It never requires external network access.
 
@@ -70,6 +73,12 @@ logging.level
 ```
 
 Secrets are not expected in the base product. Environment variables are allowlisted and never forwarded wholesale to learner processes.
+
+The server accepts `CPP_LEARN_DATA_ROOT` and `CPP_LEARN_WORKSPACE_ROOT` as
+explicit storage overrides. They support controlled test and maintenance
+composition roots; omitting them retains the default learner paths. The Web
+development proxy accepts `CPP_LEARN_API_URL`, while production static serving
+continues to use same-origin `/api` routes.
 
 ## 5. Logging and observability
 
