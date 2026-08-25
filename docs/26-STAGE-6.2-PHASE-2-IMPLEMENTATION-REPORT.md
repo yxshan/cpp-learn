@@ -21,8 +21,11 @@
 - Added semantic standard, deprecation, removal, and local-verification badges;
   source links; related Entries and Activities; complete examples; expected
   output; and accessible copy feedback.
-- Expanded the release catalog from 5 to 15 Entries and from 4 to 14 compiled
-  examples across containers, algorithms, strings, memory, and utility topics.
+- Added semantic, slug-resolved Activity-to-Reference links alongside the
+  existing Reference-to-Activity path, preserving the unsaved-code guard.
+- Expanded the release catalog from 5 to the specified 15-Entry editorial set
+  and from 4 to 12 compiled examples across containers, algorithms, strings,
+  memory, and utility topics; the catalog version is now 2.
 - Added production SPA fallback for `/reference` and `/reference/*` without
   changing `/api` error behavior.
 
@@ -42,18 +45,20 @@ inspection do not dispatch Learning Platform commands.
 
 | Test | Evidence | Result |
 |---|---|---|
-| `T-REF-004` | `npm run check:reference` compiles and executes 14 examples under their declared standards with strict warnings | Passed |
-| `T-REF-006` | Playwright covers symbol/header/Chinese search, category URL reload, canonical redirects, anchors, history, keyboard navigation, Activity links, and 390-pixel layout | Passed |
+| `T-REF-004` | `npm run check:reference` compiles and executes 12 examples under their declared standards with strict warnings | Passed |
+| `T-REF-006` | Playwright covers symbol/header/Chinese search, category URL reload, canonical redirects, anchors, history, keyboard navigation, bidirectional Activity links, and 390-pixel layout | Passed |
 | `T-REF-007` | Playwright compares Workspace and Dashboard state before/after copy and observes no non-GET browser request | Passed |
-| `T-REF-008` | Vite emits a separate Reference chunk; Fastify serves deep links; browser flow makes no external request | Passed |
+| `T-REF-008` | `npm run test:e2e:production` serves the real Vite `dist` through Fastify and completes a deep-link browser flow while all non-loopback requests are actively blocked | Passed |
 | Existing regression suite | `npm test`, `npm run test:e2e`, and `npm run check:content` retain Shared contracts, Curriculum, server, learning, Workspace, Judge, CLI, and Dashboard coverage | Passed |
 
 ## 4. Release content
 
-The 15-Entry vertical release includes the standard-library landing; vector,
-map, string, memory, and algorithm headers/types; `std::sort`, `std::find`,
-`std::move`; and selected vector members. Every ordinary new Entry has an
-original deterministic example and a primary working-draft source.
+The 15-Entry vertical release matches the Authoring Guide backlog: three
+landings; the vector and algorithm headers; vector, string, string-view,
+unique-pointer, and optional types; sort, find, and make-unique functions;
+`vector::push_back`; and the sequence-container selection guide. Every
+non-landing Entry has an original deterministic example and a primary
+working-draft source.
 
 ## 5. Accessibility and responsive behavior
 

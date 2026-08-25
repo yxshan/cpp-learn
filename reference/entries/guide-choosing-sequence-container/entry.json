@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "guide-choosing-sequence-container",
+  "version": 1,
+  "slug": "guides/choosing-a-sequence-container",
+  "kind": "guide",
+  "title": "选择顺序容器",
+  "summary": "根据连续性、访问方式、修改位置与引用稳定性选择顺序容器。",
+  "aliases": ["顺序容器选择", "vector deque list", "容器选型"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["containers", "std-vector"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/guide-choosing-sequence-container/content.md"
+  },
+  "examples": [
+    {
+      "id": "vector-default",
+      "path": "entries/guide-choosing-sequence-container/examples/vector-default.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3 8 13\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: sequence containers",
+      "url": "https://eel.is/c++draft/sequence.reqmts",
+      "standardSection": "[sequence.reqmts]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

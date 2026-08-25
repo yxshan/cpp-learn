@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "algorithms",
+  "version": 1,
+  "slug": "standard-library/algorithms",
+  "kind": "landing",
+  "title": "算法库",
+  "summary": "通过迭代器或范围对数据执行查找、排序、变换与聚合。",
+  "aliases": ["algorithms", "算法库", "标准算法"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-sort", "std-find"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/algorithms/content.md"
+  },
+  "examples": [],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: algorithms library",
+      "url": "https://eel.is/c++draft/algorithms",
+      "standardSection": "[algorithms]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

@@ -21,6 +21,8 @@ import {
   submitReflection,
 } from "./api.js";
 import { formatCppSource, isCppSourcePath } from "./cpp-format.js";
+import { referenceEntryUrl, referenceSearchUrl } from "./reference-location.js";
+import { useReferenceLinks } from "./reference-links.js";
 
 self.MonacoEnvironment = { getWorker: () => new EditorWorker() };
 loader.config({ monaco });
@@ -195,6 +197,7 @@ export function LessonWorkspace({
   const [reflectionAnswers, setReflectionAnswers] = useState<
     Record<string, string>
   >({});
+  const referenceLinks = useReferenceLinks(activity?.referenceIds);
 
   useEffect(() => {
     let cancelled = false;
@@ -549,6 +552,36 @@ export function LessonWorkspace({
                   ))}
                 </ul>
               </section>
+              {activity.referenceIds && activity.referenceIds.length > 0 && (
+                <section className="activity-reference-links">
+                  <p className="eyebrow">C++ API 文档</p>
+                  <div>
+                    {activity.referenceIds.map((referenceId) => {
+                      const reference = referenceLinks[referenceId];
+                      return (
+                        <a
+                          key={referenceId}
+                          aria-label={`打开 ${reference?.title ?? referenceId} API 文档`}
+                          href={
+                            reference
+                              ? referenceEntryUrl(
+                                  new URL(window.location.href),
+                                  reference.slug,
+                                )
+                              : referenceSearchUrl(
+                                  new URL(window.location.href),
+                                  referenceId,
+                                )
+                          }
+                        >
+                          <code>{reference?.title ?? referenceId}</code>
+                          <span>打开 Reference →</span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
             </div>
           )}
           {activity?.learning && (

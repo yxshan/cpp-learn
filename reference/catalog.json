@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 1,
+  "version": 2,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -8,15 +8,15 @@
     "entries/std-sort/entry.json",
     "entries/std-vector-push-back/entry.json",
     "entries/header-algorithm/entry.json",
-    "entries/header-string/entry.json",
     "entries/std-string/entry.json",
-    "entries/header-map/entry.json",
-    "entries/std-map/entry.json",
-    "entries/header-memory/entry.json",
     "entries/std-unique-ptr/entry.json",
     "entries/std-find/entry.json",
-    "entries/std-vector-size/entry.json",
-    "entries/std-move/entry.json"
+    "entries/containers/entry.json",
+    "entries/algorithms/entry.json",
+    "entries/std-string-view/entry.json",
+    "entries/std-optional/entry.json",
+    "entries/std-make-unique/entry.json",
+    "entries/guide-choosing-sequence-container/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
@@ -39,22 +39,16 @@
       "order": 40
     },
     {
-      "id": "associative-containers",
-      "title": "关联容器",
-      "parentId": "containers",
-      "order": 50
-    },
-    {
       "id": "memory",
       "title": "内存与所有权",
       "parentId": "standard-library",
-      "order": 60
+      "order": 50
     },
     {
       "id": "utilities",
       "title": "工具与值类别",
       "parentId": "standard-library",
-      "order": 70
+      "order": 60
     }
   ],
   "redirects": [

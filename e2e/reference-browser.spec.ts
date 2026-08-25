@@ -51,6 +51,14 @@ test("[T-REF-006] canonical Entry anchors survive reload and history", async ({
   await expect(
     page.getByRole("heading", { name: "std::sort", exact: true }),
   ).toBeVisible();
+  await expect(
+    page
+      .locator(".reference-related")
+      .getByRole("link", { name: /std::vector/ }),
+  ).toHaveAttribute(
+    "href",
+    "/reference/standard-library/containers/vector?q=std%3A%3Asort",
+  );
   await page.goBack();
   await expect(
     page.getByRole("heading", { name: "“std::sort”的搜索结果" }),
@@ -67,13 +75,13 @@ test("[T-REF-006] category filters survive reload through URL state", async ({
   await page.goto("/reference");
   await page.getByRole("button", { name: /^算法/ }).click();
   await expect(page).toHaveURL(/category=algorithms/);
-  await expect(page.getByText("3 个条目")).toBeVisible();
+  await expect(page.getByText("4 个条目")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button", { name: /^算法/ })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await expect(page.getByText("3 个条目")).toBeVisible();
+  await expect(page.getByText("4 个条目")).toBeVisible();
 });
 
 test("[T-REF-006] keyboard table of contents and Activity navigation work", async ({
@@ -85,13 +93,27 @@ test("[T-REF-006] keyboard table of contents and Activity navigation work", asyn
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#%E5%A4%8D%E6%9D%82%E5%BA%A6$/);
 
-  const activity = page.locator(".reference-related a").first();
-  await expect(activity).toContainText("相关课程");
+  const activity = page
+    .locator(".reference-related")
+    .getByRole("link", { name: /相关课程/ })
+    .first();
   await activity.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/activity=stl-containers-algorithms/);
   await expect(
     page.getByRole("heading", { name: "STL 容器、迭代器与算法" }),
+  ).toBeVisible();
+  const reference = page.getByRole("link", {
+    name: "打开 std::vector API 文档",
+  });
+  await expect(reference).toHaveAttribute(
+    "href",
+    "/reference/standard-library/containers/vector",
+  );
+  await reference.focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByRole("heading", { name: "std::vector", exact: true }),
   ).toBeVisible();
 });
 
@@ -153,7 +175,7 @@ test("[T-REF-008] Reference browsing makes no external network request", async (
   });
 
   await page.goto("/reference?q=unique_ptr");
-  await page.getByRole("link", { name: /std::unique_ptr/ }).click();
+  await page.getByRole("link", { name: /^类型 std::unique_ptr/ }).click();
   await expect(
     page.getByRole("heading", { name: "std::unique_ptr", exact: true }),
   ).toBeVisible();

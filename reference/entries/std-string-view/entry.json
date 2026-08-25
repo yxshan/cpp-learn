@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "std-string-view",
+  "version": 1,
+  "slug": "standard-library/strings/string-view",
+  "kind": "type",
+  "title": "std::string_view",
+  "summary": "以不拥有字符的轻量视图读取连续字符序列。",
+  "symbol": "std::string_view",
+  "header": "<string_view>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["string_view", "字符串视图", "非拥有字符串"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["std-string"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-string-view/content.md"
+  },
+  "examples": [
+    {
+      "id": "view-prefix",
+      "path": "entries/std-string-view/examples/view-prefix.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "C++\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view",
+      "url": "https://eel.is/c++draft/string.view",
+      "standardSection": "[string.view]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

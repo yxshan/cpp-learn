@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "std-optional",
+  "version": 1,
+  "slug": "standard-library/utilities/optional",
+  "kind": "type",
+  "title": "std::optional",
+  "summary": "显式表示一个可能存在、也可能缺失的值。",
+  "symbol": "std::optional",
+  "header": "<optional>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["optional", "可选值", "可能为空的值"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["std-string-view"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-optional/content.md"
+  },
+  "examples": [
+    {
+      "id": "parse-port",
+      "path": "entries/std-optional/examples/parse-port.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "8080\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: optional objects",
+      "url": "https://eel.is/c++draft/optional",
+      "standardSection": "[optional]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

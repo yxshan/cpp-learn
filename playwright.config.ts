@@ -12,6 +12,7 @@ import {
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "reference-production.spec.ts",
   fullyParallel: false,
   retries: 0,
   reporter: "list",

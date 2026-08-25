@@ -390,10 +390,32 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
 
     await expect(reference.readiness()).resolves.toEqual({
       ready: true,
-      catalogVersion: 1,
+      catalogVersion: 2,
       entryCount: 15,
       activationDurationMs: expect.any(Number),
     });
+    const navigation = await reference.getNavigation();
+    expect(
+      navigation.categories.flatMap((category) => category.entryIds).sort(),
+    ).toEqual(
+      [
+        "standard-library",
+        "containers",
+        "algorithms",
+        "header-vector",
+        "header-algorithm",
+        "std-vector",
+        "std-string",
+        "std-string-view",
+        "std-unique-ptr",
+        "std-optional",
+        "std-sort",
+        "std-find",
+        "std-make-unique",
+        "std-vector-push-back",
+        "guide-choosing-sequence-container",
+      ].sort(),
+    );
     const result = await reference.search({ text: "std::sort" });
     expect(result.results[0]).toMatchObject({ id: "std-sort" });
   });

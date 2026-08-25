@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "std-make-unique",
+  "version": 1,
+  "slug": "standard-library/memory/make-unique",
+  "kind": "function",
+  "title": "std::make_unique",
+  "summary": "构造对象并把独占所有权立即封装进 std::unique_ptr。",
+  "symbol": "std::make_unique",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++14",
+  "aliases": ["make_unique", "创建独占指针", "安全创建对象"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["std-unique-ptr"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-make-unique/content.md"
+  },
+  "examples": [
+    {
+      "id": "make-counter",
+      "path": "entries/std-make-unique/examples/make-counter.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unique_ptr creation",
+      "url": "https://eel.is/c++draft/unique.ptr.create",
+      "standardSection": "[unique.ptr.create]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

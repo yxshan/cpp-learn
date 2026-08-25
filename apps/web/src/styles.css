@@ -1314,6 +1314,34 @@ footer {
   padding: 0;
   background: transparent;
 }
+.activity-reference-links > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.activity-reference-links a {
+  display: grid;
+  gap: 4px;
+  min-width: 145px;
+  padding: 10px 12px;
+  color: #a8bbb2;
+  text-decoration: none;
+  border: 1px solid #29453a;
+  border-radius: 4px 10px 4px 4px;
+  background: #10221b;
+}
+.activity-reference-links a:hover {
+  color: #e7f5ef;
+  border-color: #4a7b68;
+  background: #173027;
+}
+.activity-reference-links a code {
+  color: var(--green);
+  font: 11px var(--mono);
+}
+.activity-reference-links a span {
+  font-size: 10px;
+}
 .editor-titlebar {
   min-height: 42px;
   padding: 0 15px;

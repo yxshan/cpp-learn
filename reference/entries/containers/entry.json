@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "containers",
+  "version": 1,
+  "slug": "standard-library/containers",
+  "kind": "landing",
+  "title": "容器库",
+  "summary": "按数据布局、访问模式与失效规则选择标准容器。",
+  "aliases": ["containers", "容器", "标准容器"],
+  "categories": ["containers"],
+  "relatedEntryIds": [
+    "header-vector",
+    "std-vector",
+    "guide-choosing-sequence-container"
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "entries/containers/content.md"
+  },
+  "examples": [],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: containers library",
+      "url": "https://eel.is/c++draft/containers",
+      "standardSection": "[containers]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

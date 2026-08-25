@@ -12,7 +12,7 @@
   "since": "c++98",
   "aliases": ["string", "字符串", "标准字符串"],
   "categories": ["strings"],
-  "relatedEntryIds": ["header-string", "std-move"],
+  "relatedEntryIds": ["std-string-view"],
   "content": { "format": "markdown", "path": "entries/std-string/content.md" },
   "examples": [
     {

@@ -185,8 +185,8 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-REF-003 | `modules/reference/src/reference.test.ts` covers exact symbol/header/title/alias/Chinese/heading ranking, explicit symbol prefixes, positive filters, local verification, standard availability intervals, and stable tie-breaking | Passed |
 | T-REF-004 | `npm run check:reference` compiles and runs release examples under their declared standard and warning profile | Passed |
 | T-REF-005 | `apps/server/src/server.test.ts` exercises bootstrap readiness, Reference navigation/search/resolve/detail, repeated scalar query rejection, and 400/404/503 responses through real Fastify injection | Passed |
-| T-REF-006 | `e2e/reference-browser.spec.ts` covers symbol/header/Chinese search, URL-backed category filters, canonical and historical slugs, replacement history, anchors, keyboard navigation, Activity links, status semantics, and 390-pixel layout | Passed |
+| T-REF-006 | `e2e/reference-browser.spec.ts` covers symbol/header/Chinese search, URL-backed category filters, canonical and historical slugs, replacement history, anchors, keyboard navigation, bidirectional Activity links, status semantics, and 390-pixel layout | Passed |
 | T-REF-007 | `e2e/reference-browser.spec.ts` snapshots an Activity Workspace and Dashboard before/after browsing and copying, while also asserting that the browser emits no non-GET request | Passed |
-| T-REF-008 | The Web build emits a lazy Reference chunk; `apps/server/src/server.test.ts` proves production deep-link fallback and Playwright asserts no external network request | Passed |
+| T-REF-008 | `npm run test:e2e:production` serves the real Vite `dist` through Fastify, opens a deep Reference URL, and aborts every non-loopback browser request; the build emits a lazy Reference chunk | Passed |
 | T-REF-009 | Later Playground tests cover temporary identity, timeout/cancel/output bounds, cleanup, and no Evidence | Deferred within Stage 6.2 |
 | T-REF-010 | `packages/reference-schema/src/reference-schema.test.ts` and release activation require a primary source and complete attribution for reused material | Passed |

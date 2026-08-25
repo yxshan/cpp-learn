@@ -12,7 +12,7 @@
   "since": "c++11",
   "aliases": ["unique_ptr", "独占智能指针", "唯一所有权"],
   "categories": ["memory"],
-  "relatedEntryIds": ["header-memory", "std-move"],
+  "relatedEntryIds": ["std-make-unique"],
   "content": { "format": "markdown", "path": "entries/std-unique-ptr/content.md" },
   "examples": [
     {

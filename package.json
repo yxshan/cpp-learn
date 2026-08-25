@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:production": "npm run build && playwright test --config playwright.production.config.ts",
     "test:watch": "vitest",
     "check:docs": "node scripts/check-docs.mjs",
     "check:content": "node --experimental-strip-types scripts/check-content.ts",
