@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "std-vector-size",
+  "version": 1,
+  "slug": "standard-library/containers/vector/size",
+  "kind": "member",
+  "title": "std::vector::size",
+  "summary": "返回 vector 当前拥有的元素数量。",
+  "symbol": "std::vector::size",
+  "header": "<vector>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["vector size", "元素数量", "容器长度"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-vector", "std-vector-push-back"],
+  "content": { "format": "markdown", "path": "entries/std-vector-size/content.md" },
+  "examples": [
+    {
+      "id": "read-size",
+      "path": "entries/std-vector-size/examples/read-size.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector capacity",
+      "url": "https://eel.is/c++draft/vector.capacity",
+      "standardSection": "[vector.capacity]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

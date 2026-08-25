@@ -311,9 +311,15 @@ describe("[T-OPS-001] integrated Web hosting", () => {
     const server = createServer({ platform, webRoot });
 
     const response = await server.inject({ method: "GET", url: "/" });
+    const referenceDeepLink = await server.inject({
+      method: "GET",
+      url: "/reference/standard-library/containers/vector?q=vector#complexity",
+    });
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain("C++ Learn");
+    expect(referenceDeepLink.statusCode).toBe(200);
+    expect(referenceDeepLink.body).toContain("C++ Learn");
     await server.close();
     await rm(webRoot, { recursive: true, force: true });
   });

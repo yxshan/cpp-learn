@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "std-map",
+  "version": 1,
+  "slug": "standard-library/containers/map",
+  "kind": "type",
+  "title": "std::map",
+  "summary": "按比较器顺序保存唯一键与关联值的有序关联容器。",
+  "symbol": "std::map",
+  "header": "<map>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["map", "有序映射", "字典", "键值容器"],
+  "categories": ["associative-containers"],
+  "relatedEntryIds": ["header-map", "std-string"],
+  "content": { "format": "markdown", "path": "entries/std-map/content.md" },
+  "examples": [
+    {
+      "id": "ordered-scores",
+      "path": "entries/std-map/examples/ordered-scores.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "cpp=20 js=15\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: map",
+      "url": "https://eel.is/c++draft/map",
+      "standardSection": "[map]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

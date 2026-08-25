@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "header-memory",
+  "version": 1,
+  "slug": "standard-library/headers/memory",
+  "kind": "header",
+  "title": "<memory>",
+  "summary": "提供智能指针、分配器与未初始化内存算法等所有权工具。",
+  "header": "<memory>",
+  "since": "c++98",
+  "aliases": ["memory header", "内存头文件", "智能指针头文件"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["std-unique-ptr"],
+  "content": { "format": "markdown", "path": "entries/header-memory/content.md" },
+  "examples": [
+    {
+      "id": "make-owned-int",
+      "path": "entries/header-memory/examples/make-owned-int.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "42\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: memory library",
+      "url": "https://eel.is/c++draft/memory",
+      "standardSection": "[memory]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

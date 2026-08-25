@@ -113,6 +113,29 @@ const LessonWorkspace = lazy(async () => {
   return { default: module.LessonWorkspace };
 });
 
+const ReferenceBrowser = lazy(async () => {
+  const module = await import("./ReferenceBrowser.js");
+  return { default: module.ReferenceBrowser };
+});
+
+export function App() {
+  if (
+    window.location.pathname === "/reference" ||
+    window.location.pathname.startsWith("/reference/")
+  ) {
+    return (
+      <Suspense
+        fallback={
+          <div className="workspace-loading">正在加载 C++ Reference…</div>
+        }
+      >
+        <ReferenceBrowser />
+      </Suspense>
+    );
+  }
+  return <LearningApp />;
+}
+
 function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
@@ -156,7 +179,7 @@ function StatusCard({
   );
 }
 
-export function App() {
+function LearningApp() {
   const [bootstrap, setBootstrap] = useState<BootstrapResult>();
   const [dashboard, setDashboard] = useState<DashboardResult>();
   const [error, setError] = useState<string>();
@@ -540,6 +563,9 @@ export function App() {
               }
             >
               <span aria-hidden="true">06</span>复习
+            </a>
+            <a className="nav-item" href="/reference">
+              <span aria-hidden="true">07</span>API 文档
             </a>
           </nav>
           <div className="sidebar-footer">

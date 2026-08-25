@@ -383,7 +383,7 @@ describe("[T-REF-003] deterministic Reference search", () => {
 export { catalog, entry, filesFor };
 
 describe("[T-REF-001] filesystem Reference Adapter", () => {
-  it("loads the release catalog and its five tracer-bullet Entries", async () => {
+  it("loads the 15-Entry Web vertical release catalog", async () => {
     const reference = createFilesystemReferenceCatalog({
       catalogPath: resolve("reference/catalog.json"),
     });
@@ -391,7 +391,7 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
     await expect(reference.readiness()).resolves.toEqual({
       ready: true,
       catalogVersion: 1,
-      entryCount: 5,
+      entryCount: 15,
       activationDurationMs: expect.any(Number),
     });
     const result = await reference.search({ text: "std::sort" });

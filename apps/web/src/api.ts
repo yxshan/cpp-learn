@@ -8,6 +8,11 @@ import {
   type HintRevealCommandResult,
   type JobCancelCommandResult,
   type ProgressResult,
+  type ReferenceEntryDetail,
+  type ReferenceNavigation,
+  type ReferenceSearchQuery,
+  type ReferenceSearchResult,
+  type ReferenceSlugResolution,
   type ReflectionSubmitCommandResult,
   type ReviewsResult,
   type WorkspaceResult,
@@ -18,6 +23,15 @@ export type Request = (
   input: RequestInfo | URL,
   init?: RequestInit,
 ) => Promise<Response>;
+
+export class HttpRequestError extends Error {
+  constructor(
+    readonly status: number,
+    message = `Request failed with HTTP ${status}`,
+  ) {
+    super(message);
+  }
+}
 
 export async function getBootstrap(
   request: Request = fetch,
@@ -38,7 +52,7 @@ async function requestJson<T>(
 ): Promise<T> {
   const response = await request(url, init);
   if (!response.ok) {
-    throw new Error(`Request failed with HTTP ${response.status}`);
+    throw new HttpRequestError(response.status);
   }
   const value = (await response.json()) as unknown;
   if (
@@ -50,6 +64,55 @@ async function requestJson<T>(
     throw new Error("Response violates the versioned transport contract");
   }
   return value as T;
+}
+
+export async function getReferenceNavigation(
+  request: Request = fetch,
+): Promise<ReferenceNavigation> {
+  return requestJson(
+    "/api/v1/reference",
+    { headers: { accept: "application/json" } },
+    request,
+  );
+}
+
+export async function searchReference(
+  query: ReferenceSearchQuery,
+  request: Request = fetch,
+): Promise<ReferenceSearchResult> {
+  const parameters = new URLSearchParams({ q: query.text });
+  if (query.kind !== undefined) parameters.set("kind", query.kind);
+  if (query.category !== undefined) parameters.set("category", query.category);
+  if (query.standard !== undefined) parameters.set("standard", query.standard);
+  if (query.verified !== undefined) parameters.set("verified", query.verified);
+  if (query.limit !== undefined) parameters.set("limit", String(query.limit));
+  return requestJson(
+    `/api/v1/reference/search?${parameters.toString()}`,
+    { headers: { accept: "application/json" } },
+    request,
+  );
+}
+
+export async function resolveReferenceSlug(
+  slug: string,
+  request: Request = fetch,
+): Promise<ReferenceSlugResolution> {
+  return requestJson(
+    `/api/v1/reference/resolve?slug=${encodeURIComponent(slug)}`,
+    { headers: { accept: "application/json" } },
+    request,
+  );
+}
+
+export async function getReferenceEntry(
+  entryId: string,
+  request: Request = fetch,
+): Promise<ReferenceEntryDetail> {
+  return requestJson(
+    `/api/v1/reference/entries/${encodeURIComponent(entryId)}`,
+    { headers: { accept: "application/json" } },
+    request,
+  );
 }
 
 export async function getActivity(

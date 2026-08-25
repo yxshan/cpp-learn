@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "std-string",
+  "version": 1,
+  "slug": "standard-library/strings/string",
+  "kind": "type",
+  "title": "std::string",
+  "summary": "拥有并管理一段可变长窄字符序列的标准字符串类型。",
+  "symbol": "std::string",
+  "header": "<string>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["string", "字符串", "标准字符串"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["header-string", "std-move"],
+  "content": { "format": "markdown", "path": "entries/std-string/content.md" },
+  "examples": [
+    {
+      "id": "append-text",
+      "path": "entries/std-string/examples/append-text.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "Hello, C++\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: basic_string",
+      "url": "https://eel.is/c++draft/string.classes",
+      "standardSection": "[string.classes]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

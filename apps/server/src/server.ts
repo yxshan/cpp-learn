@@ -124,6 +124,10 @@ export function createServer(
       prefix: "/",
       wildcard: false,
     });
+    const sendWebEntry = (_request: unknown, reply: FastifyReply) =>
+      reply.sendFile("index.html");
+    server.get("/reference", sendWebEntry);
+    server.get("/reference/*", sendWebEntry);
   }
 
   server.get("/api/v1/health", async () => ({

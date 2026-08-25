@@ -41,7 +41,8 @@ Read in this order:
 23. [C++ API Reference Content Authoring Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md)
 24. [C++ API Reference Implementation Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md)
 25. [Stage 6.2 Phase 1 Implementation Report](25-STAGE-6.2-PHASE-1-IMPLEMENTATION-REPORT.md)
-26. [Domain Context](CONTEXT.md)
+26. [Stage 6.2 Phase 2 Implementation Report](26-STAGE-6.2-PHASE-2-IMPLEMENTATION-REPORT.md)
+27. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

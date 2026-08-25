@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "header-algorithm",
+  "version": 1,
+  "slug": "standard-library/headers/algorithm",
+  "kind": "header",
+  "title": "<algorithm>",
+  "summary": "提供排序、查找、变换与范围处理等通用算法。",
+  "header": "<algorithm>",
+  "since": "c++98",
+  "aliases": ["algorithm", "算法头文件", "标准算法"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["std-sort", "std-find"],
+  "content": { "format": "markdown", "path": "entries/header-algorithm/content.md" },
+  "examples": [
+    {
+      "id": "count-even",
+      "path": "entries/header-algorithm/examples/count-even.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "2\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: algorithms library",
+      "url": "https://eel.is/c++draft/algorithms",
+      "standardSection": "[algorithms]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

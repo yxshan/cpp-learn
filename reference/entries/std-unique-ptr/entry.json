@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "std-unique-ptr",
+  "version": 1,
+  "slug": "standard-library/memory/unique-ptr",
+  "kind": "type",
+  "title": "std::unique_ptr",
+  "summary": "以不可复制、可移动的句柄表达资源的独占所有权。",
+  "symbol": "std::unique_ptr",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["unique_ptr", "独占智能指针", "唯一所有权"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["header-memory", "std-move"],
+  "content": { "format": "markdown", "path": "entries/std-unique-ptr/content.md" },
+  "examples": [
+    {
+      "id": "transfer-ownership",
+      "path": "entries/std-unique-ptr/examples/transfer-ownership.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "0 7\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unique_ptr",
+      "url": "https://eel.is/c++draft/unique.ptr",
+      "standardSection": "[unique.ptr]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

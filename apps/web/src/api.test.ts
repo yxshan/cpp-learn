@@ -11,6 +11,10 @@ import {
   getBootstrap,
   getDashboard,
   getProgress,
+  getReferenceEntry,
+  getReferenceNavigation,
+  resolveReferenceSlug,
+  searchReference,
   getReviews,
   getWorkspace,
   revealHint,
@@ -356,5 +360,73 @@ describe("[T-WEB-001] learning-flow API Adapter", () => {
     expect(request.mock.calls[2]?.[1]).toMatchObject({ method: "PATCH" });
     expect(request.mock.calls[3]?.[1]).toMatchObject({ method: "POST" });
     expect(request.mock.calls[5]?.[1]).toMatchObject({ method: "POST" });
+  });
+});
+
+describe("[T-REF-006] Reference API Adapter", () => {
+  it("loads navigation, bounded search, slug resolution, and Entry detail", async () => {
+    const responses = [
+      {
+        schemaVersion: 1,
+        catalogVersion: 1,
+        categories: [],
+        supportedStandards: [],
+      },
+      {
+        schemaVersion: 1,
+        catalogVersion: 1,
+        query: { text: "vector" },
+        total: 0,
+        results: [],
+      },
+      {
+        schemaVersion: 1,
+        entryId: "std-vector",
+        canonicalSlug: "standard-library/containers/vector",
+        redirected: true,
+      },
+      {
+        schemaVersion: 1,
+        catalogVersion: 1,
+        id: "std-vector",
+        slug: "standard-library/containers/vector",
+      },
+    ];
+    const request = vi.fn().mockImplementation(
+      async () =>
+        new Response(JSON.stringify(responses.shift()), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    );
+
+    await getReferenceNavigation(request);
+    await searchReference(
+      { text: "vector", standard: "c++20", limit: 12 },
+      request,
+    );
+    await resolveReferenceSlug("containers/vector", request);
+    await getReferenceEntry("std-vector", request);
+
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      "/api/v1/reference",
+      "/api/v1/reference/search?q=vector&standard=c%2B%2B20&limit=12",
+      "/api/v1/reference/resolve?slug=containers%2Fvector",
+      "/api/v1/reference/entries/std-vector",
+    ]);
+  });
+
+  it("exposes the Reference HTTP status for degraded and missing views", async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 404 }));
+
+    await expect(getReferenceNavigation(request)).rejects.toMatchObject({
+      status: 503,
+    });
+    await expect(getReferenceEntry("missing", request)).rejects.toMatchObject({
+      status: 404,
+    });
   });
 });
