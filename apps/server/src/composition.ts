@@ -19,6 +19,8 @@ import {
 } from "@cpp-learn/reference";
 import { createFilesystemWorkspace } from "@cpp-learn/workspace";
 
+import { createServer, type ServerDependencies } from "./server.js";
+
 const projectRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
 export type ReferenceActivityIndexResult =
@@ -148,6 +150,26 @@ export async function createProductionApplication(
     },
   });
   return { platform, reference };
+}
+
+type ProductionApplication = Awaited<
+  ReturnType<typeof createProductionApplication>
+>;
+
+type ProductionHttpServerOptions = Omit<
+  ServerDependencies,
+  "platform" | "reference"
+>;
+
+export function createProductionHttpServer(
+  application: ProductionApplication,
+  options: ProductionHttpServerOptions,
+) {
+  return createServer({
+    ...options,
+    platform: application.platform,
+    reference: application.reference,
+  });
 }
 
 export async function createProductionPlatform(

@@ -13,11 +13,13 @@ import type {
 } from "@cpp-learn/contracts";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
 import { createServer } from "@cpp-learn/server";
-import { createProductionApplication } from "@cpp-learn/server/composition";
+import {
+  createProductionApplication,
+  createProductionHttpServer,
+} from "@cpp-learn/server/composition";
 import { createInMemoryWorkspace } from "@cpp-learn/workspace";
 
 import { runCli } from "./cli.js";
-import { createCliHttpServer } from "./serve.js";
 
 const bootstrap: LearningBootstrapResult = {
   schemaVersion: 1,
@@ -37,7 +39,7 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
       dataRoot: join(runtimeRoot, "data"),
       workspaceRoot: join(runtimeRoot, "workspaces"),
     });
-    const server = createCliHttpServer(application, { logger: false });
+    const server = createProductionHttpServer(application, { logger: false });
 
     try {
       const response = await server.inject({

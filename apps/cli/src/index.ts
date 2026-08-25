@@ -6,10 +6,10 @@ import type { LearningPlatform } from "@cpp-learn/contracts";
 import {
   createProductionApplication,
   createProductionDataArchive,
+  createProductionHttpServer,
 } from "@cpp-learn/server/composition";
 
 import { runCli } from "./cli.js";
-import { createCliHttpServer } from "./serve.js";
 
 const archive = createProductionDataArchive();
 const command = process.argv[2];
@@ -38,7 +38,7 @@ process.exitCode = await runCli({
     if (!application) {
       throw new Error("HTTP server is unavailable in data-only mode");
     }
-    const server = createCliHttpServer(application, {
+    const server = createProductionHttpServer(application, {
       archive,
       logger: true,
       webRoot,
