@@ -7,6 +7,16 @@
 
 ```cpp
 #include <memory>
+
+namespace std {
+// 非数组 T
+template<class T, class... Args>
+unique_ptr<T> make_unique(Args&&... args);
+
+// 未知边界数组 T
+template<class T>
+unique_ptr<T> make_unique(size_t count);
+} // namespace std
 ```
 
 ## 所有权

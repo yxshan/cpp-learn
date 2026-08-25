@@ -7,6 +7,20 @@
 
 ```cpp
 #include <optional>
+
+// 代表性公开声明（省略约束与部分重载）
+namespace std {
+template<class T>
+class optional {
+public:
+    constexpr bool has_value() const noexcept;
+    constexpr T& value() &;
+    constexpr const T& value() const&;
+
+    template<class U>
+    constexpr T value_or(U&& default_value) const&;
+};
+} // namespace std
 ```
 
 ## 状态检查

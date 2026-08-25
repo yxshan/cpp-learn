@@ -2698,6 +2698,9 @@ footer {
 }
 
 @media (max-width: 720px) {
+  .reference-page [id] {
+    scroll-margin-top: 187px;
+  }
   .reference-header {
     min-height: 126px;
     padding: max(10px, env(safe-area-inset-top)) 16px 12px;

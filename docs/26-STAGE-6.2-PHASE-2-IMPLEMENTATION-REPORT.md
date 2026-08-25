@@ -68,7 +68,8 @@ working-draft source.
 - Focus indicators, skip navigation, heading anchors, live copy feedback, and
   non-color status text are present.
 - The directory drawer is labeled and URL-backed filters survive reload.
-- The 390-pixel browser test asserts no document-level horizontal overflow.
+- The 390-pixel browser test asserts no document-level horizontal overflow and
+  keeps anchored headings below both sticky navigation rows.
 - Reduced-motion preferences disable the loading spinner.
 
 ## 6. Controlled limitations

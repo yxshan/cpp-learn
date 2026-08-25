@@ -146,6 +146,14 @@ test("[T-REF-007] narrow browsing and copy feedback create no learning writes", 
   }));
   expect(widths.document).toBeLessThanOrEqual(widths.viewport);
 
+  await page.goto(
+    "/reference/standard-library/containers/vector#%E5%A4%8D%E6%9D%82%E5%BA%A6",
+  );
+  const anchoredHeadingTop = await page
+    .locator("#复杂度")
+    .evaluate((element) => element.getBoundingClientRect().top);
+  expect(anchoredHeadingTop).toBeGreaterThanOrEqual(171);
+
   const firstCodeBlock = page.locator(".reference-code-block").first();
   const copy = firstCodeBlock.getByRole("button", { name: "复制代码" });
   await copy.click();
