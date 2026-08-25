@@ -15,7 +15,7 @@ source-backed, accessible, and connected to the existing learning platform.
 Implementation follows vertical slices so content, contracts, Module behavior,
 and browser experience become executable together.
 
-The accepted design source is [C++ API Reference Module
+The proposed design source is [C++ API Reference Module
 Design](22-API-REFERENCE-MODULE-DESIGN.md). Content work follows the [Authoring
 Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md).
 
@@ -52,10 +52,11 @@ Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md).
 2. Scaffold `modules/reference` with Interface result types and in-memory test
    fixtures.
 3. Implement full-catalog validation and filesystem loading.
-4. Implement deterministic navigation, lookup, and ranked search.
+4. Implement deterministic navigation, canonical slug resolution, lookup, and
+   ranked search.
 5. Add shared query DTOs to `packages/contracts`.
 6. Compose the Module in `apps/server` with degraded readiness reporting.
-7. Expose Reference list, search, and detail routes.
+7. Expose Reference list, search, slug-resolution, and detail routes.
 8. Add five Entries representing landing, header, type, function, and member
    kinds.
 
@@ -63,10 +64,12 @@ Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md).
 
 - Schema rejects unknown fields, unsafe paths, unsupported standards, and
   missing sources.
-- Catalog rejects duplicate IDs/slugs, unknown relationships, and cycles in
-  navigation parents.
+- Catalog rejects duplicate IDs/slugs, invalid redirects, unknown Entry
+  relationships, and cycles in navigation parents.
+- Composition rejects unknown Activity-to-Reference links after both catalogs
+  validate.
 - Search covers exact symbol, header, alias, Chinese title, prefix, filter, and
-  stable tie-break behavior.
+  stable tie-break behavior, including standard availability intervals.
 - HTTP routes match shared DTOs and expose no local file paths.
 - Missing Reference content degrades bootstrap without blocking learning flows.
 
@@ -85,14 +88,19 @@ activate, and existing checks remain green.
 3. Add semantic status badges, code copy feedback, loading, empty, not-found,
    and degraded states.
 4. Implement 15 representative Entries and all required example files.
-5. Connect Reference-to-Activity links without adding Activity manifest fields.
-6. Add content verification to `npm run check:content` or a dedicated
+5. Add optional `referenceIds` to Activity manifests and perform cross-catalog
+   validation in the composition root.
+6. Connect bidirectional Reference/Activity navigation from the validated link
+   index.
+7. Add content verification to `npm run check:content` or a dedicated
    `check:reference` gate invoked by `npm run check`.
 
 ### Required tests
 
 - Browser search opens `std::vector` from symbol, `<vector>`, and Chinese alias.
-- Direct Entry and anchor URLs survive reload and browser history.
+- Direct Entry and anchor URLs survive reload and browser history; historical
+  slugs replace themselves with the canonical slug without adding a history
+  entry or dropping the anchor and search context.
 - Keyboard-only search, result selection, table of contents, and Activity
   navigation work.
 - A 390-pixel viewport has no document-level horizontal overflow.
@@ -108,9 +116,6 @@ integration, accessibility, and Playwright gates.
 
 ### Work packages
 
-- Add optional `referenceIds` to Activity manifests after the Reference
-  capability is stable.
-- Validate bidirectional Activity/Entry links.
 - Expand to 80–120 Entries across containers, algorithms, strings, memory,
   utilities, I/O, filesystem, time, and concurrency.
 - Add category and standard filters plus local toolchain verification status.
@@ -181,11 +186,11 @@ gate runs before each phase is accepted.
 | Test ID | Planned evidence |
 |---|---|
 | T-REF-001 | Schema, ID, slug, path, version, and source validation |
-| T-REF-002 | Complete relationship and navigation validation |
-| T-REF-003 | Deterministic lookup, ranking, aliases, and filters |
+| T-REF-002 | Reference graph/navigation plus composition-root cross-catalog validation |
+| T-REF-003 | Deterministic lookup, ranking, aliases, and availability-interval filters |
 | T-REF-004 | Original example compilation under declared standards |
 | T-REF-005 | HTTP DTO and degraded-readiness contract tests |
-| T-REF-006 | Direct URL, history, responsive, and keyboard browser flow |
+| T-REF-006 | Canonical/redirected URL, history, responsive, and keyboard browser flow |
 | T-REF-007 | No Workspace, Learning Record, or Evidence mutation on browse |
 | T-REF-008 | Offline production serving and no remote request requirement |
 | T-REF-009 | Playground execution isolation and cleanup |
@@ -211,4 +216,3 @@ reverting its composition, routes, Web navigation, and release content. No
 learner migration is required. After bidirectional links ship, rollback must
 retain a compatibility reader or first release a content migration that removes
 required Reference relationships.
-

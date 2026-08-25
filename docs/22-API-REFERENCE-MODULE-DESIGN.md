@@ -84,8 +84,10 @@ Reference Example ──later──▶ temporary Playground ──▶ Judge exec
 ```
 
 `apps/server` remains the only composition root. The Reference Module receives
-its catalog root and file reader as dependencies. It cannot write Workspaces,
-Learning Records, or Curriculum files.
+its catalog root and file reader as dependencies. After both catalogs validate,
+the composition root also supplies an immutable Activity-link index derived
+from Curriculum `referenceIds`. The Module cannot write Workspaces, Learning
+Records, or Curriculum files.
 
 The initial production and test implementations both use the same filesystem
 content rules. An in-memory Adapter is justified for Module tests; no database
@@ -96,7 +98,8 @@ Adapter is introduced until catalog scale or measured latency requires one.
 ```ts
 interface ReferenceCatalog {
   readiness(): Promise<ReferenceReadiness>;
-  getEntry(idOrSlug: string): Promise<ReferenceEntryDetail | undefined>;
+  getEntry(entryId: string): Promise<ReferenceEntryDetail | undefined>;
+  resolveSlug(slug: string): Promise<ReferenceSlugResolution | undefined>;
   search(query: ReferenceSearchQuery): Promise<ReferenceSearchResult>;
   getNavigation(): Promise<ReferenceNavigation>;
 }
@@ -106,13 +109,13 @@ interface ReferenceCatalog {
 
 - Queries are read-only and deterministic for one activated catalog version.
 - Catalog activation is all-or-nothing after validation.
-- Unknown IDs and slugs return `undefined`; invalid search filters return a
-  validation error.
+- Unknown IDs and slug resolutions return `undefined`; invalid search filters
+  return a validation error.
 - Search results use stable tie-breaking by normalized symbol and Entry ID.
 - Public results contain content and attribution only; filesystem paths and
   authoring diagnostics remain server-side.
-- One Entry cannot declare a relationship to an unknown Entry or Activity.
-- A slug may change only with an explicit redirect entry; an ID never changes.
+- One Entry cannot declare a relationship to an unknown Entry.
+- A slug may change only with an explicit catalog redirect; an ID never changes.
 
 The Module hides Markdown loading, normalization, indexing, ranking, link
 resolution, source validation, and navigation-tree construction behind this
@@ -146,7 +149,7 @@ learner backup/restore because it can be restored from the application release.
 ## 7. Entry model
 
 The normative JSON Schema will live in `packages/reference-schema`. The first
-schema version represents the following public shape:
+schema version represents the following authoring and storage manifest shape:
 
 ```ts
 type ReferenceEntryKind =
@@ -158,6 +161,54 @@ type ReferenceEntryKind =
   | "concept"
   | "guide";
 
+type CppStandard =
+  | "c++98"
+  | "c++03"
+  | "c++11"
+  | "c++14"
+  | "c++17"
+  | "c++20"
+  | "c++23"
+  | "c++26-draft";
+
+interface ReferenceCatalogManifest {
+  schemaVersion: 1;
+  version: number;
+  entries: string[];
+  categories: {
+    id: string;
+    title: string;
+    parentId?: string;
+    order: number;
+  }[];
+  redirects: {
+    fromSlug: string;
+    toEntryId: string;
+  }[];
+}
+
+interface ReferenceExampleManifest {
+  id: string;
+  path: string;
+  kind: "compile" | "run" | "expected-compile-failure";
+  standard: CppStandard;
+  stdin?: string;
+  expectedStdout?: string;
+  expectedDiagnosticCategory?: string;
+}
+
+interface ReferenceSource {
+  kind: "primary" | "secondary" | "vendor";
+  title: string;
+  url: string;
+  standardSection?: string;
+  reusedMaterial?: {
+    license: string;
+    attribution: string;
+    modifications: string;
+  };
+}
+
 interface ReferenceEntryManifest {
   schemaVersion: 1;
   id: string;
@@ -165,6 +216,7 @@ interface ReferenceEntryManifest {
   slug: string;
   kind: ReferenceEntryKind;
   title: string;
+  summary: string;
   symbol?: string;
   header?: string;
   namespace?: string;
@@ -174,7 +226,6 @@ interface ReferenceEntryManifest {
   aliases: string[];
   categories: string[];
   relatedEntryIds: string[];
-  relatedActivityIds: string[];
   content: { format: "markdown"; path: string };
   examples: ReferenceExampleManifest[];
   sources: ReferenceSource[];
@@ -182,9 +233,17 @@ interface ReferenceEntryManifest {
 }
 ```
 
-`CppStandard` is a closed value set initially covering `c++98`, `c++03`,
-`c++11`, `c++14`, `c++17`, `c++20`, `c++23`, and `c++26-draft`. Draft status
-must be visibly different from a published standard.
+Catalog entry values are confined relative paths to `entry.json` manifests.
+Category IDs are unique and their optional parent graph is acyclic. Redirect
+source slugs are unique, cannot equal an active slug, and target an existing
+Entry ID.
+
+Every Entry requires at least one `primary` source. A `run` example requires
+bounded deterministic `expectedStdout`; an
+`expected-compile-failure` example requires `expectedDiagnosticCategory` and
+cannot declare expected stdout. `c++26-draft` is visibly different from a
+published standard and may remain locally unverified when the toolchain lacks
+support.
 
 Complexity, exception guarantees, iterator invalidation, thread safety,
 constraints, overload explanations, and feature-test macros remain structured
@@ -213,7 +272,8 @@ Every non-landing Entry must include, where applicable:
 7. Lifetime, invalidation, and thread-safety rules.
 8. At least one minimal original example.
 9. Common mistakes and JavaScript comparison when pedagogically useful.
-10. Related Entries, Activities, and factual sources.
+10. Related Entries, Activities derived from Curriculum links, and factual
+    sources.
 
 ## 9. Search design
 
@@ -243,6 +303,16 @@ Supported filters:
 - Standard version.
 - Local toolchain verification status.
 
+`standard=X` means “available when compiling in X”, not “introduced in X”. An
+entity Entry matches when `since <= X` and `removedSince` is absent or
+`X < removedSince`, using the order declared by `CppStandard`.
+`deprecatedSince` does not remove a result; the result remains visible with a
+deprecated status. `c++26-draft` sorts after C++23 and includes earlier,
+non-removed entities plus draft-only entities, but its draft status remains
+visible. A `landing` or `guide` Entry without `since` is excluded when a
+standard filter is active and remains visible in unfiltered navigation and
+search.
+
 ## 10. HTTP and Web presentation
 
 Planned query routes:
@@ -250,8 +320,126 @@ Planned query routes:
 ```text
 GET /api/v1/reference
 GET /api/v1/reference/search?q=vector&standard=c%2B%2B20
+GET /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
 GET /api/v1/reference/entries/:entryId
 ```
+
+These routes are proposed contracts. They enter [Interface
+Contracts](05-INTERFACE_CONTRACTS.md) only in the implementation change that
+adds shared DTO schemas and executable contract tests.
+
+Proposed query DTOs:
+
+```ts
+interface ReferenceSearchQuery {
+  text: string;
+  kind?: ReferenceEntryKind;
+  category?: string;
+  standard?: CppStandard;
+  verified?: "verified" | "unsupported" | "not-checked";
+  limit?: number; // 1..50, default 20
+}
+
+interface ReferenceSearchItem {
+  id: string;
+  slug: string;
+  kind: ReferenceEntryKind;
+  title: string;
+  summary: string;
+  symbol?: string;
+  header?: string;
+  since?: CppStandard;
+  matchedBy: (
+    | "id"
+    | "symbol"
+    | "header"
+    | "alias"
+    | "title"
+    | "heading"
+    | "category"
+    | "body"
+  )[];
+}
+
+interface ReferenceSearchResult {
+  schemaVersion: 1;
+  catalogVersion: number;
+  query: ReferenceSearchQuery;
+  total: number;
+  results: ReferenceSearchItem[];
+}
+
+interface ReferenceSlugResolution {
+  schemaVersion: 1;
+  entryId: string;
+  canonicalSlug: string;
+  redirected: boolean;
+}
+
+interface ReferenceExampleView {
+  id: string;
+  kind: ReferenceExampleManifest["kind"];
+  standard: CppStandard;
+  source: string;
+  digest: string;
+  verification: "verified" | "unsupported" | "not-checked";
+  stdin?: string;
+  expectedStdout?: string;
+  expectedDiagnosticCategory?: string;
+}
+
+interface ReferenceEntryDetail
+  extends Omit<
+    ReferenceEntryManifest,
+    "content" | "examples"
+  > {
+  schemaVersion: 1;
+  catalogVersion: number;
+  content: string;
+  examples: ReferenceExampleView[];
+  relatedActivityIds: string[];
+}
+
+interface ReferenceNavigation {
+  schemaVersion: 1;
+  catalogVersion: number;
+  categories: {
+    id: string;
+    title: string;
+    parentId?: string;
+    order: number;
+    entryIds: string[];
+  }[];
+  supportedStandards: CppStandard[];
+}
+
+interface ReferenceReadiness {
+  ready: boolean;
+  catalogVersion?: number;
+  entryCount?: number;
+  issueCodes?: (
+    | "catalog_missing"
+    | "catalog_invalid"
+    | "integration_invalid"
+  )[];
+}
+```
+
+Public DTOs omit manifest paths and add example source text, SHA-256 digest,
+local verification state, and Activity links from the validated integration
+index. Unknown Entries return `404`, invalid bounded filters return `400`, and
+unavailable Reference capability returns `503 reference_unavailable` without
+changing platform health.
+
+Readiness exposes only the closed, stable `issueCodes` vocabulary. Detailed
+schema paths, filesystem paths, source excerpts, and authoring diagnostics are
+logged and displayed only through server-side development tooling.
+
+Slug resolution is deterministic. An active slug returns its Entry ID and
+`redirected: false`; a historical catalog redirect returns the target Entry's
+ID and canonical slug with `redirected: true`; an unknown slug returns `404`.
+Redirects target Entry IDs directly, so redirect chains are neither stored nor
+followed. The detail route accepts only a stable Entry ID.
 
 The Web Adapter is lazy-loaded from the primary navigation. Its desktop layout
 uses a category sidebar, main article, and local table of contents. Narrow
@@ -262,7 +450,9 @@ Required interactions:
 
 - Keyboard-accessible global search with a real label.
 - Stable URL for Entry and heading anchors.
-- Back/forward navigation without losing the search query.
+- Back/forward navigation without losing the search query. A historical slug
+  is replaced with its canonical slug using `history.replaceState`, preserving
+  the heading anchor and search context without adding a history entry.
 - Visible standard, draft, deprecated, and local-support states that do not
   rely on color alone.
 - Copy buttons that announce success without modifying code or records.
@@ -270,18 +460,18 @@ Required interactions:
 
 ## 11. Curriculum integration
 
-Activities may later add optional `referenceIds`. Curriculum validation checks
-that every ID exists in the activated Reference catalog. This is a relationship
-between Modules, not ownership transfer:
+Activities add optional `referenceIds` in the read-only vertical release. The
+Curriculum Module validates their shape and owns which References are relevant
+to an Activity. After both Modules activate internally, the composition root
+validates every cross-catalog ID and builds an immutable reverse link index.
+This is a relationship between Modules, not ownership transfer:
 
 - Curriculum owns when a Reference is relevant to an Activity.
 - Reference owns Entry content, navigation, and related-Entry relationships.
+- The composition root owns cross-catalog validation and derives Activity links
+  for Reference query results.
 - Learning Platform owns Activity navigation and Evidence.
 - Reference browsing produces no Activity start, completion, or Evidence event.
-
-The first implementation may derive Activity links from Reference manifests
-only. Adding `referenceIds` to Activity manifests is a later schema change when
-bidirectional links are required.
 
 ## 12. Example verification and Playground
 
@@ -376,7 +566,8 @@ count, but not raw free-form queries by default.
 - An unavailable Reference Module does not prevent existing Dashboard,
   Activity, Workspace, or Grade flows from starting; bootstrap reports the
   degraded capability.
-- An unknown related Activity or Entry is a content validation error.
+- An unknown related Entry is a Reference activation error; an unknown Activity
+  `referenceId` is a cross-catalog content readiness error.
 - Missing example toolchain support marks the example unverified for that local
   toolchain; it does not rewrite normative standard status.
 - A Playground system error remains separate from learning verdicts.
@@ -387,9 +578,14 @@ The initial Reference release is accepted when:
 
 - At least 15 representative Entries across five categories validate and load.
 - Exact symbol, header, alias, Chinese title, and filtered search are
-  deterministic and contract-tested.
+  deterministic and contract-tested, including standard availability
+  intervals.
 - Entry, navigation, and related-Entry links have no broken targets.
-- All ordinary examples compile under the declared local C++20 profile.
+- Active and historical slugs resolve to one canonical URL; unknown slugs have
+  deterministic not-found behavior.
+- All ordinary examples compile under their declared standard when the local
+  toolchain supports it; unsupported later-standard examples are explicitly
+  reported and cannot be labeled verified.
 - Reference browsing produces no Workspace or Learning Record mutation.
 - Direct URLs, browser history, keyboard navigation, and a 390-pixel viewport
   pass Playwright coverage.

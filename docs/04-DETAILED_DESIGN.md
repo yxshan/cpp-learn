@@ -278,10 +278,11 @@ Configuration precedence:
 
 Paths are resolved once by the composition root and passed as explicit dependencies.
 
-## 11. Reference Module
+## 11. Planned Reference Module
 
 The Reference Module is a read-only content Module separate from Curriculum and
-Learning Platform orchestration. It owns Reference Entry activation,
+Learning Platform orchestration. Subject to the proposed
+[ADR-0006](adr/0006-separate-declarative-api-reference.md), it owns Reference Entry activation,
 navigation, lookup, deterministic search, source metadata, and relationship
 resolution.
 
@@ -290,7 +291,8 @@ resolution.
 ```ts
 interface ReferenceCatalog {
   readiness(): Promise<ReferenceReadiness>;
-  getEntry(idOrSlug: string): Promise<ReferenceEntryDetail | undefined>;
+  getEntry(entryId: string): Promise<ReferenceEntryDetail | undefined>;
+  resolveSlug(slug: string): Promise<ReferenceSlugResolution | undefined>;
   search(query: ReferenceSearchQuery): Promise<ReferenceSearchResult>;
   getNavigation(): Promise<ReferenceNavigation>;
 }
@@ -298,21 +300,28 @@ interface ReferenceCatalog {
 
 The filesystem Adapter reads a catalog plus JSON manifests, Markdown, and
 example files. An in-memory Adapter supplies Module and caller tests. Catalog
-activation validates the complete relationship graph, builds navigation and a
-bounded in-memory search index, and publishes the new catalog atomically. A
-failed reload retains the previous valid catalog.
+activation validates the Entry/category graph, builds navigation and a bounded
+in-memory search index, and publishes the new catalog atomically. After
+Curriculum and Reference activation, the composition root validates Activity
+`referenceIds` and supplies the Reference query view with an immutable reverse
+Activity-link index. A failed reload retains the previous valid catalog.
 
 ### Invariants
 
 - Entry IDs are stable; IDs and active slugs are unique.
 - Content and example paths are relative, normalized, and confined to the
   configured Reference root.
-- Entry relationships and related Activity IDs resolve before activation.
+- Entry relationships resolve before Reference activation; Activity
+  `referenceIds` resolve in composition before content readiness succeeds.
 - Search ranking and tie-breaking are deterministic.
 - Markdown is declarative and rendered through the existing safe renderer;
   arbitrary HTML, MDX, and scripts are rejected.
 - Runtime Reference queries never write Workspace or Learning Record state.
 - Standard status and local toolchain verification are represented separately.
+- Standard filters use availability intervals rather than exact introduction
+  versions; deprecation remains visible and removal ends the interval.
+- Active and historical slugs resolve to a canonical slug before Entry lookup;
+  redirect records target stable Entry IDs and cannot form chains.
 
 ### Search implementation
 

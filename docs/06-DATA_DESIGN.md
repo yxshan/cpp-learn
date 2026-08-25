@@ -205,7 +205,8 @@ Reference data invariants:
 
 - Entry ID and active slug are unique.
 - Manifest, content, and example paths remain inside `reference-content/`.
-- Related Entry and Activity IDs resolve before activation.
+- Related Entry IDs resolve before Reference activation; Activity manifests own
+  `referenceIds`, which resolve during cross-catalog composition validation.
 - Entry and schema versions are positive and explicit.
 - Published and draft standard states are distinct values.
 - Sources include kind, title, URL, and optional standard section.

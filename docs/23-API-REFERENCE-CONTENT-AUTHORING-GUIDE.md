@@ -55,7 +55,8 @@ Every Entry defines:
 - Canonical symbol, header, and namespace when applicable.
 - Standard availability and explicit draft status.
 - Search aliases and categories.
-- Related Entry and Activity IDs.
+- Related Entry IDs; related Activities declare this Entry through their
+  `referenceIds`.
 - Markdown content path.
 - Original example manifests.
 - Primary and optional secondary sources.
@@ -150,7 +151,7 @@ Example requirements:
 
 - Stored as standalone UTF-8 source files with a trailing newline.
 - Deterministic and free from external network, wall-clock, locale, and random
-  dependencies unless those dependencies are the teaching topic.
+  dependencies.
 - Use the minimum required standard and declare it in the manifest.
 - Compile with warnings enabled; warnings are treated as content defects.
 - Avoid `using namespace std;` in canonical examples.
@@ -160,8 +161,11 @@ Example requirements:
 - Use comments to explain intent, not to restate each line.
 
 Every example records whether it is `compile`, `run`, or
-`expected-compile-failure`. Run examples declare bounded stdin and expected
-stdout where deterministic.
+`expected-compile-failure`. Every Run example declares bounded stdin when
+needed and exact bounded expected stdout. Examples teaching concurrency,
+clocks, randomness, locale, or another nondeterministic facility use `compile`
+unless they can assert and print a deterministic invariant; the prose explains
+the varying behavior instead of making an unstable output claim.
 
 ## 8. C++-specific fact checklist
 
@@ -217,7 +221,7 @@ Useful policy references:
 5. Review technical facts against primary sources.
 6. Review the page as a learner: searchability, quick answer, example, traps.
 7. Review Chinese terminology against [CONTEXT.md](CONTEXT.md).
-8. Add or update related Activity links.
+8. Add or update the related Activity manifests' `referenceIds`.
 9. Merge only after content and Web rendering gates pass.
 
 An AI may draft structure, aliases, or examples, but a maintainer must verify

@@ -37,8 +37,8 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | FR-070, FR-071 | DATA §10; DEVOPS §6 | T-DATA-001 export; T-DATA-002 backup/restore | Stage 2 |
 | FR-072 | DD §4; CJS §4 | T-WORK-006 content upgrade preservation | Stage 2–4 |
 | FR-080, FR-083 | REF-DES §4–7, §13; DD §11 | T-REF-001 schema/catalog activation; T-REF-002 relationship/navigation integrity | Stage 6.2 |
-| FR-081, FR-082 | REF-DES §8–10; IC §2 | T-REF-003 deterministic search/filters; T-REF-005 query contracts; T-REF-006 Reference browser flow | Stage 6.2 |
-| FR-084 | REF-DES §11; IC §2 | T-REF-007 no Workspace, record, or Evidence mutation | Stage 6.2 |
+| FR-081, FR-082 | REF-DES §8–10 | T-REF-003 deterministic search/filters; T-REF-005 query contracts; T-REF-006 Reference browser flow | Stage 6.2 |
+| FR-084 | REF-DES §11 | T-REF-007 no Workspace, record, or Evidence mutation | Stage 6.2 |
 | FR-085 | REF-DES §12; REF-AUTH §7 | T-REF-004 declared-standard example compilation | Stage 6.2 |
 | FR-086 | REF-DES §12; REF-PLAN §7 | T-REF-009 Playground identity, execution isolation, and cleanup | Stage 6.2 later phase |
 | FR-087 | REF-DES §14; REF-AUTH §9 | T-REF-010 source, attribution, and reused-material policy | Stage 6.2 |
@@ -181,11 +181,11 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | Test ID | Planned executable evidence | Status |
 |---|---|---|
 | T-REF-001 | `packages/reference-schema` fixtures and full-catalog activation tests | Planned |
-| T-REF-002 | `modules/reference` rejects duplicate IDs/slugs, unsafe paths, unknown relationships, and invalid navigation | Planned |
-| T-REF-003 | `modules/reference` exact symbol/header/alias/Chinese/prefix/filter ranking fixtures with stable tie-breaking | Planned |
+| T-REF-002 | `modules/reference` rejects duplicate IDs/slugs, unsafe paths, invalid redirects, unknown Entry relationships, and invalid navigation; composition integration rejects unknown Activity-to-Reference links | Planned |
+| T-REF-003 | `modules/reference` exact symbol/header/alias/Chinese/prefix/filter ranking fixtures, standard availability intervals, and stable tie-breaking | Planned |
 | T-REF-004 | Reference content gate compiles ordinary examples with the declared standard and warning profile | Planned |
 | T-REF-005 | Direct Module and Fastify Reference list/search/detail/degraded-readiness contract comparison | Planned |
-| T-REF-006 | Playwright direct URLs, history, keyboard search/navigation, status semantics, and 390-pixel layout | Planned |
+| T-REF-006 | Playwright canonical and historical-slug URLs, replacement history semantics, anchors, keyboard search/navigation, status semantics, and 390-pixel layout | Planned |
 | T-REF-007 | Integration test snapshots Workspace and Learning Record before and after Reference browsing/copying | Planned |
 | T-REF-008 | Built Web/HTTP Reference flow passes with outbound network access blocked | Planned |
 | T-REF-009 | Later Playground tests cover temporary identity, timeout/cancel/output bounds, cleanup, and no Evidence | Deferred within Stage 6.2 |

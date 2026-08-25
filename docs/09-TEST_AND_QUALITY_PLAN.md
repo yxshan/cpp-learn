@@ -106,11 +106,12 @@ Reference content CI additionally validates:
 
 - Entry and catalog JSON Schema, stable IDs, versions, unique slugs, safe paths,
   and closed standard/kind values.
-- Navigation, related-Entry, and related-Activity integrity.
+- Navigation and related-Entry integrity inside Reference, plus
+  Activity-to-Reference integrity at the composition root.
 - Required sections, original-content policy, source URLs, verification date,
   and reused-material attribution.
 - Deterministic search fixtures for exact symbol, header, alias, Chinese term,
-  prefix, filter, and tie-breaking behavior.
+  prefix, standard availability intervals, filters, and tie-breaking behavior.
 - Every ordinary example compiles with its declared standard and warnings; Run
   examples also satisfy bounded deterministic output.
 - Reference browsing and a future Playground cannot produce Activity Evidence.

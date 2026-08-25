@@ -6,7 +6,8 @@ status: proposed
 
 The platform will model C++ Reference Entries in a separate read-only deep
 Module backed by versioned JSON manifests, Markdown, and original example
-files. Curriculum Activities may link to stable Entry IDs, but Reference
+files. Curriculum Activities own links to stable Entry IDs, while the
+composition root validates the cross-catalog index; Reference
 Entries do not inherit Activity prerequisites, Workspaces, Judges, reflections,
 or Evidence policies.
 

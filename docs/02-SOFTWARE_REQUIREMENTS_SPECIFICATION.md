@@ -86,7 +86,7 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 - **FR-080** The system shall load and atomically activate versioned Reference Entries from validated declarative manifests, Markdown, and example files.
 - **FR-081** The Web Adapter shall provide Reference navigation and deterministic search by exact symbol, header, title, alias, Chinese term, category, Entry kind, and C++ standard filter.
 - **FR-082** A Reference Entry shall expose applicable header, namespace, standard availability, representative signatures, constraints, complexity, exception behavior, lifetime or invalidation rules, examples, related content, sources, and verification date.
-- **FR-083** The system shall maintain valid links among Reference Entries and from Reference Entries to Activities using stable identifiers.
+- **FR-083** The system shall maintain valid links among Reference Entries and between Activities and Reference Entries using stable identifiers.
 - **FR-084** Browsing, searching, and copying Reference content shall not initialize or modify an Activity Workspace, Attempt, Evidence, Concept state, Review, or Project state.
 - **FR-085** Ordinary Reference examples shall be compiled by content quality gates using their declared standard and the supported warning profile.
 - **FR-086** A later Reference Playground shall run selected examples through a temporary non-Activity identity without private tests or learning Evidence.

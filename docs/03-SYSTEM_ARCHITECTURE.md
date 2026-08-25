@@ -75,13 +75,14 @@ It owns session selection, Activity lifecycle, Evidence policy, hint independenc
 
 Owns versioned content, the Concept graph, Activity manifests, content validation, migrations, and public material lookup. A filesystem Adapter serves production; an in-memory Adapter serves tests.
 
-### Reference Module
+### Planned Reference Module
 
 Owns versioned C++ Reference Entries, complete-catalog validation, navigation,
 lookup, deterministic ranked search, relationship resolution, source metadata,
 and example definitions. A filesystem Adapter serves production and an
 in-memory Adapter serves Module tests. It is read-only at runtime and does not
-participate in learning-state transitions.
+participate in learning-state transitions. This extension remains subject to
+the proposed [ADR-0006](adr/0006-separate-declarative-api-reference.md).
 
 ### Workspace Module
 
@@ -115,7 +116,8 @@ Learner clicks Grade
 
 - Curriculum owns content definitions and private references to judge configuration.
 - Reference owns Entry content, search index, navigation, factual sources, and
-  Reference-to-Activity relationships.
+  Entry-to-Entry relationships. Curriculum owns an Activity's `referenceIds`;
+  the composition root validates cross-catalog links.
 - Workspace owns Learner-editable files and Source Snapshots.
 - Judge owns transient execution artifacts and immutable reports.
 - Learning Record owns history and derived Concept state.
