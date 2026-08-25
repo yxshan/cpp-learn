@@ -82,6 +82,28 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
     );
   });
 
+  it("rejects successful Reference readiness without activation metrics", async () => {
+    const request = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...bootstrap,
+          services: {
+            ...bootstrap.services,
+            reference: { ready: true },
+          },
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      ),
+    );
+
+    await expect(getBootstrap(request)).rejects.toThrow(
+      "Bootstrap response violates the transport contract",
+    );
+  });
+
   it("rejects a bootstrap timestamp without an ISO 8601 timezone", async () => {
     const request = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ...bootstrap, generatedAt: "yesterday" }), {

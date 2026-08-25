@@ -124,7 +124,12 @@ describe("[T-REF-001] Reference catalog activation", () => {
     const vector = entry("std-vector");
     const duplicate = entry("std-vector", { slug: "standard-library/vector-2" });
     const reference = createInMemoryReferenceCatalog({
-      catalog: catalog([vector, duplicate]),
+      catalog: catalog([vector, duplicate], {
+        entries: [
+          "entries/vector-primary/entry.json",
+          "entries/vector-duplicate/entry.json",
+        ],
+      }),
       entries: [vector, duplicate],
       files: filesFor([vector, duplicate]),
     });
@@ -271,7 +276,8 @@ describe("[T-REF-003] deterministic Reference search", () => {
       verificationByExampleKey,
       files: {
         ...filesFor(entries),
-        [vector.content.path]: "# std::vector\n\n## 迭代器失效\n",
+        [vector.content.path]:
+          "# std::vector\n\n## 迭代器失效\n\n正文仅提及 std::ranges::sort。\n",
       },
     });
   };
@@ -320,6 +326,13 @@ describe("[T-REF-003] deterministic Reference search", () => {
     });
     await expect(reference.search({ text: "vector" })).resolves.toMatchObject({
       results: [expect.objectContaining({ id: "std-vector" })],
+    });
+    await expect(
+      reference.search({ text: "ranges::sort" }),
+    ).resolves.toMatchObject({
+      results: [
+        expect.objectContaining({ id: "std-vector", matchedBy: ["body"] }),
+      ],
     });
   });
 

@@ -46,7 +46,7 @@ the cross-catalog graph and builds reverse Activity links.
 |---|---|---|
 | `T-REF-001` | Unsupported-standard and schema-vocabulary checks; independent duplicate ID/slug checks; real filesystem activation, duration, confined paths, and content/catalog symlink escape rejection | Passed |
 | `T-REF-002` | Independent unknown-relationship, invalid-redirect, and category-cycle checks; navigation and composition-root link validation | Passed |
-| `T-REF-003` | Symbol, explicit prefix, title, alias, Chinese, heading, header, positive filters, verification, stable ties, and standard-interval search | Passed |
+| `T-REF-003` | Symbol, explicit prefix, stripped qualified body tokens, title, alias, Chinese, heading, header, positive filters, verification, stable ties, and standard-interval search | Passed |
 | `T-REF-004` | Clang compiles four examples with declared C++20 and strict warnings; Run output is exact | Passed |
 | `T-REF-005` | Real Fastify injection covers required bootstrap readiness, all Reference query routes, repeated scalar parameters, and safe error semantics | Passed |
 | `T-REF-010` | Schema and activation require primary sources and complete reused-material attribution | Passed |

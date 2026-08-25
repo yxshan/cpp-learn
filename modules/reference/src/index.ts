@@ -300,7 +300,12 @@ function tokens(value: string): readonly string[] {
 
 function indexSearchValues(values: readonly string[]): IndexedSearchField {
   const forms = [...new Set(values.flatMap(searchableForms))];
-  return { forms, tokenSets: forms.map(tokens) };
+  return {
+    forms,
+    tokenSets: forms.map((form) => [
+      ...new Set(tokens(form).flatMap(searchableForms)),
+    ]),
+  };
 }
 
 function exactQuery(field: IndexedSearchField, query: string): boolean {

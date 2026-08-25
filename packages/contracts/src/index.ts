@@ -22,28 +22,26 @@ export interface RecordReadiness {
   readonly issues?: readonly string[];
 }
 
-export interface LearningBootstrapResult {
-  readonly schemaVersion: typeof SCHEMA_VERSION;
-  readonly generatedAt: string;
-  readonly ready: boolean;
-  readonly services: {
-    readonly curriculum: CurriculumReadiness;
-    readonly toolchain: ToolchainReadiness;
-    readonly record: RecordReadiness;
-  };
+interface BootstrapServices {
+  readonly curriculum: CurriculumReadiness;
+  readonly toolchain: ToolchainReadiness;
+  readonly record: RecordReadiness;
 }
 
-export interface BootstrapResult {
+interface BootstrapEnvelope<Services extends BootstrapServices> {
   readonly schemaVersion: typeof SCHEMA_VERSION;
   readonly generatedAt: string;
   readonly ready: boolean;
-  readonly services: {
-    readonly curriculum: CurriculumReadiness;
-    readonly toolchain: ToolchainReadiness;
-    readonly record: RecordReadiness;
-    readonly reference: ReferenceReadiness;
-  };
+  readonly services: Services;
 }
+
+export type LearningBootstrapResult = BootstrapEnvelope<BootstrapServices>;
+
+export type BootstrapResult = BootstrapEnvelope<
+  BootstrapServices & {
+    readonly reference: ReferenceReadiness;
+  }
+>;
 
 export const REFERENCE_ENTRY_KINDS = [
   "landing",
@@ -188,13 +186,17 @@ export interface ReferenceNavigation {
 export type ReferenceReadinessIssueCode =
   "catalog_missing" | "catalog_invalid" | "integration_invalid";
 
-export interface ReferenceReadiness {
-  readonly ready: boolean;
-  readonly catalogVersion?: number;
-  readonly entryCount?: number;
-  readonly activationDurationMs?: number;
-  readonly issueCodes?: readonly ReferenceReadinessIssueCode[];
-}
+export type ReferenceReadiness =
+  | {
+      readonly ready: true;
+      readonly catalogVersion: number;
+      readonly entryCount: number;
+      readonly activationDurationMs: number;
+    }
+  | {
+      readonly ready: false;
+      readonly issueCodes: readonly ReferenceReadinessIssueCode[];
+    };
 
 export interface ActivityDetail {
   readonly id: string;

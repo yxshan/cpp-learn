@@ -67,6 +67,7 @@
         "activationDurationMs": { "type": "number", "minimum": 0 },
         "issueCodes": {
           "type": "array",
+          "minItems": 1,
           "uniqueItems": true,
           "items": {
             "enum": [
@@ -76,7 +77,25 @@
             ]
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "ready": { "const": true },
+            "catalogVersion": {},
+            "entryCount": {},
+            "activationDurationMs": {}
+          },
+          "required": ["catalogVersion", "entryCount", "activationDurationMs"]
+        },
+        {
+          "properties": {
+            "ready": { "const": false },
+            "issueCodes": {}
+          },
+          "required": ["issueCodes"]
+        }
+      ]
     }
   }
 }

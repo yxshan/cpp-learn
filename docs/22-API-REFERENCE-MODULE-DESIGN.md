@@ -415,17 +415,21 @@ interface ReferenceNavigation {
   supportedStandards: CppStandard[];
 }
 
-interface ReferenceReadiness {
-  ready: boolean;
-  catalogVersion?: number;
-  entryCount?: number;
-  activationDurationMs?: number;
-  issueCodes?: (
-    | "catalog_missing"
-    | "catalog_invalid"
-    | "integration_invalid"
-  )[];
-}
+type ReferenceReadiness =
+  | {
+      ready: true;
+      catalogVersion: number;
+      entryCount: number;
+      activationDurationMs: number;
+    }
+  | {
+      ready: false;
+      issueCodes: (
+        | "catalog_missing"
+        | "catalog_invalid"
+        | "integration_invalid"
+      )[];
+    };
 ```
 
 Public DTOs omit manifest paths and add example source text, SHA-256 digest,
