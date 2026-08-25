@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   createProductionDataArchive,
-  createProductionPlatform,
+  createProductionApplication,
 } from "./composition.js";
 import { resolveServerAddress, resolveServerStoragePaths } from "./config.js";
 import { createServer } from "./server.js";
@@ -11,9 +11,11 @@ const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
 
 const { host, port } = resolveServerAddress(process.env);
 const storagePaths = resolveServerStoragePaths(process.env);
+const application = await createProductionApplication(storagePaths);
 
 const server = createServer({
-  platform: await createProductionPlatform(storagePaths),
+  platform: application.platform,
+  reference: application.reference,
   archive: createProductionDataArchive(storagePaths),
   logger: true,
   webRoot,

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -47,6 +47,33 @@ Session request:
   "availableMinutes": 40
 }
 ```
+
+### C++ API Reference
+
+```text
+GET /api/v1/reference
+GET /api/v1/reference/search?q=vector&standard=c%2B%2B20
+GET /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
+GET /api/v1/reference/entries/:entryId
+```
+
+`GET /api/v1/reference` returns ordered category navigation and the supported
+C++ standards. Search accepts bounded `q`, `kind`, `category`, `standard`,
+`verified`, and `limit` parameters. A standard filter means “available when
+compiling in that standard”; it is not an exact introduction-version filter.
+Results use deterministic ranking and stable Entry-ID tie-breaking.
+
+The resolve endpoint accepts a current or historical slug and returns the
+stable Entry ID, canonical slug, and `redirected` flag. The detail endpoint
+accepts only a stable Entry ID. Public Entry responses contain rendered
+Markdown, original example source and digest, sources, and related IDs; they
+never contain manifest, Markdown, example, or repository filesystem paths.
+
+Invalid filters return `400 validation_error`; unknown IDs and slugs return
+`404 reference_not_found`. A missing, invalid, or cross-catalog-inconsistent
+Reference returns `503 reference_unavailable` with only closed readiness issue
+codes. Reference queries are read-only and do not create a Workspace, Attempt,
+Judge job, or Evidence.
 
 ### Workspace
 
@@ -232,7 +259,7 @@ Suggested HTTP mapping:
 - `404`: unknown resource.
 - `409`: revision or lifecycle conflict.
 - `422`: valid request whose learning preconditions are not met.
-- `503`: toolchain or record storage unavailable.
+- `503`: toolchain, record storage, or optional Reference capability unavailable.
 - `500`: unexpected internal failure.
 
 ## 6. CLI contract
@@ -263,3 +290,5 @@ Exit codes:
 - CLI JSON output is compared with direct Learning Platform results.
 - SSE replay and final-report fallback are contract-tested.
 - Old event fixtures are loaded in migration tests before a release.
+- Reference Module and Fastify responses are compared through T-REF-005; route
+  responses are built from `packages/contracts` DTOs.

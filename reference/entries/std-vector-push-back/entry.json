@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "std-vector-push-back",
+  "version": 1,
+  "slug": "standard-library/containers/vector/push-back",
+  "kind": "member",
+  "title": "std::vector::push_back",
+  "summary": "在 vector 末尾追加一个元素，并在容量不足时触发重新分配。",
+  "symbol": "std::vector::push_back",
+  "header": "<vector>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["push_back", "尾部追加", "添加元素"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-vector", "header-vector"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-vector-push-back/content.md"
+  },
+  "examples": [
+    {
+      "id": "append-values",
+      "path": "entries/std-vector-push-back/examples/append-values.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "10 20\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector modifiers",
+      "url": "https://eel.is/c++draft/vector.modifiers",
+      "standardSection": "[vector.modifiers]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

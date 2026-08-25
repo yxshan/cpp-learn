@@ -130,6 +130,20 @@ describe("[T-CONTENT-003] Curriculum prerequisite graph", () => {
     });
   });
 
+  it("validates optional stable Reference identifiers", () => {
+    const candidate = activity("reference-links", []);
+    const result = validateCatalog([
+      { ...candidate, referenceIds: ["std-vector", "Bad Reference"] },
+    ]);
+
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: "/referenceIds/1" }),
+      ]),
+    });
+  });
+
   it("rejects private-test feedback that copies hidden input or expected output", () => {
     const candidate = activity("private-leak", []);
     const result = validateCatalog([

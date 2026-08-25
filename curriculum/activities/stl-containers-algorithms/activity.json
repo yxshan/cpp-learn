@@ -7,6 +7,12 @@
   "estimatedMinutes": 25,
   "conceptIds": ["cpp-stl-containers", "cpp-algorithms"],
   "prerequisiteIds": ["copy-move-ownership"],
+  "referenceIds": [
+    "header-vector",
+    "std-vector",
+    "std-sort",
+    "std-vector-push-back"
+  ],
   "objectives": ["用 vector、迭代器范围和 sort 分离存储与算法。"],
   "victoryConditions": ["三个输入按升序输出。"],
   "sources": [

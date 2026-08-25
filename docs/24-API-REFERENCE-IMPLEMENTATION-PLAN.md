@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 0.1 |
-| Status | Draft |
+| Version | 1.0 |
+| Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
 
@@ -15,7 +15,7 @@ source-backed, accessible, and connected to the existing learning platform.
 Implementation follows vertical slices so content, contracts, Module behavior,
 and browser experience become executable together.
 
-The proposed design source is [C++ API Reference Module
+The accepted design source is [C++ API Reference Module
 Design](22-API-REFERENCE-MODULE-DESIGN.md). Content work follows the [Authoring
 Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md).
 

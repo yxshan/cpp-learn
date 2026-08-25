@@ -184,7 +184,10 @@ Acceptance:
 
 ## 11. Stage 6.2: C++ API Reference
 
-**Status:** Planned. Design and acceptance sources are the [Reference Module
+**Status:** Phase 1 accepted on 2026-08-25; Web vertical release remains
+planned. Reproducible Phase 1 evidence is recorded in the [Stage 6.2 Phase 1
+Implementation Report](25-STAGE-6.2-PHASE-1-IMPLEMENTATION-REPORT.md). Design
+and remaining acceptance sources are the [Reference Module
 Design](22-API-REFERENCE-MODULE-DESIGN.md) and [Implementation
 Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md).
 

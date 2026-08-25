@@ -12,9 +12,55 @@ import {
   createLocalDataArchive,
 } from "@cpp-learn/learning-record";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
+import {
+  createFilesystemReferenceCatalog,
+  createUnavailableReferenceCatalog,
+  type ReferenceCatalog,
+} from "@cpp-learn/reference";
 import { createFilesystemWorkspace } from "@cpp-learn/workspace";
 
 const projectRoot = fileURLToPath(new URL("../../../", import.meta.url));
+
+export type ReferenceActivityIndexResult =
+  | {
+      readonly ok: true;
+      readonly relatedActivityIdsByEntryId: ReadonlyMap<
+        string,
+        readonly string[]
+      >;
+    }
+  | {
+      readonly ok: false;
+      readonly unknownLinks: readonly {
+        readonly activityId: string;
+        readonly referenceId: string;
+      }[];
+    };
+
+export async function buildReferenceActivityIndex(
+  activities: readonly {
+    readonly id: string;
+    readonly referenceIds?: readonly string[];
+  }[],
+  reference: ReferenceCatalog,
+): Promise<ReferenceActivityIndexResult> {
+  const index = new Map<string, string[]>();
+  const unknownLinks: { activityId: string; referenceId: string }[] = [];
+  for (const activity of activities) {
+    for (const referenceId of activity.referenceIds ?? []) {
+      if (!(await reference.getEntry(referenceId))) {
+        unknownLinks.push({ activityId: activity.id, referenceId });
+        continue;
+      }
+      const activityIds = index.get(referenceId) ?? [];
+      activityIds.push(activity.id);
+      index.set(referenceId, activityIds);
+    }
+  }
+  return unknownLinks.length > 0
+    ? { ok: false, unknownLinks }
+    : { ok: true, relatedActivityIdsByEntryId: index };
+}
 
 export interface ProductionPlatformOptions {
   readonly dataRoot?: string;
@@ -35,7 +81,7 @@ export function createProductionDataArchive(
   return createLocalDataArchive(productionPaths(options));
 }
 
-export async function createProductionPlatform(
+export async function createProductionApplication(
   options: ProductionPlatformOptions = {},
 ) {
   const { dataRoot, workspaceRoot } = productionPaths(options);
@@ -43,6 +89,25 @@ export async function createProductionPlatform(
     catalogPath: join(projectRoot, "curriculum", "catalog.json"),
     privateJudgePath: join(projectRoot, "judge-private", "tests.json"),
   });
+  const referenceCatalogPath = join(projectRoot, "reference", "catalog.json");
+  const baseReference = createFilesystemReferenceCatalog({
+    catalogPath: referenceCatalogPath,
+  });
+  const referenceReadiness = await baseReference.readiness();
+  let reference: ReferenceCatalog = baseReference;
+  if (referenceReadiness.ready) {
+    const activityIndex = await buildReferenceActivityIndex(
+      await curriculum.listActivities(),
+      baseReference,
+    );
+    reference = activityIndex.ok
+      ? createFilesystemReferenceCatalog({
+          catalogPath: referenceCatalogPath,
+          relatedActivityIdsByEntryId:
+            activityIndex.relatedActivityIdsByEntryId,
+        })
+      : createUnavailableReferenceCatalog("integration_invalid");
+  }
   const record = createJsonlLearningRecord({ dataRoot });
   await record.initialize();
   const compiler = "/usr/bin/clang++";
@@ -55,7 +120,7 @@ export async function createProductionPlatform(
     workspaceRoot,
     activities: await curriculum.listWorkspaceActivities(),
   });
-  return createLearningPlatform({
+  const platform = createLearningPlatform({
     clock: () => new Date(),
     curriculum,
     workspace,
@@ -82,4 +147,11 @@ export async function createProductionPlatform(
       record: () => record.readiness(),
     },
   });
+  return { platform, reference };
+}
+
+export async function createProductionPlatform(
+  options: ProductionPlatformOptions = {},
+) {
+  return (await createProductionApplication(options)).platform;
 }

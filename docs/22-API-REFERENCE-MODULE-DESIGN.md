@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-DES-001 |
-| Version | 0.1 |
-| Status | Draft |
+| Version | 1.0 |
+| Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
 
@@ -324,9 +324,9 @@ GET /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
 GET /api/v1/reference/entries/:entryId
 ```
 
-These routes are proposed contracts. They enter [Interface
-Contracts](05-INTERFACE_CONTRACTS.md) only in the implementation change that
-adds shared DTO schemas and executable contract tests.
+These routes are active contracts in [Interface
+Contracts](05-INTERFACE_CONTRACTS.md). Their DTOs are shared from
+`packages/contracts` and covered through executable Module and Fastify tests.
 
 Proposed query DTOs:
 

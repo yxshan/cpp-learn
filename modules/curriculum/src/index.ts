@@ -34,6 +34,7 @@ export interface Activity {
   readonly estimatedMinutes: number;
   readonly conceptIds: readonly string[];
   readonly prerequisiteIds: readonly string[];
+  readonly referenceIds?: readonly string[];
   readonly objectives: readonly string[];
   readonly victoryConditions: readonly string[];
   readonly sources: readonly ActivitySource[];
@@ -705,6 +706,9 @@ export function createFilesystemCurriculum(
       estimatedMinutes: activity.estimatedMinutes,
       conceptIds: activity.conceptIds,
       prerequisiteIds: activity.prerequisiteIds,
+      ...(activity.referenceIds === undefined
+        ? {}
+        : { referenceIds: activity.referenceIds }),
       objectives: activity.objectives,
       victoryConditions: activity.victoryConditions,
       sources: activity.sources,

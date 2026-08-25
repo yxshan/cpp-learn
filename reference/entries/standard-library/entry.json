@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "standard-library",
+  "version": 1,
+  "slug": "standard-library",
+  "kind": "landing",
+  "title": "C++ 标准库",
+  "summary": "按功能查找 C++ 标准库设施，并了解其头文件、标准版本与使用约束。",
+  "aliases": ["标准库", "stl", "standard library"],
+  "categories": ["standard-library"],
+  "relatedEntryIds": ["header-vector", "std-vector", "std-sort"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/standard-library/content.md"
+  },
+  "examples": [],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: library introduction",
+      "url": "https://eel.is/c++draft/library"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

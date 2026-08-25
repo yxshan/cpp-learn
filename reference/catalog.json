@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "entries": [
+    "entries/standard-library/entry.json",
+    "entries/header-vector/entry.json",
+    "entries/std-vector/entry.json",
+    "entries/std-sort/entry.json",
+    "entries/std-vector-push-back/entry.json"
+  ],
+  "categories": [
+    { "id": "standard-library", "title": "标准库", "order": 10 },
+    {
+      "id": "containers",
+      "title": "容器",
+      "parentId": "standard-library",
+      "order": 20
+    },
+    {
+      "id": "algorithms",
+      "title": "算法",
+      "parentId": "standard-library",
+      "order": 30
+    }
+  ],
+  "redirects": [
+    {
+      "fromSlug": "containers/vector",
+      "toEntryId": "std-vector"
+    }
+  ]
+}

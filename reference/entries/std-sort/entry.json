@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "std-sort",
+  "version": 1,
+  "slug": "standard-library/algorithms/sort",
+  "kind": "function",
+  "title": "std::sort",
+  "summary": "将随机访问范围按升序或自定义严格弱序原地排序。",
+  "symbol": "std::sort",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["sort", "排序", "原地排序"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["std-vector"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-sort/content.md"
+  },
+  "examples": [
+    {
+      "id": "sort-vector",
+      "path": "entries/std-sort/examples/sort-vector.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "1 2 3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: sort",
+      "url": "https://eel.is/c++draft/sort",
+      "standardSection": "[sort]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

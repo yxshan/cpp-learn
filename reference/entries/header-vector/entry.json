@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "header-vector",
+  "version": 1,
+  "slug": "standard-library/headers/vector",
+  "kind": "header",
+  "title": "<vector>",
+  "summary": "声明连续存储的动态数组容器 std::vector 及其相关比较与交换设施。",
+  "symbol": "<vector>",
+  "header": "<vector>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["vector header", "向量头文件"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-vector", "std-vector-push-back"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-vector/content.md"
+  },
+  "examples": [
+    {
+      "id": "include-vector",
+      "path": "entries/header-vector/examples/include-vector.cpp",
+      "kind": "compile",
+      "standard": "c++20"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector header synopsis",
+      "url": "https://eel.is/c++draft/vector.syn",
+      "standardSection": "[vector.syn]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

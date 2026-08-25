@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Separate declarative C++ API Reference Module

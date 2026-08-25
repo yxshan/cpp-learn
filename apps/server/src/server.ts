@@ -2,15 +2,25 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import fastifyStatic from "@fastify/static";
 
 import type { LearningPlatform } from "@cpp-learn/contracts";
+import type {
+  CppStandard,
+  ReferenceEntryKind,
+  ReferenceVerification,
+} from "@cpp-learn/contracts";
+import {
+  ReferenceQueryValidationError,
+  type ReferenceCatalog,
+} from "@cpp-learn/reference";
 
 const MAX_ARCHIVE_REQUEST_BYTES = 64 * 1024 * 1024;
 
 export interface ServerDependencies {
   readonly platform: LearningPlatform;
+  readonly reference?: ReferenceCatalog;
   readonly logger?: boolean;
   readonly webRoot?: string;
   readonly archive?: {
@@ -128,6 +138,147 @@ export function createServer(
 
   server.get("/api/v1/activities", async () =>
     dependencies.platform.query({ type: "activities.list" }),
+  );
+
+  const readyReference = async (
+    reply: FastifyReply,
+  ): Promise<ReferenceCatalog | undefined> => {
+    const readiness = dependencies.reference
+      ? await dependencies.reference.readiness()
+      : {
+          ready: false as const,
+          issueCodes: ["catalog_missing" as const],
+        };
+    if (!readiness.ready) {
+      await reply.code(503).send({
+        schemaVersion: 1,
+        error: { code: "reference_unavailable" },
+        readiness,
+      });
+      return undefined;
+    }
+    return dependencies.reference;
+  };
+
+  server.get("/api/v1/reference", async (_request, reply) => {
+    const reference = await readyReference(reply);
+    return reference?.getNavigation();
+  });
+
+  const referenceKinds = new Set<ReferenceEntryKind>([
+    "landing",
+    "header",
+    "type",
+    "function",
+    "member",
+    "concept",
+    "guide",
+  ]);
+  const cppStandards = new Set<CppStandard>([
+    "c++98",
+    "c++03",
+    "c++11",
+    "c++14",
+    "c++17",
+    "c++20",
+    "c++23",
+    "c++26-draft",
+  ]);
+  const referenceVerification = new Set<ReferenceVerification>([
+    "verified",
+    "unsupported",
+    "not-checked",
+  ]);
+
+  server.get<{
+    Querystring: {
+      q?: string;
+      kind?: string;
+      category?: string;
+      standard?: string;
+      verified?: string;
+      limit?: string;
+    };
+  }>("/api/v1/reference/search", async (request, reply) => {
+    const reference = await readyReference(reply);
+    if (!reference) return;
+    const { q = "", kind, category, standard, verified, limit } = request.query;
+    const parsedLimit = limit === undefined ? undefined : Number(limit);
+    if (
+      (kind !== undefined && !referenceKinds.has(kind as ReferenceEntryKind)) ||
+      (standard !== undefined && !cppStandards.has(standard as CppStandard)) ||
+      (verified !== undefined &&
+        !referenceVerification.has(verified as ReferenceVerification)) ||
+      (limit !== undefined && !Number.isInteger(parsedLimit))
+    ) {
+      return reply.code(400).send({
+        schemaVersion: 1,
+        error: { code: "validation_error", message: "Invalid search query" },
+      });
+    }
+    try {
+      return await reference.search({
+        text: q,
+        ...(kind === undefined ? {} : { kind: kind as ReferenceEntryKind }),
+        ...(category === undefined ? {} : { category }),
+        ...(standard === undefined
+          ? {}
+          : { standard: standard as CppStandard }),
+        ...(verified === undefined
+          ? {}
+          : { verified: verified as ReferenceVerification }),
+        ...(parsedLimit === undefined ? {} : { limit: parsedLimit }),
+      });
+    } catch (error) {
+      if (error instanceof ReferenceQueryValidationError) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: {
+            code: "validation_error",
+            message: "Invalid search query",
+          },
+        });
+      }
+      throw error;
+    }
+  });
+
+  server.get<{ Querystring: { slug?: string } }>(
+    "/api/v1/reference/resolve",
+    async (request, reply) => {
+      const reference = await readyReference(reply);
+      if (!reference) return;
+      if (!request.query.slug) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: { code: "validation_error", message: "Slug is required" },
+        });
+      }
+      const result = await reference.resolveSlug(request.query.slug);
+      if (!result) {
+        return reply.code(404).send({
+          schemaVersion: 1,
+          error: { code: "reference_not_found" },
+        });
+      }
+      return result;
+    },
+  );
+
+  server.get<{ Params: { entryId: string } }>(
+    "/api/v1/reference/entries/:entryId",
+    async (request, reply) => {
+      const reference = await readyReference(reply);
+      if (!reference) return;
+      const result = await reference.getEntry(request.params.entryId);
+      if (!result) {
+        return reply.code(404).send({
+          schemaVersion: 1,
+          error: { code: "reference_not_found" },
+        });
+      }
+      return result;
+    },
   );
 
   server.get<{ Params: { activityId: string } }>(

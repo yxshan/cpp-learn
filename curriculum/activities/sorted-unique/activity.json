@@ -7,6 +7,7 @@
   "estimatedMinutes": 35,
   "conceptIds": ["cpp-stl-containers", "cpp-algorithms"],
   "prerequisiteIds": ["stl-containers-algorithms"],
+  "referenceIds": ["std-vector", "std-sort"],
   "objectives": ["组合 sort、unique 与 erase。"],
   "victoryConditions": ["四个输入按升序且无重复输出。"],
   "sources": [

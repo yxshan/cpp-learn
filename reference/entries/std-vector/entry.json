@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "std-vector",
+  "version": 1,
+  "slug": "standard-library/containers/vector",
+  "kind": "type",
+  "title": "std::vector",
+  "summary": "连续存储、可动态改变大小的序列容器，适合作为默认的可增长数组。",
+  "symbol": "std::vector",
+  "header": "<vector>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["vector", "动态数组", "向量容器"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["header-vector", "std-vector-push-back", "std-sort"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-vector/content.md"
+  },
+  "examples": [
+    {
+      "id": "vector-basics",
+      "path": "entries/std-vector/examples/vector-basics.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: class template vector",
+      "url": "https://eel.is/c++draft/vector",
+      "standardSection": "[vector]"
+    }
+  ],
+  "verifiedAt": "2026-08-25"
+}

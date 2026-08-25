@@ -17,6 +17,10 @@ import {
 } from "@cpp-learn/learning-record";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
 import {
+  createInMemoryReferenceCatalog,
+  type ReferenceEntryManifest,
+} from "@cpp-learn/reference";
+import {
   createFilesystemWorkspace,
   createInMemoryWorkspace,
 } from "@cpp-learn/workspace";
@@ -57,6 +61,68 @@ const unusedSnapshot = {
   }),
 };
 
+function createReferenceFixture() {
+  const vector: ReferenceEntryManifest = {
+    schemaVersion: 1,
+    id: "std-vector",
+    version: 1,
+    slug: "standard-library/containers/vector",
+    kind: "type",
+    title: "std::vector",
+    summary: "连续存储的动态数组容器。",
+    symbol: "std::vector",
+    header: "<vector>",
+    namespace: "std",
+    since: "c++98",
+    aliases: ["动态数组", "vector"],
+    categories: ["containers"],
+    relatedEntryIds: [],
+    content: { format: "markdown", path: "entries/std-vector/content.md" },
+    examples: [
+      {
+        id: "basic",
+        path: "entries/std-vector/basic.cpp",
+        kind: "run",
+        standard: "c++20",
+        expectedStdout: "3\n",
+      },
+    ],
+    sources: [
+      {
+        kind: "primary",
+        title: "C++ working draft",
+        url: "https://eel.is/c++draft/vector",
+      },
+    ],
+    verifiedAt: "2026-08-25",
+  };
+  return createInMemoryReferenceCatalog({
+    catalog: {
+      schemaVersion: 1,
+      version: 1,
+      entries: ["entries/std-vector/entry.json"],
+      categories: [{ id: "containers", title: "容器", order: 10 }],
+      redirects: [{ fromSlug: "library/vector", toEntryId: "std-vector" }],
+    },
+    entries: [vector],
+    files: {
+      "entries/std-vector/content.md": "# std::vector\n",
+      "entries/std-vector/basic.cpp":
+        '#include <iostream>\nint main() { std::cout << "3\\n"; }\n',
+    },
+  });
+}
+
+function createUnusedPlatform(): LearningPlatform {
+  return {
+    async dispatch() {
+      throw new Error("No commands in this fixture");
+    },
+    async *events() {},
+    query: vi.fn().mockResolvedValue(bootstrap),
+  } as unknown as LearningPlatform;
+}
+
 describe("[T-CONTRACT-001] HTTP bootstrap Adapter", () => {
   it("returns the shared LearningPlatform query result unchanged", async () => {
     const platform: LearningPlatform = {
@@ -77,6 +143,109 @@ describe("[T-CONTRACT-001] HTTP bootstrap Adapter", () => {
     expect(response.json()).toEqual(bootstrap);
     expect(platform.query).toHaveBeenCalledWith({ type: "bootstrap.get" });
     await server.close();
+  });
+});
+
+describe("[T-REF-005] HTTP Reference Adapter", () => {
+  it("serves navigation, search, slug resolution, and Entry detail through shared DTOs", async () => {
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+    });
+
+    const navigation = await server.inject({
+      method: "GET",
+      url: "/api/v1/reference",
+    });
+    const search = await server.inject({
+      method: "GET",
+      url: "/api/v1/reference/search?q=%E5%8A%A8%E6%80%81%E6%95%B0%E7%BB%84&standard=c%2B%2B20",
+    });
+    const resolution = await server.inject({
+      method: "GET",
+      url: "/api/v1/reference/resolve?slug=library%2Fvector",
+    });
+    const detail = await server.inject({
+      method: "GET",
+      url: "/api/v1/reference/entries/std-vector",
+    });
+
+    expect(navigation.statusCode).toBe(200);
+    expect(navigation.json()).toMatchObject({
+      schemaVersion: 1,
+      categories: [{ id: "containers", entryIds: ["std-vector"] }],
+    });
+    expect(search.statusCode).toBe(200);
+    expect(search.json()).toMatchObject({
+      schemaVersion: 1,
+      results: [{ id: "std-vector" }],
+    });
+    expect(resolution.json()).toEqual({
+      schemaVersion: 1,
+      entryId: "std-vector",
+      canonicalSlug: "standard-library/containers/vector",
+      redirected: true,
+    });
+    expect(detail.json()).toMatchObject({
+      schemaVersion: 1,
+      id: "std-vector",
+      markdown: "# std::vector\n",
+    });
+    expect(detail.body).not.toContain("entries/std-vector");
+    await server.close();
+  });
+
+  it("returns deterministic validation, not-found, and degraded responses", async () => {
+    const readyServer = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+    });
+    const invalid = await readyServer.inject({
+      method: "GET",
+      url: "/api/v1/reference/search?q=vector&limit=0",
+    });
+    const missing = await readyServer.inject({
+      method: "GET",
+      url: "/api/v1/reference/entries/missing-entry",
+    });
+
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.json()).toMatchObject({
+      error: { code: "validation_error" },
+    });
+    expect(missing.statusCode).toBe(404);
+    await readyServer.close();
+
+    const unavailable = createInMemoryReferenceCatalog({
+      catalog: {
+        schemaVersion: 1,
+        version: 1,
+        entries: ["entries/missing/entry.json"],
+        categories: [{ id: "library", title: "标准库", order: 1 }],
+        redirects: [],
+      },
+      entries: [],
+      files: {},
+    });
+    const degradedServer = createServer({
+      platform: createUnusedPlatform(),
+      reference: unavailable,
+    });
+    const degraded = await degradedServer.inject({
+      method: "GET",
+      url: "/api/v1/reference",
+    });
+
+    expect(degraded.statusCode).toBe(503);
+    expect(degraded.json()).toEqual({
+      schemaVersion: 1,
+      error: { code: "reference_unavailable" },
+      readiness: {
+        ready: false,
+        issueCodes: ["catalog_invalid"],
+      },
+    });
+    await degradedServer.close();
   });
 });
 

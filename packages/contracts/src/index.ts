@@ -33,6 +33,140 @@ export interface BootstrapResult {
   };
 }
 
+export type ReferenceEntryKind =
+  "landing" | "header" | "type" | "function" | "member" | "concept" | "guide";
+
+export type CppStandard =
+  | "c++98"
+  | "c++03"
+  | "c++11"
+  | "c++14"
+  | "c++17"
+  | "c++20"
+  | "c++23"
+  | "c++26-draft";
+
+export type ReferenceVerification = "verified" | "unsupported" | "not-checked";
+
+export interface ReferenceSource {
+  readonly kind: "primary" | "secondary" | "vendor";
+  readonly title: string;
+  readonly url: string;
+  readonly standardSection?: string;
+  readonly reusedMaterial?: {
+    readonly license: string;
+    readonly attribution: string;
+    readonly modifications: string;
+  };
+}
+
+export interface ReferenceExampleView {
+  readonly id: string;
+  readonly kind: "compile" | "run" | "expected-compile-failure";
+  readonly standard: CppStandard;
+  readonly source: string;
+  readonly digest: string;
+  readonly verification: ReferenceVerification;
+  readonly stdin?: string;
+  readonly expectedStdout?: string;
+  readonly expectedDiagnosticCategory?: string;
+}
+
+export interface ReferenceEntryDetail {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly catalogVersion: number;
+  readonly id: string;
+  readonly version: number;
+  readonly slug: string;
+  readonly kind: ReferenceEntryKind;
+  readonly title: string;
+  readonly summary: string;
+  readonly symbol?: string;
+  readonly header?: string;
+  readonly namespace?: string;
+  readonly since?: CppStandard;
+  readonly deprecatedSince?: CppStandard;
+  readonly removedSince?: CppStandard;
+  readonly aliases: readonly string[];
+  readonly categories: readonly string[];
+  readonly relatedEntryIds: readonly string[];
+  readonly markdown: string;
+  readonly examples: readonly ReferenceExampleView[];
+  readonly sources: readonly ReferenceSource[];
+  readonly verifiedAt: string;
+  readonly relatedActivityIds: readonly string[];
+}
+
+export interface ReferenceSearchQuery {
+  readonly text: string;
+  readonly kind?: ReferenceEntryKind;
+  readonly category?: string;
+  readonly standard?: CppStandard;
+  readonly verified?: ReferenceVerification;
+  readonly limit?: number;
+}
+
+export type ReferenceMatchField =
+  | "id"
+  | "symbol"
+  | "header"
+  | "alias"
+  | "title"
+  | "heading"
+  | "category"
+  | "body";
+
+export interface ReferenceSearchItem {
+  readonly id: string;
+  readonly slug: string;
+  readonly kind: ReferenceEntryKind;
+  readonly title: string;
+  readonly summary: string;
+  readonly symbol?: string;
+  readonly header?: string;
+  readonly since?: CppStandard;
+  readonly deprecatedSince?: CppStandard;
+  readonly matchedBy: readonly ReferenceMatchField[];
+}
+
+export interface ReferenceSearchResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly catalogVersion: number;
+  readonly query: ReferenceSearchQuery;
+  readonly total: number;
+  readonly results: readonly ReferenceSearchItem[];
+}
+
+export interface ReferenceSlugResolution {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly entryId: string;
+  readonly canonicalSlug: string;
+  readonly redirected: boolean;
+}
+
+export interface ReferenceNavigation {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly catalogVersion: number;
+  readonly categories: readonly {
+    readonly id: string;
+    readonly title: string;
+    readonly parentId?: string;
+    readonly order: number;
+    readonly entryIds: readonly string[];
+  }[];
+  readonly supportedStandards: readonly CppStandard[];
+}
+
+export type ReferenceReadinessIssueCode =
+  "catalog_missing" | "catalog_invalid" | "integration_invalid";
+
+export interface ReferenceReadiness {
+  readonly ready: boolean;
+  readonly catalogVersion?: number;
+  readonly entryCount?: number;
+  readonly issueCodes?: readonly ReferenceReadinessIssueCode[];
+}
+
 export interface ActivityDetail {
   readonly id: string;
   readonly version: number;
@@ -42,6 +176,7 @@ export interface ActivityDetail {
   readonly estimatedMinutes: number;
   readonly conceptIds: readonly string[];
   readonly prerequisiteIds?: readonly string[];
+  readonly referenceIds?: readonly string[];
   readonly objectives?: readonly string[];
   readonly victoryConditions?: readonly string[];
   readonly sources?: readonly ActivitySource[];

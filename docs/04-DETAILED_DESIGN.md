@@ -278,10 +278,10 @@ Configuration precedence:
 
 Paths are resolved once by the composition root and passed as explicit dependencies.
 
-## 11. Planned Reference Module
+## 11. Reference Module
 
 The Reference Module is a read-only content Module separate from Curriculum and
-Learning Platform orchestration. Subject to the proposed
+Learning Platform orchestration. Under the accepted
 [ADR-0006](adr/0006-separate-declarative-api-reference.md), it owns Reference Entry activation,
 navigation, lookup, deterministic search, source metadata, and relationship
 resolution.

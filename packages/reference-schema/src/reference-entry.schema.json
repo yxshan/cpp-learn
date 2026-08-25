@@ -1,0 +1,170 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-entry.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "slug",
+    "kind",
+    "title",
+    "summary",
+    "aliases",
+    "categories",
+    "relatedEntryIds",
+    "content",
+    "examples",
+    "sources",
+    "verifiedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "$ref": "#/$defs/id" },
+    "version": { "type": "integer", "minimum": 1 },
+    "slug": { "$ref": "#/$defs/slug" },
+    "kind": {
+      "enum": [
+        "landing",
+        "header",
+        "type",
+        "function",
+        "member",
+        "concept",
+        "guide"
+      ]
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "symbol": { "type": "string", "minLength": 1 },
+    "header": { "type": "string", "pattern": "^<[^<>]+>$" },
+    "namespace": { "type": "string", "minLength": 1 },
+    "since": { "$ref": "#/$defs/standard" },
+    "deprecatedSince": { "$ref": "#/$defs/standard" },
+    "removedSince": { "$ref": "#/$defs/standard" },
+    "aliases": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "relatedEntryIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "path"],
+      "properties": {
+        "format": { "const": "markdown" },
+        "path": { "$ref": "#/$defs/safePath" }
+      }
+    },
+    "examples": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/example" }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "contains": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": { "kind": { "const": "primary" } }
+      },
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "verifiedAt": { "type": "string", "format": "date" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[/-][a-z0-9]+)*$"
+    },
+    "standard": {
+      "enum": [
+        "c++98",
+        "c++03",
+        "c++11",
+        "c++14",
+        "c++17",
+        "c++20",
+        "c++23",
+        "c++26-draft"
+      ]
+    },
+    "safePath": {
+      "type": "string",
+      "pattern": "^(?!/)(?!.*\\.\\.)(?!.*\\\\).+"
+    },
+    "example": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "kind", "standard"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": { "$ref": "#/$defs/safePath" },
+        "kind": { "enum": ["compile", "run", "expected-compile-failure"] },
+        "standard": { "$ref": "#/$defs/standard" },
+        "stdin": { "type": "string", "maxLength": 65536 },
+        "expectedStdout": { "type": "string", "maxLength": 65536 },
+        "expectedDiagnosticCategory": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "run" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "expectedStdout": true },
+            "required": ["expectedStdout"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "expected-compile-failure" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "expectedDiagnosticCategory": true },
+            "required": ["expectedDiagnosticCategory"],
+            "not": { "required": ["expectedStdout"] }
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "title", "url"],
+      "properties": {
+        "kind": { "enum": ["primary", "secondary", "vendor"] },
+        "title": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "standardSection": { "type": "string", "minLength": 1 },
+        "reusedMaterial": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["license", "attribution", "modifications"],
+          "properties": {
+            "license": { "type": "string", "minLength": 1 },
+            "attribution": { "type": "string", "minLength": 1 },
+            "modifications": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

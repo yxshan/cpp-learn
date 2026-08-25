@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 0.1 |
-| Status | Draft |
+| Version | 1.0 |
+| Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
 
@@ -12,8 +12,8 @@
 
 This guide defines how maintainers and future content authors create original,
 verifiable C++ Reference Entries. It complements the [Reference Module
-Design](22-API-REFERENCE-MODULE-DESIGN.md); the JSON Schema and content checker
-become normative when implemented.
+Design](22-API-REFERENCE-MODULE-DESIGN.md); the implemented JSON Schema and
+`check:reference` content checker are normative for release content.
 
 The Reference serves a learner who knows JavaScript and is learning modern C++
 for software, Web, backend, and infrastructure development. It must remain

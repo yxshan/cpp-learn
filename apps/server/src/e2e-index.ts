@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   createProductionDataArchive,
-  createProductionPlatform,
+  createProductionApplication,
 } from "./composition.js";
 import { resolveServerAddress, resolveServerStoragePaths } from "./config.js";
 import { createServer } from "./server.js";
@@ -19,9 +19,11 @@ const e2eRuntimeRoot: string = configuredRuntimeRoot;
 
 await rm(e2eRuntimeRoot, { recursive: true, force: true });
 await mkdir(e2eRuntimeRoot, { recursive: true });
+const application = await createProductionApplication(storagePaths);
 
 const server = createServer({
-  platform: await createProductionPlatform(storagePaths),
+  platform: application.platform,
+  reference: application.reference,
   archive: createProductionDataArchive(storagePaths),
   logger: true,
   webRoot,
