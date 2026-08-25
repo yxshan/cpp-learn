@@ -63,6 +63,47 @@ describe("C++ editor formatting", () => {
     );
   });
 
+  it("keeps scalar and container list initialization on the declaration line", () => {
+    expect(
+      formatCppSource(
+        "int main(){int count{0};std::string name{};std::vector<int> values{1,2,3};}",
+      ),
+    ).toBe(
+      "int main() {\n  int count{0};\n  std::string name{};\n  std::vector<int> values{1, 2, 3};\n}\n",
+    );
+  });
+
+  it("distinguishes list initialization from classes, arrays, lambdas, and constructor bodies", () => {
+    expect(
+      formatCppSource(
+        "struct Point{int x{0};int y{0};};struct Counter{Counter():value_{0}{}int value_;};int main(){int values[]{1,2};Point point{1,2};auto make=[](){return Point{3,4};};if(true){return values[0];}}",
+      ),
+    ).toBe(
+      [
+        "struct Point {",
+        "  int x{0};",
+        "  int y{0};",
+        "};",
+        "struct Counter {",
+        "  Counter() : value_{0} {",
+        "  }",
+        "  int value_;",
+        "};",
+        "int main() {",
+        "  int values[]{1, 2};",
+        "  Point point{1, 2};",
+        "  auto make = []() {",
+        "    return Point{3, 4};",
+        "  };",
+        "  if (true) {",
+        "    return values[0];",
+        "  }",
+        "}",
+        "",
+      ].join("\n"),
+    );
+  });
+
   it("is idempotent for an already formatted source", () => {
     const source = "#pragma once\n\nstruct Point {\n  int x;\n  int y;\n};\n";
     expect(formatCppSource(formatCppSource(source))).toBe(source);

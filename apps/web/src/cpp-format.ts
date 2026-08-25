@@ -88,6 +88,23 @@ const binarySymbols = new Set([
   "^=",
   "?",
 ]);
+const blockOpeningKeywords = new Set([
+  "catch",
+  "class",
+  "concept",
+  "do",
+  "else",
+  "enum",
+  "for",
+  "if",
+  "namespace",
+  "requires",
+  "struct",
+  "switch",
+  "try",
+  "union",
+  "while",
+]);
 
 export function isCppSourcePath(path: string): boolean {
   return /\.(?:c|cc|cpp|cxx|h|hh|hpp|hxx)$/i.test(path);
@@ -266,6 +283,58 @@ function isTemplateOpening(
   return false;
 }
 
+function isArrayDeclaratorClosing(
+  tokens: readonly CppToken[],
+  closingIndex: number,
+): boolean {
+  let depth = 0;
+  for (let index = closingIndex - 1; index >= 0; index -= 1) {
+    const token = tokens[index];
+    if (token?.value === "]") depth += 1;
+    if (token?.value !== "[") continue;
+    if (depth > 0) {
+      depth -= 1;
+      continue;
+    }
+    const prior = tokens[index - 1];
+    return prior?.kind === "word" || prior?.value === "]";
+  }
+  return false;
+}
+
+function isBlockOpening(
+  tokens: readonly CppToken[],
+  index: number,
+  currentLine: string,
+): boolean {
+  const previous = tokens[index - 1];
+  if (!previous || currentLine.trim().length === 0) return true;
+  if (previous.value === ")") return true;
+  if (previous.value === "}" && currentLine.includes(")")) return true;
+  if (previous.value === "]")
+    return !isArrayDeclaratorClosing(tokens, index - 1);
+
+  const lineTokens: CppToken[] = [];
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const token = tokens[cursor];
+    if (!token || [";", "{", "}"].includes(token.value)) break;
+    lineTokens.push(token);
+  }
+  if (
+    lineTokens.some(
+      (token) => token.kind === "word" && blockOpeningKeywords.has(token.value),
+    )
+  ) {
+    return true;
+  }
+
+  const containsParameters = lineTokens.some((token) => token.value === ")");
+  const containsConstructorSeparator = lineTokens.some(
+    (token) => token.value === ":",
+  );
+  return containsParameters && !containsConstructorSeparator;
+}
+
 export function formatCppSource(source: string): string {
   if (source.trim().length === 0) return "";
   const tokens = tokenizeCpp(source.replace(/\r\n?/g, "\n"));
@@ -277,6 +346,7 @@ export function formatCppSource(source: string): string {
   let isCaseLabel = false;
   let caseTernaryDepth = 0;
   const caseBodyIndentations: number[] = [];
+  const braceKinds: ("block" | "initializer")[] = [];
   let previous: CppToken | undefined;
 
   const append = (value: string, spaceBefore = false): void => {
@@ -339,6 +409,19 @@ export function formatCppSource(source: string): string {
       continue;
     }
     if (token.value === "{") {
+      if (!isBlockOpening(tokens, tokenIndex, line)) {
+        line = line.trimEnd();
+        append(
+          "{",
+          previous?.value === "=" ||
+            previous?.value === "," ||
+            previous?.value === "return",
+        );
+        braceKinds.push("initializer");
+        previous = token;
+        continue;
+      }
+      braceKinds.push("block");
       append("{", line.length > 0);
       finishLine();
       indentation += 1;
@@ -346,6 +429,12 @@ export function formatCppSource(source: string): string {
       continue;
     }
     if (token.value === "}") {
+      if (braceKinds.pop() === "initializer") {
+        line = line.trimEnd();
+        append("}");
+        previous = token;
+        continue;
+      }
       finishLine();
       if (caseBodyIndentations.at(-1) === indentation - 1) {
         indentation -= 1;
@@ -488,6 +577,8 @@ export function formatCppSource(source: string): string {
         previous?.kind === "literal" ||
         priorValue === ")" ||
         priorValue === "]" ||
+        priorValue === ">" ||
+        priorValue === ">>" ||
         priorValue === "," ||
         priorValue === ";" ||
         priorValue === "}");
