@@ -269,6 +269,21 @@ test("[T-UI-004] Project evidence navigation and interactive traces stay usable 
 test("[T-UI-005] C++ starter code is formatted and editor tools can format or reset the active file", async ({
   page,
 }) => {
+  await page.route("**/api/v1/workspaces/modern-vocabulary", async (route) => {
+    const starter = '#include <iostream>\nint main(){std::cout<<"TODO\\n";}\n';
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        schemaVersion: 1,
+        workspace: {
+          activityId: "modern-vocabulary",
+          revision: 0,
+          files: { "main.cpp": starter },
+          starterFiles: { "main.cpp": starter },
+        },
+      }),
+    });
+  });
   await page.goto("/?activity=modern-vocabulary");
   await expect(
     page.getByRole("heading", { name: "Lambda、optional、variant 与 ranges" }),

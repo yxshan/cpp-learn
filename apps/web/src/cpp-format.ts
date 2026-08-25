@@ -114,6 +114,14 @@ function readRawLiteral(source: string, markerIndex: number): number {
   return end < 0 ? source.length : end + closing.length;
 }
 
+function readLiteralSuffix(source: string, literalEnd: number): number {
+  if (!/[A-Za-z_]/.test(source[literalEnd] ?? "")) return literalEnd;
+  let end = literalEnd + 1;
+  while (end < source.length && /[A-Za-z0-9_]/.test(source[end] ?? ""))
+    end += 1;
+  return end;
+}
+
 function tokenizeCpp(source: string): readonly CppToken[] {
   const tokens: CppToken[] = [];
   let index = 0;
@@ -167,7 +175,10 @@ function tokenizeCpp(source: string): readonly CppToken[] {
     const rawPrefix = /^(?:u8|u|U|L)?R"/.exec(source.slice(index));
     if (rawPrefix) {
       const markerIndex = index + rawPrefix[0].length - 2;
-      const end = readRawLiteral(source, markerIndex);
+      const end = readLiteralSuffix(
+        source,
+        readRawLiteral(source, markerIndex),
+      );
       tokens.push({ kind: "literal", value: source.slice(index, end) });
       index = end;
       continue;
@@ -175,7 +186,10 @@ function tokenizeCpp(source: string): readonly CppToken[] {
     const quotePrefix = /^(?:u8|u|U|L)?(["'])/.exec(source.slice(index));
     if (quotePrefix) {
       const quoteIndex = index + quotePrefix[0].length - 1;
-      const end = readQuotedLiteral(source, index, quoteIndex);
+      const end = readLiteralSuffix(
+        source,
+        readQuotedLiteral(source, index, quoteIndex),
+      );
       tokens.push({ kind: "literal", value: source.slice(index, end) });
       index = end;
       continue;
@@ -253,6 +267,8 @@ export function formatCppSource(source: string): string {
   let indentation = 0;
   let parentheses = 0;
   let templateDepth = 0;
+  let isCaseLabel = false;
+  const caseBodyIndentations: number[] = [];
   let previous: CppToken | undefined;
 
   const append = (value: string, spaceBefore = false): void => {
@@ -323,6 +339,10 @@ export function formatCppSource(source: string): string {
     }
     if (token.value === "}") {
       finishLine();
+      if (caseBodyIndentations.at(-1) === indentation - 1) {
+        indentation -= 1;
+        caseBodyIndentations.pop();
+      }
       indentation = Math.max(0, indentation - 1);
       append("}");
       if (
@@ -374,7 +394,16 @@ export function formatCppSource(source: string): string {
       continue;
     }
     if (token.value === ":") {
-      if (previous?.kind === "word" && labelKeywords.has(previous.value)) {
+      if (isCaseLabel) {
+        append(":");
+        finishLine();
+        caseBodyIndentations.push(indentation);
+        indentation += 1;
+        isCaseLabel = false;
+      } else if (
+        previous?.kind === "word" &&
+        labelKeywords.has(previous.value)
+      ) {
         append(":");
         finishLine();
       } else {
@@ -383,6 +412,18 @@ export function formatCppSource(source: string): string {
       }
       previous = token;
       continue;
+    }
+
+    if (
+      token.kind === "word" &&
+      (token.value === "case" || token.value === "default") &&
+      line.trim().length === 0
+    ) {
+      if (caseBodyIndentations.at(-1) === indentation - 1) {
+        indentation -= 1;
+        caseBodyIndentations.pop();
+      }
+      isCaseLabel = true;
     }
 
     if (token.kind === "symbol") {

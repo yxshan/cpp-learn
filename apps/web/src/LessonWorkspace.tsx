@@ -372,10 +372,7 @@ export function LessonWorkspace({
     }
   };
 
-  const replaceActiveSource = (
-    content: string,
-    successMessage: string,
-  ): void => {
+  const updateActiveSource = (content: string): void => {
     if (!workspace || !activity) return;
     const nextSources = { ...sources, [activePath]: content };
     const dirty = activity.workspace.editablePaths.some(
@@ -385,6 +382,13 @@ export function LessonWorkspace({
     setReport(undefined);
     setIsDirty(dirty);
     onDirtyChange(dirty);
+  };
+
+  const replaceActiveSource = (
+    content: string,
+    successMessage: string,
+  ): void => {
+    updateActiveSource(content);
     setMessage(successMessage);
   };
 
@@ -648,17 +652,7 @@ export function LessonWorkspace({
             theme="vs-dark"
             value={sources[activePath] ?? ""}
             onChange={(value) => {
-              if (!workspace || !activity) return;
-              const nextSources = {
-                ...sources,
-                [activePath]: value ?? "",
-              };
-              const dirty = activity.workspace.editablePaths.some(
-                (path) => nextSources[path] !== workspace.files[path],
-              );
-              setSources(nextSources);
-              setIsDirty(dirty);
-              onDirtyChange(dirty);
+              updateActiveSource(value ?? "");
             }}
             options={{
               automaticLayout: true,
