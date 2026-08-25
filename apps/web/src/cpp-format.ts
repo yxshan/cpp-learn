@@ -42,7 +42,14 @@ const multiCharacterSymbols = [
   "##",
 ] as const;
 
-const controlKeywords = new Set(["if", "for", "while", "switch", "catch"]);
+const controlKeywords = new Set([
+  "if",
+  "for",
+  "while",
+  "switch",
+  "catch",
+  "case",
+]);
 const labelKeywords = new Set([
   "case",
   "default",
@@ -268,6 +275,7 @@ export function formatCppSource(source: string): string {
   let parentheses = 0;
   let templateDepth = 0;
   let isCaseLabel = false;
+  let caseTernaryDepth = 0;
   const caseBodyIndentations: number[] = [];
   let previous: CppToken | undefined;
 
@@ -394,7 +402,11 @@ export function formatCppSource(source: string): string {
       continue;
     }
     if (token.value === ":") {
-      if (isCaseLabel) {
+      if (isCaseLabel && caseTernaryDepth > 0) {
+        append(":", true);
+        line += " ";
+        caseTernaryDepth -= 1;
+      } else if (isCaseLabel) {
         append(":");
         finishLine();
         caseBodyIndentations.push(indentation);
@@ -424,9 +436,11 @@ export function formatCppSource(source: string): string {
         caseBodyIndentations.pop();
       }
       isCaseLabel = true;
+      caseTernaryDepth = 0;
     }
 
     if (token.kind === "symbol") {
+      if (isCaseLabel && token.value === "?") caseTernaryDepth += 1;
       if (token.value === "<" && isTemplateOpening(tokens, tokenIndex)) {
         append("<");
         templateDepth += 1;

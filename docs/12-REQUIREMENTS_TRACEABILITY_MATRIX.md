@@ -160,6 +160,6 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 
 | Test ID | Executable evidence | Status |
 |---|---|---|
-| T-EDITOR-001 | `apps/web/src/cpp-format.test.ts` verifies deterministic C++ formatting, literal/comment and literal-suffix preservation, `for`-header and `switch`-label handling, unary operators, idempotence, and source-path detection | Passed |
+| T-EDITOR-001 | `apps/web/src/cpp-format.test.ts` verifies deterministic C++ formatting, literal/comment and literal-suffix preservation, `for`-header handling, ordinary and ternary-expression `switch` labels, unary operators, idempotence, and source-path detection | Passed |
 | T-WORK-001 | `modules/workspace/src/workspace.test.ts` verifies the immutable starter baseline remains distinct from saved learner files and follows the current Activity version | Passed |
 | T-UI-005 | Playwright verifies formatted starter presentation, active-file Format, confirmed Reset, and buffer-only persistence messaging in the real Monaco editor | Passed |

@@ -34,7 +34,7 @@ clears the dirty state; changing source also clears stale Judge output.
 
 | Test | Evidence | Result |
 |---|---|---|
-| `T-EDITOR-001` | Unit tests cover compact input, literals and their suffixes, comments, `for` headers, unary operators, `switch` labels, idempotence, and C/C++ path detection | Passed |
+| `T-EDITOR-001` | Unit tests cover compact input, literals and their suffixes, comments, `for` headers, unary operators, ordinary and ternary-expression `switch` labels, idempotence, and C/C++ path detection | Passed |
 | `T-WORK-001` | In-memory and filesystem Workspace tests prove saved learner files do not change the returned starter baseline | Passed |
 | `T-UI-005` | Chromium opens a compact starter as conventional multi-line C++, formats an edited buffer, confirms reset, observes persistence messaging, and proves both tools remain inside the 390-pixel code panel | Passed |
 | Static gates | Prettier, ESLint, and TypeScript validate the new contracts and Web implementation | Passed |

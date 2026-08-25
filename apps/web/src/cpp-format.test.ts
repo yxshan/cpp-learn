@@ -53,6 +53,16 @@ describe("C++ editor formatting", () => {
     );
   });
 
+  it("distinguishes a ternary colon inside a case expression from the label colon", () => {
+    expect(
+      formatCppSource(
+        "int choose(){switch(1){case (true?1:2):return 1;case (false?1:(true?2:3)):return 2;}}",
+      ),
+    ).toBe(
+      "int choose() {\n  switch (1) {\n    case (true ? 1 : 2):\n      return 1;\n    case (false ? 1 : (true ? 2 : 3)):\n      return 2;\n  }\n}\n",
+    );
+  });
+
   it("is idempotent for an already formatted source", () => {
     const source = "#pragma once\n\nstruct Point {\n  int x;\n  int y;\n};\n";
     expect(formatCppSource(formatCppSource(source))).toBe(source);
