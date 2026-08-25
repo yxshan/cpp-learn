@@ -30,7 +30,9 @@ GET /api/v1/dashboard
 `health` reports server liveness only. `bootstrap` includes Curriculum,
 toolchain, record, and Reference readiness. Reference readiness is capability
 status: `ready: false` does not change the overall platform `ready` result or
-disable learning flows. `dashboard` returns derived learning state.
+disable learning flows. A successful Reference readiness result includes
+`catalogVersion`, `entryCount`, and `activationDurationMs`. `dashboard` returns
+derived learning state.
 
 ### Curriculum and sessions
 
@@ -65,6 +67,8 @@ C++ standards. Search accepts bounded `q`, `kind`, `category`, `standard`,
 `verified`, and `limit` parameters. A standard filter means “available when
 compiling in that standard”; it is not an exact introduction-version filter.
 Results use deterministic ranking and stable Entry-ID tie-breaking.
+Repeated values for scalar query parameters are invalid and return `400`
+rather than being coerced.
 Each result includes aggregate local verification status. Entry examples expose
 their individual `verified`, `unsupported`, or `not-checked` state; absence of a
 verification Adapter is represented as `not-checked`, never inferred from the

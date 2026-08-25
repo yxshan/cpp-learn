@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { performance } from "node:perf_hooks";
 
 import {
   CPP_STANDARDS,
@@ -89,13 +90,25 @@ interface ActiveCatalog {
     ReferenceVerification
   >;
   readonly relatedActivityIdsByEntryId: ReadonlyMap<string, readonly string[]>;
+  readonly activationDurationMs: number;
+}
+
+interface IndexedSearchField {
+  readonly forms: readonly string[];
+  readonly tokenSets: readonly (readonly string[])[];
 }
 
 interface ReferenceSearchDocument {
   readonly entry: ReferenceEntryManifest;
-  readonly headings: readonly string[];
-  readonly body: string;
-  readonly categoryValues: readonly string[];
+  readonly id: IndexedSearchField;
+  readonly symbol?: IndexedSearchField;
+  readonly header?: IndexedSearchField;
+  readonly aliases: IndexedSearchField;
+  readonly title: IndexedSearchField;
+  readonly headings: IndexedSearchField;
+  readonly categories: IndexedSearchField;
+  readonly body: IndexedSearchField;
+  readonly sortKey: string;
   readonly verification: ReferenceVerification;
 }
 
@@ -237,14 +250,25 @@ async function activate(data: CatalogData): Promise<ActiveCatalog> {
     data.verificationByExampleKey ?? new Map<string, ReferenceVerification>();
   const searchDocuments = data.entries.map((entry) => {
     const markdown = textByPath.get(entry.content.path) ?? "";
+    const categoryValues = entry.categories.flatMap((categoryId) => {
+      const title = categoryById.get(categoryId)?.title;
+      return title === undefined ? [categoryId] : [categoryId, title];
+    });
     return {
       entry,
-      headings: headings(markdown),
-      body: markdown.replace(/^#{1,6}\s+.+$/gm, ""),
-      categoryValues: entry.categories.flatMap((categoryId) => {
-        const title = categoryById.get(categoryId)?.title;
-        return title === undefined ? [categoryId] : [categoryId, title];
-      }),
+      id: indexSearchValues([entry.id]),
+      ...(entry.symbol === undefined
+        ? {}
+        : { symbol: indexSearchValues([entry.symbol]) }),
+      ...(entry.header === undefined
+        ? {}
+        : { header: indexSearchValues([entry.header]) }),
+      aliases: indexSearchValues(entry.aliases),
+      title: indexSearchValues([entry.title]),
+      headings: indexSearchValues(headings(markdown)),
+      categories: indexSearchValues(categoryValues),
+      body: indexSearchValues([markdown.replace(/^#{1,6}\s+.+$/gm, "")]),
+      sortKey: normalize(entry.symbol ?? entry.title),
       verification: entryVerification(entry, verificationByExampleKey),
     };
   });
@@ -256,6 +280,7 @@ async function activate(data: CatalogData): Promise<ActiveCatalog> {
     verificationByExampleKey,
     relatedActivityIdsByEntryId:
       data.relatedActivityIdsByEntryId ?? new Map(),
+    activationDurationMs: 0,
   };
 }
 
@@ -269,27 +294,35 @@ function searchableForms(value: string): readonly string[] {
   return normalized === stripped ? [normalized] : [normalized, stripped];
 }
 
-function exactQuery(value: string, query: string): boolean {
-  return searchableForms(value).includes(query);
+function tokens(value: string): readonly string[] {
+  return value.match(/[\p{L}\p{N}_:+<>-]+/gu) ?? [];
 }
 
-function prefixQuery(value: string, query: string): boolean {
-  return searchableForms(value).some((form) => form.startsWith(query));
+function indexSearchValues(values: readonly string[]): IndexedSearchField {
+  const forms = [...new Set(values.flatMap(searchableForms))];
+  return { forms, tokenSets: forms.map(tokens) };
 }
 
-function tokenQuery(value: string, query: string): boolean {
-  const forms = searchableForms(value);
+function exactQuery(field: IndexedSearchField, query: string): boolean {
+  return field.forms.includes(query);
+}
+
+function prefixQuery(field: IndexedSearchField, query: string): boolean {
+  return field.forms.some((form) => form.startsWith(query));
+}
+
+function tokenQuery(
+  field: IndexedSearchField,
+  query: string,
+  queryTokens: readonly string[],
+): boolean {
   if (/\p{Script=Han}/u.test(query)) {
-    return forms.some((form) => form.includes(query));
+    return field.forms.some((form) => form.includes(query));
   }
-  const queryTokens: readonly string[] =
-    query.match(/[\p{L}\p{N}_:+<>-]+/gu) ?? [];
   if (queryTokens.length === 0) return false;
-  return forms.some((form) => {
-    const tokens: readonly string[] =
-      form.match(/[\p{L}\p{N}_:+<>-]+/gu) ?? [];
-    return queryTokens.every((token) => tokens.includes(token));
-  });
+  return field.tokenSets.some((fieldTokens) =>
+    queryTokens.every((token) => fieldTokens.includes(token)),
+  );
 }
 
 function standardIndex(standard: CppStandard): number {
@@ -318,9 +351,16 @@ function headings(markdown: string): readonly string[] {
 function createReferenceCatalog(
   load: () => Promise<CatalogData>,
 ): ReferenceCatalog {
+  const activationStartedAt = performance.now();
   const activation: Promise<Activation> = load()
     .then(activate)
-    .then((active) => ({ ready: true as const, active }))
+    .then((active) => ({
+      ready: true as const,
+      active: {
+        ...active,
+        activationDurationMs: Math.max(0, performance.now() - activationStartedAt),
+      },
+    }))
     .catch((error: unknown) => ({
       ready: false as const,
       issueCode:
@@ -337,6 +377,7 @@ function createReferenceCatalog(
             ready: true,
             catalogVersion: state.active.catalog.version,
             entryCount: state.active.entriesById.size,
+            activationDurationMs: state.active.activationDurationMs,
           }
         : { ready: false, issueCodes: [state.issueCode] };
     },
@@ -460,6 +501,7 @@ function createReferenceCatalog(
         throw new ReferenceQueryValidationError("Invalid Reference search");
       }
       const normalizedQuery = normalize(query.text);
+      const normalizedQueryTokens = tokens(normalizedQuery);
       const ranked = state.active.searchDocuments
         .filter(
           (document) =>
@@ -473,7 +515,6 @@ function createReferenceCatalog(
               document.verification === query.verified),
         )
         .flatMap((document) => {
-          const { entry } = document;
           const matchedBy = new Set<ReferenceMatchField>();
           let score = normalizedQuery.length === 0 ? 100 : Infinity;
           const recordMatch = (
@@ -486,57 +527,66 @@ function createReferenceCatalog(
               score = Math.min(score, matchScore);
             }
           };
-          recordMatch("id", exactQuery(entry.id, normalizedQuery), 0);
+          recordMatch("id", exactQuery(document.id, normalizedQuery), 0);
           recordMatch(
             "symbol",
-            entry.symbol !== undefined &&
-              exactQuery(entry.symbol, normalizedQuery),
+            document.symbol !== undefined &&
+              exactQuery(document.symbol, normalizedQuery),
             0,
           );
           recordMatch(
             "header",
-            entry.header !== undefined &&
-              exactQuery(entry.header, normalizedQuery),
+            document.header !== undefined &&
+              exactQuery(document.header, normalizedQuery),
             0,
           );
           recordMatch(
             "alias",
-            entry.aliases.some((alias) => exactQuery(alias, normalizedQuery)),
+            exactQuery(document.aliases, normalizedQuery),
             1,
           );
-          recordMatch("title", exactQuery(entry.title, normalizedQuery), 1);
+          recordMatch("title", exactQuery(document.title, normalizedQuery), 1);
           recordMatch(
             "symbol",
-            entry.symbol !== undefined &&
-              prefixQuery(entry.symbol, normalizedQuery),
+            document.symbol !== undefined &&
+              prefixQuery(document.symbol, normalizedQuery),
             2,
           );
-          recordMatch("title", tokenQuery(entry.title, normalizedQuery), 3);
+          recordMatch(
+            "title",
+            tokenQuery(document.title, normalizedQuery, normalizedQueryTokens),
+            3,
+          );
           recordMatch(
             "heading",
-            document.headings.some((heading) =>
-              tokenQuery(heading, normalizedQuery),
+            tokenQuery(
+              document.headings,
+              normalizedQuery,
+              normalizedQueryTokens,
             ),
             3,
           );
           recordMatch(
             "category",
-            document.categoryValues.some((category) =>
-              tokenQuery(category, normalizedQuery),
+            tokenQuery(
+              document.categories,
+              normalizedQuery,
+              normalizedQueryTokens,
             ),
             4,
           );
-          recordMatch("body", tokenQuery(document.body, normalizedQuery), 4);
+          recordMatch(
+            "body",
+            tokenQuery(document.body, normalizedQuery, normalizedQueryTokens),
+            4,
+          );
           if (!Number.isFinite(score) && normalizedQuery.length > 0) return [];
           return [{ ...document, matchedBy: [...matchedBy], score }];
         })
         .sort(
           (left, right) =>
             left.score - right.score ||
-            normalize(left.entry.symbol ?? left.entry.title).localeCompare(
-              normalize(right.entry.symbol ?? right.entry.title),
-              "en",
-            ) ||
+            left.sortKey.localeCompare(right.sortKey, "en") ||
             left.entry.id.localeCompare(right.entry.id, "en"),
         );
       const limit = query.limit ?? 20;
@@ -673,16 +723,23 @@ export function createFilesystemReferenceCatalog(
   dependencies: FilesystemReferenceCatalogDependencies,
 ): ReferenceCatalog {
   return createReferenceCatalog(async () => {
+    const configuredCatalogPath = resolve(dependencies.catalogPath);
+    const configuredRoot = dirname(configuredCatalogPath);
     let catalogPath: string;
+    let root: string;
     try {
-      catalogPath = await realpath(dependencies.catalogPath);
+      root = await realpath(configuredRoot);
+      catalogPath = await realpath(configuredCatalogPath);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
         throw new ReferenceCatalogMissingError();
       }
       throw error;
     }
-    const root = dirname(catalogPath);
+    const catalogFromRoot = relative(root, catalogPath);
+    if (catalogFromRoot.startsWith("..") || isAbsolute(catalogFromRoot)) {
+      throw new Error("Reference catalog symlink escapes the configured root");
+    }
     const catalog = JSON.parse(
       await readFile(catalogPath, "utf8"),
     ) as ReferenceCatalogManifest;

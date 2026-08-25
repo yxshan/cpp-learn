@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { CPP_STANDARDS, REFERENCE_ENTRY_KINDS } from "@cpp-learn/contracts";
+
 import {
+  referenceEntrySchema,
   validateReferenceCatalogManifest,
   validateReferenceEntryManifest,
 } from "./index.js";
@@ -89,5 +92,31 @@ describe("[T-REF-001] Reference manifest schemas", () => {
         }),
       ]),
     );
+  });
+
+  it("rejects unsupported language standards", () => {
+    const issues = validateReferenceEntryManifest({
+      ...validEntry,
+      since: "c++27",
+      examples: [{ ...validEntry.examples[0], standard: "c++27" }],
+    });
+
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "/since", keyword: "enum" }),
+        expect.objectContaining({
+          path: "/examples/0/standard",
+          keyword: "enum",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps schema vocabularies aligned with the shared runtime contract", () => {
+    const properties = referenceEntrySchema.properties;
+    expect(properties.kind.enum).toEqual([...REFERENCE_ENTRY_KINDS]);
+    expect(referenceEntrySchema.$defs.standard.enum).toEqual([
+      ...CPP_STANDARDS,
+    ]);
   });
 });

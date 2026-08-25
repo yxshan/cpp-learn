@@ -86,6 +86,7 @@ describe("[T-REF-001] Reference catalog activation", () => {
       ready: true,
       catalogVersion: 1,
       entryCount: 1,
+      activationDurationMs: expect.any(Number),
     });
     await expect(reference.getEntry("std-vector")).resolves.toMatchObject({
       schemaVersion: 1,
@@ -118,28 +119,70 @@ describe("[T-REF-001] Reference catalog activation", () => {
     });
     await expect(reference.getEntry("std-vector")).resolves.toBeUndefined();
   });
+
+  it("rejects duplicate Entry IDs without publishing a partial catalog", async () => {
+    const vector = entry("std-vector");
+    const duplicate = entry("std-vector", { slug: "standard-library/vector-2" });
+    const reference = createInMemoryReferenceCatalog({
+      catalog: catalog([vector, duplicate]),
+      entries: [vector, duplicate],
+      files: filesFor([vector, duplicate]),
+    });
+
+    await expect(reference.readiness()).resolves.toMatchObject({
+      ready: false,
+      issueCodes: ["catalog_invalid"],
+    });
+  });
 });
 
 describe("[T-REF-002] Reference graph and navigation", () => {
-  it("rejects unknown Entry relationships, invalid redirects, and category cycles", async () => {
+  it("rejects an unknown Entry relationship", async () => {
     const vector = entry("std-vector", {
       relatedEntryIds: ["missing-entry"],
     });
+    const reference = createInMemoryReferenceCatalog({
+      catalog: catalog([vector]),
+      entries: [vector],
+      files: filesFor([vector]),
+    });
+
+    await expect(reference.readiness()).resolves.toEqual({
+      ready: false,
+      issueCodes: ["catalog_invalid"],
+    });
+  });
+
+  it("rejects an invalid redirect independently", async () => {
+    const vector = entry("std-vector");
+    const reference = createInMemoryReferenceCatalog({
+      catalog: catalog([vector], {
+        redirects: [{ fromSlug: "old/vector", toEntryId: "missing-entry" }],
+      }),
+      entries: [vector],
+      files: filesFor([vector]),
+    });
+
+    await expect(reference.readiness()).resolves.toMatchObject({
+      ready: false,
+      issueCodes: ["catalog_invalid"],
+    });
+  });
+
+  it("rejects a category parent cycle independently", async () => {
+    const vector = entry("std-vector");
     const reference = createInMemoryReferenceCatalog({
       catalog: catalog([vector], {
         categories: [
           { id: "containers", title: "容器", parentId: "sequences", order: 1 },
           { id: "sequences", title: "顺序容器", parentId: "containers", order: 2 },
         ],
-        redirects: [
-          { fromSlug: "old/vector", toEntryId: "missing-entry" },
-        ],
       }),
       entries: [vector],
       files: filesFor([vector]),
     });
 
-    await expect(reference.readiness()).resolves.toEqual({
+    await expect(reference.readiness()).resolves.toMatchObject({
       ready: false,
       issueCodes: ["catalog_invalid"],
     });
@@ -336,6 +379,7 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
       ready: true,
       catalogVersion: 1,
       entryCount: 5,
+      activationDurationMs: expect.any(Number),
     });
     const result = await reference.search({ text: "std::sort" });
     expect(result.results[0]).toMatchObject({ id: "std-sort" });
@@ -372,6 +416,47 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
         catalogPath: join(root, "catalog.json"),
       });
       await expect(reference.readiness()).resolves.toEqual({
+        ready: false,
+        issueCodes: ["catalog_invalid"],
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a catalog symlink that escapes the configured Reference root", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-reference-root-"));
+    const outside = await mkdtemp(join(tmpdir(), "cpp-reference-outside-"));
+    const vector = entry("std-vector");
+    try {
+      await mkdir(join(outside, "entries", "std-vector"), { recursive: true });
+      await writeFile(
+        join(outside, "entries", "std-vector", "content.md"),
+        "# std::vector\n",
+        "utf8",
+      );
+      await writeFile(
+        join(outside, "entries", "std-vector", "basic.cpp"),
+        "int main() { return 0; }\n",
+        "utf8",
+      );
+      await writeFile(
+        join(outside, "entries", "std-vector", "entry.json"),
+        JSON.stringify(vector),
+        "utf8",
+      );
+      await writeFile(
+        join(outside, "catalog.json"),
+        JSON.stringify(catalog([vector])),
+        "utf8",
+      );
+      await symlink(join(outside, "catalog.json"), join(root, "catalog.json"));
+
+      const reference = createFilesystemReferenceCatalog({
+        catalogPath: join(root, "catalog.json"),
+      });
+      await expect(reference.readiness()).resolves.toMatchObject({
         ready: false,
         issueCodes: ["catalog_invalid"],
       });

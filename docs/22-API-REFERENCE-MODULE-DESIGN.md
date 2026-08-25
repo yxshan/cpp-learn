@@ -419,6 +419,7 @@ interface ReferenceReadiness {
   ready: boolean;
   catalogVersion?: number;
   entryCount?: number;
+  activationDurationMs?: number;
   issueCodes?: (
     | "catalog_missing"
     | "catalog_invalid"
@@ -433,7 +434,9 @@ index. Unknown Entries return `404`, invalid bounded filters return `400`, and
 unavailable Reference capability returns `503 reference_unavailable` without
 changing platform health.
 
-Readiness exposes only the closed, stable `issueCodes` vocabulary. Detailed
+Successful readiness also exposes the measured catalog activation duration in
+milliseconds. Readiness exposes only the closed, stable `issueCodes`
+vocabulary. Detailed
 schema paths, filesystem paths, source excerpts, and authoring diagnostics are
 logged and displayed only through server-side development tooling.
 

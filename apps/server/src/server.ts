@@ -184,43 +184,62 @@ export function createServer(
     REFERENCE_VERIFICATIONS,
   );
 
+  const invalidReferenceQuery = (reply: FastifyReply) =>
+    reply.code(400).send({
+      schemaVersion: 1,
+      error: { code: "validation_error", message: "Invalid search query" },
+    });
+
   server.get<{
-    Querystring: {
-      q?: string;
-      kind?: string;
-      category?: string;
-      standard?: string;
-      verified?: string;
-      limit?: string;
-    };
+    Querystring: Record<string, unknown>;
   }>("/api/v1/reference/search", async (request, reply) => {
     const reference = await readyReference(reply);
     if (!reference) return;
-    const { q = "", kind, category, standard, verified, limit } = request.query;
-    const parsedLimit = limit === undefined ? undefined : Number(limit);
+    const { q, kind, category, standard, verified, limit } = request.query;
+    const scalarValues = [q, kind, category, standard, verified, limit];
     if (
-      (kind !== undefined && !referenceKinds.has(kind as ReferenceEntryKind)) ||
-      (standard !== undefined && !cppStandards.has(standard as CppStandard)) ||
-      (verified !== undefined &&
-        !referenceVerification.has(verified as ReferenceVerification)) ||
-      (limit !== undefined && !Number.isInteger(parsedLimit))
+      scalarValues.some(
+        (value) => value !== undefined && typeof value !== "string",
+      )
     ) {
-      return reply.code(400).send({
-        schemaVersion: 1,
-        error: { code: "validation_error", message: "Invalid search query" },
-      });
+      return invalidReferenceQuery(reply);
+    }
+    const searchText = (q as string | undefined) ?? "";
+    const searchKind = kind as string | undefined;
+    const searchCategory = category as string | undefined;
+    const searchStandard = standard as string | undefined;
+    const searchVerification = verified as string | undefined;
+    const searchLimit = limit as string | undefined;
+    const parsedLimit =
+      searchLimit === undefined ? undefined : Number(searchLimit);
+    if (
+      (searchKind !== undefined &&
+        !referenceKinds.has(searchKind as ReferenceEntryKind)) ||
+      (searchStandard !== undefined &&
+        !cppStandards.has(searchStandard as CppStandard)) ||
+      (searchVerification !== undefined &&
+        !referenceVerification.has(
+          searchVerification as ReferenceVerification,
+        )) ||
+      (searchLimit !== undefined && !Number.isInteger(parsedLimit))
+    ) {
+      return invalidReferenceQuery(reply);
     }
     try {
       return await reference.search({
-        text: q,
-        ...(kind === undefined ? {} : { kind: kind as ReferenceEntryKind }),
-        ...(category === undefined ? {} : { category }),
-        ...(standard === undefined
+        text: searchText,
+        ...(searchKind === undefined
           ? {}
-          : { standard: standard as CppStandard }),
-        ...(verified === undefined
+          : { kind: searchKind as ReferenceEntryKind }),
+        ...(searchCategory === undefined ? {} : { category: searchCategory }),
+        ...(searchStandard === undefined
           ? {}
-          : { verified: verified as ReferenceVerification }),
+          : { standard: searchStandard as CppStandard }),
+        ...(searchVerification === undefined
+          ? {}
+          : {
+              verified: searchVerification as ReferenceVerification,
+            }),
         ...(parsedLimit === undefined ? {} : { limit: parsedLimit }),
       });
     } catch (error) {
@@ -237,18 +256,19 @@ export function createServer(
     }
   });
 
-  server.get<{ Querystring: { slug?: string } }>(
+  server.get<{ Querystring: Record<string, unknown> }>(
     "/api/v1/reference/resolve",
     async (request, reply) => {
       const reference = await readyReference(reply);
       if (!reference) return;
-      if (!request.query.slug) {
+      const slug = request.query["slug"];
+      if (typeof slug !== "string" || slug.length === 0) {
         return reply.code(400).send({
           schemaVersion: 1,
           error: { code: "validation_error", message: "Slug is required" },
         });
       }
-      const result = await reference.resolveSlug(request.query.slug);
+      const result = await reference.resolveSlug(slug);
       if (!result) {
         return reply.code(404).send({
           schemaVersion: 1,

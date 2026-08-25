@@ -14,9 +14,10 @@
   `packages/reference-schema`.
 - Added the read-only `ReferenceCatalog` Module Interface with filesystem and
   in-memory Adapters.
-- Implemented atomic activation, confined paths, complete graph validation,
-  ordered navigation, stable ID lookup, canonical slug resolution, and
-  deterministic ranked search.
+- Implemented atomic activation with duration reporting, lexical and physical
+  path confinement, complete graph validation, ordered navigation, stable ID
+  lookup, canonical slug resolution, and an activation-built normalized/token
+  search index.
 - Added standard availability filters that distinguish introduction,
   deprecation, removal, and draft status.
 - Added shared Reference DTOs and Fastify navigation, search, resolve, and
@@ -43,11 +44,11 @@ the cross-catalog graph and builds reverse Activity links.
 
 | Test | Evidence | Result |
 |---|---|---|
-| `T-REF-001` | Schema fixtures, real filesystem activation, confined paths, and symlink escape rejection | Passed |
-| `T-REF-002` | Duplicate/graph/navigation/redirect rejection and composition-root link validation | Passed |
+| `T-REF-001` | Unsupported-standard and schema-vocabulary checks; independent duplicate ID/slug checks; real filesystem activation, duration, confined paths, and content/catalog symlink escape rejection | Passed |
+| `T-REF-002` | Independent unknown-relationship, invalid-redirect, and category-cycle checks; navigation and composition-root link validation | Passed |
 | `T-REF-003` | Symbol, explicit prefix, title, alias, Chinese, heading, header, positive filters, verification, stable ties, and standard-interval search | Passed |
 | `T-REF-004` | Clang compiles four examples with declared C++20 and strict warnings; Run output is exact | Passed |
-| `T-REF-005` | Real Fastify injection covers bootstrap readiness, all Reference query routes, and safe error semantics | Passed |
+| `T-REF-005` | Real Fastify injection covers required bootstrap readiness, all Reference query routes, repeated scalar parameters, and safe error semantics | Passed |
 | `T-REF-010` | Schema and activation require primary sources and complete reused-material attribution | Passed |
 | Existing regression suite | Curriculum, server, learning, Workspace, Judge, Web build, lint, and type checks | Passed |
 

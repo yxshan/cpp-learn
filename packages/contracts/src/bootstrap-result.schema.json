@@ -13,7 +13,7 @@
     "services": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["curriculum", "toolchain", "record"],
+      "required": ["curriculum", "toolchain", "record", "reference"],
       "properties": {
         "curriculum": { "$ref": "#/$defs/curriculumReadiness" },
         "toolchain": { "$ref": "#/$defs/toolchainReadiness" },
@@ -64,6 +64,7 @@
         "ready": { "type": "boolean" },
         "catalogVersion": { "type": "integer", "minimum": 1 },
         "entryCount": { "type": "integer", "minimum": 0 },
+        "activationDurationMs": { "type": "number", "minimum": 0 },
         "issueCodes": {
           "type": "array",
           "uniqueItems": true,

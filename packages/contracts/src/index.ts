@@ -22,6 +22,17 @@ export interface RecordReadiness {
   readonly issues?: readonly string[];
 }
 
+export interface LearningBootstrapResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly generatedAt: string;
+  readonly ready: boolean;
+  readonly services: {
+    readonly curriculum: CurriculumReadiness;
+    readonly toolchain: ToolchainReadiness;
+    readonly record: RecordReadiness;
+  };
+}
+
 export interface BootstrapResult {
   readonly schemaVersion: typeof SCHEMA_VERSION;
   readonly generatedAt: string;
@@ -30,7 +41,7 @@ export interface BootstrapResult {
     readonly curriculum: CurriculumReadiness;
     readonly toolchain: ToolchainReadiness;
     readonly record: RecordReadiness;
-    readonly reference?: ReferenceReadiness;
+    readonly reference: ReferenceReadiness;
   };
 }
 
@@ -181,6 +192,7 @@ export interface ReferenceReadiness {
   readonly ready: boolean;
   readonly catalogVersion?: number;
   readonly entryCount?: number;
+  readonly activationDurationMs?: number;
   readonly issueCodes?: readonly ReferenceReadinessIssueCode[];
 }
 
@@ -641,7 +653,7 @@ export type LearningQuery =
   | { readonly type: "attempt.get"; readonly attemptId: string }
   | { readonly type: "job.get"; readonly jobId: string };
 export type QueryResult =
-  | BootstrapResult
+  | LearningBootstrapResult
   | ActivitiesResult
   | ActivityResult
   | WorkspaceResult
@@ -653,7 +665,7 @@ export type QueryResult =
 export type QueryResultFor<Q extends LearningQuery> = Q extends {
   readonly type: "bootstrap.get";
 }
-  ? BootstrapResult
+  ? LearningBootstrapResult
   : Q extends { readonly type: "activities.list" }
     ? ActivitiesResult
     : Q extends { readonly type: "activity.get" }

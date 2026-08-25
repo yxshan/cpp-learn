@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 
-import type { BootstrapResult, LearningPlatform } from "@cpp-learn/contracts";
+import type {
+  LearningBootstrapResult,
+  LearningPlatform,
+} from "@cpp-learn/contracts";
 
 export interface CliDependencies {
   readonly argv: readonly string[];
@@ -21,7 +24,7 @@ export interface CliDependencies {
   };
 }
 
-function formatDoctorReport(report: BootstrapResult): string {
+function formatDoctorReport(report: LearningBootstrapResult): string {
   const symbol = (ready: boolean): string => (ready ? "✓" : "✗");
   return [
     `C++ Learn ${report.ready ? "is ready" : "needs attention"}`,

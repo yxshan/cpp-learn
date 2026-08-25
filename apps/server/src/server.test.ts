@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type {
   AttemptCompletedEvent,
-  BootstrapResult,
+  LearningBootstrapResult,
   JudgeReport,
   LearningPlatform,
 } from "@cpp-learn/contracts";
@@ -27,7 +27,7 @@ import {
 
 import { createServer } from "./server.js";
 
-const bootstrap: BootstrapResult = {
+const bootstrap: LearningBootstrapResult = {
   schemaVersion: 1,
   generatedAt: "2026-08-23T08:00:00.000Z",
   ready: true,
@@ -268,6 +268,32 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
       },
     });
     await degradedServer.close();
+  });
+
+  it("rejects repeated scalar search and slug parameters with 400", async () => {
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+    });
+
+    const repeatedSearch = await server.inject({
+      method: "GET",
+      url: "/api/v1/reference/search?q=vector&q=span",
+    });
+    const repeatedSlug = await server.inject({
+      method: "GET",
+      url: "/api/v1/reference/resolve?slug=library%2Fvector&slug=old%2Fvector",
+    });
+
+    expect(repeatedSearch.statusCode).toBe(400);
+    expect(repeatedSearch.json()).toMatchObject({
+      error: { code: "validation_error" },
+    });
+    expect(repeatedSlug.statusCode).toBe(400);
+    expect(repeatedSlug.json()).toMatchObject({
+      error: { code: "validation_error" },
+    });
+    await server.close();
   });
 });
 

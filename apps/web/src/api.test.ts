@@ -27,6 +27,12 @@ const bootstrap: BootstrapResult = {
     curriculum: { ready: true, activityCount: 1 },
     toolchain: { ready: true, compiler: "Apple Clang 15" },
     record: { ready: true },
+    reference: {
+      ready: true,
+      catalogVersion: 1,
+      entryCount: 5,
+      activationDurationMs: 12,
+    },
   },
 };
 
@@ -48,6 +54,24 @@ describe("[T-CONTRACT-001] Web bootstrap Adapter", () => {
   it("rejects a versioned payload that does not satisfy the transport schema", async () => {
     const request = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ schemaVersion: 1, ready: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await expect(getBootstrap(request)).rejects.toThrow(
+      "Bootstrap response violates the transport contract",
+    );
+  });
+
+  it("rejects a public bootstrap response that omits Reference readiness", async () => {
+    const services = {
+      curriculum: bootstrap.services.curriculum,
+      toolchain: bootstrap.services.toolchain,
+      record: bootstrap.services.record,
+    };
+    const request = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ...bootstrap, services }), {
         status: 200,
         headers: { "content-type": "application/json" },
       }),

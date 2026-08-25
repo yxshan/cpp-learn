@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type {
   AttemptCompletedEvent,
-  BootstrapResult,
+  LearningBootstrapResult,
   DashboardResult,
   JudgeReport,
   LearningPlatform,
@@ -13,7 +13,7 @@ import { createInMemoryWorkspace } from "@cpp-learn/workspace";
 
 import { runCli } from "./cli.js";
 
-const bootstrap: BootstrapResult = {
+const bootstrap: LearningBootstrapResult = {
   schemaVersion: 1,
   generatedAt: "2026-08-23T08:00:00.000Z",
   ready: false,
