@@ -1,3 +1,7 @@
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 
 import type {
@@ -9,9 +13,11 @@ import type {
 } from "@cpp-learn/contracts";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
 import { createServer } from "@cpp-learn/server";
+import { createProductionApplication } from "@cpp-learn/server/composition";
 import { createInMemoryWorkspace } from "@cpp-learn/workspace";
 
 import { runCli } from "./cli.js";
+import { createCliHttpServer } from "./serve.js";
 
 const bootstrap: LearningBootstrapResult = {
   schemaVersion: 1,
@@ -23,6 +29,36 @@ const bootstrap: LearningBootstrapResult = {
     record: { ready: true },
   },
 };
+
+describe("[T-REF-005] CLI serve Reference composition", () => {
+  it("serves the activated Reference catalog through the public HTTP API", async () => {
+    const runtimeRoot = await mkdtemp(join(tmpdir(), "cpp-learn-cli-serve-"));
+    const application = await createProductionApplication({
+      dataRoot: join(runtimeRoot, "data"),
+      workspaceRoot: join(runtimeRoot, "workspaces"),
+    });
+    const server = createCliHttpServer(application, { logger: false });
+
+    try {
+      const response = await server.inject({
+        method: "GET",
+        url: "/api/v1/reference",
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        schemaVersion: 1,
+        catalogVersion: 2,
+        categories: expect.arrayContaining([
+          expect.objectContaining({ id: "containers" }),
+        ]),
+      });
+    } finally {
+      await server.close();
+      await rm(runtimeRoot, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("[T-CONTRACT-001] CLI doctor Adapter", () => {
   it("writes exactly one shared versioned result in JSON mode", async () => {
