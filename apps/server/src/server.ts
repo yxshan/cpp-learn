@@ -5,11 +5,14 @@ import { join } from "node:path";
 import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import fastifyStatic from "@fastify/static";
 
-import type { LearningPlatform } from "@cpp-learn/contracts";
-import type {
-  CppStandard,
-  ReferenceEntryKind,
-  ReferenceVerification,
+import {
+  CPP_STANDARDS,
+  REFERENCE_ENTRY_KINDS,
+  REFERENCE_VERIFICATIONS,
+  type CppStandard,
+  type LearningPlatform,
+  type ReferenceEntryKind,
+  type ReferenceVerification,
 } from "@cpp-learn/contracts";
 import {
   ReferenceQueryValidationError,
@@ -128,9 +131,24 @@ export function createServer(
     status: "ok",
   }));
 
-  server.get("/api/v1/bootstrap", async () =>
-    dependencies.platform.query({ type: "bootstrap.get" }),
-  );
+  const referenceReadiness = () =>
+    dependencies.reference
+      ? dependencies.reference.readiness()
+      : Promise.resolve({
+          ready: false as const,
+          issueCodes: ["catalog_missing" as const],
+        });
+
+  server.get("/api/v1/bootstrap", async () => {
+    const result = await dependencies.platform.query({ type: "bootstrap.get" });
+    return {
+      ...result,
+      services: {
+        ...result.services,
+        reference: await referenceReadiness(),
+      },
+    };
+  });
 
   server.get("/api/v1/dashboard", async () =>
     dependencies.platform.query({ type: "dashboard.get" }),
@@ -143,12 +161,7 @@ export function createServer(
   const readyReference = async (
     reply: FastifyReply,
   ): Promise<ReferenceCatalog | undefined> => {
-    const readiness = dependencies.reference
-      ? await dependencies.reference.readiness()
-      : {
-          ready: false as const,
-          issueCodes: ["catalog_missing" as const],
-        };
+    const readiness = await referenceReadiness();
     if (!readiness.ready) {
       await reply.code(503).send({
         schemaVersion: 1,
@@ -165,30 +178,11 @@ export function createServer(
     return reference?.getNavigation();
   });
 
-  const referenceKinds = new Set<ReferenceEntryKind>([
-    "landing",
-    "header",
-    "type",
-    "function",
-    "member",
-    "concept",
-    "guide",
-  ]);
-  const cppStandards = new Set<CppStandard>([
-    "c++98",
-    "c++03",
-    "c++11",
-    "c++14",
-    "c++17",
-    "c++20",
-    "c++23",
-    "c++26-draft",
-  ]);
-  const referenceVerification = new Set<ReferenceVerification>([
-    "verified",
-    "unsupported",
-    "not-checked",
-  ]);
+  const referenceKinds = new Set<ReferenceEntryKind>(REFERENCE_ENTRY_KINDS);
+  const cppStandards = new Set<CppStandard>(CPP_STANDARDS);
+  const referenceVerification = new Set<ReferenceVerification>(
+    REFERENCE_VERIFICATIONS,
+  );
 
   server.get<{
     Querystring: {

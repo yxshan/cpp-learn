@@ -1,19 +1,21 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 
-import type {
-  CppStandard,
-  ReferenceEntryDetail,
-  ReferenceEntryKind,
-  ReferenceNavigation,
-  ReferenceReadiness,
-  ReferenceReadinessIssueCode,
-  ReferenceMatchField,
-  ReferenceSearchQuery,
-  ReferenceSearchResult,
-  ReferenceSlugResolution,
-  ReferenceSource,
+import {
+  CPP_STANDARDS,
+  type CppStandard,
+  type ReferenceEntryDetail,
+  type ReferenceEntryKind,
+  type ReferenceNavigation,
+  type ReferenceReadiness,
+  type ReferenceReadinessIssueCode,
+  type ReferenceMatchField,
+  type ReferenceSearchQuery,
+  type ReferenceSearchResult,
+  type ReferenceSlugResolution,
+  type ReferenceSource,
+  type ReferenceVerification,
 } from "@cpp-learn/contracts";
 import {
   validateReferenceCatalogManifest,
@@ -80,23 +82,25 @@ export interface ReferenceCatalog {
 interface ActiveCatalog {
   readonly catalog: ReferenceCatalogManifest;
   readonly entriesById: ReadonlyMap<string, ReferenceEntryManifest>;
-  readonly readText: (path: string) => Promise<string>;
   readonly textByPath: ReadonlyMap<string, string>;
+  readonly searchDocuments: readonly ReferenceSearchDocument[];
+  readonly verificationByExampleKey: ReadonlyMap<
+    string,
+    ReferenceVerification
+  >;
   readonly relatedActivityIdsByEntryId: ReadonlyMap<string, readonly string[]>;
 }
 
-const CPP_STANDARDS: readonly CppStandard[] = [
-  "c++98",
-  "c++03",
-  "c++11",
-  "c++14",
-  "c++17",
-  "c++20",
-  "c++23",
-  "c++26-draft",
-];
+interface ReferenceSearchDocument {
+  readonly entry: ReferenceEntryManifest;
+  readonly headings: readonly string[];
+  readonly body: string;
+  readonly categoryValues: readonly string[];
+  readonly verification: ReferenceVerification;
+}
 
 export class ReferenceQueryValidationError extends Error {}
+class ReferenceCatalogMissingError extends Error {}
 
 type Activation =
   | { readonly ready: true; readonly active: ActiveCatalog }
@@ -109,6 +113,10 @@ interface CatalogData {
   readonly catalog: ReferenceCatalogManifest;
   readonly entries: readonly ReferenceEntryManifest[];
   readonly readText: (path: string) => Promise<string>;
+  readonly verificationByExampleKey?: ReadonlyMap<
+    string,
+    ReferenceVerification
+  >;
   readonly relatedActivityIdsByEntryId?: ReadonlyMap<
     string,
     readonly string[]
@@ -117,6 +125,27 @@ interface CatalogData {
 
 function digest(value: string): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function exampleVerificationKey(entryId: string, exampleId: string): string {
+  return `${entryId}/${exampleId}`;
+}
+
+function entryVerification(
+  entry: ReferenceEntryManifest,
+  verificationByExampleKey: ReadonlyMap<string, ReferenceVerification>,
+): ReferenceVerification {
+  const states = entry.examples.map(
+    (example) =>
+      verificationByExampleKey.get(
+        exampleVerificationKey(entry.id, example.id),
+      ) ?? "not-checked",
+  );
+  if (states.includes("unsupported")) return "unsupported";
+  if (states.length > 0 && states.every((state) => state === "verified")) {
+    return "verified";
+  }
+  return "not-checked";
 }
 
 async function activate(data: CatalogData): Promise<ActiveCatalog> {
@@ -204,11 +233,27 @@ async function activate(data: CatalogData): Promise<ActiveCatalog> {
   const textByPath = new Map(
     paths.map((path, index) => [path, contents[index] ?? ""]),
   );
+  const verificationByExampleKey =
+    data.verificationByExampleKey ?? new Map<string, ReferenceVerification>();
+  const searchDocuments = data.entries.map((entry) => {
+    const markdown = textByPath.get(entry.content.path) ?? "";
+    return {
+      entry,
+      headings: headings(markdown),
+      body: markdown.replace(/^#{1,6}\s+.+$/gm, ""),
+      categoryValues: entry.categories.flatMap((categoryId) => {
+        const title = categoryById.get(categoryId)?.title;
+        return title === undefined ? [categoryId] : [categoryId, title];
+      }),
+      verification: entryVerification(entry, verificationByExampleKey),
+    };
+  });
   return {
     catalog: data.catalog,
     entriesById,
-    readText: data.readText,
     textByPath,
+    searchDocuments,
+    verificationByExampleKey,
     relatedActivityIdsByEntryId:
       data.relatedActivityIdsByEntryId ?? new Map(),
   };
@@ -224,12 +269,27 @@ function searchableForms(value: string): readonly string[] {
   return normalized === stripped ? [normalized] : [normalized, stripped];
 }
 
-function containsQuery(value: string, query: string): boolean {
-  return searchableForms(value).some((form) => form.includes(query));
-}
-
 function exactQuery(value: string, query: string): boolean {
   return searchableForms(value).includes(query);
+}
+
+function prefixQuery(value: string, query: string): boolean {
+  return searchableForms(value).some((form) => form.startsWith(query));
+}
+
+function tokenQuery(value: string, query: string): boolean {
+  const forms = searchableForms(value);
+  if (/\p{Script=Han}/u.test(query)) {
+    return forms.some((form) => form.includes(query));
+  }
+  const queryTokens: readonly string[] =
+    query.match(/[\p{L}\p{N}_:+<>-]+/gu) ?? [];
+  if (queryTokens.length === 0) return false;
+  return forms.some((form) => {
+    const tokens: readonly string[] =
+      form.match(/[\p{L}\p{N}_:+<>-]+/gu) ?? [];
+    return queryTokens.every((token) => tokens.includes(token));
+  });
 }
 
 function standardIndex(standard: CppStandard): number {
@@ -264,8 +324,7 @@ function createReferenceCatalog(
     .catch((error: unknown) => ({
       ready: false as const,
       issueCode:
-        error instanceof Error &&
-        (error as NodeJS.ErrnoException).code === "ENOENT"
+        error instanceof ReferenceCatalogMissingError
           ? ("catalog_missing" as const)
           : ("catalog_invalid" as const),
     }));
@@ -296,7 +355,10 @@ function createReferenceCatalog(
             standard: example.standard,
             source,
             digest: digest(source),
-            verification: "not-checked" as const,
+            verification:
+              state.active.verificationByExampleKey.get(
+                exampleVerificationKey(entry.id, example.id),
+              ) ?? "not-checked",
             ...(example.stdin === undefined ? {} : { stdin: example.stdin }),
             ...(example.expectedStdout === undefined
               ? {}
@@ -334,7 +396,7 @@ function createReferenceCatalog(
         aliases: entry.aliases,
         categories: entry.categories,
         relatedEntryIds: entry.relatedEntryIds,
-        markdown,
+        content: markdown,
         examples,
         sources: entry.sources,
         verifiedAt: entry.verifiedAt,
@@ -398,49 +460,75 @@ function createReferenceCatalog(
         throw new ReferenceQueryValidationError("Invalid Reference search");
       }
       const normalizedQuery = normalize(query.text);
-      const ranked = [...state.active.entriesById.values()]
+      const ranked = state.active.searchDocuments
         .filter(
-          (entry) =>
-            (query.kind === undefined || entry.kind === query.kind) &&
+          (document) =>
+            (query.kind === undefined ||
+              document.entry.kind === query.kind) &&
             (query.category === undefined ||
-              entry.categories.includes(query.category)) &&
+              document.entry.categories.includes(query.category)) &&
             (query.standard === undefined ||
-              availableInStandard(entry, query.standard)) &&
-            (query.verified === undefined || query.verified === "not-checked"),
+              availableInStandard(document.entry, query.standard)) &&
+            (query.verified === undefined ||
+              document.verification === query.verified),
         )
-        .flatMap((entry) => {
-          const markdown =
-            state.active.textByPath.get(entry.content.path) ?? "";
+        .flatMap((document) => {
+          const { entry } = document;
           const matchedBy = new Set<ReferenceMatchField>();
           let score = normalizedQuery.length === 0 ? 100 : Infinity;
-          const match = (
+          const recordMatch = (
             field: ReferenceMatchField,
-            value: string | undefined,
-            exactScore: number,
-            containsScore: number,
+            matched: boolean,
+            matchScore: number,
           ) => {
-            if (!value || normalizedQuery.length === 0) return;
-            if (exactQuery(value, normalizedQuery)) {
+            if (matched && normalizedQuery.length > 0) {
               matchedBy.add(field);
-              score = Math.min(score, exactScore);
-            } else if (containsQuery(value, normalizedQuery)) {
-              matchedBy.add(field);
-              score = Math.min(score, containsScore);
+              score = Math.min(score, matchScore);
             }
           };
-          match("id", entry.id, 0, 3);
-          match("symbol", entry.symbol, 0, 2);
-          match("header", entry.header, 0, 3);
-          for (const alias of entry.aliases)
-            match("alias", alias, 1, 3);
-          match("title", entry.title, 1, 3);
-          for (const heading of headings(markdown))
-            match("heading", heading, 3, 3);
-          for (const category of entry.categories)
-            match("category", category, 4, 4);
-          match("body", markdown.replace(/^#{1,6}\s+.+$/gm, ""), 4, 4);
+          recordMatch("id", exactQuery(entry.id, normalizedQuery), 0);
+          recordMatch(
+            "symbol",
+            entry.symbol !== undefined &&
+              exactQuery(entry.symbol, normalizedQuery),
+            0,
+          );
+          recordMatch(
+            "header",
+            entry.header !== undefined &&
+              exactQuery(entry.header, normalizedQuery),
+            0,
+          );
+          recordMatch(
+            "alias",
+            entry.aliases.some((alias) => exactQuery(alias, normalizedQuery)),
+            1,
+          );
+          recordMatch("title", exactQuery(entry.title, normalizedQuery), 1);
+          recordMatch(
+            "symbol",
+            entry.symbol !== undefined &&
+              prefixQuery(entry.symbol, normalizedQuery),
+            2,
+          );
+          recordMatch("title", tokenQuery(entry.title, normalizedQuery), 3);
+          recordMatch(
+            "heading",
+            document.headings.some((heading) =>
+              tokenQuery(heading, normalizedQuery),
+            ),
+            3,
+          );
+          recordMatch(
+            "category",
+            document.categoryValues.some((category) =>
+              tokenQuery(category, normalizedQuery),
+            ),
+            4,
+          );
+          recordMatch("body", tokenQuery(document.body, normalizedQuery), 4);
           if (!Number.isFinite(score) && normalizedQuery.length > 0) return [];
-          return [{ entry, matchedBy: [...matchedBy], score }];
+          return [{ ...document, matchedBy: [...matchedBy], score }];
         })
         .sort(
           (left, right) =>
@@ -457,7 +545,7 @@ function createReferenceCatalog(
         catalogVersion: state.active.catalog.version,
         query,
         total: ranked.length,
-        results: ranked.slice(0, limit).map(({ entry, matchedBy }) => ({
+        results: ranked.slice(0, limit).map(({ entry, matchedBy, verification }) => ({
           id: entry.id,
           slug: entry.slug,
           kind: entry.kind,
@@ -469,6 +557,7 @@ function createReferenceCatalog(
           ...(entry.deprecatedSince === undefined
             ? {}
             : { deprecatedSince: entry.deprecatedSince }),
+          verification,
           matchedBy,
         })),
       };
@@ -509,6 +598,10 @@ export interface InMemoryReferenceCatalogDependencies {
   readonly catalog: ReferenceCatalogManifest;
   readonly entries: readonly ReferenceEntryManifest[];
   readonly files: Readonly<Record<string, string>>;
+  readonly verificationByExampleKey?: ReadonlyMap<
+    string,
+    ReferenceVerification
+  >;
   readonly relatedActivityIdsByEntryId?: ReadonlyMap<
     string,
     readonly string[]
@@ -526,6 +619,11 @@ export function createInMemoryReferenceCatalog(
       if (content === undefined) throw new Error(`Missing file: ${path}`);
       return content;
     },
+    ...(dependencies.verificationByExampleKey === undefined
+      ? {}
+      : {
+          verificationByExampleKey: dependencies.verificationByExampleKey,
+        }),
     ...(dependencies.relatedActivityIdsByEntryId === undefined
       ? {}
       : {
@@ -549,8 +647,22 @@ function resolveInsideRoot(root: string, path: string): string {
   return resolved;
 }
 
+async function readConfinedText(root: string, path: string): Promise<string> {
+  const lexicalPath = resolveInsideRoot(root, path);
+  const physicalPath = await realpath(lexicalPath);
+  const fromRoot = relative(root, physicalPath);
+  if (fromRoot.startsWith("..") || isAbsolute(fromRoot)) {
+    throw new Error("Reference symlink escapes the catalog root");
+  }
+  return readFile(physicalPath, "utf8");
+}
+
 export interface FilesystemReferenceCatalogDependencies {
   readonly catalogPath: string;
+  readonly verificationByExampleKey?: ReadonlyMap<
+    string,
+    ReferenceVerification
+  >;
   readonly relatedActivityIdsByEntryId?: ReadonlyMap<
     string,
     readonly string[]
@@ -561,21 +673,33 @@ export function createFilesystemReferenceCatalog(
   dependencies: FilesystemReferenceCatalogDependencies,
 ): ReferenceCatalog {
   return createReferenceCatalog(async () => {
-    const root = dirname(dependencies.catalogPath);
+    let catalogPath: string;
+    try {
+      catalogPath = await realpath(dependencies.catalogPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        throw new ReferenceCatalogMissingError();
+      }
+      throw error;
+    }
+    const root = dirname(catalogPath);
     const catalog = JSON.parse(
-      await readFile(dependencies.catalogPath, "utf8"),
+      await readFile(catalogPath, "utf8"),
     ) as ReferenceCatalogManifest;
     const entries = await Promise.all(
       catalog.entries.map(async (path) =>
-        JSON.parse(
-          await readFile(resolveInsideRoot(root, path), "utf8"),
-        ),
+        JSON.parse(await readConfinedText(root, path)),
       ),
     );
     return {
       catalog,
       entries,
-      readText: (path) => readFile(resolveInsideRoot(root, path), "utf8"),
+      readText: (path) => readConfinedText(root, path),
+      ...(dependencies.verificationByExampleKey === undefined
+        ? {}
+        : {
+            verificationByExampleKey: dependencies.verificationByExampleKey,
+          }),
       ...(dependencies.relatedActivityIdsByEntryId === undefined
         ? {}
         : {

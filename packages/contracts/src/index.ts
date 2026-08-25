@@ -30,23 +30,39 @@ export interface BootstrapResult {
     readonly curriculum: CurriculumReadiness;
     readonly toolchain: ToolchainReadiness;
     readonly record: RecordReadiness;
+    readonly reference?: ReferenceReadiness;
   };
 }
 
-export type ReferenceEntryKind =
-  "landing" | "header" | "type" | "function" | "member" | "concept" | "guide";
+export const REFERENCE_ENTRY_KINDS = [
+  "landing",
+  "header",
+  "type",
+  "function",
+  "member",
+  "concept",
+  "guide",
+] as const;
+export type ReferenceEntryKind = (typeof REFERENCE_ENTRY_KINDS)[number];
 
-export type CppStandard =
-  | "c++98"
-  | "c++03"
-  | "c++11"
-  | "c++14"
-  | "c++17"
-  | "c++20"
-  | "c++23"
-  | "c++26-draft";
+export const CPP_STANDARDS = [
+  "c++98",
+  "c++03",
+  "c++11",
+  "c++14",
+  "c++17",
+  "c++20",
+  "c++23",
+  "c++26-draft",
+] as const;
+export type CppStandard = (typeof CPP_STANDARDS)[number];
 
-export type ReferenceVerification = "verified" | "unsupported" | "not-checked";
+export const REFERENCE_VERIFICATIONS = [
+  "verified",
+  "unsupported",
+  "not-checked",
+] as const;
+export type ReferenceVerification = (typeof REFERENCE_VERIFICATIONS)[number];
 
 export interface ReferenceSource {
   readonly kind: "primary" | "secondary" | "vendor";
@@ -90,7 +106,7 @@ export interface ReferenceEntryDetail {
   readonly aliases: readonly string[];
   readonly categories: readonly string[];
   readonly relatedEntryIds: readonly string[];
-  readonly markdown: string;
+  readonly content: string;
   readonly examples: readonly ReferenceExampleView[];
   readonly sources: readonly ReferenceSource[];
   readonly verifiedAt: string;
@@ -126,6 +142,7 @@ export interface ReferenceSearchItem {
   readonly header?: string;
   readonly since?: CppStandard;
   readonly deprecatedSince?: CppStandard;
+  readonly verification: ReferenceVerification;
   readonly matchedBy: readonly ReferenceMatchField[];
 }
 

@@ -180,11 +180,11 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 
 | Test ID | Planned executable evidence | Status |
 |---|---|---|
-| T-REF-001 | `packages/reference-schema/src/reference-schema.test.ts` and `modules/reference/src/reference.test.ts` validate schemas and full-catalog activation | Passed |
+| T-REF-001 | `packages/reference-schema/src/reference-schema.test.ts` and `modules/reference/src/reference.test.ts` validate schemas, full-catalog activation, confined paths, and symlink escape rejection | Passed |
 | T-REF-002 | `modules/reference/src/reference.test.ts` rejects invalid graphs; `apps/server/src/composition.test.ts` validates Activity-to-Reference integration | Passed |
-| T-REF-003 | `modules/reference/src/reference.test.ts` covers exact symbol/header/alias/Chinese/heading ranking, standard availability intervals, and stable tie-breaking | Passed |
+| T-REF-003 | `modules/reference/src/reference.test.ts` covers exact symbol/header/title/alias/Chinese/heading ranking, explicit symbol prefixes, positive filters, local verification, standard availability intervals, and stable tie-breaking | Passed |
 | T-REF-004 | `npm run check:reference` compiles and runs release examples under their declared standard and warning profile | Passed |
-| T-REF-005 | `apps/server/src/server.test.ts` exercises Reference navigation/search/resolve/detail and 400/404/503 responses through real Fastify injection | Passed |
+| T-REF-005 | `apps/server/src/server.test.ts` exercises bootstrap readiness, Reference navigation/search/resolve/detail, and 400/404/503 responses through real Fastify injection | Passed |
 | T-REF-006 | Playwright canonical and historical-slug URLs, replacement history semantics, anchors, keyboard search/navigation, status semantics, and 390-pixel layout | Planned |
 | T-REF-007 | Integration test snapshots Workspace and Learning Record before and after Reference browsing/copying | Planned |
 | T-REF-008 | Built Web/HTTP Reference flow passes with outbound network access blocked | Planned |

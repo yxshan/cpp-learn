@@ -1,5 +1,8 @@
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
-import { resolve } from "node:path";
 
 import {
   createFilesystemReferenceCatalog,
@@ -88,7 +91,7 @@ describe("[T-REF-001] Reference catalog activation", () => {
       schemaVersion: 1,
       catalogVersion: 1,
       id: "std-vector",
-      markdown: "# std-vector\n\n容器正文。\n",
+      content: "# std-vector\n\n容器正文。\n",
       examples: [
         expect.objectContaining({
           id: "basic",
@@ -192,7 +195,12 @@ describe("[T-REF-002] Reference graph and navigation", () => {
 });
 
 describe("[T-REF-003] deterministic Reference search", () => {
-  const searchableCatalog = () => {
+  const searchableCatalog = (
+    verificationByExampleKey: ReadonlyMap<
+      string,
+      "verified" | "unsupported" | "not-checked"
+    > = new Map(),
+  ) => {
     const vector = entry("std-vector", {
       title: "std::vector 动态数组",
       symbol: "std::vector",
@@ -217,6 +225,7 @@ describe("[T-REF-003] deterministic Reference search", () => {
     return createInMemoryReferenceCatalog({
       catalog: catalog(entries),
       entries,
+      verificationByExampleKey,
       files: {
         ...filesFor(entries),
         [vector.content.path]: "# std::vector\n\n## 迭代器失效\n",
@@ -231,6 +240,28 @@ describe("[T-REF-003] deterministic Reference search", () => {
       id: "std-vector",
       matchedBy: expect.arrayContaining(["symbol"]),
     });
+  });
+
+  it("ranks exact titles and headers before explicit symbol prefixes", async () => {
+    const reference = searchableCatalog();
+    const title = await reference.search({ text: "std::span 连续视图" });
+    const header = await reference.search({ text: "<span>" });
+    const prefix = await reference.search({ text: "std::vec" });
+    const suffix = await reference.search({ text: "tor" });
+
+    expect(title.results[0]).toMatchObject({
+      id: "std-span",
+      matchedBy: expect.arrayContaining(["title"]),
+    });
+    expect(header.results[0]).toMatchObject({
+      id: "std-span",
+      matchedBy: expect.arrayContaining(["header"]),
+    });
+    expect(prefix.results[0]).toMatchObject({
+      id: "std-vector",
+      matchedBy: expect.arrayContaining(["symbol"]),
+    });
+    expect(suffix.results).toEqual([]);
   });
 
   it("searches Chinese aliases, headings, and normalized headers", async () => {
@@ -266,6 +297,31 @@ describe("[T-REF-003] deterministic Reference search", () => {
       searchableCatalog().search({ text: "", category: "missing-category" }),
     ).rejects.toThrow("Invalid Reference search");
   });
+
+  it("filters by kind, category, and aggregate local verification with stable ties", async () => {
+    const reference = searchableCatalog(
+      new Map([
+        ["std-vector/basic", "verified"],
+        ["std-span/basic", "verified"],
+        ["std-auto-ptr/basic", "unsupported"],
+      ]),
+    );
+
+    const result = await reference.search({
+      text: "",
+      kind: "type",
+      category: "containers",
+      verified: "verified",
+    });
+
+    expect(result.results).toMatchObject([
+      { id: "std-span", verification: "verified" },
+      { id: "std-vector", verification: "verified" },
+    ]);
+    await expect(reference.getEntry("std-vector")).resolves.toMatchObject({
+      examples: [{ verification: "verified" }],
+    });
+  });
 });
 
 export { catalog, entry, filesFor };
@@ -283,5 +339,80 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
     });
     const result = await reference.search({ text: "std::sort" });
     expect(result.results[0]).toMatchObject({ id: "std-sort" });
+  });
+
+  it("rejects a content symlink that escapes the Reference root", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-reference-root-"));
+    const outside = await mkdtemp(join(tmpdir(), "cpp-reference-outside-"));
+    const vector = entry("std-vector");
+    try {
+      await mkdir(join(root, "entries", "std-vector"), { recursive: true });
+      await writeFile(join(outside, "secret.md"), "secret\n", "utf8");
+      await symlink(
+        join(outside, "secret.md"),
+        join(root, vector.content.path),
+      );
+      await writeFile(
+        join(root, vector.examples[0]?.path ?? "missing.cpp"),
+        "int main() { return 0; }\n",
+        "utf8",
+      );
+      await writeFile(
+        join(root, "entries", "std-vector", "entry.json"),
+        JSON.stringify(vector),
+        "utf8",
+      );
+      await writeFile(
+        join(root, "catalog.json"),
+        JSON.stringify(catalog([vector])),
+        "utf8",
+      );
+
+      const reference = createFilesystemReferenceCatalog({
+        catalogPath: join(root, "catalog.json"),
+      });
+      await expect(reference.readiness()).resolves.toEqual({
+        ready: false,
+        issueCodes: ["catalog_invalid"],
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+
+  it("distinguishes a missing catalog from invalid missing Entry files", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-reference-missing-"));
+    const vector = entry("std-vector");
+    try {
+      const missingCatalog = createFilesystemReferenceCatalog({
+        catalogPath: join(root, "missing-catalog.json"),
+      });
+      await expect(missingCatalog.readiness()).resolves.toEqual({
+        ready: false,
+        issueCodes: ["catalog_missing"],
+      });
+
+      await mkdir(join(root, "entries", "std-vector"), { recursive: true });
+      await writeFile(
+        join(root, "entries", "std-vector", "entry.json"),
+        JSON.stringify(vector),
+        "utf8",
+      );
+      await writeFile(
+        join(root, "catalog.json"),
+        JSON.stringify(catalog([vector])),
+        "utf8",
+      );
+      const invalidContent = createFilesystemReferenceCatalog({
+        catalogPath: join(root, "catalog.json"),
+      });
+      await expect(invalidContent.readiness()).resolves.toEqual({
+        ready: false,
+        issueCodes: ["catalog_invalid"],
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });

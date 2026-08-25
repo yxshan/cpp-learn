@@ -124,7 +124,7 @@ function createUnusedPlatform(): LearningPlatform {
 }
 
 describe("[T-CONTRACT-001] HTTP bootstrap Adapter", () => {
-  it("returns the shared LearningPlatform query result unchanged", async () => {
+  it("augments the shared LearningPlatform result with Reference readiness", async () => {
     const platform: LearningPlatform = {
       async dispatch() {
         throw new Error("No commands in this fixture");
@@ -140,7 +140,16 @@ describe("[T-CONTRACT-001] HTTP bootstrap Adapter", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual(bootstrap);
+    expect(response.json()).toEqual({
+      ...bootstrap,
+      services: {
+        ...bootstrap.services,
+        reference: {
+          ready: false,
+          issueCodes: ["catalog_missing"],
+        },
+      },
+    });
     expect(platform.query).toHaveBeenCalledWith({ type: "bootstrap.get" });
     await server.close();
   });
@@ -189,7 +198,7 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
     expect(detail.json()).toMatchObject({
       schemaVersion: 1,
       id: "std-vector",
-      markdown: "# std::vector\n",
+      content: "# std::vector\n",
     });
     expect(detail.body).not.toContain("entries/std-vector");
     await server.close();
@@ -235,6 +244,10 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
       method: "GET",
       url: "/api/v1/reference",
     });
+    const degradedBootstrap = await degradedServer.inject({
+      method: "GET",
+      url: "/api/v1/bootstrap",
+    });
 
     expect(degraded.statusCode).toBe(503);
     expect(degraded.json()).toEqual({
@@ -243,6 +256,15 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
       readiness: {
         ready: false,
         issueCodes: ["catalog_invalid"],
+      },
+    });
+    expect(degradedBootstrap.json()).toMatchObject({
+      ready: true,
+      services: {
+        reference: {
+          ready: false,
+          issueCodes: ["catalog_invalid"],
+        },
       },
     });
     await degradedServer.close();

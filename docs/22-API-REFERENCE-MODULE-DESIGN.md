@@ -349,6 +349,8 @@ interface ReferenceSearchItem {
   symbol?: string;
   header?: string;
   since?: CppStandard;
+  deprecatedSince?: CppStandard;
+  verification: "verified" | "unsupported" | "not-checked";
   matchedBy: (
     | "id"
     | "symbol"
@@ -434,6 +436,13 @@ changing platform health.
 Readiness exposes only the closed, stable `issueCodes` vocabulary. Detailed
 schema paths, filesystem paths, source excerpts, and authoring diagnostics are
 logged and displayed only through server-side development tooling.
+
+The filesystem and in-memory Adapters may receive a local verification map
+keyed by Entry/example identity. Entry search status is `verified` only when
+every example is verified, `unsupported` when any example is unsupported, and
+otherwise `not-checked`. Missing verification data is never treated as proof of
+support. The HTTP bootstrap response includes Reference readiness without
+making this optional capability part of overall learning-platform readiness.
 
 Slug resolution is deterministic. An active slug returns its Entry ID and
 `redirected: false`; a historical catalog redirect returns the target Entry's

@@ -17,7 +17,8 @@
       "properties": {
         "curriculum": { "$ref": "#/$defs/curriculumReadiness" },
         "toolchain": { "$ref": "#/$defs/toolchainReadiness" },
-        "record": { "$ref": "#/$defs/recordReadiness" }
+        "record": { "$ref": "#/$defs/recordReadiness" },
+        "reference": { "$ref": "#/$defs/referenceReadiness" }
       }
     }
   },
@@ -53,6 +54,27 @@
       "properties": {
         "ready": { "type": "boolean" },
         "issues": { "$ref": "#/$defs/issues" }
+      }
+    },
+    "referenceReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready"],
+      "properties": {
+        "ready": { "type": "boolean" },
+        "catalogVersion": { "type": "integer", "minimum": 1 },
+        "entryCount": { "type": "integer", "minimum": 0 },
+        "issueCodes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "catalog_missing",
+              "catalog_invalid",
+              "integration_invalid"
+            ]
+          }
+        }
       }
     }
   }

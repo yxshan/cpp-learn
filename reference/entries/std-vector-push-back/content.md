@@ -11,6 +11,20 @@
 
 ## 声明
 
+C++98 至 C++17 的复制重载（C++20 前不带 `constexpr`）：
+
+```cpp
+void push_back(const T& value);
+```
+
+C++11 起增加移动重载（C++20 前不带 `constexpr`）：
+
+```cpp
+void push_back(T&& value);
+```
+
+C++20 起两个重载均为 `constexpr`：
+
 ```cpp
 constexpr void push_back(const T& value);
 constexpr void push_back(T&& value);
@@ -27,6 +41,10 @@ constexpr void push_back(T&& value);
 ## 生命周期与失效规则
 
 若新大小超过旧容量，所有迭代器、指针和引用都会失效；否则只有原来的尾后迭代器失效。
+
+## 异常与约束
+
+元素必须满足对应重载的可插入要求。通常可获得强异常保证；若只能使用可能抛异常的移动构造且元素不可复制，抛出异常后的效果可能不再由标准保证。
 
 ## 示例
 
