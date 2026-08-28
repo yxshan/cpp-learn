@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-deque",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/deque",
   "kind": "header",
   "title": "<deque>",
@@ -12,7 +12,11 @@
   "since": "c++98",
   "aliases": ["deque header", "双端队列头文件"],
   "categories": ["containers"],
-  "relatedEntryIds": ["std-deque", "std-vector"],
+  "relatedEntryIds": [
+    "std-deque",
+    "std-vector",
+    "guide-choosing-sequence-container"
+  ],
   "content": {
     "format": "markdown",
     "path": "entries/header-deque/content.md"
@@ -23,7 +27,14 @@
       "path": "entries/header-deque/examples/include-deque.cpp",
       "kind": "run",
       "standard": "c++20",
-      "expectedStdout": "1 3\n"
+      "expectedStdout": "1 2 3\n"
+    },
+    {
+      "id": "stable-reference",
+      "path": "entries/header-deque/examples/stable-reference.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "20 4\n"
     }
   ],
   "sources": [
@@ -35,10 +46,40 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: deque overview",
+      "url": "https://eel.is/c++draft/deque.overview",
+      "standardSection": "[deque.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: deque modifiers",
+      "url": "https://eel.is/c++draft/deque.modifiers",
+      "standardSection": "[deque.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: library header conformance",
+      "url": "https://eel.is/c++draft/res.on.headers",
+      "standardSection": "[res.on.headers]"
+    },
+    {
+      "kind": "primary",
       "title": "WG21 1997 public review draft: deque synopsis",
       "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-containers.html",
       "standardSection": "[lib.deque]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[deque.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[deque.syn]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

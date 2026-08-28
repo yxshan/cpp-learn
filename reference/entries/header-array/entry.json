@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-array",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/array",
   "kind": "header",
   "title": "<array>",
@@ -12,7 +12,11 @@
   "since": "c++11",
   "aliases": ["array header", "定长数组头文件"],
   "categories": ["containers"],
-  "relatedEntryIds": ["std-array", "std-vector"],
+  "relatedEntryIds": [
+    "std-array",
+    "std-vector",
+    "guide-choosing-sequence-container"
+  ],
   "content": {
     "format": "markdown",
     "path": "entries/header-array/content.md"
@@ -24,6 +28,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "6\n"
+    },
+    {
+      "id": "tuple-and-to-array",
+      "path": "entries/header-array/examples/tuple-and-to-array.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3 5 8 3\n"
     }
   ],
   "sources": [
@@ -35,10 +46,58 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: array overview",
+      "url": "https://eel.is/c++draft/array.overview",
+      "standardSection": "[array.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array members",
+      "url": "https://eel.is/c++draft/array.members",
+      "standardSection": "[array.members]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array specialized algorithms",
+      "url": "https://eel.is/c++draft/array.special",
+      "standardSection": "[array.special]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: zero-sized arrays",
+      "url": "https://eel.is/c++draft/array.zero",
+      "standardSection": "[array.zero]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array creation",
+      "url": "https://eel.is/c++draft/array.creation",
+      "standardSection": "[array.creation]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array tuple interface",
+      "url": "https://eel.is/c++draft/array.tuple",
+      "standardSection": "[array.tuple]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: library header conformance",
+      "url": "https://eel.is/c++draft/res.on.headers",
+      "standardSection": "[res.on.headers]"
+    },
+    {
+      "kind": "primary",
       "title": "WG21 N3337: array",
       "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
       "standardSection": "[array]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[array.creation]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

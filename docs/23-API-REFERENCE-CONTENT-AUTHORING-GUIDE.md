@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-28 |
@@ -56,6 +56,22 @@ An omitted section is acceptable only when it genuinely does not apply, not
 when research has not been completed. Landing and header Entries may remain
 short because their job is navigation, but they still require clear scope,
 important entities, inclusion guidance, and precise outgoing links.
+
+For a learning-quality **header Entry**, the reduced form must include:
+
+- a facility map grouped by learner-visible purpose rather than a copied
+  synopsis wall;
+- per-facility version boundaries where the current synopsis mixes standards;
+- direct-include guidance and a warning against accidental transitive
+  includes;
+- the most important semantic boundary needed to choose the next entity page;
+- at least one self-contained deterministic example, with a second example
+  for a core header when it teaches a distinct non-member facility or boundary;
+- outgoing links to the detailed type, member, algorithm, or selection guide.
+
+Header pages preview behavior only when it changes navigation or prevents a
+high-impact misconception. Detailed overloads, exceptions, and operation-level
+rules remain on entity pages so the same contract is not maintained twice.
 
 ## 3. Selecting Entry granularity
 

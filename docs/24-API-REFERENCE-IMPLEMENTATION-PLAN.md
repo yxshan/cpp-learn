@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-28 |
@@ -115,9 +115,9 @@ integration, accessibility, and Playwright gates.
 ## 6. Phase 3: core catalog expansion
 
 Current state: the first expansion batch, category/standard/verification
-filters, coverage reporting, and compiler-bound local verification manifests
-are delivered. Catalog expansion toward the 80–120 Entry target remains in
-progress.
+filters, coverage reporting, compiler-bound local verification manifests, and
+the first two content-quality batches are delivered. Catalog expansion toward
+the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
 vertical-release Entries against the learning-quality definition in the
@@ -126,6 +126,11 @@ maintained in the [Content Quality Backlog](reference/API_REFERENCE_CONTENT_QUAL
 Each quality batch requires a primary-source research note, two deterministic
 examples for upgraded ordinary entities, content verification, and an
 implementation report.
+
+Quality batch 1 established the ordinary-entity baseline for `std::optional`,
+`std::make_unique`, and `std::string_view`. Quality batch 2 established the
+reduced header-page baseline and the container-selection decision model for
+`<vector>`, `<array>`, `<deque>`, and `<unordered_map>`.
 
 ### Work packages
 

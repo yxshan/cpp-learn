@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-unordered-map",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/unordered-map",
   "kind": "header",
   "title": "<unordered_map>",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "200\n"
+    },
+    {
+      "id": "rehash-reference",
+      "path": "entries/header-unordered-map/examples/rehash-reference.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "active\n"
     }
   ],
   "sources": [
@@ -35,10 +42,58 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: unordered container requirements",
+      "url": "https://eel.is/c++draft/unord.req.general",
+      "standardSection": "[unord.req.general]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered requirements table",
+      "url": "https://eel.is/c++draft/unord.req",
+      "standardSection": "[unord.req]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_map overview",
+      "url": "https://eel.is/c++draft/unord.map.overview",
+      "standardSection": "[unord.map.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_map element access",
+      "url": "https://eel.is/c++draft/unord.map.elem",
+      "standardSection": "[unord.map.elem]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: Cpp17Hash requirements",
+      "url": "https://eel.is/c++draft/hash.requirements",
+      "standardSection": "[hash.requirements]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: library header conformance",
+      "url": "https://eel.is/c++draft/res.on.headers",
+      "standardSection": "[res.on.headers]"
+    },
+    {
+      "kind": "primary",
       "title": "WG21 N3337: unordered_map header synopsis",
       "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
       "standardSection": "[unord.map.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[unord.map.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[unord.map.syn]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

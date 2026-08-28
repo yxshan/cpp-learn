@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-vector",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/vector",
   "kind": "header",
   "title": "<vector>",
@@ -12,7 +12,13 @@
   "since": "c++98",
   "aliases": ["vector header", "向量头文件"],
   "categories": ["containers"],
-  "relatedEntryIds": ["std-vector", "std-vector-push-back"],
+  "relatedEntryIds": [
+    "std-vector",
+    "std-vector-push-back",
+    "std-vector-reserve",
+    "std-sort",
+    "guide-choosing-sequence-container"
+  ],
   "content": {
     "format": "markdown",
     "path": "entries/header-vector/content.md"
@@ -23,6 +29,13 @@
       "path": "entries/header-vector/examples/include-vector.cpp",
       "kind": "compile",
       "standard": "c++20"
+    },
+    {
+      "id": "erase-even",
+      "path": "entries/header-vector/examples/erase-even.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "1 3 5\n"
     }
   ],
   "sources": [
@@ -31,7 +44,49 @@
       "title": "C++ working draft: vector header synopsis",
       "url": "https://eel.is/c++draft/vector.syn",
       "standardSection": "[vector.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector overview",
+      "url": "https://eel.is/c++draft/vector.overview",
+      "standardSection": "[vector.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector capacity",
+      "url": "https://eel.is/c++draft/vector.capacity",
+      "standardSection": "[vector.capacity]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector modifiers",
+      "url": "https://eel.is/c++draft/vector.modifiers",
+      "standardSection": "[vector.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector<bool>",
+      "url": "https://eel.is/c++draft/vector.bool",
+      "standardSection": "[vector.bool]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: library header conformance",
+      "url": "https://eel.is/c++draft/res.on.headers",
+      "standardSection": "[res.on.headers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[vector.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[vector.syn]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

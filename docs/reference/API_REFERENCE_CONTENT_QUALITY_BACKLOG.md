@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-28 |
@@ -47,19 +47,20 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 25 Entries. All have at least one primary source
-and the 22 examples pass the local toolchain gate, but depth is uneven.
+The active catalog contains 25 Entries. All have at least one primary source,
+and all 30 examples pass the local toolchain gate. Depth still varies by
+editorial role and upgrade status.
 
 | Action | Entries | Reason |
 |---|---|---|
-| Upgrade now | `std::optional`, `std::make_unique`, `std::string_view` | Accurate but missing several standard contract sections, source granularity, and realistic examples |
-| Deepen next | `<vector>`, `<array>`, `<deque>`, `<unordered_map>`, choosing a sequence container | Useful navigation, but important selection rules and boundaries remain compressed |
-| Add second example | `std::vector`, `std::vector::push_back`, `std::vector::reserve`, `std::array`, `std::deque`, `std::unordered_map`, `std::sort`, `std::find`, `std::string`, `std::unique_ptr`, `std::cin`, `std::cout` | Core semantics are present; realistic transfer examples are still missing |
+| Completed in quality batch 1 | `std::optional`, `std::make_unique`, `std::string_view` | Rewritten to the ordinary-entity learning-quality baseline with two verified examples each |
+| Completed in quality batch 2 | `<vector>`, `<array>`, `<deque>`, `<unordered_map>`, choosing a sequence container | Header facility maps, version boundaries, container decision rules, and differentiated invalidation guidance are now source-backed |
+| Add second example next | `std::vector`, `std::vector::push_back`, `std::vector::reserve`, `std::array`, `std::deque`, `std::unordered_map`, `std::sort`, `std::find`, `std::string`, `std::unique_ptr`, `std::cin`, `std::cout` | Core semantics are present; realistic transfer examples are still missing |
 | Keep concise | Standard Library, Containers, Algorithms, `<algorithm>`, `<iostream>` | Landing/header role is primarily navigation; review links and scope instead of padding prose |
 
-The first upgrade batch is accepted only when the three “Upgrade now” Entries
-meet the definition in section 2, their examples compile and run, and their
-claims are reviewed against the accompanying primary-source research note.
+Quality batches 1 and 2 are complete. The next quality batch should add the
+missing realistic examples above before broad expansion introduces more
+ordinary entities with the same debt.
 
 ## 4. Planned 120-Entry catalog
 
@@ -132,8 +133,8 @@ fact-verified or release-ready.
 
 ## 5. Delivery order
 
-1. Upgrade the three current P0 Entries before adding new ones.
-2. Deepen the existing container headers and selection guide.
+1. Upgrade the three current P0 Entries before adding new ones. **Completed.**
+2. Deepen the existing container headers and selection guide. **Completed.**
 3. Add common associative/container adaptors and high-frequency algorithms.
 4. Add string conversion, shared ownership, and utility vocabulary.
 5. Add filesystem and time with deterministic examples.

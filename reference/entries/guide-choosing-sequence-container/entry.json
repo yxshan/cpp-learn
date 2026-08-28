@@ -1,14 +1,19 @@
 {
   "schemaVersion": 2,
   "id": "guide-choosing-sequence-container",
-  "version": 1,
+  "version": 2,
   "slug": "guides/choosing-a-sequence-container",
   "kind": "guide",
   "title": "选择顺序容器",
   "summary": "根据连续性、访问方式、修改位置与引用稳定性选择顺序容器。",
   "aliases": ["顺序容器选择", "vector deque list", "容器选型"],
   "categories": ["containers"],
-  "relatedEntryIds": ["containers", "std-vector"],
+  "relatedEntryIds": [
+    "containers",
+    "std-vector",
+    "std-array",
+    "std-deque"
+  ],
   "content": {
     "format": "markdown",
     "path": "entries/guide-choosing-sequence-container/content.md"
@@ -19,7 +24,14 @@
       "path": "entries/guide-choosing-sequence-container/examples/vector-default.cpp",
       "kind": "run",
       "standard": "c++20",
-      "expectedStdout": "3 8 13\n"
+      "expectedStdout": "6 / 3 / 10 40\n"
+    },
+    {
+      "id": "stable-index",
+      "path": "entries/guide-choosing-sequence-container/examples/stable-index.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "10 4\n"
     }
   ],
   "sources": [
@@ -28,7 +40,79 @@
       "title": "C++ working draft: sequence containers",
       "url": "https://eel.is/c++draft/sequence.reqmts",
       "standardSection": "[sequence.reqmts]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: general container requirements",
+      "url": "https://eel.is/c++draft/container.reqmts",
+      "standardSection": "[container.reqmts]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: container complexity preamble",
+      "url": "https://eel.is/c++draft/container.requirements.pre",
+      "standardSection": "[container.requirements.pre]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: array overview",
+      "url": "https://eel.is/c++draft/array.overview",
+      "standardSection": "[array.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector overview",
+      "url": "https://eel.is/c++draft/vector.overview",
+      "standardSection": "[vector.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector data access",
+      "url": "https://eel.is/c++draft/vector.data",
+      "standardSection": "[vector.data]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector capacity",
+      "url": "https://eel.is/c++draft/vector.capacity",
+      "standardSection": "[vector.capacity]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector modifiers",
+      "url": "https://eel.is/c++draft/vector.modifiers",
+      "standardSection": "[vector.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: deque overview",
+      "url": "https://eel.is/c++draft/deque.overview",
+      "standardSection": "[deque.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: deque modifiers",
+      "url": "https://eel.is/c++draft/deque.modifiers",
+      "standardSection": "[deque.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: list modifiers",
+      "url": "https://eel.is/c++draft/list.modifiers",
+      "standardSection": "[list.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: forward_list overview",
+      "url": "https://eel.is/c++draft/forward.list.overview",
+      "standardSection": "[forward.list.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: forward_list modifiers",
+      "url": "https://eel.is/c++draft/forward.list.modifiers",
+      "standardSection": "[forward.list.modifiers]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }
