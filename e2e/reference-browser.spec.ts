@@ -9,7 +9,7 @@ test("[T-REF-006] symbol, header, and Chinese search open std::vector", async ({
   await expect(
     page.getByRole("heading", { name: "查 API，也理解背后的工程约束" }),
   ).toBeVisible();
-  await expect(page.getByText("15 个条目")).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("25 个条目");
 
   for (const query of ["std::vector", "<vector>", "动态数组"]) {
     const search = page.getByLabel("搜索 C++ API");
@@ -115,6 +115,33 @@ test("[T-REF-006] keyboard table of contents and Activity navigation work", asyn
   await expect(
     page.getByRole("heading", { name: "std::vector", exact: true }),
   ).toBeVisible();
+});
+
+test("[T-REF-006] Markdown tables render as readable semantic tables", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/reference/standard-library/headers/unordered-map");
+
+  const table = page.getByRole("table");
+  await expect(table).toBeVisible();
+  await expect(
+    table.getByRole("columnheader", { name: "实体组" }),
+  ).toBeVisible();
+  await expect(
+    table.getByRole("cell", { name: "std::erase_if" }),
+  ).toBeVisible();
+
+  const widths = await page
+    .locator(".reference-table-scroll")
+    .evaluate((element) => ({
+      table: element.scrollWidth,
+      wrapper: element.clientWidth,
+      document: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+    }));
+  expect(widths.table).toBeGreaterThan(widths.wrapper);
+  expect(widths.document).toBeLessThanOrEqual(widths.viewport);
 });
 
 test("[T-REF-007] narrow browsing and copy feedback create no learning writes", async ({

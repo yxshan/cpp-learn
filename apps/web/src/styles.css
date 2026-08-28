@@ -2518,6 +2518,45 @@ footer {
   background: #10241d;
   font-family: var(--mono);
 }
+.reference-table-scroll {
+  max-width: 100%;
+  margin: 20px 0 24px;
+  overflow-x: auto;
+  border: 1px solid #29463b;
+  border-radius: 6px;
+  scrollbar-color: #315044 #0a1713;
+}
+.reference-table-scroll table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  color: #b8c8c1;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.reference-table-scroll th,
+.reference-table-scroll td {
+  padding: 12px 14px;
+  border-right: 1px solid #223b32;
+  border-bottom: 1px solid #223b32;
+  text-align: left;
+  vertical-align: top;
+}
+.reference-table-scroll th {
+  color: #e4f0eb;
+  background: #10241d;
+  font: 650 12px/1.5 var(--mono);
+}
+.reference-table-scroll tbody tr:nth-child(even) {
+  background: #0a1713;
+}
+.reference-table-scroll th:last-child,
+.reference-table-scroll td:last-child {
+  border-right: 0;
+}
+.reference-table-scroll tbody tr:last-child td {
+  border-bottom: 0;
+}
 .reference-code-block {
   position: relative;
   max-width: 100%;

@@ -1,5 +1,6 @@
 import { Children, isValidElement, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import type {
   ReferenceEntryDetail,
@@ -154,6 +155,7 @@ export function ReferenceArticle({
 
       <div className="reference-markdown">
         <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
           components={{
             h1: ({ children }) => (
               <h2 id={headingId(nodeText(children))}>{children}</h2>
@@ -172,6 +174,11 @@ export function ReferenceArticle({
               <a href={href} rel="noreferrer">
                 {children}
               </a>
+            ),
+            table: ({ children }) => (
+              <div className="reference-table-scroll">
+                <table>{children}</table>
+              </div>
             ),
           }}
         >
