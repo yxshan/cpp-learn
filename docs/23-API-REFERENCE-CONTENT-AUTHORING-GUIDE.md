@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-28 |
 
 ## 1. Audience and purpose
 
@@ -258,7 +258,17 @@ The report covers:
 - example counts by kind, declared language standard, and current local
   verification status.
 
-`not-checked` means that the catalog instance used for the report has not been
-given a local toolchain verification result. It does not mean that an example
-failed. `npm run check:reference` remains the release gate that compiles and,
-where applicable, runs every declared example.
+Run `npm run check:reference` before the report. The check compiles and, where
+applicable, runs every declared example; only a completely successful run
+atomically publishes the local verification manifest. The report and
+production server use the manifest only when its catalog version and compiler
+fingerprint match, then independently bind every result to the example's
+declared standard and source SHA-256 digest.
+
+`not-checked` means no current local toolchain result is available for that
+example. It does not mean the example failed. Typical causes are a first run,
+a changed compiler, edited example source, a new catalog version, a partial
+manifest, or invalid local cache data. Rerun `npm run check:reference` after
+content or toolchain changes. The generated
+`.cpp-learn/data/reference-verification.json` file is local, rebuildable, and
+must not be authored, reviewed, committed, or included in learner backups.

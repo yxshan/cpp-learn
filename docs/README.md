@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 2.3 |
+| Version | 2.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-28 |
 
 ## Purpose
 
@@ -43,7 +43,8 @@ Read in this order:
 25. [Stage 6.2 Phase 1 Implementation Report](25-STAGE-6.2-PHASE-1-IMPLEMENTATION-REPORT.md)
 26. [Stage 6.2 Phase 2 Implementation Report](26-STAGE-6.2-PHASE-2-IMPLEMENTATION-REPORT.md)
 27. [Stage 6.2 Phase 3 Batch 1 Implementation Report](27-STAGE-6.2-PHASE-3-BATCH-1-IMPLEMENTATION-REPORT.md)
-28. [Domain Context](CONTEXT.md)
+28. [Stage 6.2 Phase 3 Local Verification Implementation Report](28-STAGE-6.2-PHASE-3-LOCAL-VERIFICATION-IMPLEMENTATION-REPORT.md)
+29. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

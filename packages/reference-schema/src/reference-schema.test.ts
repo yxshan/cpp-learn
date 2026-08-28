@@ -4,8 +4,10 @@ import { CPP_STANDARDS, REFERENCE_ENTRY_KINDS } from "@cpp-learn/contracts";
 
 import {
   referenceEntrySchema,
+  referenceVerificationSchema,
   validateReferenceCatalogManifest,
   validateReferenceEntryManifest,
+  validateReferenceVerificationManifest,
 } from "./index.js";
 
 const validEntry = {
@@ -129,5 +131,41 @@ describe("[T-REF-001] Reference manifest schemas", () => {
         expect.objectContaining({ path: "/schemaVersion", keyword: "const" }),
       ]),
     );
+  });
+
+  it("validates persisted local verification against the closed vocabulary", () => {
+    const manifest = {
+      schemaVersion: 1,
+      catalogVersion: 3,
+      compilerFingerprint: "Apple clang version 15.0.0",
+      examples: [
+        {
+          entryId: "std-vector",
+          exampleId: "basic",
+          sourceDigest:
+            "bc8bb8e433bf65214540115414c821c904b2a30d60a3ac0424bf9b77a00024b7",
+          standard: "c++20",
+          verification: "verified",
+        },
+      ],
+    };
+
+    expect(validateReferenceVerificationManifest(manifest)).toEqual([]);
+    expect(
+      validateReferenceVerificationManifest({
+        ...manifest,
+        examples: [{ ...manifest.examples[0], verification: "assumed" }],
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "/examples/0/verification",
+          keyword: "enum",
+        }),
+      ]),
+    );
+    expect(referenceVerificationSchema.$defs.standard.enum).toEqual([
+      ...CPP_STANDARDS,
+    ]);
   });
 });

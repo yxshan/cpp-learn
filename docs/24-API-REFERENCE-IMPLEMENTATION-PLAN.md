@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-28 |
 
 ## 1. Objective
 
@@ -113,6 +113,11 @@ The 15-Entry Reference is usable offline and passes Module, contract,
 integration, accessibility, and Playwright gates.
 
 ## 6. Phase 3: core catalog expansion
+
+Current state: the first expansion batch, category/standard/verification
+filters, coverage reporting, and compiler-bound local verification manifests
+are delivered. Catalog expansion toward the 80–120 Entry target remains in
+progress.
 
 ### Work packages
 

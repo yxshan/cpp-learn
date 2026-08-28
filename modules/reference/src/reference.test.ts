@@ -383,6 +383,141 @@ describe("[T-REF-003] deterministic Reference search", () => {
 export { catalog, entry, filesFor };
 
 describe("[T-REF-001] filesystem Reference Adapter", () => {
+  it("publishes only current local toolchain verification from a persisted manifest", async () => {
+    const root = await mkdtemp(join(tmpdir(), "cpp-reference-verified-"));
+    const vector = entry("std-vector", {
+      examples: [
+        {
+          id: "basic",
+          path: "entries/std-vector/basic.cpp",
+          kind: "compile",
+          standard: "c++20",
+        },
+      ],
+    });
+    try {
+      await mkdir(join(root, "entries", "std-vector"), { recursive: true });
+      await writeFile(
+        join(root, "catalog.json"),
+        JSON.stringify(catalog([vector])),
+        "utf8",
+      );
+      await writeFile(
+        join(root, "entries", "std-vector", "entry.json"),
+        JSON.stringify(vector),
+        "utf8",
+      );
+      await writeFile(
+        join(root, "entries", "std-vector", "content.md"),
+        "# std::vector\n",
+        "utf8",
+      );
+      await writeFile(
+        join(root, "entries", "std-vector", "basic.cpp"),
+        "int main() {}\n",
+        "utf8",
+      );
+      const verificationPath = join(root, "verification.json");
+      const matchingManifest = {
+        schemaVersion: 1,
+        catalogVersion: 1,
+        compilerFingerprint: "Apple clang version 17.0.0",
+        examples: [
+          {
+            entryId: "std-vector",
+            exampleId: "basic",
+            sourceDigest:
+              "bc8bb8e433bf65214540115414c821c904b2a30d60a3ac0424bf9b77a00024b7",
+            standard: "c++20",
+            verification: "verified",
+          },
+        ],
+      } as const;
+      await writeFile(
+        verificationPath,
+        JSON.stringify(matchingManifest),
+        "utf8",
+      );
+
+      const verifiedReference = (
+        compilerFingerprint: string = matchingManifest.compilerFingerprint,
+      ) =>
+        createFilesystemReferenceCatalog({
+          catalogPath: join(root, "catalog.json"),
+          verification: { manifestPath: verificationPath, compilerFingerprint },
+        });
+      const expectNotChecked = async (candidate: unknown): Promise<void> => {
+        await writeFile(
+          verificationPath,
+          typeof candidate === "string"
+            ? candidate
+            : JSON.stringify(candidate),
+          "utf8",
+        );
+        await expect(
+          verifiedReference().getEntry("std-vector"),
+        ).resolves.toMatchObject({
+          examples: [{ id: "basic", verification: "not-checked" }],
+        });
+      };
+
+      const reference = verifiedReference();
+
+      await expect(reference.getEntry("std-vector")).resolves.toMatchObject({
+        examples: [{ id: "basic", verification: "verified" }],
+      });
+      await expect(
+        reference.search({ text: "std::vector", verified: "verified" }),
+      ).resolves.toMatchObject({ total: 1 });
+
+      const staleReference = verifiedReference(
+        "Apple clang version 18.0.0",
+      );
+      await expect(
+        staleReference.getEntry("std-vector"),
+      ).resolves.toMatchObject({
+        examples: [{ id: "basic", verification: "not-checked" }],
+      });
+
+      await expectNotChecked({
+        ...matchingManifest,
+        examples: [
+          { ...matchingManifest.examples[0], sourceDigest: "0".repeat(64) },
+        ],
+      });
+      await expectNotChecked("{");
+      await expectNotChecked({ ...matchingManifest, catalogVersion: 2 });
+      await expectNotChecked({ ...matchingManifest, examples: [] });
+      await expectNotChecked({
+        ...matchingManifest,
+        examples: [
+          matchingManifest.examples[0],
+          matchingManifest.examples[0],
+        ],
+      });
+      await expectNotChecked({
+        ...matchingManifest,
+        examples: [
+          { ...matchingManifest.examples[0], entryId: "unknown-entry" },
+        ],
+      });
+      await expectNotChecked({
+        ...matchingManifest,
+        examples: [
+          { ...matchingManifest.examples[0], standard: "c++17" },
+        ],
+      });
+      await rm(verificationPath);
+      await expect(
+        verifiedReference().getEntry("std-vector"),
+      ).resolves.toMatchObject({
+        examples: [{ id: "basic", verification: "not-checked" }],
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("loads the expanded Phase 3 Reference catalog", async () => {
     const reference = createFilesystemReferenceCatalog({
       catalogPath: resolve("reference/catalog.json"),

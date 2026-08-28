@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
-import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 
 import {
@@ -22,6 +22,7 @@ import {
 import {
   validateReferenceCatalogManifest,
   validateReferenceEntryManifest,
+  validateReferenceVerificationManifest,
 } from "@cpp-learn/reference-schema";
 
 export {
@@ -76,6 +77,26 @@ export interface ReferenceEntryManifest {
   readonly examples: readonly ReferenceExampleManifest[];
   readonly sources: readonly ReferenceSource[];
   readonly verifiedAt: string;
+}
+
+export interface ReferenceVerificationManifest {
+  readonly schemaVersion: 1;
+  readonly catalogVersion: number;
+  readonly compilerFingerprint: string;
+  readonly examples: readonly {
+    readonly entryId: string;
+    readonly exampleId: string;
+    readonly sourceDigest: string;
+    readonly standard: CppStandard;
+    readonly verification: "verified" | "unsupported";
+  }[];
+}
+
+export const REFERENCE_VERIFICATION_MANIFEST_FILENAME =
+  "reference-verification.json";
+
+export function referenceVerificationManifestPath(dataRoot: string): string {
+  return join(dataRoot, REFERENCE_VERIFICATION_MANIFEST_FILENAME);
 }
 
 export interface ReferenceCatalog {
@@ -136,10 +157,60 @@ interface CatalogData {
     string,
     ReferenceVerification
   >;
+  readonly verification?: {
+    readonly manifest: ReferenceVerificationManifest;
+    readonly compilerFingerprint: string;
+  };
   readonly relatedActivityIdsByEntryId?: ReadonlyMap<
     string,
     readonly string[]
   >;
+}
+
+function verificationFromManifest(
+  verificationContext:
+    | {
+        readonly manifest: ReferenceVerificationManifest;
+        readonly compilerFingerprint: string;
+      }
+    | undefined,
+  catalog: ReferenceCatalogManifest,
+  entries: readonly ReferenceEntryManifest[],
+  textByPath: ReadonlyMap<string, string>,
+): ReadonlyMap<string, ReferenceVerification> {
+  if (
+    verificationContext === undefined ||
+    verificationContext.manifest.catalogVersion !== catalog.version ||
+    verificationContext.manifest.compilerFingerprint !==
+      verificationContext.compilerFingerprint
+  ) {
+    return new Map();
+  }
+
+  const { manifest } = verificationContext;
+  const examples = new Map(
+    entries.flatMap((entry) =>
+      entry.examples.map((example) => [
+        exampleVerificationKey(entry.id, example.id),
+        { entry, example },
+      ]),
+    ),
+  );
+  const verification = new Map<string, ReferenceVerification>();
+  for (const result of manifest.examples) {
+    const key = exampleVerificationKey(result.entryId, result.exampleId);
+    const current = examples.get(key);
+    if (
+      current === undefined ||
+      verification.has(key) ||
+      current.example.standard !== result.standard ||
+      digest(textByPath.get(current.example.path) ?? "") !== result.sourceDigest
+    ) {
+      return new Map();
+    }
+    verification.set(key, result.verification);
+  }
+  return verification;
 }
 
 function digest(value: string): string {
@@ -253,7 +324,13 @@ async function activate(data: CatalogData): Promise<ActiveCatalog> {
     paths.map((path, index) => [path, contents[index] ?? ""]),
   );
   const verificationByExampleKey =
-    data.verificationByExampleKey ?? new Map<string, ReferenceVerification>();
+    data.verificationByExampleKey ??
+    verificationFromManifest(
+      data.verification,
+      data.catalog,
+      data.entries,
+      textByPath,
+    );
   const searchDocuments = data.entries.map((entry) => {
     const markdown = textByPath.get(entry.content.path) ?? "";
     const categoryValues = entry.categories.flatMap((categoryId) => {
@@ -728,6 +805,10 @@ export interface FilesystemReferenceCatalogDependencies {
     string,
     readonly string[]
   >;
+  readonly verification?: {
+    readonly manifestPath: string;
+    readonly compilerFingerprint: string;
+  };
 }
 
 export function createFilesystemReferenceCatalog(
@@ -759,10 +840,33 @@ export function createFilesystemReferenceCatalog(
         JSON.parse(await readConfinedText(root, path)),
       ),
     );
+    let verificationManifest: ReferenceVerificationManifest | undefined;
+    if (dependencies.verification !== undefined) {
+      try {
+        const candidate: unknown = JSON.parse(
+          await readFile(resolve(dependencies.verification.manifestPath), "utf8"),
+        );
+        if (validateReferenceVerificationManifest(candidate).length === 0) {
+          verificationManifest = candidate as ReferenceVerificationManifest;
+        }
+      } catch {
+        verificationManifest = undefined;
+      }
+    }
     return {
       catalog,
       entries,
       readText: (path) => readConfinedText(root, path),
+      ...(verificationManifest === undefined ||
+      dependencies.verification === undefined
+        ? {}
+        : {
+            verification: {
+              manifest: verificationManifest,
+              compilerFingerprint:
+                dependencies.verification.compilerFingerprint,
+            },
+          }),
       ...(dependencies.verificationByExampleKey === undefined
         ? {}
         : {

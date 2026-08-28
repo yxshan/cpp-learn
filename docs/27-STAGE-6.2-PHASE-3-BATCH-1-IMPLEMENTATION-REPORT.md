@@ -92,3 +92,9 @@ Revert catalog version 3, the ten Entry directories, Reference schema version
 2, the `object` vocabulary, and the coverage reporter together. The change does
 not migrate or mutate learner Workspaces, Attempts, Evidence, or Learning
 Records.
+
+## 8. Follow-up
+
+The persisted-verification limitation recorded in section 6 was resolved by
+[Stage 6.2 Phase 3 Local Verification Implementation Report](28-STAGE-6.2-PHASE-3-LOCAL-VERIFICATION-IMPLEMENTATION-REPORT.md).
+This note preserves the accepted Batch 1 report as a historical snapshot.

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-28 |
 
 ## 1. Supported baseline
 
@@ -31,6 +31,8 @@ npm run typecheck
 npm run lint
 npm test
 npm run test:e2e
+npm run check:reference
+npm run report:reference
 ./cpplearn doctor
 ```
 
@@ -152,9 +154,21 @@ The Learning Record exposes rebuild through its maintenance Interface and automa
 7. Merge only after the complete Reference catalog activates and the production
    Web route renders offline.
 
-The implementation introduces `npm run check:reference` and invokes it from
-`npm run check` before the first Reference release. Until that command exists,
-the Reference feature cannot be marked accepted.
+`npm run check:reference` validates the active catalog, compiles every example
+under its declared C++ standard and strict warning profile, runs executable
+examples, and compares exact expected output. Only after the complete catalog
+passes does it atomically replace the local verification manifest. By default
+the manifest is written to
+`.cpp-learn/data/reference-verification.json`; `CPP_LEARN_DATA_ROOT` selects the
+same alternate data root used by the server.
+
+`npm run report:reference` loads that manifest when it matches the current
+compiler fingerprint, catalog version, example standard, and source digest.
+It reports stale, missing, malformed, or unlisted records as `not-checked`.
+Run `check:reference` after changing Reference examples, switching compiler
+toolchains, or updating the catalog version, then run `report:reference` to
+inspect coverage. The manifest is a rebuildable local cache: it is excluded
+from Git and learner backups and is not a substitute for the release gate.
 
 ## 8. Dependency management
 

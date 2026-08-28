@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-DES-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-28 |
 
 ## 1. Purpose
 
@@ -445,12 +445,23 @@ vocabulary. Detailed
 schema paths, filesystem paths, source excerpts, and authoring diagnostics are
 logged and displayed only through server-side development tooling.
 
-The filesystem and in-memory Adapters may receive a local verification map
-keyed by Entry/example identity. Entry search status is `verified` only when
-every example is verified, `unsupported` when any example is unsupported, and
-otherwise `not-checked`. Missing verification data is never treated as proof of
-support. The HTTP bootstrap response includes Reference readiness without
-making this optional capability part of overall learning-platform readiness.
+The in-memory Adapter may receive a local verification map keyed by
+Entry/example identity. The production filesystem Adapter instead loads an
+optional, schema-validated verification manifest from the local data root. The
+content gate writes this rebuildable manifest atomically only after every
+example passes. Each record is bound to the catalog version, compiler
+fingerprint, Entry/example identity, declared standard, and source SHA-256
+digest. A mismatch invalidates the manifest rather than carrying evidence
+across content or toolchain changes; a valid partial manifest leaves unlisted
+examples `not-checked`.
+
+Entry search status is `verified` only when every example is verified,
+`unsupported` when any example is unsupported, and otherwise `not-checked`.
+Missing, malformed, duplicate, or stale verification data is never treated as
+proof of support and never makes Reference unavailable. The manifest is a
+local cache, excluded from source control and learner backups. The HTTP
+bootstrap response includes Reference readiness without making this optional
+capability part of overall learning-platform readiness.
 
 Slug resolution is deterministic. An active slug returns its Entry ID and
 `redirected: false`; a historical catalog redirect returns the target Entry's
@@ -497,6 +508,13 @@ This is a relationship between Modules, not ownership transfer:
 Each example file is compiled by content CI with its declared standard and the
 reference warning profile. Compile-failure examples require an explicit kind
 and expected diagnostic category; they cannot silently fail the gate.
+
+The local content gate additionally publishes successful results to the
+verification manifest described above. It does not publish a replacement when
+any example fails, times out, exceeds output bounds, produces unexpected
+stdout, or misses its expected diagnostic category. This preserves the last
+complete result while its catalog/toolchain binding prevents stale evidence
+from being presented as current.
 
 ### Later interactive release
 

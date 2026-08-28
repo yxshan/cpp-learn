@@ -3,6 +3,7 @@ import addFormats from "ajv-formats";
 
 import referenceCatalogSchema from "./reference-catalog.schema.json" with { type: "json" };
 import referenceEntrySchema from "./reference-entry.schema.json" with { type: "json" };
+import referenceVerificationSchema from "./reference-verification.schema.json" with { type: "json" };
 
 export interface ReferenceValidationIssue {
   readonly path: string;
@@ -14,6 +15,7 @@ const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 const validateCatalog = ajv.compile(referenceCatalogSchema);
 const validateEntry = ajv.compile(referenceEntrySchema);
+const validateVerification = ajv.compile(referenceVerificationSchema);
 
 function issuePath(error: ErrorObject): string {
   if (error.keyword === "required") {
@@ -42,4 +44,14 @@ export function validateReferenceEntryManifest(
   return validateEntry(value) ? [] : issues(validateEntry.errors);
 }
 
-export { referenceCatalogSchema, referenceEntrySchema };
+export function validateReferenceVerificationManifest(
+  value: unknown,
+): readonly ReferenceValidationIssue[] {
+  return validateVerification(value) ? [] : issues(validateVerification.errors);
+}
+
+export {
+  referenceCatalogSchema,
+  referenceEntrySchema,
+  referenceVerificationSchema,
+};

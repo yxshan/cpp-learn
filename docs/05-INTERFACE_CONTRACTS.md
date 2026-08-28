@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-28 |
 
 ## 1. Contract policy
 
@@ -80,6 +80,15 @@ Each result includes aggregate local verification status. Entry examples expose
 their individual `verified`, `unsupported`, or `not-checked` state; absence of a
 verification Adapter is represented as `not-checked`, never inferred from the
 normative C++ standard status.
+
+The production filesystem Adapter may load a rebuildable local verification
+manifest produced by `npm run check:reference`. A record is accepted only when
+the manifest schema, catalog version, compiler fingerprint, Entry/example
+identity, declared standard, and source SHA-256 digest match the active
+catalog. Missing, malformed, duplicate, partial, or stale data does not make
+Reference unavailable: affected examples remain `not-checked`. Verification
+data is local capability evidence, not learner state, and is never returned
+with filesystem paths or compiler command details.
 
 The resolve endpoint accepts a current or historical slug and returns the
 stable Entry ID, canonical slug, and `redirected` flag. The detail endpoint

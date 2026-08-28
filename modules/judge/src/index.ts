@@ -14,6 +14,8 @@ import {
   type ToolchainReadiness,
 } from "@cpp-learn/contracts";
 
+export const DEFAULT_NATIVE_CPP_COMPILER = "/usr/bin/clang++";
+
 export interface ProcessResult {
   readonly exitCode: number | null;
   readonly stdout: string;
@@ -396,7 +398,7 @@ export function createNativeJudge(
   const run = dependencies.run ?? runBoundedProcess;
   const clock = dependencies.clock ?? (() => new Date());
   const monotonicClock = dependencies.monotonicClock ?? (() => Date.now());
-  const compiler = dependencies.compiler ?? "/usr/bin/clang++";
+  const compiler = dependencies.compiler ?? DEFAULT_NATIVE_CPP_COMPILER;
   const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
   const cmake = dependencies.cmake ?? "cmake";
   const ctest = dependencies.ctest ?? "ctest";

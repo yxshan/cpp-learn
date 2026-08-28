@@ -1,10 +1,22 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import type { CppStandard } from "@cpp-learn/contracts";
-import { runBoundedProcess } from "@cpp-learn/judge";
-import { createFilesystemReferenceCatalog } from "@cpp-learn/reference";
+import {
+  DEFAULT_NATIVE_CPP_COMPILER,
+  createNativeToolchainProbe,
+  executeProcess,
+  runBoundedProcess,
+} from "@cpp-learn/judge";
+import {
+  createFilesystemReferenceCatalog,
+  referenceVerificationManifestPath,
+  type ReferenceVerificationManifest,
+} from "@cpp-learn/reference";
+
+import { assertReferenceCompilationAccepted } from "./reference-example-verification.ts";
+import { resolveReferenceDataRoot } from "./reference-data-root.ts";
 
 const standardFlag: Readonly<Record<CppStandard, string>> = {
   "c++98": "c++98",
@@ -31,12 +43,21 @@ const navigation = await reference.getNavigation();
 const entryIds = [
   ...new Set(navigation.categories.flatMap((category) => category.entryIds)),
 ];
-const compiler = "/usr/bin/clang++";
+const compiler = DEFAULT_NATIVE_CPP_COMPILER;
 const environment = {
   PATH: "/usr/bin:/bin",
   LANG: "C",
   LC_ALL: "C",
 };
+const toolchain = await createNativeToolchainProbe({
+  execute: executeProcess,
+  compiler,
+})();
+if (!toolchain.ready || toolchain.compiler === undefined) {
+  throw new Error("Reference content check failed: compiler unavailable");
+}
+const verificationExamples: ReferenceVerificationManifest["examples"][number][] =
+  [];
 let exampleCount = 0;
 
 for (const entryId of entryIds) {
@@ -67,33 +88,17 @@ for (const entryId of entryIds) {
         environment: { ...environment, TMPDIR: root },
       });
 
-      if (example.kind === "expected-compile-failure") {
-        if (compilation.exitCode === 0) {
-          throw new Error(`${entry.id}/${example.id} unexpectedly compiled`);
-        }
-        if (
-          example.expectedDiagnosticCategory &&
-          !compilation.stderr
-            .toLocaleLowerCase("en-US")
-            .includes(
-              example.expectedDiagnosticCategory.toLocaleLowerCase("en-US"),
-            )
-        ) {
-          throw new Error(
-            `${entry.id}/${example.id} missed diagnostic category ${example.expectedDiagnosticCategory}`,
-          );
-        }
-        continue;
-      }
-      if (
-        compilation.exitCode !== 0 ||
-        compilation.timedOut ||
-        compilation.outputLimitExceeded
-      ) {
-        throw new Error(
-          `${entry.id}/${example.id} failed to compile:\n${compilation.stderr}`,
-        );
-      }
+      assertReferenceCompilationAccepted({
+        identity: `${entry.id}/${example.id}`,
+        kind: example.kind,
+        ...(example.expectedDiagnosticCategory === undefined
+          ? {}
+          : {
+              expectedDiagnosticCategory: example.expectedDiagnosticCategory,
+            }),
+        compilation,
+      });
+
       if (example.kind === "run") {
         const execution = await runBoundedProcess({
           executable: outputPath,
@@ -115,12 +120,43 @@ for (const entryId of entryIds) {
           );
         }
       }
+      verificationExamples.push({
+        entryId: entry.id,
+        exampleId: example.id,
+        sourceDigest: example.digest,
+        standard: example.standard,
+        verification: "verified",
+      });
     } finally {
       await rm(root, { recursive: true, force: true });
     }
   }
 }
 
+const verificationManifest: ReferenceVerificationManifest = {
+  schemaVersion: 1,
+  catalogVersion: readiness.catalogVersion,
+  compilerFingerprint: toolchain.compiler,
+  examples: verificationExamples,
+};
+const dataRoot = resolveReferenceDataRoot();
+const verificationPath = referenceVerificationManifestPath(dataRoot);
+const temporaryVerificationPath = join(
+  dataRoot,
+  `.reference-verification-${process.pid}.tmp`,
+);
+await mkdir(dirname(verificationPath), { recursive: true });
+try {
+  await writeFile(
+    temporaryVerificationPath,
+    `${JSON.stringify(verificationManifest, undefined, 2)}\n`,
+    "utf8",
+  );
+  await rename(temporaryVerificationPath, verificationPath);
+} finally {
+  await rm(temporaryVerificationPath, { force: true });
+}
+
 console.log(
-  `Reference content check passed (${readiness.entryCount ?? 0} Entries, ${exampleCount} examples).`,
+  `Reference content check passed (${readiness.entryCount ?? 0} Entries, ${exampleCount} examples; local verification cached).`,
 );

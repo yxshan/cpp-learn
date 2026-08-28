@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -11,7 +11,13 @@ import type {
   JudgeReport,
   LearningPlatform,
 } from "@cpp-learn/contracts";
+import {
+  DEFAULT_NATIVE_CPP_COMPILER,
+  createNativeToolchainProbe,
+  executeProcess,
+} from "@cpp-learn/judge";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
+import { referenceVerificationManifestPath } from "@cpp-learn/reference";
 import { createServer } from "@cpp-learn/server";
 import {
   createProductionApplication,
@@ -35,8 +41,36 @@ const bootstrap: LearningBootstrapResult = {
 describe("[T-REF-005] CLI serve Reference composition", () => {
   it("serves the activated Reference catalog through the public HTTP API", async () => {
     const runtimeRoot = await mkdtemp(join(tmpdir(), "cpp-learn-cli-serve-"));
+    const dataRoot = join(runtimeRoot, "data");
+    const toolchain = await createNativeToolchainProbe({
+      execute: executeProcess,
+      compiler: DEFAULT_NATIVE_CPP_COMPILER,
+    })();
+    if (!toolchain.ready || toolchain.compiler === undefined) {
+      throw new Error("Test requires the configured C++ toolchain");
+    }
+    await mkdir(dataRoot, { recursive: true });
+    await writeFile(
+      referenceVerificationManifestPath(dataRoot),
+      JSON.stringify({
+        schemaVersion: 1,
+        catalogVersion: 3,
+        compilerFingerprint: toolchain.compiler,
+        examples: [
+          {
+            entryId: "std-cout",
+            exampleId: "write-formatted-value",
+            sourceDigest:
+              "3d493383cdee79805a487088b5b62a9ec192e8a2b6453aad2b7f0f15e06349e9",
+            standard: "c++20",
+            verification: "verified",
+          },
+        ],
+      }),
+      "utf8",
+    );
     const application = await createProductionApplication({
-      dataRoot: join(runtimeRoot, "data"),
+      dataRoot,
       workspaceRoot: join(runtimeRoot, "workspaces"),
     });
     const server = createProductionHttpServer(application, { logger: false });
@@ -58,15 +92,18 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
 
       const objectSearch = await server.inject({
         method: "GET",
-        url: "/api/v1/reference/search?q=std%3A%3Acout&kind=object",
+        url: "/api/v1/reference/search?q=std%3A%3Acout&kind=object&verified=verified",
       });
       expect(objectSearch.statusCode).toBe(200);
       expect(objectSearch.json()).toMatchObject({
         schemaVersion: 2,
-        total: 2,
+        total: 1,
         results: [
-          expect.objectContaining({ id: "std-cout", kind: "object" }),
-          expect.objectContaining({ id: "std-cin", kind: "object" }),
+          expect.objectContaining({
+            id: "std-cout",
+            kind: "object",
+            verification: "verified",
+          }),
         ],
       });
     } finally {

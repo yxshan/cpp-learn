@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { createFilesystemCurriculum } from "@cpp-learn/curriculum";
 import {
+  DEFAULT_NATIVE_CPP_COMPILER,
   createNativeJudge,
   createNativeToolchainProbe,
   executeProcess,
@@ -15,6 +16,7 @@ import { createLearningPlatform } from "@cpp-learn/learning-platform";
 import {
   createFilesystemReferenceCatalog,
   createUnavailableReferenceCatalog,
+  referenceVerificationManifestPath,
   type ReferenceCatalog,
 } from "@cpp-learn/reference";
 import { createFilesystemWorkspace } from "@cpp-learn/workspace";
@@ -95,6 +97,12 @@ export async function createProductionApplication(
   const baseReference = createFilesystemReferenceCatalog({
     catalogPath: referenceCatalogPath,
   });
+  const compiler = DEFAULT_NATIVE_CPP_COMPILER;
+  const toolchainProbe = createNativeToolchainProbe({
+    execute: executeProcess,
+    compiler,
+  });
+  const toolchain = await toolchainProbe();
   const referenceReadiness = await baseReference.readiness();
   let reference: ReferenceCatalog = baseReference;
   if (referenceReadiness.ready) {
@@ -107,17 +115,19 @@ export async function createProductionApplication(
           catalogPath: referenceCatalogPath,
           relatedActivityIdsByEntryId:
             activityIndex.relatedActivityIdsByEntryId,
+          ...(toolchain.ready && toolchain.compiler !== undefined
+            ? {
+                verification: {
+                  manifestPath: referenceVerificationManifestPath(dataRoot),
+                  compilerFingerprint: toolchain.compiler,
+                },
+              }
+            : {}),
         })
       : createUnavailableReferenceCatalog("integration_invalid");
   }
   const record = createJsonlLearningRecord({ dataRoot });
   await record.initialize();
-  const compiler = "/usr/bin/clang++";
-  const toolchainProbe = createNativeToolchainProbe({
-    execute: executeProcess,
-    compiler,
-  });
-  const toolchain = await toolchainProbe();
   const workspace = createFilesystemWorkspace({
     workspaceRoot,
     activities: await curriculum.listWorkspaceActivities(),
