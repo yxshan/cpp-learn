@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-optional",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/utilities/optional",
   "kind": "type",
   "title": "std::optional",
@@ -23,7 +23,14 @@
       "path": "entries/std-optional/examples/parse-port.cpp",
       "kind": "run",
       "standard": "c++20",
-      "expectedStdout": "8080\n"
+      "expectedStdout": "8080\n80\n"
+    },
+    {
+      "id": "configuration-override",
+      "path": "entries/std-optional/examples/configuration-override.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3\n5:200\nfalse\n"
     }
   ],
   "sources": [
@@ -32,7 +39,43 @@
       "title": "C++ working draft: optional objects",
       "url": "https://eel.is/c++draft/optional",
       "standardSection": "[optional]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: optional constructors",
+      "url": "https://eel.is/c++draft/optional.ctor",
+      "standardSection": "[optional.ctor]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: optional observers",
+      "url": "https://eel.is/c++draft/optional.observe",
+      "standardSection": "[optional.observe]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: optional modifiers",
+      "url": "https://eel.is/c++draft/optional.mod",
+      "standardSection": "[optional.mod]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: optional assignment",
+      "url": "https://eel.is/c++draft/optional.assign",
+      "standardSection": "[optional.assign]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: object lifetime",
+      "url": "https://eel.is/c++draft/basic.life",
+      "standardSection": "[basic.life]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[optional]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

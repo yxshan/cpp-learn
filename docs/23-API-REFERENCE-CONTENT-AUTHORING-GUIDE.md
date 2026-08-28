@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-28 |
@@ -31,6 +31,31 @@ precise enough for engineering use without reading like copied standardese.
 - Cite the source used to verify each Entry; do not paste source prose.
 - Describe standard availability separately from local compiler support.
 - Never describe undefined behavior as a permitted implementation choice.
+
+The active [Content Quality Backlog](reference/API_REFERENCE_CONTENT_QUALITY_BACKLOG.md)
+defines the catalog target and upgrade order. Authors must select Entries from
+that backlog or update it through review; adding convenient symbols ad hoc is
+not an accepted expansion process.
+
+### Learning-quality acceptance
+
+Schema validity, search visibility, and one compiling example establish only a
+technical baseline. Before an ordinary entity Entry is marked
+learning-quality, it must cover every applicable item below:
+
+- intended use and an explicit non-use case;
+- representative declarations and version boundaries;
+- constraints, preconditions, parameters, and return/value categories;
+- ownership, lifetime, invalidation, and thread-safety boundaries;
+- complexity and exception guarantees stated at standard-defined precision;
+- one minimal and one realistic deterministic example;
+- actionable mistakes and a JavaScript/TypeScript comparison when useful;
+- direct primary sources for each substantive standard-fact group.
+
+An omitted section is acceptable only when it genuinely does not apply, not
+when research has not been completed. Landing and header Entries may remain
+short because their job is navigation, but they still require clear scope,
+important entities, inclusion guidance, and precise outgoing links.
 
 ## 3. Selecting Entry granularity
 

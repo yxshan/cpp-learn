@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-string-view",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/strings/string-view",
   "kind": "type",
   "title": "std::string_view",
@@ -12,7 +12,7 @@
   "since": "c++17",
   "aliases": ["string_view", "字符串视图", "非拥有字符串"],
   "categories": ["strings"],
-  "relatedEntryIds": ["std-string"],
+  "relatedEntryIds": ["std-string", "std-optional"],
   "content": {
     "format": "markdown",
     "path": "entries/std-string-view/content.md"
@@ -23,7 +23,14 @@
       "path": "entries/std-string-view/examples/view-prefix.cpp",
       "kind": "run",
       "standard": "c++20",
-      "expectedStdout": "C++\n"
+      "expectedStdout": "alice admin\n"
+    },
+    {
+      "id": "request-target",
+      "path": "entries/std-string-view/examples/request-target.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "/search\nq=cpp\n"
     }
   ],
   "sources": [
@@ -32,7 +39,54 @@
       "title": "C++ working draft: string_view",
       "url": "https://eel.is/c++draft/string.view",
       "standardSection": "[string.view]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view requirements",
+      "url": "https://eel.is/c++draft/string.view.template.general",
+      "standardSection": "[string.view.template.general]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view construction",
+      "url": "https://eel.is/c++draft/string.view.cons",
+      "standardSection": "[string.view.cons]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view access",
+      "url": "https://eel.is/c++draft/string.view.access",
+      "standardSection": "[string.view.access]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view operations",
+      "url": "https://eel.is/c++draft/string.view.ops",
+      "standardSection": "[string.view.ops]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view modifiers",
+      "url": "https://eel.is/c++draft/string.view.modifiers",
+      "standardSection": "[string.view.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string_view search",
+      "url": "https://eel.is/c++draft/string.view.find",
+      "standardSection": "[string.view.find]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 N3921: string_view Revision 7",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3921.html"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[string.view]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

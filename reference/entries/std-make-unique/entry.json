@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-make-unique",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/memory/make-unique",
   "kind": "function",
   "title": "std::make_unique",
@@ -23,7 +23,14 @@
       "path": "entries/std-make-unique/examples/make-counter.cpp",
       "kind": "run",
       "standard": "c++20",
-      "expectedStdout": "3\n"
+      "expectedStdout": "CCCC\n"
+    },
+    {
+      "id": "formatter-factory",
+      "path": "entries/std-make-unique/examples/formatter-factory.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "request-42\n"
     }
   ],
   "sources": [
@@ -32,7 +39,36 @@
       "title": "C++ working draft: unique_ptr creation",
       "url": "https://eel.is/c++draft/unique.ptr.create",
       "standardSection": "[unique.ptr.create]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unique_ptr model",
+      "url": "https://eel.is/c++draft/unique.ptr.general",
+      "standardSection": "[unique.ptr.general]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unique_ptr modifiers",
+      "url": "https://eel.is/c++draft/unique.ptr.single.modifiers",
+      "standardSection": "[unique.ptr.single.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: default_delete",
+      "url": "https://eel.is/c++draft/unique.ptr.dltr.dflt",
+      "standardSection": "[unique.ptr.dltr.dflt]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: new-expression",
+      "url": "https://eel.is/c++draft/expr.new",
+      "standardSection": "[expr.new]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 N3656: make_unique Revision 1",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3656.htm"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }
