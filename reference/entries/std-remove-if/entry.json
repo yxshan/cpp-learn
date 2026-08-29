@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "std-remove-if",
+  "version": 1,
+  "slug": "standard-library/algorithms/remove-if",
+  "kind": "function",
+  "title": "std::remove_if",
+  "summary": "把不满足删除条件的元素稳定移到范围前部，并返回新的逻辑末尾。",
+  "symbol": "std::remove_if",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["remove_if", "按条件删除", "erase remove", "逻辑删除"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-vector", "std-transform"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-remove-if/content.md"
+  },
+  "examples": [
+    {
+      "id": "erase-negative-values",
+      "path": "entries/std-remove-if/examples/erase-negative-values.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "2 5 8\n"
+    },
+    {
+      "id": "discard-expired-sessions",
+      "path": "entries/std-remove-if/examples/discard-expired-sessions.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "active=a1\nactive=c3\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: remove and remove_if",
+      "url": "https://eel.is/c++draft/alg.remove",
+      "standardSection": "[alg.remove]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: algorithms requirements",
+      "url": "https://eel.is/c++draft/algorithms.requirements",
+      "standardSection": "[algorithms.requirements]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[alg.remove]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.alg.remove]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0202R3: constexpr algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html",
+      "standardSection": "remove_if"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

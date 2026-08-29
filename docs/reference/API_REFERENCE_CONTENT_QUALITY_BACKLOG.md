@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-29 |
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 25 Entries. All have at least one primary source,
-and all 30 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 37 Entries. All have at least one primary source,
+and all 66 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -56,35 +56,35 @@ editorial role and upgrade status.
 | Completed in quality batch 1 | `std::optional`, `std::make_unique`, `std::string_view` | Rewritten to the ordinary-entity learning-quality baseline with two verified examples each |
 | Completed in quality batch 2 | `<vector>`, `<array>`, `<deque>`, `<unordered_map>`, choosing a sequence container | Header facility maps, version boundaries, container decision rules, and differentiated invalidation guidance are now source-backed |
 | Completed in quality batch 3 | `std::vector`, `std::vector::push_back`, `std::vector::reserve`, `std::array`, `std::deque`, `std::unordered_map`, `std::sort`, `std::find`, `std::string`, `std::unique_ptr`, `std::cin`, `std::cout` | Each core entity now pairs its minimal example with a deterministic realistic example and explicit selection guidance |
+| Completed in breadth batch 4 | `std::map`, `std::set`, `std::unordered_set`, `std::queue`, `std::priority_queue`, `std::stack`, `std::transform`, `std::count_if`, `std::all_of`, `std::lower_bound`, `std::remove_if`, `std::accumulate` | Twelve directly searchable entity pages add associative containers, adaptors, and high-frequency algorithms with two verified examples each |
 | Keep concise | Standard Library, Containers, Algorithms, `<algorithm>`, `<iostream>` | Landing/header role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 are complete. The existing ordinary-entity example
-debt is cleared, so the next batch can begin controlled breadth expansion with
-common associative containers, container adaptors, and high-frequency
-algorithms.
+Quality batches 1 through 3 and breadth batch 4 are complete. The existing
+ordinary-entity example debt remains cleared. The next batch can finish the
+header maps around the new entities and add the remaining high-frequency
+algorithms before moving into string conversion, shared ownership, and utility
+vocabulary.
 
 ## 4. Planned 120-Entry catalog
 
-The current 25 Entries remain in scope. The following 95 candidates make the
+The current 37 Entries remain in scope. The following 83 candidates make the
 remaining catalog explicit. “Candidate” means editorially selected, not yet
 fact-verified or release-ready.
 
-### 4.1 Containers: 17 candidates
+### 4.1 Containers: 11 candidates
 
-- `<map>`, `std::map`, `<set>`, `std::set`.
-- `<unordered_set>`, `std::unordered_set`.
+- `<map>`, `<set>`, `<unordered_set>`.
 - `<list>`, `std::list`, `<forward_list>`, `std::forward_list`.
 - `<span>`, `std::span`.
-- `<queue>`, `std::queue`, `std::priority_queue`.
-- `<stack>`, `std::stack`.
+- `<queue>`, `<stack>`.
 
-### 4.2 Algorithms and numeric operations: 18 candidates
+### 4.2 Algorithms and numeric operations: 12 candidates
 
-- `<numeric>`, `std::accumulate`.
-- `std::for_each`, `std::transform`, `std::copy`, `std::move` (algorithm).
-- `std::count`, `std::count_if`, `std::all_of`, `std::any_of`, `std::none_of`.
-- `std::lower_bound`, `std::binary_search`.
-- `std::reverse`, `std::rotate`, `std::remove`, `std::remove_if`, `std::unique`.
+- `<numeric>`.
+- `std::for_each`, `std::copy`, `std::move` (algorithm).
+- `std::count`, `std::any_of`, `std::none_of`.
+- `std::binary_search`.
+- `std::reverse`, `std::rotate`, `std::remove`, `std::unique`.
 
 ### 4.3 Strings and conversion: 8 candidates
 
@@ -137,7 +137,8 @@ fact-verified or release-ready.
 1. Upgrade the three current P0 Entries before adding new ones. **Completed.**
 2. Deepen the existing container headers and selection guide. **Completed.**
 3. Add common associative/container adaptors and high-frequency algorithms.
-   **Next.**
+   **Entity slice completed in breadth batch 4; header and algorithm remainder
+   is next.**
 4. Add string conversion, shared ownership, and utility vocabulary.
 5. Add filesystem and time with deterministic examples.
 6. Add concurrency last, after its nondeterministic-example and memory-model

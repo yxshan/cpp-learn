@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "std-stack",
+  "version": 1,
+  "slug": "standard-library/containers/stack",
+  "kind": "type",
+  "title": "std::stack",
+  "summary": "提供后进先出访问的容器适配器，只允许操作栈顶。",
+  "symbol": "std::stack",
+  "header": "<stack>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["stack", "栈", "后进先出", "LIFO"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-deque", "std-queue"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-stack/content.md"
+  },
+  "examples": [
+    {
+      "id": "lifo-order",
+      "path": "entries/std-stack/examples/lifo-order.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "third second first\n"
+    },
+    {
+      "id": "validate-delimiters",
+      "path": "entries/std-stack/examples/validate-delimiters.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "{[()]} valid\n{[(])} invalid\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: stack synopsis",
+      "url": "https://eel.is/c++draft/stack.syn",
+      "standardSection": "[stack.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: stack definition",
+      "url": "https://eel.is/c++draft/stack.defn",
+      "standardSection": "[stack.defn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: container adaptors",
+      "url": "https://eel.is/c++draft/container.adaptors",
+      "standardSection": "[container.adaptors]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[stack]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.stack]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

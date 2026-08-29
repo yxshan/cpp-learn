@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 2.7 |
+| Version | 2.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-29 |
@@ -47,7 +47,8 @@ Read in this order:
 29. [Stage 6.2 Phase 3 Content Quality Batch 1 Implementation Report](29-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-1-IMPLEMENTATION-REPORT.md)
 30. [Stage 6.2 Phase 3 Content Quality Batch 2 Implementation Report](30-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-2-IMPLEMENTATION-REPORT.md)
 31. [Stage 6.2 Phase 3 Content Quality Batch 3 Implementation Report](31-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-3-IMPLEMENTATION-REPORT.md)
-32. [Domain Context](CONTEXT.md)
+32. [Stage 6.2 Phase 3 Breadth Expansion Batch 4 Implementation Report](32-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-4-IMPLEMENTATION-REPORT.md)
+33. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -65,6 +66,7 @@ API Reference research and editorial baselines:
 - [Content Quality Batch 1 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH1_RESEARCH.md)
 - [Content Quality Batch 2 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH2_RESEARCH.md)
 - [Content Quality Batch 3 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH3_RESEARCH.md)
+- [Breadth Expansion Batch 4 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH4_RESEARCH.md)
 
 ## Architecture decisions
 

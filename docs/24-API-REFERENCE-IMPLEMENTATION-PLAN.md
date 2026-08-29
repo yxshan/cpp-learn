@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-29 |
@@ -115,9 +115,10 @@ integration, accessibility, and Playwright gates.
 ## 6. Phase 3: core catalog expansion
 
 Current state: the first expansion batch, category/standard/verification
-filters, coverage reporting, compiler-bound local verification manifests, and
-the first three content-quality batches are delivered. Catalog expansion
-toward the 80–120 Entry target remains in progress.
+filters, coverage reporting, compiler-bound local verification manifests, the
+first three content-quality batches, and the fourth breadth-expansion batch are
+delivered. Catalog expansion toward the 80–120 Entry target remains in
+progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
 vertical-release Entries against the learning-quality definition in the
@@ -133,6 +134,10 @@ reduced header-page baseline and the container-selection decision model for
 `<vector>`, `<array>`, `<deque>`, and `<unordered_map>`. Quality batch 3 gave
 the remaining 12 core ordinary entities a deterministic realistic example and
 explicit selection guidance, clearing the catalog's known one-example debt.
+Breadth batch 4 advanced the catalog from 25 to 37 Entries by adding six
+associative/container-adaptor types and six high-frequency algorithms. Every
+new entity ships at learning-quality depth with two deterministic C++20 Run
+examples and explicit C++20/current-draft separation.
 
 ### Work packages
 

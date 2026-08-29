@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "std-queue",
+  "version": 1,
+  "slug": "standard-library/containers/queue",
+  "kind": "type",
+  "title": "std::queue",
+  "summary": "提供先进先出访问的容器适配器，只暴露队首和队尾操作。",
+  "symbol": "std::queue",
+  "header": "<queue>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["queue", "队列", "先进先出", "FIFO"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-deque", "std-priority-queue", "std-stack"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-queue/content.md"
+  },
+  "examples": [
+    {
+      "id": "fifo-order",
+      "path": "entries/std-queue/examples/fifo-order.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "10 20 30\n"
+    },
+    {
+      "id": "dispatch-jobs",
+      "path": "entries/std-queue/examples/dispatch-jobs.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "dispatch=compile\ndispatch=test\ndispatch=package\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: queue synopsis",
+      "url": "https://eel.is/c++draft/queue.syn",
+      "standardSection": "[queue.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: queue definition",
+      "url": "https://eel.is/c++draft/queue.defn",
+      "standardSection": "[queue.defn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: container adaptors",
+      "url": "https://eel.is/c++draft/container.adaptors",
+      "standardSection": "[container.adaptors]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[queue]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.queue]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

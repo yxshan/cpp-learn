@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 3,
+  "version": 4,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -26,7 +26,19 @@
     "entries/std-deque/entry.json",
     "entries/header-unordered-map/entry.json",
     "entries/std-unordered-map/entry.json",
-    "entries/std-vector-reserve/entry.json"
+    "entries/std-vector-reserve/entry.json",
+    "entries/std-map/entry.json",
+    "entries/std-set/entry.json",
+    "entries/std-unordered-set/entry.json",
+    "entries/std-queue/entry.json",
+    "entries/std-priority-queue/entry.json",
+    "entries/std-stack/entry.json",
+    "entries/std-transform/entry.json",
+    "entries/std-count-if/entry.json",
+    "entries/std-all-of/entry.json",
+    "entries/std-lower-bound/entry.json",
+    "entries/std-remove-if/entry.json",
+    "entries/std-accumulate/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

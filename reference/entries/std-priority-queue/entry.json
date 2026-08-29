@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "std-priority-queue",
+  "version": 1,
+  "slug": "standard-library/containers/priority-queue",
+  "kind": "type",
+  "title": "std::priority_queue",
+  "summary": "始终访问当前最高优先级元素的容器适配器，默认最大值优先。",
+  "symbol": "std::priority_queue",
+  "header": "<queue>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["priority_queue", "优先队列", "堆", "最大堆"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-queue", "std-vector", "std-sort"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-priority-queue/content.md"
+  },
+  "examples": [
+    {
+      "id": "highest-first",
+      "path": "entries/std-priority-queue/examples/highest-first.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "9 5 2\n"
+    },
+    {
+      "id": "schedule-tasks",
+      "path": "entries/std-priority-queue/examples/schedule-tasks.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "incident\ndeploy\nreport\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: priority_queue definition",
+      "url": "https://eel.is/c++draft/priority.queue",
+      "standardSection": "[priority.queue]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: container adaptors",
+      "url": "https://eel.is/c++draft/container.adaptors",
+      "standardSection": "[container.adaptors]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: strict weak ordering",
+      "url": "https://eel.is/c++draft/alg.sorting",
+      "standardSection": "[alg.sorting]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[priority.queue]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.priority.queue]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

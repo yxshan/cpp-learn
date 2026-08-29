@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 2,
+  "id": "std-unordered-set",
+  "version": 1,
+  "slug": "standard-library/containers/unordered-set",
+  "kind": "type",
+  "title": "std::unordered_set",
+  "summary": "使用哈希保存唯一元素，平均常数时间完成成员查询。",
+  "symbol": "std::unordered_set",
+  "header": "<unordered_set>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["unordered_set", "哈希集合", "无序集合", "hash set"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-set", "std-unordered-map"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-unordered-set/content.md"
+  },
+  "examples": [
+    {
+      "id": "membership-check",
+      "path": "entries/std-unordered-set/examples/membership-check.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "admin=true\nguest=false\n"
+    },
+    {
+      "id": "deduplicate-request-ids",
+      "path": "entries/std-unordered-set/examples/deduplicate-request-ids.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "accepted=req-2\naccepted=req-7\nduplicate=req-2\nunique=2\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_set overview",
+      "url": "https://eel.is/c++draft/unord.set.overview",
+      "standardSection": "[unord.set.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered associative container requirements",
+      "url": "https://eel.is/c++draft/unord.req",
+      "standardSection": "[unord.req]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: container data races",
+      "url": "https://eel.is/c++draft/container.requirements.dataraces",
+      "standardSection": "[container.requirements.dataraces]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_set modifiers",
+      "url": "https://eel.is/c++draft/unord.set.modifiers",
+      "standardSection": "[unord.set.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[unord.set]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++11 working draft N3337",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
+      "standardSection": "[unord.set]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0458R2: contains for associative containers",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0458r2.html",
+      "standardSection": "contains"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

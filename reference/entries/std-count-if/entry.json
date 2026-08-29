@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "std-count-if",
+  "version": 1,
+  "slug": "standard-library/algorithms/count-if",
+  "kind": "function",
+  "title": "std::count_if",
+  "summary": "统计范围中让一元谓词成立的元素数量。",
+  "symbol": "std::count_if",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["count_if", "条件计数", "按条件统计"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-all-of", "std-find"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-count-if/content.md"
+  },
+  "examples": [
+    {
+      "id": "count-even",
+      "path": "entries/std-count-if/examples/count-even.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "even=3\n"
+    },
+    {
+      "id": "count-slow-requests",
+      "path": "entries/std-count-if/examples/count-slow-requests.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "slow=2/5\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: count and count_if",
+      "url": "https://eel.is/c++draft/alg.count",
+      "standardSection": "[alg.count]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: algorithms requirements",
+      "url": "https://eel.is/c++draft/algorithms.requirements",
+      "standardSection": "[algorithms.requirements]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[alg.count]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.alg.count]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0202R3: constexpr algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html",
+      "standardSection": "count_if"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

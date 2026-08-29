@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "std-transform",
+  "version": 1,
+  "slug": "standard-library/algorithms/transform",
+  "kind": "function",
+  "title": "std::transform",
+  "summary": "对输入范围逐项应用转换，并把结果写入目标范围。",
+  "symbol": "std::transform",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["transform", "映射算法", "逐项转换", "map operation"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-remove-if", "std-vector"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-transform/content.md"
+  },
+  "examples": [
+    {
+      "id": "square-values",
+      "path": "entries/std-transform/examples/square-values.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "1 4 9 16\n"
+    },
+    {
+      "id": "build-route-labels",
+      "path": "entries/std-transform/examples/build-route-labels.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "GET /health\nPOST /users\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: transform",
+      "url": "https://eel.is/c++draft/alg.transform",
+      "standardSection": "[alg.transform]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: algorithms requirements",
+      "url": "https://eel.is/c++draft/algorithms.requirements",
+      "standardSection": "[algorithms.requirements]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[alg.transform]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.alg.transform]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0202R3: constexpr algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html",
+      "standardSection": "transform"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

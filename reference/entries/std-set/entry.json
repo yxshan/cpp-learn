@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 2,
+  "id": "std-set",
+  "version": 1,
+  "slug": "standard-library/containers/set",
+  "kind": "type",
+  "title": "std::set",
+  "summary": "按值排序且元素唯一的关联容器，适合有序成员集合与范围查询。",
+  "symbol": "std::set",
+  "header": "<set>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["set", "有序集合", "唯一集合", "树集合"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-map", "std-unordered-set", "std-lower-bound"],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-set/content.md"
+  },
+  "examples": [
+    {
+      "id": "unique-ports",
+      "path": "entries/std-set/examples/unique-ports.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "80 443 8080\n"
+    },
+    {
+      "id": "select-version-range",
+      "path": "entries/std-set/examples/select-version-range.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "v2 v3 v4\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: set overview",
+      "url": "https://eel.is/c++draft/set.overview",
+      "standardSection": "[set.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: set modifiers",
+      "url": "https://eel.is/c++draft/set.modifiers",
+      "standardSection": "[set.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: associative container requirements",
+      "url": "https://eel.is/c++draft/associative.reqmts",
+      "standardSection": "[associative.reqmts]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: container data races",
+      "url": "https://eel.is/c++draft/container.requirements.dataraces",
+      "standardSection": "[container.requirements.dataraces]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[set]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.set]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0458R2: contains for associative containers",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0458r2.html",
+      "standardSection": "contains"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}
