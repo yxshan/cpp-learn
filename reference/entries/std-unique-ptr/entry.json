@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-unique-ptr",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/memory/unique-ptr",
   "kind": "type",
   "title": "std::unique_ptr",
@@ -21,6 +21,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "0 7\n"
+    },
+    {
+      "id": "polymorphic-factory",
+      "path": "entries/std-unique-ptr/examples/polymorphic-factory.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "worker\n"
     }
   ],
   "sources": [
@@ -29,7 +36,31 @@
       "title": "C++ working draft: unique_ptr",
       "url": "https://eel.is/c++draft/unique.ptr",
       "standardSection": "[unique.ptr]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unique_ptr constructors",
+      "url": "https://eel.is/c++draft/unique.ptr.single.ctor",
+      "standardSection": "[unique.ptr.single.ctor]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unique_ptr destructor",
+      "url": "https://eel.is/c++draft/unique.ptr.single.dtor",
+      "standardSection": "[unique.ptr.single.dtor]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: default_delete",
+      "url": "https://eel.is/c++draft/unique.ptr.dltr.dflt",
+      "standardSection": "[unique.ptr.dltr.dflt]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: delete expressions",
+      "url": "https://eel.is/c++draft/expr.delete",
+      "standardSection": "[expr.delete]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

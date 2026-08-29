@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-vector-push-back",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/containers/vector/push-back",
   "kind": "member",
   "title": "std::vector::push_back",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "10 20\n"
+    },
+    {
+      "id": "append-moved-request",
+      "path": "entries/std-vector-push-back/examples/append-moved-request.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "1 /health\n"
     }
   ],
   "sources": [
@@ -32,7 +39,24 @@
       "title": "C++ working draft: vector modifiers",
       "url": "https://eel.is/c++draft/vector.modifiers",
       "standardSection": "[vector.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector overview",
+      "url": "https://eel.is/c++draft/vector.overview",
+      "standardSection": "[vector.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: moved-from library objects",
+      "url": "https://eel.is/c++draft/lib.types.movedfrom",
+      "standardSection": "[lib.types.movedfrom]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P1004R2: constexpr vector",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1004r2.pdf"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

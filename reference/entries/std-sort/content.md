@@ -9,9 +9,16 @@
 - 标准：C++98 起
 - 要求：随机访问迭代器
 
-## 声明
+## 什么时候使用
 
-C++98 至 C++17：
+需要原地重排随机访问范围，并且不要求等价元素保持原相对次序时使用。若必须保持等价元素
+的先后关系，应选择 [`std::stable_sort`](https://eel.is/c++draft/stable.sort)；链表容器
+应使用自己的排序成员。若只需要最小值、前若干项或按分界查找，不一定需要把整个范围
+完全排序。
+
+## 代表性声明
+
+C++98 起的两个经典非执行策略重载：
 
 ```cpp
 template<class RandomIt>
@@ -30,6 +37,9 @@ constexpr void sort(RandomIt first, RandomIt last);
 template<class RandomIt, class Compare>
 constexpr void sort(RandomIt first, RandomIt last, Compare comp);
 ```
+
+C++17 起还提供执行策略重载；它们具有额外的调用要求与异常处理规则，本页示例聚焦上面的
+经典重载。C++20 起经典重载可用于常量求值。
 
 ## 参数
 
@@ -53,7 +63,8 @@ constexpr void sort(RandomIt first, RandomIt last, Compare comp);
 
 ## 示例
 
-示例对 `std::vector<int>` 排序并输出稳定可复现的结果。
+第一个示例对整数向量升序排序。第二个示例为候选人定义“分数降序、同分姓名升序”的比较
+规则；显式同分规则既符合严格弱序，也让示例输出不依赖算法如何排列等价元素。
 
 ## 相关内容
 

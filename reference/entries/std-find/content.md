@@ -9,7 +9,13 @@
 - 标准：C++98 起
 - 复杂度：至多线性比较
 
-## 声明
+## 什么时候使用
+
+需要在普通迭代器范围中按 `==` 找到第一个目标值时使用，适合小型或未排序序列。
+需要按谓词或对象字段查找时选择 `std::find_if`；关联容器和无序关联容器通常应使用自身的
+`find` 成员，以利用其索引结构，而不是对整个容器执行线性扫描。
+
+## 代表性声明
 
 ```cpp
 template<class InputIt, class T>
@@ -17,6 +23,7 @@ constexpr InputIt find(InputIt first, InputIt last, const T& value);
 ```
 
 `constexpr` 适用于 C++20 起的该重载；更早标准中的返回与查找语义相同，但声明不带 `constexpr`。
+C++17 起还存在执行策略重载，本页示例聚焦经典非策略版本。
 
 ## 参数
 
@@ -26,6 +33,7 @@ constexpr InputIt find(InputIt first, InputIt last, const T& value);
 ## 返回值
 
 找到时返回第一个匹配元素的迭代器；没有找到时返回 `last`。返回值不拥有元素，其有效性依赖原范围。
+该返回规则由 [`[alg.find]`](https://eel.is/c++draft/alg.find) 定义。
 
 ## 复杂度
 
@@ -37,7 +45,8 @@ constexpr InputIt find(InputIt first, InputIt last, const T& value);
 
 ## 示例
 
-示例查找整数 `30` 并输出其从零开始的位置。
+第一个示例查找整数 `30` 并输出其从零开始的位置。第二个示例在固定流水线状态中寻找首个
+失败阶段，先检查结果不是 `end()`，再计算并输出阶段下标。
 
 ## 常见错误
 

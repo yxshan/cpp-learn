@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-array",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/containers/array",
   "kind": "type",
   "title": "std::array",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "3 4 9\n"
+    },
+    {
+      "id": "fixed-pipeline",
+      "path": "entries/std-array/examples/fixed-pipeline.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3 test\n"
     }
   ],
   "sources": [
@@ -58,5 +65,5 @@
       "standardSection": "[array]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

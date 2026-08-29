@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-vector-reserve",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/containers/vector/reserve",
   "kind": "member",
   "title": "std::vector::reserve",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "0 true\n3\n"
+    },
+    {
+      "id": "retain-reference",
+      "path": "entries/std-vector-reserve/examples/retain-reference.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "api true\n"
     }
   ],
   "sources": [
@@ -38,7 +45,12 @@
       "title": "WG21 1997 public review draft: vector capacity",
       "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-containers.html",
       "standardSection": "[lib.vector.capacity]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P1004R2: constexpr vector",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1004r2.pdf"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

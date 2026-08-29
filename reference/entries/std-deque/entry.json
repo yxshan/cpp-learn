@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-deque",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/containers/deque",
   "kind": "type",
   "title": "std::deque",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "20 40 3\n"
+    },
+    {
+      "id": "recent-latencies",
+      "path": "entries/std-deque/examples/recent-latencies.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "15 18 21\n"
     }
   ],
   "sources": [
@@ -52,5 +59,5 @@
       "standardSection": "[lib.deque]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

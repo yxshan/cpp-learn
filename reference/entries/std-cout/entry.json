@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-cout",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/io/cout",
   "kind": "object",
   "title": "std::cout",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "items=3\n"
+    },
+    {
+      "id": "format-identifier",
+      "path": "entries/std-cout/examples/format-identifier.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "decimal=42\nhex=0x2a\n"
     }
   ],
   "sources": [
@@ -53,10 +60,22 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: format flag manipulators",
+      "url": "https://eel.is/c++draft/fmtflags.manip",
+      "standardSection": "[fmtflags.manip]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: arithmetic output",
+      "url": "https://eel.is/c++draft/ostream.formatted.arithmetic",
+      "standardSection": "[ostream.formatted.arithmetic]"
+    },
+    {
+      "kind": "primary",
       "title": "WG21 1997 public review draft: iostream objects",
       "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-iostreams.html",
       "standardSection": "[lib.iostream.objects]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

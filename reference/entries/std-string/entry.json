@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-string",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/strings/string",
   "kind": "type",
   "title": "std::string",
@@ -21,6 +21,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "Hello, C++\n"
+    },
+    {
+      "id": "parse-setting",
+      "path": "entries/std-string/examples/parse-setting.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "mode -> release\n"
     }
   ],
   "sources": [
@@ -29,7 +36,36 @@
       "title": "C++ working draft: basic_string",
       "url": "https://eel.is/c++draft/string.classes",
       "standardSection": "[string.classes]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: basic_string general requirements",
+      "url": "https://eel.is/c++draft/basic.string.general",
+      "standardSection": "[basic.string.general]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string element access",
+      "url": "https://eel.is/c++draft/string.access",
+      "standardSection": "[string.access]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string find",
+      "url": "https://eel.is/c++draft/string.find",
+      "standardSection": "[string.find]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: string substr",
+      "url": "https://eel.is/c++draft/string.substr",
+      "standardSection": "[string.substr]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0980R1: constexpr string",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0980r1.pdf"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

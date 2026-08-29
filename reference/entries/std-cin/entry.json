@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-cin",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/io/cin",
   "kind": "object",
   "title": "std::cin",
@@ -25,6 +25,14 @@
       "standard": "c++20",
       "stdin": "7 5\n",
       "expectedStdout": "12\n"
+    },
+    {
+      "id": "sum-stream",
+      "path": "entries/std-cin/examples/sum-stream.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "stdin": "10 20 30\n",
+      "expectedStdout": "3 60\n"
     }
   ],
   "sources": [
@@ -60,10 +68,16 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: basic_ios members",
+      "url": "https://eel.is/c++draft/basic.ios.members",
+      "standardSection": "[basic.ios.members]"
+    },
+    {
+      "kind": "primary",
       "title": "WG21 1997 public review draft: iostream objects",
       "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-iostreams.html",
       "standardSection": "[lib.iostream.objects]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

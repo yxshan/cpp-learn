@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-vector",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/containers/vector",
   "kind": "type",
   "title": "std::vector",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "3\n"
+    },
+    {
+      "id": "sum-batch",
+      "path": "entries/std-vector/examples/sum-batch.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "3 24\n"
     }
   ],
   "sources": [
@@ -32,7 +39,25 @@
       "title": "C++ working draft: class template vector",
       "url": "https://eel.is/c++draft/vector",
       "standardSection": "[vector]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector overview",
+      "url": "https://eel.is/c++draft/vector.overview",
+      "standardSection": "[vector.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector modifiers",
+      "url": "https://eel.is/c++draft/vector.modifiers",
+      "standardSection": "[vector.modifiers]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: vector bool specialization",
+      "url": "https://eel.is/c++draft/vector.bool",
+      "standardSection": "[vector.bool]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

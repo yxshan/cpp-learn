@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-find",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/find",
   "kind": "function",
   "title": "std::find",
@@ -21,6 +21,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "2\n"
+    },
+    {
+      "id": "find-failed-stage",
+      "path": "entries/std-find/examples/find-failed-stage.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "failed-at=2\n"
     }
   ],
   "sources": [
@@ -29,7 +36,23 @@
       "title": "C++ working draft: find",
       "url": "https://eel.is/c++draft/alg.find",
       "standardSection": "[alg.find]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: general iterator requirements",
+      "url": "https://eel.is/c++draft/iterator.requirements.general",
+      "standardSection": "[iterator.requirements.general]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0024R2: parallel algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0202R3: constexpr algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }

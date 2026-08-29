@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 2.6 |
+| Version | 2.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-28 |
+| Last updated | 2026-08-29 |
 
 ## Purpose
 
@@ -46,7 +46,8 @@ Read in this order:
 28. [Stage 6.2 Phase 3 Local Verification Implementation Report](28-STAGE-6.2-PHASE-3-LOCAL-VERIFICATION-IMPLEMENTATION-REPORT.md)
 29. [Stage 6.2 Phase 3 Content Quality Batch 1 Implementation Report](29-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-1-IMPLEMENTATION-REPORT.md)
 30. [Stage 6.2 Phase 3 Content Quality Batch 2 Implementation Report](30-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-2-IMPLEMENTATION-REPORT.md)
-31. [Domain Context](CONTEXT.md)
+31. [Stage 6.2 Phase 3 Content Quality Batch 3 Implementation Report](31-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-3-IMPLEMENTATION-REPORT.md)
+32. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -63,6 +64,7 @@ API Reference research and editorial baselines:
 - [Content Quality Backlog](reference/API_REFERENCE_CONTENT_QUALITY_BACKLOG.md)
 - [Content Quality Batch 1 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH1_RESEARCH.md)
 - [Content Quality Batch 2 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH2_RESEARCH.md)
+- [Content Quality Batch 3 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH3_RESEARCH.md)
 
 ## Architecture decisions
 

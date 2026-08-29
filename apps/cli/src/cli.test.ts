@@ -65,6 +65,14 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
             standard: "c++20",
             verification: "verified",
           },
+          {
+            entryId: "std-cout",
+            exampleId: "format-identifier",
+            sourceDigest:
+              "90215bdb6b7fd5acd45fb5e5f5f05eca848102f4194e2db1fc0f4c276582381d",
+            standard: "c++20",
+            verification: "verified",
+          },
         ],
       }),
       "utf8",

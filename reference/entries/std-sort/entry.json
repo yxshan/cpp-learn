@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-sort",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/sort",
   "kind": "function",
   "title": "std::sort",
@@ -24,6 +24,13 @@
       "kind": "run",
       "standard": "c++20",
       "expectedStdout": "1 2 3\n"
+    },
+    {
+      "id": "rank-candidates",
+      "path": "entries/std-sort/examples/rank-candidates.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "Lin:95\nMing:95\nZhao:80\n"
     }
   ],
   "sources": [
@@ -32,7 +39,29 @@
       "title": "C++ working draft: sort",
       "url": "https://eel.is/c++draft/sort",
       "standardSection": "[sort]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: sorting requirements",
+      "url": "https://eel.is/c++draft/alg.sorting.general",
+      "standardSection": "[alg.sorting.general]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: stable_sort",
+      "url": "https://eel.is/c++draft/stable.sort",
+      "standardSection": "[stable.sort]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0024R2: parallel algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P0202R3: constexpr algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-28"
 }
