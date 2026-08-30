@@ -26,6 +26,7 @@ const baseline = await loadReferenceQualityBaseline(baselinePath);
 const comparison = compareReferenceQualityBaseline({
   catalogVersion: audit.catalogVersion,
   findings: audit.findings,
+  entryVersions: audit.entryVersions,
   baseline,
 });
 

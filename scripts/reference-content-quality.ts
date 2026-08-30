@@ -52,6 +52,7 @@ export interface ReferenceQualityBaseline {
     fixedPoint: string;
     scope: string;
   };
+  acceptedEntryVersions: Record<string, number>;
   knownGaps: ReferenceQualityFinding[];
   notApplicable: (ReferenceQualityFinding & {
     reason: string;
@@ -73,6 +74,7 @@ export interface ReferenceQualityAudit {
   findings: ReferenceQualityFinding[];
   findingsByArea: Partial<Record<ReferenceQualityArea, number>>;
   entriesWithFindings: number;
+  entryVersions: Record<string, number>;
 }
 
 type TextArea = Exclude<
@@ -146,6 +148,37 @@ function hasHeading(headings: string[], area: TextArea): boolean {
   return headings.some((heading) => headingPatterns[area].test(heading));
 }
 
+function markdownTable(
+  body: string,
+): { headers: string[]; rows: string[][] } | undefined {
+  const lines = body.split("\n");
+  for (let index = 0; index < lines.length - 1; index += 1) {
+    const headerLine = lines[index];
+    const separatorLine = lines[index + 1];
+    if (
+      headerLine === undefined ||
+      separatorLine === undefined ||
+      !/^\|.*\|$/u.test(headerLine) ||
+      !/^\|(?:\s*:?-+:?\s*\|)+$/u.test(separatorLine)
+    ) {
+      continue;
+    }
+    const cells = (line: string): string[] =>
+      line
+        .slice(1, -1)
+        .split("|")
+        .map((cell) => cell.trim());
+    const rows: string[][] = [];
+    for (let rowIndex = index + 2; rowIndex < lines.length; rowIndex += 1) {
+      const row = lines[rowIndex];
+      if (row === undefined || !/^\|.*\|$/u.test(row)) break;
+      rows.push(cells(row));
+    }
+    return { headers: cells(headerLine), rows };
+  }
+  return undefined;
+}
+
 function findingKey(finding: ReferenceQualityFinding): string {
   return `${finding.entryId}\u0000${finding.area}`;
 }
@@ -210,15 +243,22 @@ function auditHeader(input: ReferenceQualityInput): ReferenceQualityArea[] {
   const facilitySection = sections.find(({ heading }) =>
     /主要实体|主要设施|设施与|设施地图/u.test(heading),
   );
-  const hasMarkdownTable =
-    facilitySection !== undefined &&
-    /^\|.+\|\n\|(?:\s*:?-+:?\s*\|)+/mu.test(facilitySection.body);
-  const tableHasVersionBoundary =
-    facilitySection !== undefined &&
-    /^\|[^\n]*C\+\+(?:98|03|11|14|17|20|23|26)[^\n]*\|/mu.test(
-      facilitySection.body,
+  const facilityTable =
+    facilitySection === undefined
+      ? undefined
+      : markdownTable(facilitySection.body);
+  const versionColumn = facilityTable?.headers.findIndex((header) =>
+    /版本|标准/u.test(header),
+  );
+  const everyFacilityHasVersion =
+    versionColumn !== undefined &&
+    versionColumn >= 0 &&
+    facilityTable !== undefined &&
+    facilityTable.rows.length > 0 &&
+    facilityTable.rows.every((row) =>
+      /C\+\+(?:98|03|11|14|17|20|23|26)/u.test(row[versionColumn] ?? ""),
     );
-  if (!(hasMarkdownTable && tableHasVersionBoundary)) {
+  if (!everyFacilityHasVersion) {
     missing.push("facility-map");
   }
 
@@ -254,10 +294,12 @@ export function auditReferenceContent(
 export function compareReferenceQualityBaseline({
   catalogVersion,
   findings,
+  entryVersions,
   baseline,
 }: {
   catalogVersion: number;
   findings: ReferenceQualityFinding[];
+  entryVersions: Readonly<Record<string, number>>;
   baseline: ReferenceQualityBaseline;
 }): ReferenceQualityBaselineComparison {
   const currentKeys = new Set(findings.map(findingKey));
@@ -265,7 +307,14 @@ export function compareReferenceQualityBaseline({
     ...baseline.knownGaps,
     ...baseline.notApplicable.map(({ entryId, area }) => ({ entryId, area })),
   ];
-  const baselineKeys = new Set(reviewedFindings.map(findingKey));
+  const baselineKeys = new Set(
+    reviewedFindings
+      .filter(
+        ({ entryId }) =>
+          baseline.acceptedEntryVersions[entryId] === entryVersions[entryId],
+      )
+      .map(findingKey),
+  );
 
   return {
     newFindings: sortFindings(
@@ -273,7 +322,10 @@ export function compareReferenceQualityBaseline({
     ),
     resolvedFindings: sortFindings(
       reviewedFindings.filter(
-        (finding) => !currentKeys.has(findingKey(finding)),
+        (finding) =>
+          !currentKeys.has(findingKey(finding)) ||
+          baseline.acceptedEntryVersions[finding.entryId] !==
+            entryVersions[finding.entryId],
       ),
     ),
     catalogVersionMatches: baseline.catalogVersion === catalogVersion,
@@ -346,8 +398,12 @@ export function parseReferenceQualityBaseline(
   }
   const knownGapValues = value["knownGaps"];
   const notApplicableValues = value["notApplicable"];
+  const acceptedVersionValues = value["acceptedEntryVersions"];
   if (!Array.isArray(knownGapValues) || !Array.isArray(notApplicableValues)) {
     throw new Error("quality baseline findings must be arrays");
+  }
+  if (!isRecord(acceptedVersionValues)) {
+    throw new Error("quality baseline acceptedEntryVersions is required");
   }
   const knownGaps = knownGapValues.map((finding, index) =>
     parseFinding(finding, `knownGaps[${index}]`),
@@ -390,6 +446,28 @@ export function parseReferenceQualityBaseline(
     }
     notApplicableKeys.add(key);
   }
+  const reviewedEntryIds = new Set(
+    [...knownGaps, ...notApplicable].map(({ entryId }) => entryId),
+  );
+  const acceptedEntryVersions: Record<string, number> = {};
+  for (const [entryId, version] of Object.entries(acceptedVersionValues)) {
+    if (!reviewedEntryIds.has(entryId)) {
+      throw new Error(
+        `acceptedEntryVersions contains unreviewed Entry: ${entryId}`,
+      );
+    }
+    if (!Number.isInteger(version) || (version as number) < 1) {
+      throw new Error(
+        `acceptedEntryVersions.${entryId} must be a positive integer`,
+      );
+    }
+    acceptedEntryVersions[entryId] = version as number;
+  }
+  for (const entryId of reviewedEntryIds) {
+    if (acceptedEntryVersions[entryId] === undefined) {
+      throw new Error(`acceptedEntryVersions is missing ${entryId}`);
+    }
+  }
 
   return {
     schemaVersion: 1,
@@ -400,6 +478,7 @@ export function parseReferenceQualityBaseline(
       fixedPoint,
       scope: parseNonEmptyString(reviewValue["scope"], "review.scope"),
     },
+    acceptedEntryVersions,
     knownGaps,
     notApplicable,
   };
@@ -417,6 +496,7 @@ export async function auditReferenceCatalog(
   }
   const catalog = rawCatalog as ReferenceCatalogManifest;
   const findings: ReferenceQualityFinding[] = [];
+  const entryVersions: Record<string, number> = {};
   let auditedEntryCount = 0;
 
   for (const entryPath of catalog.entries) {
@@ -426,6 +506,7 @@ export async function auditReferenceCatalog(
       throw new Error(`${entryPath} schema is invalid for quality audit`);
     }
     const entry = rawEntry as ReferenceEntryManifest;
+    entryVersions[entry.id] = entry.version;
     if (entry.kind === "landing" || entry.kind === "guide") continue;
 
     auditedEntryCount += 1;
@@ -463,6 +544,7 @@ export async function auditReferenceCatalog(
     findingsByArea,
     entriesWithFindings: new Set(sortedFindings.map(({ entryId }) => entryId))
       .size,
+    entryVersions,
   };
 }
 

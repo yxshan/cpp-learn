@@ -83,9 +83,11 @@ quality-ratchet batch 7, the checked-in baseline contains 41 known gaps across
 
 `reference/quality-baseline.json` is a reviewed debt inventory, not a routine
 acceptance waiver. It records the approval fixed point and supports reasoned,
-dated `notApplicable` decisions for genuinely irrelevant profile items. Every
-remediation removes the matching baseline row or stale decision in the same
-change. New Entries and materially rewritten Entries may not introduce debt.
+dated `notApplicable` decisions for genuinely irrelevant profile items. Debt is
+also bound to the reviewed Entry version, so materially changing an indebted
+page forces its remaining findings back through review. Every remediation
+removes the matching baseline row or stale decision in the same change. New
+Entries and materially rewritten Entries may not introduce debt.
 
 ## 4. Planned 120-Entry catalog
 

@@ -28,7 +28,8 @@ across 25 Entries.
 - `npm run report:reference` reports audited/skipped Entries, affected Entries,
   total known gaps, and area counts.
 - `reference/quality-baseline.json` records inherited structural debt in stable
-  Entry/area pairs with review provenance and reasoned not-applicable support.
+  Entry/area pairs with review provenance, accepted Entry versions, and
+  reasoned not-applicable support.
 - The root `npm run check` includes the new gate.
 
 The structural checker verifies discoverability of required topics, not the
@@ -49,7 +50,7 @@ Working Draft clauses already recorded in Entry manifests.
 
 | Gate | Result |
 |---|---|
-| Focused quality-profile tests | Passed: 11 tests |
+| Focused quality-profile tests | Passed: 12 tests |
 | TypeScript typecheck | Passed |
 | Quality ratchet | Passed: 57/61 audited, 41 reviewed gaps, no regressions |
 | Reference coverage report | Passed: quality summary emitted |

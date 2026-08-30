@@ -180,8 +180,9 @@ structure and manifest counts by Entry kind, then requires an exact match with
 `reference/quality-baseline.json`. A fixed finding must be removed from the
 baseline in the same change; a new finding must be corrected rather than
 baselined. Genuinely irrelevant items require a dated `notApplicable` reason.
-The baseline carries review provenance, and catalog version changes require an
-explicit baseline review.
+The baseline carries review provenance and accepted Entry versions; versioning
+an indebted Entry invalidates its inherited allowance. Catalog version changes
+require an explicit baseline review.
 
 ## 8. Dependency management
 

@@ -97,11 +97,13 @@ Existing debt is recorded in `reference/quality-baseline.json`. The gate is a
 ratchet relative to that reviewed artifact: an unrecorded gap fails, a resolved
 gap that remains in the baseline also fails, and a catalog-version mismatch
 requires the whole baseline to be reviewed. The baseline records its review ID,
-date, Git fixed point, and scope; automation validates these fields, while code
-review authorizes any baseline change. Never add an item merely to make CI
-green. Additions are allowed only when formally accepting inherited debt with a
-remediation owner/order; normal new or materially edited Entries must satisfy
-their profile immediately.
+date, Git fixed point, scope, and the accepted version of every indebted Entry.
+Automation validates these fields, while code review authorizes any baseline
+change. If an indebted Entry version changes, its inherited findings become
+new and stale simultaneously until the page satisfies its profile. Never add
+an item merely to make CI green. Additions are allowed only when formally
+accepting inherited debt with a remediation owner/order; normal new or
+materially edited Entries must satisfy their profile immediately.
 
 When a profile item genuinely does not apply, add a reviewed `notApplicable`
 decision with a concrete reason and review date instead of filler prose. The

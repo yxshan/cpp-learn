@@ -228,9 +228,10 @@ C++20 头文件。
 
 ## 主要设施
 
-| 设施 | 说明 |
-|---|---|
-| demo | 演示 |
+| 设施 | 说明 | 首次标准 |
+|---|---|---|
+| demo | 演示 | C++20 |
+| demo_later | 后续设施 | — |
 
 ## 什么时候使用
 
@@ -273,6 +274,7 @@ describe("Reference quality baseline ratchet", () => {
       fixedPoint: "a2ae587",
       scope: "Inherited catalog debt only.",
     },
+    acceptedEntryVersions: { "std-old": 2 },
     knownGaps: [
       { entryId: "std-old", area: "javascript" },
       { entryId: "std-old", area: "lifetime" },
@@ -285,6 +287,7 @@ describe("Reference quality baseline ratchet", () => {
       compareReferenceQualityBaseline({
         catalogVersion: 6,
         findings: baseline.knownGaps,
+        entryVersions: { "std-old": 2 },
         baseline,
       }),
     ).toEqual({
@@ -302,6 +305,7 @@ describe("Reference quality baseline ratchet", () => {
           { entryId: "std-old", area: "lifetime" },
           { entryId: "std-new", area: "complexity" },
         ],
+        entryVersions: { "std-old": 2, "std-new": 1 },
         baseline,
       }),
     ).toEqual({
@@ -321,6 +325,7 @@ describe("Reference quality baseline ratchet", () => {
     };
     const baselineWithDecision: ReferenceQualityBaseline = {
       ...baseline,
+      acceptedEntryVersions: { "std-no-analogy": 1 },
       knownGaps: [],
       notApplicable: [notApplicable],
     };
@@ -329,6 +334,7 @@ describe("Reference quality baseline ratchet", () => {
       compareReferenceQualityBaseline({
         catalogVersion: 6,
         findings: [{ entryId: "std-no-analogy", area: "javascript" }],
+        entryVersions: { "std-no-analogy": 1 },
         baseline: baselineWithDecision,
       }),
     ).toEqual({
@@ -340,9 +346,31 @@ describe("Reference quality baseline ratchet", () => {
       compareReferenceQualityBaseline({
         catalogVersion: 6,
         findings: [],
+        entryVersions: { "std-no-analogy": 1 },
         baseline: baselineWithDecision,
       }).resolvedFindings,
     ).toEqual([{ entryId: "std-no-analogy", area: "javascript" }]);
+  });
+
+  it("invalidates inherited debt when its Entry version changes", () => {
+    expect(
+      compareReferenceQualityBaseline({
+        catalogVersion: 6,
+        findings: baseline.knownGaps,
+        entryVersions: { "std-old": 3 },
+        baseline,
+      }),
+    ).toEqual({
+      newFindings: [
+        { entryId: "std-old", area: "lifetime" },
+        { entryId: "std-old", area: "javascript" },
+      ],
+      resolvedFindings: [
+        { entryId: "std-old", area: "lifetime" },
+        { entryId: "std-old", area: "javascript" },
+      ],
+      catalogVersionMatches: true,
+    });
   });
 
   it("rejects malformed, duplicate, and overlapping baseline records", () => {
