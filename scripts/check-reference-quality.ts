@@ -31,7 +31,7 @@ const comparison = compareReferenceQualityBaseline({
 
 printFindings("New Reference quality findings", comparison.newFindings);
 printFindings(
-  "Resolved findings still present in the baseline",
+  "Resolved findings or stale not-applicable decisions still present in the baseline",
   comparison.resolvedFindings,
 );
 

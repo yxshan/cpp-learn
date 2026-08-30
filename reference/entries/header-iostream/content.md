@@ -10,23 +10,22 @@
 - 标准：C++98 起
 - 主要实体：标准输入、输出和诊断流对象
 
-## 什么时候使用
+## 什么时候包含
 
 程序需要通过标准输入读取数据，或向标准输出、标准错误输出写入文本时，直接包含
 `<iostream>`。不要依赖其他头文件间接包含它。
 
-## 代表性声明
+## 头文件中的主要实体
 
-```cpp
-namespace std {
-extern istream cin;
-extern ostream cout;
-extern ostream cerr;
-extern ostream clog;
-}
-```
+| 实体组 | 作用 | 首次标准 |
+|---|---|---|
+| `std::cin`、`std::wcin` | 关联标准输入的窄/宽字符输入流 | C++98 |
+| `std::cout`、`std::wcout` | 关联标准输出的窄/宽字符输出流 | C++98 |
+| `std::cerr`、`std::wcerr` | 默认启用 `unitbuf` 的诊断输出流 | C++98 |
+| `std::clog`、`std::wclog` | 关联标准错误输出的日志流 | C++98 |
 
-这只是窄字符流对象的代表性声明，不是该头文件的完整清单。
+这是面向用途的设施地图，不是 synopsis 的逐字副本；具体对象状态、格式化接口和 stream
+buffer 合同由相应类型与对象页面解释。
 
 ## 生命周期与并发
 

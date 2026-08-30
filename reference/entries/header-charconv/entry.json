@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-charconv",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/charconv",
   "kind": "header",
   "title": "<charconv>",

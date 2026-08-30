@@ -59,7 +59,7 @@ editorial role and upgrade status.
 | Completed in breadth batch 4 | `std::map`, `std::set`, `std::unordered_set`, `std::queue`, `std::priority_queue`, `std::stack`, `std::transform`, `std::count_if`, `std::all_of`, `std::lower_bound`, `std::remove_if`, `std::accumulate` | Twelve directly searchable entity pages add associative containers, adaptors, and high-frequency algorithms with two verified examples each |
 | Completed in breadth batch 5 | `<map>`, `<set>`, `<unordered_set>`, `<queue>`, `<stack>`, `<numeric>`, `std::binary_search`, `std::any_of`, `std::copy`, `std::reverse`, `std::unique`, `std::for_each` | Six facility maps close navigation around batch 4 and six ordinary algorithm pages define classic, policy, and ranges boundaries with verified examples |
 | Completed in breadth batch 6 | `<string>`, `<string_view>`, `<charconv>`, `<memory>`, `std::string::substr`, `std::string::find`, `std::string::append`, `std::from_chars`, `std::to_chars`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared` | Four facility maps and eight ordinary pages close owning/borrowed text, low-level conversion, and shared-ownership learning loops; cppreference informs page structure while WG21 sources govern facts |
-| Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout` | Added missing mistakes, complexity, lifetime/invalidation, related-link, and JavaScript comparison coverage; all six now pass their kind profile |
+| Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
 Quality batches 1 through 3 and breadth batches 4 through 6 are complete. The existing
@@ -71,8 +71,8 @@ I/O, filesystem, or time vocabulary.
 
 The kind-aware audit currently checks 57 of 61 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
-quality-ratchet batch 7, the checked-in baseline contains 43 known gaps across
-27 Entries, down from the initial 58 gaps across 35 Entries.
+quality-ratchet batch 7, the checked-in baseline contains 41 known gaps across
+25 Entries, down from the initial 58 gaps across 35 Entries.
 
 | Remediation batch | Focus | Current gap areas |
 |---|---|---|
@@ -81,9 +81,11 @@ quality-ratchet batch 7, the checked-in baseline contains 43 known gaps across
 | 10 | Header navigation | direct-inclusion guidance, facility maps, related links |
 | 11 | String conversion and member operations | selection, parameters, lifetime |
 
-`reference/quality-baseline.json` is debt inventory, not an acceptance waiver.
-Every remediation removes the matching baseline rows in the same change. New
-Entries and materially rewritten Entries may not introduce new rows.
+`reference/quality-baseline.json` is a reviewed debt inventory, not a routine
+acceptance waiver. It records the approval fixed point and supports reasoned,
+dated `notApplicable` decisions for genuinely irrelevant profile items. Every
+remediation removes the matching baseline row or stale decision in the same
+change. New Entries and materially rewritten Entries may not introduce debt.
 
 ## 4. Planned 120-Entry catalog
 

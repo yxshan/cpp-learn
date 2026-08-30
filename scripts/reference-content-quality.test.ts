@@ -6,6 +6,7 @@ import {
   auditReferenceContent,
   auditReferenceCatalog,
   compareReferenceQualityBaseline,
+  parseReferenceQualityBaseline,
   type ReferenceQualityBaseline,
   type ReferenceQualityInput,
 } from "./reference-content-quality.js";
@@ -114,6 +115,7 @@ describe("Reference content quality profiles", () => {
     const findings = auditReferenceContent({
       id: "header-demo",
       kind: "header",
+      header: "<demo>",
       content: `# <demo>
 
 ## 快速信息
@@ -150,16 +152,132 @@ C++20 头文件。
       { entryId: "header-demo", area: "facility-map" },
     ]);
   });
+
+  it("does not confuse an unrelated example include or table with header guidance", () => {
+    const findings = auditReferenceContent({
+      id: "header-demo",
+      kind: "header",
+      header: "<demo>",
+      content: `# <demo>
+
+## 快速信息
+
+C++20 头文件。
+
+## 什么时候包含
+
+不要依赖其他头文件的传递包含。
+
+## 主要设施
+
+这里应该解释设施，但还没有设施表。
+
+## 示例
+
+\`\`\`cpp
+#include <vector>
+\`\`\`
+
+| 输入 | 输出 |
+|---|---|
+| 1 | 1 |
+
+## 常见错误
+
+不要遗漏头文件。
+
+## 相关内容
+
+继续阅读。
+
+## 来源
+
+标准草案。
+`,
+      exampleCount: 1,
+      primarySourceCount: 1,
+      relatedEntryCount: 2,
+    });
+
+    expect(findings).toEqual([
+      { entryId: "header-demo", area: "direct-include" },
+      { entryId: "header-demo", area: "facility-map" },
+    ]);
+  });
+
+  it("requires version boundaries inside the facility table", () => {
+    const findings = auditReferenceContent({
+      id: "header-demo",
+      kind: "header",
+      header: "<demo>",
+      content: `# <demo>
+
+## 快速信息
+
+C++20 头文件。
+
+## 直接包含
+
+直接使用时应显式包含：
+
+\`\`\`cpp
+#include <demo>
+\`\`\`
+
+不要依赖其他头文件的传递包含。
+
+## 主要设施
+
+| 设施 | 说明 |
+|---|---|
+| demo | 演示 |
+
+## 什么时候使用
+
+需要演示设施时使用。
+
+## 示例
+
+可运行示例。
+
+## 常见错误
+
+不要遗漏头文件。
+
+## 相关内容
+
+继续阅读。
+
+## 来源
+
+标准草案。
+`,
+      exampleCount: 1,
+      primarySourceCount: 1,
+      relatedEntryCount: 2,
+    });
+
+    expect(findings).toEqual([
+      { entryId: "header-demo", area: "facility-map" },
+    ]);
+  });
 });
 
 describe("Reference quality baseline ratchet", () => {
   const baseline: ReferenceQualityBaseline = {
     schemaVersion: 1,
     catalogVersion: 6,
+    review: {
+      id: "quality-ratchet-batch-7",
+      reviewedAt: "2026-08-30",
+      fixedPoint: "a2ae587",
+      scope: "Inherited catalog debt only.",
+    },
     knownGaps: [
       { entryId: "std-old", area: "javascript" },
       { entryId: "std-old", area: "lifetime" },
     ],
+    notApplicable: [],
   };
 
   it("passes only when the current findings exactly match the reviewed debt", () => {
@@ -191,6 +309,64 @@ describe("Reference quality baseline ratchet", () => {
       resolvedFindings: [{ entryId: "std-old", area: "javascript" }],
       catalogVersionMatches: false,
     });
+  });
+
+  it("accepts a reviewed not-applicable decision but reports a stale one", () => {
+    const notApplicable = {
+      entryId: "std-no-analogy",
+      area: "javascript" as const,
+      reason:
+        "No JavaScript API has a sufficiently similar observable contract.",
+      reviewedAt: "2026-08-30",
+    };
+    const baselineWithDecision: ReferenceQualityBaseline = {
+      ...baseline,
+      knownGaps: [],
+      notApplicable: [notApplicable],
+    };
+
+    expect(
+      compareReferenceQualityBaseline({
+        catalogVersion: 6,
+        findings: [{ entryId: "std-no-analogy", area: "javascript" }],
+        baseline: baselineWithDecision,
+      }),
+    ).toEqual({
+      newFindings: [],
+      resolvedFindings: [],
+      catalogVersionMatches: true,
+    });
+    expect(
+      compareReferenceQualityBaseline({
+        catalogVersion: 6,
+        findings: [],
+        baseline: baselineWithDecision,
+      }).resolvedFindings,
+    ).toEqual([{ entryId: "std-no-analogy", area: "javascript" }]);
+  });
+
+  it("rejects malformed, duplicate, and overlapping baseline records", () => {
+    expect(() =>
+      parseReferenceQualityBaseline({ ...baseline, schemaVersion: 2 }),
+    ).toThrow(/schemaVersion/u);
+    expect(() =>
+      parseReferenceQualityBaseline({
+        ...baseline,
+        knownGaps: [baseline.knownGaps[0], baseline.knownGaps[0]],
+      }),
+    ).toThrow(/duplicate/u);
+    expect(() =>
+      parseReferenceQualityBaseline({
+        ...baseline,
+        notApplicable: [
+          {
+            ...baseline.knownGaps[0],
+            reason: "Not applicable after semantic review.",
+            reviewedAt: "2026-08-30",
+          },
+        ],
+      }),
+    ).toThrow(/both knownGap and notApplicable/u);
   });
 });
 

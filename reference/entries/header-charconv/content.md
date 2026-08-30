@@ -21,12 +21,12 @@
 
 ## 设施与方向
 
-| 方向 | 代表设施 | 调用者提供 | 结果 |
-|---|---|---|---|
-| 字符 → 数字 | `from_chars` | `[first, last)` 与目标对象 | 停止位置 `ptr`、错误码 `ec` |
-| 数字 → 字符 | `to_chars` | 可写的 `[first, last)` | 写入尾 `ptr`、错误码 `ec` |
-| 浮点格式 | `chars_format` | scientific/fixed/hex/general 选择 | 控制解析或格式化形式 |
-| 结果类型 | `from_chars_result`、`to_chars_result` | — | 轻量指针与错误码对象 |
+| 方向 | 代表设施 | 调用者提供 | 结果 | 首次标准 |
+|---|---|---|---|---|
+| 字符 → 数字 | `from_chars` | `[first, last)` 与目标对象 | 停止位置 `ptr`、错误码 `ec` | C++17 |
+| 数字 → 字符 | `to_chars` | 可写的 `[first, last)` | 写入尾 `ptr`、错误码 `ec` | C++17 |
+| 浮点格式 | `chars_format` | scientific/fixed/hex/general 选择 | 控制解析或格式化形式 | C++17 |
+| 结果类型 | `from_chars_result`、`to_chars_result` | — | 轻量指针与错误码对象 | C++17 |
 
 整数与浮点重载均进入 C++17 标准，但不同标准库的历史实现进度可能不同。本项目用当前本机
 工具链实际编译验证整数示例。当前草案中的后续 `constexpr`、新增结果转换或更晚重载不能视为

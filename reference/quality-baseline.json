@@ -1,11 +1,15 @@
 {
   "schemaVersion": 1,
   "catalogVersion": 6,
+  "review": {
+    "id": "quality-ratchet-batch-7",
+    "reviewedAt": "2026-08-30",
+    "fixedPoint": "a2ae587",
+    "scope": "Structural debt inherited from catalog version 6; new and materially edited Entries are excluded."
+  },
   "knownGaps": [
     { "entryId": "header-algorithm", "area": "direct-include" },
     { "entryId": "header-algorithm", "area": "facility-map" },
-    { "entryId": "header-deque", "area": "direct-include" },
-    { "entryId": "header-iostream", "area": "facility-map" },
     { "entryId": "header-unordered-map", "area": "direct-include" },
     { "entryId": "header-unordered-map", "area": "related" },
     { "entryId": "std-accumulate", "area": "returns" },
@@ -45,5 +49,6 @@
     { "entryId": "std-vector-reserve", "area": "complexity" },
     { "entryId": "std-vector-reserve", "area": "javascript" },
     { "entryId": "std-weak-ptr", "area": "selection" }
-  ]
+  ],
+  "notApplicable": []
 }

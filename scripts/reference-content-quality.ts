@@ -1,12 +1,15 @@
-export type ReferenceEntryKind =
-  | "landing"
-  | "header"
-  | "type"
-  | "object"
-  | "function"
-  | "member"
-  | "concept"
-  | "guide";
+import { readFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+
+import type { ReferenceEntryKind } from "@cpp-learn/contracts";
+import type {
+  ReferenceCatalogManifest,
+  ReferenceEntryManifest,
+} from "@cpp-learn/reference";
+import {
+  validateReferenceCatalogManifest,
+  validateReferenceEntryManifest,
+} from "@cpp-learn/reference-schema";
 
 export type ReferenceQualityArea =
   | "quick-info"
@@ -33,6 +36,7 @@ export interface ReferenceQualityFinding {
 export interface ReferenceQualityInput {
   id: string;
   kind: ReferenceEntryKind;
+  header?: string;
   content: string;
   exampleCount: number;
   primarySourceCount: number;
@@ -42,7 +46,17 @@ export interface ReferenceQualityInput {
 export interface ReferenceQualityBaseline {
   schemaVersion: 1;
   catalogVersion: number;
+  review: {
+    id: string;
+    reviewedAt: string;
+    fixedPoint: string;
+    scope: string;
+  };
   knownGaps: ReferenceQualityFinding[];
+  notApplicable: (ReferenceQualityFinding & {
+    reason: string;
+    reviewedAt: string;
+  })[];
 }
 
 export interface ReferenceQualityBaselineComparison {
@@ -59,20 +73,6 @@ export interface ReferenceQualityAudit {
   findings: ReferenceQualityFinding[];
   findingsByArea: Partial<Record<ReferenceQualityArea, number>>;
   entriesWithFindings: number;
-}
-
-interface CatalogFile {
-  version: number;
-  entries: string[];
-}
-
-interface EntryFile {
-  id: string;
-  kind: ReferenceEntryKind;
-  relatedEntryIds: string[];
-  content: { path: string };
-  examples: unknown[];
-  sources: { kind: string }[];
 }
 
 type TextArea = Exclude<
@@ -122,11 +122,24 @@ const commonSemanticAreas: TextArea[] = [
   "javascript",
 ];
 
+interface MarkdownSection {
+  heading: string;
+  body: string;
+}
+
+function markdownSections(content: string): MarkdownSection[] {
+  const matches = [...content.matchAll(/^#{2,3}\s+(.+)$/gmu)];
+  return matches.map((match, index) => ({
+    heading: match[1]?.trim() ?? "",
+    body: content.slice(
+      (match.index ?? 0) + match[0].length,
+      matches[index + 1]?.index ?? content.length,
+    ),
+  }));
+}
+
 function markdownHeadings(content: string): string[] {
-  return content
-    .split("\n")
-    .map((line) => /^#{2,3}\s+(.+)$/u.exec(line)?.[1]?.trim())
-    .filter((heading): heading is string => heading !== undefined);
+  return markdownSections(content).map(({ heading }) => heading);
 }
 
 function hasHeading(headings: string[], area: TextArea): boolean {
@@ -159,7 +172,8 @@ function auditCommonMetadata(
 }
 
 function auditHeader(input: ReferenceQualityInput): ReferenceQualityArea[] {
-  const headings = markdownHeadings(input.content);
+  const sections = markdownSections(input.content);
+  const headings = sections.map(({ heading }) => heading);
   const missing: ReferenceQualityArea[] = [];
   const requiredAreas: TextArea[] = ["quick-info", "selection", "mistakes"];
 
@@ -167,25 +181,46 @@ function auditHeader(input: ReferenceQualityInput): ReferenceQualityArea[] {
     if (!hasHeading(headings, area)) missing.push(area);
   }
 
+  const inclusionSection = sections.find(({ heading }) =>
+    /直接包含|什么时候包含/u.test(heading),
+  );
+  const ownHeader = input.header;
+  const ownsHeaderDirective =
+    ownHeader !== undefined &&
+    inclusionSection?.body.includes(`#include ${ownHeader}`) === true;
+  const namesOwnHeader =
+    ownHeader !== undefined &&
+    inclusionSection?.body.includes(ownHeader) === true;
   const directsReadersToInclude =
-    /(?:显式|直接)[^。\n]{0,40}(?:包含|#include)|#include\s*<[^>]+>/u.test(
-      input.content,
-    );
+    inclusionSection !== undefined &&
+    (ownsHeaderDirective ||
+      (namesOwnHeader &&
+        /(?:(?:应|必须|需要|请)[^。\n]{0,40})?(?:显式|直接)包含|(?:应|必须|需要|请)[^。\n]{0,40}包含/u.test(
+          inclusionSection.body,
+        )));
   const rejectsTransitiveIncludes =
-    /传递包含|间接[^。\n]{0,20}包含|偶然[^。\n]{0,20}(?:包含|带入|暴露)|顺带[^。\n]{0,20}(?:声明|包含)|不要依赖[^。\n]{0,30}包含/u.test(
-      input.content,
+    inclusionSection !== undefined &&
+    /传递包含|间接[^。\n]{0,20}(?:包含|提供|声明)|偶然[^。\n]{0,20}(?:包含|带入|暴露)|顺带[^。\n]{0,20}(?:声明|包含)|不要依赖[^。\n]{0,30}包含/u.test(
+      inclusionSection.body,
     );
   if (!(directsReadersToInclude && rejectsTransitiveIncludes)) {
     missing.push("direct-include");
   }
 
-  const hasFacilityHeading = headings.some((heading) =>
+  const facilitySection = sections.find(({ heading }) =>
     /主要实体|主要设施|设施与|设施地图/u.test(heading),
   );
-  const hasMarkdownTable = /^\|.+\|\n\|(?:\s*:?-+:?\s*\|)+/mu.test(
-    input.content,
-  );
-  if (!(hasFacilityHeading && hasMarkdownTable)) missing.push("facility-map");
+  const hasMarkdownTable =
+    facilitySection !== undefined &&
+    /^\|.+\|\n\|(?:\s*:?-+:?\s*\|)+/mu.test(facilitySection.body);
+  const tableHasVersionBoundary =
+    facilitySection !== undefined &&
+    /^\|[^\n]*C\+\+(?:98|03|11|14|17|20|23|26)[^\n]*\|/mu.test(
+      facilitySection.body,
+    );
+  if (!(hasMarkdownTable && tableHasVersionBoundary)) {
+    missing.push("facility-map");
+  }
 
   missing.push(...auditCommonMetadata(input, 1));
   return missing;
@@ -226,14 +261,18 @@ export function compareReferenceQualityBaseline({
   baseline: ReferenceQualityBaseline;
 }): ReferenceQualityBaselineComparison {
   const currentKeys = new Set(findings.map(findingKey));
-  const baselineKeys = new Set(baseline.knownGaps.map(findingKey));
+  const reviewedFindings = [
+    ...baseline.knownGaps,
+    ...baseline.notApplicable.map(({ entryId, area }) => ({ entryId, area })),
+  ];
+  const baselineKeys = new Set(reviewedFindings.map(findingKey));
 
   return {
     newFindings: sortFindings(
       findings.filter((finding) => !baselineKeys.has(findingKey(finding))),
     ),
     resolvedFindings: sortFindings(
-      baseline.knownGaps.filter(
+      reviewedFindings.filter(
         (finding) => !currentKeys.has(findingKey(finding)),
       ),
     ),
@@ -241,8 +280,129 @@ export function compareReferenceQualityBaseline({
   };
 }
 
-async function readJson<T>(path: string): Promise<T> {
-  return JSON.parse(await readFile(path, "utf8")) as T;
+async function readJson(path: string): Promise<unknown> {
+  return JSON.parse(await readFile(path, "utf8")) as unknown;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseFinding(value: unknown, label: string): ReferenceQualityFinding {
+  if (!isRecord(value)) throw new Error(`${label} must be an object`);
+  const { entryId, area } = value;
+  if (
+    typeof entryId !== "string" ||
+    !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(entryId)
+  ) {
+    throw new Error(`${label}.entryId is invalid`);
+  }
+  if (
+    typeof area !== "string" ||
+    !areaOrder.includes(area as ReferenceQualityArea)
+  ) {
+    throw new Error(`${label}.area is invalid`);
+  }
+  return { entryId, area: area as ReferenceQualityArea };
+}
+
+function parseNonEmptyString(value: unknown, label: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return value;
+}
+
+function parseDate(value: unknown, label: string): string {
+  const date = parseNonEmptyString(value, label);
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(date)) {
+    throw new Error(`${label} must use YYYY-MM-DD`);
+  }
+  return date;
+}
+
+export function parseReferenceQualityBaseline(
+  value: unknown,
+): ReferenceQualityBaseline {
+  if (!isRecord(value)) throw new Error("quality baseline must be an object");
+  if (value["schemaVersion"] !== 1) {
+    throw new Error("quality baseline schemaVersion must be 1");
+  }
+  const catalogVersion = value["catalogVersion"];
+  if (!Number.isInteger(catalogVersion) || (catalogVersion as number) < 1) {
+    throw new Error(
+      "quality baseline catalogVersion must be a positive integer",
+    );
+  }
+  const reviewValue = value["review"];
+  if (!isRecord(reviewValue))
+    throw new Error("quality baseline review is required");
+  const fixedPoint = parseNonEmptyString(
+    reviewValue["fixedPoint"],
+    "review.fixedPoint",
+  );
+  if (!/^[0-9a-f]{7,40}$/u.test(fixedPoint)) {
+    throw new Error("review.fixedPoint must be a Git commit ID");
+  }
+  const knownGapValues = value["knownGaps"];
+  const notApplicableValues = value["notApplicable"];
+  if (!Array.isArray(knownGapValues) || !Array.isArray(notApplicableValues)) {
+    throw new Error("quality baseline findings must be arrays");
+  }
+  const knownGaps = knownGapValues.map((finding, index) =>
+    parseFinding(finding, `knownGaps[${index}]`),
+  );
+  const notApplicable = notApplicableValues.map((decision, index) => {
+    const finding = parseFinding(decision, `notApplicable[${index}]`);
+    if (!isRecord(decision))
+      throw new Error("notApplicable decision is invalid");
+    return {
+      ...finding,
+      reason: parseNonEmptyString(
+        decision["reason"],
+        `notApplicable[${index}].reason`,
+      ),
+      reviewedAt: parseDate(
+        decision["reviewedAt"],
+        `notApplicable[${index}].reviewedAt`,
+      ),
+    };
+  });
+  const knownKeys = new Set<string>();
+  for (const finding of knownGaps) {
+    const key = findingKey(finding);
+    if (knownKeys.has(key))
+      throw new Error(`duplicate knownGap: ${finding.entryId}:${finding.area}`);
+    knownKeys.add(key);
+  }
+  const notApplicableKeys = new Set<string>();
+  for (const decision of notApplicable) {
+    const key = findingKey(decision);
+    if (notApplicableKeys.has(key)) {
+      throw new Error(
+        `duplicate notApplicable decision: ${decision.entryId}:${decision.area}`,
+      );
+    }
+    if (knownKeys.has(key)) {
+      throw new Error(
+        `${decision.entryId}:${decision.area} cannot be both knownGap and notApplicable`,
+      );
+    }
+    notApplicableKeys.add(key);
+  }
+
+  return {
+    schemaVersion: 1,
+    catalogVersion: catalogVersion as number,
+    review: {
+      id: parseNonEmptyString(reviewValue["id"], "review.id"),
+      reviewedAt: parseDate(reviewValue["reviewedAt"], "review.reviewedAt"),
+      fixedPoint,
+      scope: parseNonEmptyString(reviewValue["scope"], "review.scope"),
+    },
+    knownGaps,
+    notApplicable,
+  };
 }
 
 export async function auditReferenceCatalog(
@@ -250,12 +410,22 @@ export async function auditReferenceCatalog(
 ): Promise<ReferenceQualityAudit> {
   const absoluteCatalogPath = resolve(catalogPath);
   const referenceRoot = dirname(absoluteCatalogPath);
-  const catalog = await readJson<CatalogFile>(absoluteCatalogPath);
+  const rawCatalog = await readJson(absoluteCatalogPath);
+  const catalogIssues = validateReferenceCatalogManifest(rawCatalog);
+  if (catalogIssues.length > 0) {
+    throw new Error("Reference catalog schema is invalid for quality audit");
+  }
+  const catalog = rawCatalog as ReferenceCatalogManifest;
   const findings: ReferenceQualityFinding[] = [];
   let auditedEntryCount = 0;
 
   for (const entryPath of catalog.entries) {
-    const entry = await readJson<EntryFile>(resolve(referenceRoot, entryPath));
+    const rawEntry = await readJson(resolve(referenceRoot, entryPath));
+    const entryIssues = validateReferenceEntryManifest(rawEntry);
+    if (entryIssues.length > 0) {
+      throw new Error(`${entryPath} schema is invalid for quality audit`);
+    }
+    const entry = rawEntry as ReferenceEntryManifest;
     if (entry.kind === "landing" || entry.kind === "guide") continue;
 
     auditedEntryCount += 1;
@@ -267,6 +437,7 @@ export async function auditReferenceCatalog(
       ...auditReferenceContent({
         id: entry.id,
         kind: entry.kind,
+        ...(entry.header === undefined ? {} : { header: entry.header }),
         content,
         exampleCount: entry.examples.length,
         primarySourceCount: entry.sources.filter(
@@ -298,7 +469,5 @@ export async function auditReferenceCatalog(
 export async function loadReferenceQualityBaseline(
   baselinePath: string,
 ): Promise<ReferenceQualityBaseline> {
-  return readJson<ReferenceQualityBaseline>(resolve(baselinePath));
+  return parseReferenceQualityBaseline(await readJson(resolve(baselinePath)));
 }
-import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";

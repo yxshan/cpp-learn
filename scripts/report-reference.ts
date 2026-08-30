@@ -51,6 +51,8 @@ console.log(
         skippedEntryCount: qualityAudit.skippedEntryCount,
         entriesWithFindings: qualityAudit.entriesWithFindings,
         knownGapCount: qualityBaseline.knownGaps.length,
+        notApplicableCount: qualityBaseline.notApplicable.length,
+        baselineReviewId: qualityBaseline.review.id,
         findingsByArea: qualityAudit.findingsByArea,
       },
     },

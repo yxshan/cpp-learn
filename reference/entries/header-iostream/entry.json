@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-iostream",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/iostream",
   "kind": "header",
   "title": "<iostream>",
@@ -46,5 +46,5 @@
       "standardSection": "[lib.iostream.objects]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-30"
 }

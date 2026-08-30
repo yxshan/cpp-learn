@@ -94,11 +94,20 @@ is correct, complete, or well sourced. Primary-source fact review and the
 Standards/Spec review remain required.
 
 Existing debt is recorded in `reference/quality-baseline.json`. The gate is a
-ratchet: a newly detected gap fails, a resolved gap that remains in the
-baseline also fails, and a catalog-version mismatch requires the whole baseline
-to be reviewed. Never add a baseline item merely to make CI green. Add it only
-for reviewed inherited debt with a remediation owner/order; normal new or
-edited Entries must satisfy their profile immediately.
+ratchet relative to that reviewed artifact: an unrecorded gap fails, a resolved
+gap that remains in the baseline also fails, and a catalog-version mismatch
+requires the whole baseline to be reviewed. The baseline records its review ID,
+date, Git fixed point, and scope; automation validates these fields, while code
+review authorizes any baseline change. Never add an item merely to make CI
+green. Additions are allowed only when formally accepting inherited debt with a
+remediation owner/order; normal new or materially edited Entries must satisfy
+their profile immediately.
+
+When a profile item genuinely does not apply, add a reviewed `notApplicable`
+decision with a concrete reason and review date instead of filler prose. The
+decision participates in the exact ratchet and becomes stale—and therefore
+fails—if the page later gains that section. “No research yet” and “hard to
+compare” are not valid reasons.
 
 ## 3. Selecting Entry granularity
 
