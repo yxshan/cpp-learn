@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "header-unordered-set",
+  "version": 1,
+  "slug": "standard-library/headers/unordered-set",
+  "kind": "header",
+  "title": "<unordered_set>",
+  "summary": "声明基于哈希的唯一值与重复值无序关联集合。",
+  "symbol": "<unordered_set>",
+  "header": "<unordered_set>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["unordered_set header", "哈希集合头文件", "无序集合头文件"],
+  "categories": ["containers"],
+  "relatedEntryIds": [
+    "std-unordered-set",
+    "header-set",
+    "std-set",
+    "header-unordered-map",
+    "std-unordered-map",
+    "containers"
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-unordered-set/content.md"
+  },
+  "examples": [
+    {
+      "id": "check-capabilities",
+      "path": "entries/header-unordered-set/examples/check-capabilities.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "read=true\ndelete=false\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_set header synopsis",
+      "url": "https://eel.is/c++draft/unord.set.syn",
+      "standardSection": "[unord.set.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: unordered_set and unordered_multiset",
+      "url": "https://eel.is/c++draft/unord.set",
+      "standardSection": "[unord.set]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[unord.set.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[unord.set.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++11 working draft N3337",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
+      "standardSection": "[unord.set]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-29 |
+| Last updated | 2026-08-30 |
 
 ## 1. Objective
 
@@ -116,9 +116,8 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and the fourth breadth-expansion batch are
-delivered. Catalog expansion toward the 80–120 Entry target remains in
-progress.
+first three content-quality batches, and breadth-expansion batches 4 and 5 are
+delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
 vertical-release Entries against the learning-quality definition in the
@@ -138,6 +137,14 @@ Breadth batch 4 advanced the catalog from 25 to 37 Entries by adding six
 associative/container-adaptor types and six high-frequency algorithms. Every
 new entity ships at learning-quality depth with two deterministic C++20 Run
 examples and explicit C++20/current-draft separation.
+
+Breadth batch 5 advanced the catalog from 37 to 49 Entries and from 66 to 88
+examples. Six header facility maps close discovery around the batch-4
+containers and numeric algorithms; six ordinary algorithm pages cover
+existence queries, copying, reversal, adjacent deduplication, and per-element
+execution. The pages explicitly separate classic, C++17 policy, and C++20
+ranges families, including the fact that `std::binary_search` has no policy
+overload.
 
 ### Work packages
 

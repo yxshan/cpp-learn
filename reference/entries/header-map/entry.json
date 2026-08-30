@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "id": "header-map",
+  "version": 1,
+  "slug": "standard-library/headers/map",
+  "kind": "header",
+  "title": "<map>",
+  "summary": "声明唯一键与重复键的有序键值关联容器。",
+  "symbol": "<map>",
+  "header": "<map>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["map header", "映射头文件", "有序映射头文件"],
+  "categories": ["containers"],
+  "relatedEntryIds": [
+    "std-map",
+    "header-set",
+    "std-set",
+    "header-unordered-map",
+    "std-unordered-map",
+    "containers"
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-map/content.md"
+  },
+  "examples": [
+    {
+      "id": "ordered-statuses",
+      "path": "entries/header-map/examples/ordered-statuses.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "created=201\nok=200\n"
+    },
+    {
+      "id": "count-route-variants",
+      "path": "entries/header-map/examples/count-route-variants.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "api=2\nweb=1\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: map header synopsis",
+      "url": "https://eel.is/c++draft/associative.map.syn",
+      "standardSection": "[associative.map.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: map and multimap",
+      "url": "https://eel.is/c++draft/map",
+      "standardSection": "[map]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[associative.map.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[associative.map.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.map]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

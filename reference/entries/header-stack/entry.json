@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "id": "header-stack",
+  "version": 1,
+  "slug": "standard-library/headers/stack",
+  "kind": "header",
+  "title": "<stack>",
+  "summary": "声明提供后进先出访问策略的 std::stack 容器适配器。",
+  "symbol": "<stack>",
+  "header": "<stack>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["stack header", "栈头文件", "LIFO 头文件"],
+  "categories": ["containers"],
+  "relatedEntryIds": [
+    "std-stack",
+    "header-queue",
+    "std-queue",
+    "std-deque",
+    "std-vector",
+    "containers"
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-stack/content.md"
+  },
+  "examples": [
+    {
+      "id": "unwind-pages",
+      "path": "entries/header-stack/examples/unwind-pages.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "details\nsearch\nhome\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: stack header synopsis",
+      "url": "https://eel.is/c++draft/stack.syn",
+      "standardSection": "[stack.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: stack definition",
+      "url": "https://eel.is/c++draft/stack.defn",
+      "standardSection": "[stack.defn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[stack.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++11 working draft N3337",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
+      "standardSection": "[stack.syn]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.stack]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}

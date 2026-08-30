@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 2,
+  "id": "header-numeric",
+  "version": 1,
+  "slug": "standard-library/headers/numeric",
+  "kind": "header",
+  "title": "<numeric>",
+  "summary": "声明顺序折叠、数值归约、扫描、内积与序列生成算法。",
+  "symbol": "<numeric>",
+  "header": "<numeric>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["numeric header", "数值算法头文件", "累加头文件"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": [
+    "std-accumulate",
+    "std-transform",
+    "algorithms",
+    "header-algorithm"
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-numeric/content.md"
+  },
+  "examples": [
+    {
+      "id": "number-and-sum",
+      "path": "entries/header-numeric/examples/number-and-sum.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "4 5 6 7\nsum=22\n"
+    },
+    {
+      "id": "sum-bytes",
+      "path": "entries/header-numeric/examples/sum-bytes.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "bytes=2000\n"
+    }
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: numeric operations overview",
+      "url": "https://eel.is/c++draft/numeric.ops.overview",
+      "standardSection": "[numeric.ops.overview]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: numeric operations",
+      "url": "https://eel.is/c++draft/numeric.ops",
+      "standardSection": "[numeric.ops]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++20 final working draft N4861",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf",
+      "standardSection": "[numeric.ops]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++17 working draft N4659",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf",
+      "standardSection": "[numeric.ops]"
+    },
+    {
+      "kind": "primary",
+      "title": "C++11 working draft N3337",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf",
+      "standardSection": "[numeric.ops]"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 P1645R1: constexpr for numeric algorithms",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1645r1.html",
+      "standardSection": "numeric algorithms"
+    },
+    {
+      "kind": "primary",
+      "title": "WG21 1997 public review draft N2356",
+      "url": "https://www.open-std.org/jtc1/sc22/open/n2356/",
+      "standardSection": "[lib.numeric.ops]"
+    }
+  ],
+  "verifiedAt": "2026-08-29"
+}
