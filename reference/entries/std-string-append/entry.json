@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "id": "std-string-append",
+  "version": 1,
+  "slug": "standard-library/strings/string/append",
+  "kind": "member",
+  "title": "std::string::append",
+  "summary": "把字符、字符串或范围追加到字符串尾部并返回自身引用。",
+  "symbol": "std::string::append",
+  "header": "<string>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["string append", "追加字符串", "拼接文本"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["std-string", "header-string", "header-string-view", "std-string-substr", "std-vector-push-back"],
+  "content": { "format": "markdown", "path": "entries/std-string-append/content.md" },
+  "examples": [
+    { "id": "append-greeting", "path": "entries/std-string-append/examples/append-greeting.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "Hello, C++!\n" },
+    { "id": "append-self-range", "path": "entries/std-string-append/examples/append-self-range.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "apiapi\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: basic_string append", "url": "https://eel.is/c++draft/string.append", "standardSection": "[string.append]" },
+    { "kind": "primary", "title": "C++ working draft: basic_string requirements", "url": "https://eel.is/c++draft/string.require", "standardSection": "[string.require]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[string.append]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.string.modifiers]" },
+    { "kind": "primary", "title": "WG21 P0980R1: constexpr string", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0980r1.pdf" },
+    { "kind": "primary", "title": "WG21 P1206R7: conversions from ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1206r7.pdf" },
+    { "kind": "secondary", "title": "cppreference 中文：basic_string::append", "url": "https://zh.cppreference.com/cpp/string/basic_string/append" }
+  ],
+  "verifiedAt": "2026-08-30"
+}

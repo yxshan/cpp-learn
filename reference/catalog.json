@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 5,
+  "version": 6,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -50,7 +50,19 @@
     "entries/std-copy/entry.json",
     "entries/std-reverse/entry.json",
     "entries/std-unique/entry.json",
-    "entries/std-for-each/entry.json"
+    "entries/std-for-each/entry.json",
+    "entries/header-string/entry.json",
+    "entries/header-string-view/entry.json",
+    "entries/header-charconv/entry.json",
+    "entries/std-string-substr/entry.json",
+    "entries/std-string-find/entry.json",
+    "entries/std-string-append/entry.json",
+    "entries/std-from-chars/entry.json",
+    "entries/std-to-chars/entry.json",
+    "entries/header-memory/entry.json",
+    "entries/std-shared-ptr/entry.json",
+    "entries/std-weak-ptr/entry.json",
+    "entries/std-make-shared/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

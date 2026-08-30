@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-unique-ptr",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/memory/unique-ptr",
   "kind": "type",
   "title": "std::unique_ptr",
@@ -12,7 +12,7 @@
   "since": "c++11",
   "aliases": ["unique_ptr", "独占智能指针", "唯一所有权"],
   "categories": ["memory"],
-  "relatedEntryIds": ["std-make-unique"],
+  "relatedEntryIds": ["header-memory", "std-make-unique", "std-shared-ptr"],
   "content": { "format": "markdown", "path": "entries/std-unique-ptr/content.md" },
   "examples": [
     {

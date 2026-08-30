@@ -9,7 +9,10 @@ test("[T-REF-006] symbol, header, and Chinese search open std::vector", async ({
   await expect(
     page.getByRole("heading", { name: "查 API，也理解背后的工程约束" }),
   ).toBeVisible();
-  await expect(page.getByRole("status")).toHaveText("25 个条目");
+  const initialResults = page.locator(".reference-results > a");
+  const initialCount = await initialResults.count();
+  expect(initialCount).toBeGreaterThan(0);
+  await expect(page.getByRole("status")).toHaveText(`${initialCount} 个条目`);
 
   for (const query of ["std::vector", "<vector>", "动态数组"]) {
     const search = page.getByLabel("搜索 C++ API");
@@ -73,15 +76,21 @@ test("[T-REF-006] category filters survive reload through URL state", async ({
   page,
 }) => {
   await page.goto("/reference");
-  await page.getByRole("button", { name: /^算法/ }).click();
+  const algorithms = page.getByRole("button", { name: /^算法/ });
+  const categoryCount = await algorithms.locator("small").innerText();
+  await algorithms.click();
   await expect(page).toHaveURL(/category=algorithms/);
-  await expect(page.getByText("4 个条目")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(
+    `${categoryCount} 个条目`,
+  );
   await page.reload();
   await expect(page.getByRole("button", { name: /^算法/ })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
-  await expect(page.getByText("4 个条目")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(
+    `${categoryCount} 个条目`,
+  );
 });
 
 test("[T-REF-006] keyboard table of contents and Activity navigation work", async ({

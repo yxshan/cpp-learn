@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "id": "header-charconv",
+  "version": 1,
+  "slug": "standard-library/headers/charconv",
+  "kind": "header",
+  "title": "<charconv>",
+  "summary": "声明不依赖区域设置、以字符区间转换数字的低层接口。",
+  "symbol": "<charconv>",
+  "header": "<charconv>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["charconv header", "字符转换头文件", "数字解析格式化"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["std-from-chars", "std-to-chars", "header-string", "header-string-view", "std-string", "std-string-view", "standard-library"],
+  "content": { "format": "markdown", "path": "entries/header-charconv/content.md" },
+  "examples": [{ "id": "integer-round-trip", "path": "entries/header-charconv/examples/integer-round-trip.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=255\nhex=ff\n" }],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: charconv synopsis", "url": "https://eel.is/c++draft/charconv.syn", "standardSection": "[charconv.syn]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[charconv.syn]" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[charconv.syn]" },
+    { "kind": "primary", "title": "WG21 P0067R5: elementary string conversions", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0067r5.html" },
+    { "kind": "primary", "title": "WG21 P0682R1: repairing elementary string conversions", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0682r1.html" },
+    { "kind": "primary", "title": "WG21 P2291R3: constexpr integral charconv", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2291r3.pdf" },
+    { "kind": "primary", "title": "WG21 P2497R0: testing charconv success", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2497r0.html" },
+    { "kind": "secondary", "title": "cppreference 中文：<charconv>", "url": "https://zh.cppreference.com/cpp/header/charconv" }
+  ],
+  "verifiedAt": "2026-08-30"
+}

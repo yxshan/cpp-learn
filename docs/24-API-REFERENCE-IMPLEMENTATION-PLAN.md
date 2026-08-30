@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-30 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 and 5 are
+first three content-quality batches, and breadth-expansion batches 4 through 6 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -145,6 +145,17 @@ existence queries, copying, reversal, adjacent deduplication, and per-element
 execution. The pages explicitly separate classic, C++17 policy, and C++20
 ranges families, including the fact that `std::binary_search` has no policy
 overload.
+
+Breadth batch 6 advanced the catalog from 49 to 61 Entries and from 88 to 108
+examples. Four header facility maps and eight ordinary pages connect owning and
+borrowed text, locale-independent conversion, shared ownership, weak
+observation, and shared construction. Article rendering now exposes a compact
+definition panel, linkable sections, learning callouts, sticky table headings,
+and visibly separated primary and secondary sources. The information
+architecture is checked against cppreference, while version, exception,
+complexity, lifetime, and undefined-behavior claims remain grounded in WG21
+primary sources. JavaScript comparisons are limited to useful mental-model
+contrasts rather than claimed semantic equivalence.
 
 ### Work packages
 

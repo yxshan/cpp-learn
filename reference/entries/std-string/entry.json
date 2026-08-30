@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-string",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/strings/string",
   "kind": "type",
   "title": "std::string",
@@ -12,7 +12,14 @@
   "since": "c++98",
   "aliases": ["string", "字符串", "标准字符串"],
   "categories": ["strings"],
-  "relatedEntryIds": ["std-string-view"],
+  "relatedEntryIds": [
+    "header-string",
+    "header-string-view",
+    "std-string-view",
+    "std-string-substr",
+    "std-string-find",
+    "std-string-append"
+  ],
   "content": { "format": "markdown", "path": "entries/std-string/content.md" },
   "examples": [
     {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-make-unique",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/memory/make-unique",
   "kind": "function",
   "title": "std::make_unique",
@@ -12,7 +12,7 @@
   "since": "c++14",
   "aliases": ["make_unique", "创建独占指针", "安全创建对象"],
   "categories": ["memory"],
-  "relatedEntryIds": ["std-unique-ptr"],
+  "relatedEntryIds": ["header-memory", "std-unique-ptr", "std-make-shared"],
   "content": {
     "format": "markdown",
     "path": "entries/std-make-unique/content.md"

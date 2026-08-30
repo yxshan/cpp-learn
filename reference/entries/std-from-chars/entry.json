@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-from-chars",
+  "version": 1,
+  "slug": "standard-library/strings/from-chars",
+  "kind": "function",
+  "title": "std::from_chars",
+  "summary": "从字符区间解析数字，并通过指针与 errc 报告结果。",
+  "symbol": "std::from_chars",
+  "header": "<charconv>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["from_chars", "无异常数字解析", "字符转数字"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["header-charconv", "std-to-chars", "header-string-view", "std-string-view", "std-string", "std-optional"],
+  "content": { "format": "markdown", "path": "entries/std-from-chars/content.md" },
+  "examples": [
+    { "id": "parse-with-remainder", "path": "entries/std-from-chars/examples/parse-with-remainder.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=200\nremainder=ms\n" },
+    { "id": "classify-parse-errors", "path": "entries/std-from-chars/examples/classify-parse-errors.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "invalid=true\nout-of-range=true\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: from_chars", "url": "https://eel.is/c++draft/charconv.from.chars", "standardSection": "[charconv.from.chars]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[charconv.from.chars]" },
+    { "kind": "primary", "title": "WG21 P0067R5: elementary string conversions", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0067r5.html" },
+    { "kind": "primary", "title": "WG21 P0682R1: repairing elementary string conversions", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0682r1.html" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[charconv.from.chars]" },
+    { "kind": "primary", "title": "WG21 P2291R3: constexpr integral charconv", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2291r3.pdf" },
+    { "kind": "primary", "title": "WG21 P2497R0: testing charconv success", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2497r0.html" },
+    { "kind": "secondary", "title": "cppreference 中文：from_chars", "url": "https://zh.cppreference.com/cpp/utility/from_chars" }
+  ],
+  "verifiedAt": "2026-08-30"
+}

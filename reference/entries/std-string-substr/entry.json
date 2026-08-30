@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-string-substr",
+  "version": 1,
+  "slug": "standard-library/strings/string/substr",
+  "kind": "member",
+  "title": "std::string::substr",
+  "summary": "复制指定字符区间，返回拥有独立存储的新字符串。",
+  "symbol": "std::string::substr",
+  "header": "<string>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["substr", "字符串切片", "提取子串"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["std-string", "header-string", "header-string-view", "std-string-find", "std-string-append", "std-string-view"],
+  "content": { "format": "markdown", "path": "entries/std-string-substr/content.md" },
+  "examples": [
+    { "id": "copy-suffix", "path": "entries/std-string-substr/examples/copy-suffix.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "result=learner\n" },
+    { "id": "extract-route-segment", "path": "entries/std-string-substr/examples/extract-route-segment.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "resource=users\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: basic_string substr", "url": "https://eel.is/c++draft/string.substr", "standardSection": "[string.substr]" },
+    { "kind": "primary", "title": "C++ working draft: basic_string constructors", "url": "https://eel.is/c++draft/string.cons", "standardSection": "[string.cons]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[string.substr]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.string.ops]" },
+    { "kind": "primary", "title": "WG21 P0980R1: constexpr string", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0980r1.pdf" },
+    { "kind": "primary", "title": "WG21 P2438R2: rvalue substr", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2438r2.html" },
+    { "kind": "primary", "title": "WG21 P3044R2: sub-string_view from string", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3044r2.pdf" },
+    { "kind": "secondary", "title": "cppreference 中文：basic_string::substr", "url": "https://zh.cppreference.com/cpp/string/basic_string/substr" }
+  ],
+  "verifiedAt": "2026-08-30"
+}

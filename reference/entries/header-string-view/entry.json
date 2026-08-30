@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "id": "header-string-view",
+  "version": 1,
+  "slug": "standard-library/headers/string-view",
+  "kind": "header",
+  "title": "<string_view>",
+  "summary": "声明非拥有字符串视图类型及其比较、搜索和散列设施。",
+  "symbol": "<string_view>",
+  "header": "<string_view>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["string_view header", "字符串视图头文件", "只读字符串视图"],
+  "categories": ["strings"],
+  "relatedEntryIds": ["std-string-view", "header-string", "header-charconv", "std-string", "std-string-substr", "std-string-find", "standard-library"],
+  "content": { "format": "markdown", "path": "entries/header-string-view/content.md" },
+  "examples": [{ "id": "view-family", "path": "entries/header-string-view/examples/view-family.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "prefix=api\nsuffix=v1/users\n" }],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: string_view synopsis", "url": "https://eel.is/c++draft/string.view.synop", "standardSection": "[string.view.synop]" },
+    { "kind": "primary", "title": "C++ working draft: string_view template", "url": "https://eel.is/c++draft/string.view.template", "standardSection": "[string.view.template]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[string.view.syn]" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[string.view.syn]" },
+    { "kind": "primary", "title": "WG21 P0220R1: basic_string_view", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0220r1.html" },
+    { "kind": "primary", "title": "WG21 P1679R3: string contains", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p1679r3.html" },
+    { "kind": "primary", "title": "WG21 P3044R2: sub-string_view from string", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3044r2.pdf" },
+    { "kind": "secondary", "title": "cppreference 中文：<string_view>", "url": "https://zh.cppreference.com/cpp/header/string_view" }
+  ],
+  "verifiedAt": "2026-08-30"
+}

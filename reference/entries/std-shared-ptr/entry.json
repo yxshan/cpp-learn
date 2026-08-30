@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "std-shared-ptr",
+  "version": 1,
+  "slug": "standard-library/memory/shared-ptr",
+  "kind": "type",
+  "title": "std::shared_ptr",
+  "summary": "以共享控制块协调对象的共同所有权和确定性销毁。",
+  "symbol": "std::shared_ptr",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["shared_ptr", "共享智能指针", "引用计数所有权"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["header-memory", "std-weak-ptr", "std-make-shared", "std-unique-ptr", "std-make-unique"],
+  "content": { "format": "markdown", "path": "entries/std-shared-ptr/content.md" },
+  "examples": [
+    { "id": "share-service", "path": "entries/std-shared-ptr/examples/share-service.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=42\nowners=2\n" },
+    { "id": "alias-member", "path": "entries/std-shared-ptr/examples/alias-member.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "id=7\nowners=2\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: shared_ptr", "url": "https://eel.is/c++draft/util.smartptr.shared", "standardSection": "[util.smartptr.shared]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[util.smartptr.shared]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[util.smartptr.shared]" },
+    { "kind": "primary", "title": "WG21 N2351: improving shared_ptr", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2351.htm" },
+    { "kind": "primary", "title": "WG21 N2638: shared_ptr thread safety", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2638.html" },
+    { "kind": "primary", "title": "C++ working draft: shared_ptr general", "url": "https://eel.is/c++draft/util.smartptr.shared.general", "standardSection": "[util.smartptr.shared.general]" },
+    { "kind": "primary", "title": "C++ working draft: shared_ptr constructors", "url": "https://eel.is/c++draft/util.smartptr.shared.const", "standardSection": "[util.smartptr.shared.const]" },
+    { "kind": "primary", "title": "C++ working draft: shared_ptr destructor", "url": "https://eel.is/c++draft/util.smartptr.shared.dest", "standardSection": "[util.smartptr.shared.dest]" },
+    { "kind": "primary", "title": "C++ working draft: shared_ptr observers", "url": "https://eel.is/c++draft/util.smartptr.shared.obs", "standardSection": "[util.smartptr.shared.obs]" },
+    { "kind": "primary", "title": "WG21 P0414R2: shared_ptr array support", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0414r2.html" },
+    { "kind": "primary", "title": "WG21 P1901R2: ownership-based hash and equality", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p1901r2.html" },
+    { "kind": "primary", "title": "WG21 P3037R5: constexpr shared_ptr and friends", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3037r5.pdf" },
+    { "kind": "secondary", "title": "cppreference 中文：shared_ptr", "url": "https://zh.cppreference.com/cpp/memory/shared_ptr" }
+  ],
+  "verifiedAt": "2026-08-30"
+}

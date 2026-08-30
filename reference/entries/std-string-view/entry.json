@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-string-view",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/strings/string-view",
   "kind": "type",
   "title": "std::string_view",
@@ -12,7 +12,14 @@
   "since": "c++17",
   "aliases": ["string_view", "字符串视图", "非拥有字符串"],
   "categories": ["strings"],
-  "relatedEntryIds": ["std-string", "std-optional"],
+  "relatedEntryIds": [
+    "header-string-view",
+    "header-string",
+    "header-charconv",
+    "std-string",
+    "std-string-substr",
+    "std-optional"
+  ],
   "content": {
     "format": "markdown",
     "path": "entries/std-string-view/content.md"

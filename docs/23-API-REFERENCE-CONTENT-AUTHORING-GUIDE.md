@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-28 |
+| Last updated | 2026-08-30 |
 
 ## 1. Audience and purpose
 
@@ -161,7 +161,10 @@ representative_signature();
 
 ## 与 JavaScript 的区别
 
-只在确实有帮助时保留本节。
+只在确实有帮助时保留本节。正文第一段使用 blockquote，使 Web 端呈现为独立的
+`JavaScript ↔ C++` 学习卡片：
+
+> JavaScript 的相近 API 是……；关键差异是所有权、错误模型或复杂度……
 
 ## 相关内容
 
@@ -175,6 +178,56 @@ representative_signature();
 If a section does not apply, omit it rather than adding an empty placeholder.
 The title, summary, quick information, example, related content, and sources
 remain required for ordinary entity Entries.
+
+### 5.1 cppreference-inspired information architecture
+
+Learner-facing coverage follows the stable information hierarchy used by
+cppreference pages, adapted to this project's Chinese teaching voice and Web
+layout:
+
+1. definition header, namespace, first standard, and version-tagged
+   representative declarations;
+2. concise semantics and explicit selection/non-use guidance;
+3. template parameters or callable/range constraints where applicable;
+4. parameters, return value, complexity, exceptions/error codes, and
+   lifetime/invalidation as separate scannable sections;
+5. notes for high-impact edge cases, original verified examples, common
+   mistakes, and related entries;
+6. primary standards sources separated visually from secondary learning
+   references and implementation sources.
+
+The Web renderer provides a definition grid, sticky page contents, linkable
+section headings, horizontally scrollable declaration/member tables, learning
+callouts, verified example output, and source-kind labels. Content authors
+should use Markdown tables for overload/version matrices instead of encoding
+alignment with spaces.
+
+cppreference is a secondary coverage and presentation reference, not the
+normative authority. Add the relevant `zh.cppreference.com` page to the
+manifest with `kind: "secondary"` when it informed the page. Standard
+behavior, first-version claims, undefined behavior, exceptions, and complexity
+must still cite the owning Working Draft clause and necessary versioned WG21
+paper or draft.
+
+Do not copy or lightly paraphrase cppreference prose or examples. Write
+original Chinese explanations and project-specific deterministic examples;
+this avoids licensing ambiguity, stale-translation leakage, and dependence on
+one external site's availability.
+
+### 5.2 JavaScript comparison policy
+
+Use a JavaScript comparison when it removes a likely misconception for this
+project's target learner. Compare observable contracts, not just names:
+
+- ownership and lifetime (`string_view`, smart pointers);
+- mutation and allocation (`append`, container growth);
+- error channels (exceptions, `errc`, JavaScript exceptions/`NaN`);
+- return shape and sentinel values (`npos`, iterator/pointer pairs);
+- numeric domain and formatting (`Number`, `BigInt`, `from_chars`,
+  `to_chars`).
+
+Avoid claiming the languages have identical APIs. State where the analogy
+ends, and omit the section when no comparison improves a learner decision.
 
 ## 6. Signatures and overloads
 

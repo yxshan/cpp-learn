@@ -2480,6 +2480,42 @@ footer {
   font-size: 15px;
   line-height: 1.75;
 }
+.reference-definition-grid {
+  max-width: 900px;
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #29463b;
+  border-radius: 5px 14px 5px 5px;
+  background: #091713;
+}
+.reference-definition-grid > div {
+  min-width: 0;
+  min-height: 74px;
+  padding: 13px 14px;
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  border-right: 1px solid #223b32;
+}
+.reference-definition-grid > div:last-child {
+  border-right: 0;
+}
+.reference-definition-grid span {
+  color: #60766c;
+  font: 9px var(--mono);
+  letter-spacing: 0.08em;
+}
+.reference-definition-grid code,
+.reference-definition-grid strong {
+  overflow-wrap: anywhere;
+  color: #dce9e3;
+  font: 600 12px/1.45 var(--mono);
+}
+.reference-definition-grid code {
+  color: var(--green);
+}
 .reference-badges {
   margin-top: 24px;
 }
@@ -2501,6 +2537,27 @@ footer {
   color: #dbe8e2;
   font-size: 18px;
 }
+.reference-markdown h2,
+.reference-markdown h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.reference-section-anchor {
+  opacity: 0;
+  color: #48665a !important;
+  text-decoration: none;
+  font: 500 0.7em var(--mono);
+  transition:
+    opacity 160ms ease,
+    color 160ms ease;
+}
+.reference-markdown h2:hover .reference-section-anchor,
+.reference-markdown h3:hover .reference-section-anchor,
+.reference-section-anchor:focus-visible {
+  opacity: 1;
+  color: var(--green) !important;
+}
 .reference-markdown p,
 .reference-markdown ul,
 .reference-markdown ol {
@@ -2517,6 +2574,34 @@ footer {
   border-radius: 4px;
   background: #10241d;
   font-family: var(--mono);
+}
+.reference-callout {
+  max-width: 790px;
+  margin: 18px 0 26px;
+  padding: 16px 18px 17px;
+  color: #a9c0b6;
+  border: 0;
+  border-left: 3px solid #6fd3aa;
+  border-radius: 0 10px 3px 0;
+  background:
+    radial-gradient(circle at 96% 10%, #6fd3aa12, transparent 38%), #0d1f19;
+}
+.reference-callout::before {
+  content: "LEARNING NOTE";
+  display: block;
+  margin-bottom: 7px;
+  color: var(--green);
+  font: 700 9px var(--mono);
+  letter-spacing: 0.12em;
+}
+.reference-markdown h2.is-js-comparison + .reference-callout::before {
+  content: "JAVASCRIPT ↔ C++";
+}
+.reference-callout > :first-child {
+  margin-top: 0;
+}
+.reference-callout > :last-child {
+  margin-bottom: 0;
 }
 .reference-table-scroll {
   max-width: 100%;
@@ -2543,6 +2628,9 @@ footer {
   vertical-align: top;
 }
 .reference-table-scroll th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   color: #e4f0eb;
   background: #10241d;
   font: 650 12px/1.5 var(--mono);
@@ -2675,6 +2763,25 @@ footer {
   gap: 8px;
   color: #64786f;
   font: 10px/1.5 var(--mono);
+}
+.reference-sources > div {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 16px;
+}
+.reference-sources a {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 8px;
+  color: #8ea69b;
+  text-decoration-color: #355548;
+}
+.reference-sources a span {
+  color: #5f7b6f;
+  font-size: 8px;
+  letter-spacing: 0.08em;
 }
 .reference-toc {
   padding-left: 2px;
@@ -2840,6 +2947,15 @@ footer {
   .reference-markdown {
     font-size: 13px;
   }
+  .reference-definition-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reference-definition-grid > div:nth-child(2) {
+    border-right: 0;
+  }
+  .reference-definition-grid > div:nth-child(-n + 2) {
+    border-bottom: 1px solid #223b32;
+  }
   .reference-markdown h2 {
     margin-top: 38px;
     font-size: 22px;
@@ -2848,6 +2964,9 @@ footer {
     padding-inline: 14px;
   }
   .reference-related > div:last-child {
+    grid-template-columns: 1fr;
+  }
+  .reference-sources > div {
     grid-template-columns: 1fr;
   }
   .reference-examples > div > header {

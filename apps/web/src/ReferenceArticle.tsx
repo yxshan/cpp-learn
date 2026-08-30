@@ -121,6 +121,48 @@ function MarkdownPre({
   return <CodeBlock className={className}>{nodeText(children)}</CodeBlock>;
 }
 
+function ArticleHeading({
+  level,
+  children,
+}: {
+  readonly level: 2 | 3;
+  readonly children?: ReactNode | undefined;
+}) {
+  const title = nodeText(children);
+  const id = headingId(title);
+  const className = /javascript|js\s*类比/i.test(title)
+    ? "is-js-comparison"
+    : undefined;
+  const content = (
+    <>
+      <span>{children}</span>
+      <a
+        className="reference-section-anchor"
+        href={`#${encodeURIComponent(id)}`}
+        aria-label={`链接到“${title}”`}
+      >
+        #
+      </a>
+    </>
+  );
+
+  return level === 2 ? (
+    <h2 id={id} className={className}>
+      {content}
+    </h2>
+  ) : (
+    <h3 id={id} className={className}>
+      {content}
+    </h3>
+  );
+}
+
+const sourceKindLabels = {
+  primary: "标准来源",
+  secondary: "参考资料",
+  vendor: "实现资料",
+} as const;
+
 export function ReferenceArticle({
   entry,
   relatedEntries,
@@ -141,16 +183,36 @@ export function ReferenceArticle({
           {entry.title}
         </h1>
         <p>{entry.summary}</p>
-        <div className="reference-badges" aria-label="条目状态">
-          {entry.since && <span>标准 · {entry.since.toUpperCase()} 起</span>}
-          {entry.deprecatedSince && (
-            <span>弃用 · {entry.deprecatedSince.toUpperCase()}</span>
-          )}
-          {entry.removedSince && (
-            <span>移除 · {entry.removedSince.toUpperCase()}</span>
-          )}
-          <span>{aggregateVerification(entry)}</span>
+        <div className="reference-definition-grid" aria-label="条目定义信息">
+          <div>
+            <span>定义于头文件</span>
+            <code>{entry.header ?? "—"}</code>
+          </div>
+          <div>
+            <span>命名空间</span>
+            <code>{entry.namespace ?? "—"}</code>
+          </div>
+          <div>
+            <span>标准支持</span>
+            <strong>
+              {entry.since ? `${entry.since.toUpperCase()} 起` : "未指定"}
+            </strong>
+          </div>
+          <div>
+            <span>示例状态</span>
+            <strong>{aggregateVerification(entry)}</strong>
+          </div>
         </div>
+        {(entry.deprecatedSince || entry.removedSince) && (
+          <div className="reference-badges" aria-label="版本状态">
+            {entry.deprecatedSince && (
+              <span>弃用 · {entry.deprecatedSince.toUpperCase()}</span>
+            )}
+            {entry.removedSince && (
+              <span>移除 · {entry.removedSince.toUpperCase()}</span>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="reference-markdown">
@@ -158,13 +220,13 @@ export function ReferenceArticle({
           remarkPlugins={[remarkGfm]}
           components={{
             h1: ({ children }) => (
-              <h2 id={headingId(nodeText(children))}>{children}</h2>
+              <ArticleHeading level={2}>{children}</ArticleHeading>
             ),
             h2: ({ children }) => (
-              <h2 id={headingId(nodeText(children))}>{children}</h2>
+              <ArticleHeading level={2}>{children}</ArticleHeading>
             ),
             h3: ({ children }) => (
-              <h3 id={headingId(nodeText(children))}>{children}</h3>
+              <ArticleHeading level={3}>{children}</ArticleHeading>
             ),
             pre: MarkdownPre,
             code: ({ className, children }) => (
@@ -179,6 +241,9 @@ export function ReferenceArticle({
               <div className="reference-table-scroll">
                 <table>{children}</table>
               </div>
+            ),
+            blockquote: ({ children }) => (
+              <blockquote className="reference-callout">{children}</blockquote>
             ),
           }}
         >
@@ -253,16 +318,19 @@ export function ReferenceArticle({
 
       <footer className="reference-sources">
         <strong>核对来源 · {entry.verifiedAt}</strong>
-        {entry.sources.map((source) => (
-          <a
-            key={source.url}
-            href={source.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {source.title} ↗
-          </a>
-        ))}
+        <div>
+          {entry.sources.map((source) => (
+            <a
+              key={source.url}
+              href={source.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span>{sourceKindLabels[source.kind]}</span>
+              {source.title} ↗
+            </a>
+          ))}
+        </div>
       </footer>
     </article>
   );

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-30 |
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 49 Entries. All have at least one primary source,
-and all 88 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 61 Entries. All have at least one primary source,
+and all 108 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -58,16 +58,17 @@ editorial role and upgrade status.
 | Completed in quality batch 3 | `std::vector`, `std::vector::push_back`, `std::vector::reserve`, `std::array`, `std::deque`, `std::unordered_map`, `std::sort`, `std::find`, `std::string`, `std::unique_ptr`, `std::cin`, `std::cout` | Each core entity now pairs its minimal example with a deterministic realistic example and explicit selection guidance |
 | Completed in breadth batch 4 | `std::map`, `std::set`, `std::unordered_set`, `std::queue`, `std::priority_queue`, `std::stack`, `std::transform`, `std::count_if`, `std::all_of`, `std::lower_bound`, `std::remove_if`, `std::accumulate` | Twelve directly searchable entity pages add associative containers, adaptors, and high-frequency algorithms with two verified examples each |
 | Completed in breadth batch 5 | `<map>`, `<set>`, `<unordered_set>`, `<queue>`, `<stack>`, `<numeric>`, `std::binary_search`, `std::any_of`, `std::copy`, `std::reverse`, `std::unique`, `std::for_each` | Six facility maps close navigation around batch 4 and six ordinary algorithm pages define classic, policy, and ranges boundaries with verified examples |
+| Completed in breadth batch 6 | `<string>`, `<string_view>`, `<charconv>`, `<memory>`, `std::string::substr`, `std::string::find`, `std::string::append`, `std::from_chars`, `std::to_chars`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared` | Four facility maps and eight ordinary pages close owning/borrowed text, low-level conversion, and shared-ownership learning loops; cppreference informs page structure while WG21 sources govern facts |
 | Keep concise | Standard Library, Containers, Algorithms, `<algorithm>`, `<iostream>` | Landing/header role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 and breadth batches 4 and 5 are complete. The existing
+Quality batches 1 through 3 and breadth batches 4 through 6 are complete. The existing
 ordinary-entity example debt remains cleared. The next batch can finish the
-remaining sequence-container and algorithm candidates, or move into string
-conversion, shared ownership, and utility vocabulary.
+remaining sequence-container and algorithm candidates, or move into utility,
+I/O, filesystem, or time vocabulary.
 
 ## 4. Planned 120-Entry catalog
 
-The current 49 Entries remain in scope. The following 71 candidates make the
+The current 61 Entries remain in scope. The following 59 candidates make the
 remaining catalog explicit. “Candidate” means editorially selected, not yet
 fact-verified or release-ready.
 
@@ -81,15 +82,12 @@ fact-verified or release-ready.
 - `std::move` (algorithm), `std::count`, `std::none_of`.
 - `std::rotate`, `std::remove`.
 
-### 4.3 Strings and conversion: 8 candidates
+### 4.3 Strings and conversion: completed
 
-- `<string>`, `<string_view>`, `<charconv>`.
-- `std::string::substr`, `std::string::find`, `std::string::append`.
-- `std::from_chars`, `std::to_chars`.
+The selected strings and conversion slice was delivered in breadth batch 6.
 
-### 4.4 Memory: 8 candidates
+### 4.4 Memory: 4 candidates
 
-- `<memory>`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared`.
 - `std::enable_shared_from_this`, `std::allocator`.
 - `std::uninitialized_copy`, `std::destroy`.
 
@@ -135,6 +133,8 @@ fact-verified or release-ready.
    **Associative/adaptor entity slice completed in breadth batch 4; its header
    maps and a second algorithm slice completed in breadth batch 5.**
 4. Add string conversion, shared ownership, and utility vocabulary.
+   **String conversion and shared ownership completed in breadth batch 6;
+   utility vocabulary remains.**
 5. Add filesystem and time with deterministic examples.
 6. Add concurrency last, after its nondeterministic-example and memory-model
    review requirements are explicit.
