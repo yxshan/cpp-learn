@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-08-30 |
 
 ## 1. Quality objectives
 
@@ -114,6 +114,11 @@ Reference content CI additionally validates:
   prefix, standard availability intervals, filters, and tie-breaking behavior.
 - Every ordinary example compiles with its declared standard and warnings; Run
   examples also satisfy bounded deterministic output.
+- Kind-aware structural quality profiles detect missing selection, interface,
+  call contract, complexity, error, lifetime, example, mistake, JavaScript,
+  relationship, source, and header-navigation coverage as applicable.
+- The reviewed-debt baseline is an exact ratchet: new findings, stale resolved
+  findings, and catalog-version drift all fail CI.
 - Reference browsing and a future Playground cannot produce Activity Evidence.
 
 ## 5. Security tests
@@ -147,7 +152,8 @@ Required before merge:
 
 - Typecheck, lint, formatting, and Module/contract tests.
 - Content lint for changed Activities.
-- Reference lint and example compilation for changed Entries.
+- Reference lint, kind-aware content-quality ratchet, and example compilation
+  for changed Entries.
 - No unexplained snapshot changes.
 
 Required before release:

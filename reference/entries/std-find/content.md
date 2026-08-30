@@ -52,6 +52,13 @@ C++17 起还存在执行策略重载，本页示例聚焦经典非策略版本�
 
 解引用结果前必须检查它不等于结束迭代器。若容器自身提供更合适的查找成员，例如 `std::map::find`，应使用其数据结构优势。
 
+## 与 JavaScript 的区别
+
+JavaScript `Array.prototype.find()` 返回匹配值或 `undefined`，`findIndex()` 返回索引或 `-1`；
+C++ `std::find` 返回迭代器，并用 `last` 表示未找到，因此调用者能继续在同一范围中执行算法，
+但必须先检查尾后迭代器。`std::find` 按值使用相等比较；需要回调条件时对应的是
+`std::find_if`，更接近 JavaScript `find(predicate)`。
+
 ## 相关内容
 
 `<algorithm>` 解释通用算法区间，`std::vector` 是常见输入容器。

@@ -28,6 +28,15 @@ class unique_ptr;
 
 `get()` 返回不拥有资源的裸指针，`operator*` 和 `operator->` 提供访问。观察结果不能超过 `unique_ptr` 的生命周期，也不能自行释放资源。
 
+## 复杂度
+
+标准没有为整个类模板给出一条统一复杂度承诺。观察器与 `release()` 只读取或更新所存指针；
+移动还可能移动删除器。`reset()`、移动赋值与析构会在存在旧指针时调用删除器，因而总成本
+包含删除器和被管理对象析构所做的工作，不能把“销毁整棵对象图”笼统写成 O(1)。这些效果
+分别见 [`[unique.ptr.single.observers]`](https://eel.is/c++draft/unique.ptr.single.observers) 与
+[`[unique.ptr.single.modifiers]`](https://eel.is/c++draft/unique.ptr.single.modifiers)。数组特化的
+`operator[]` 不执行边界检查。
+
 ## 异常与约束
 
 删除器必须能正确释放对应资源，并且在 `unique_ptr` 析构调用它时不得抛出异常。使用默认

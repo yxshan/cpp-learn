@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-28 |
+| Last updated | 2026-08-30 |
 
 ## 1. Supported baseline
 
@@ -32,6 +32,7 @@ npm run lint
 npm test
 npm run test:e2e
 npm run check:reference
+npm run check:reference-quality
 npm run report:reference
 ./cpplearn doctor
 ```
@@ -151,7 +152,9 @@ The Learning Record exposes rebuild through its maintenance Interface and automa
    claims against primary sources.
 6. Review terminology and learner usability using the [Reference Authoring
    Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md).
-7. Merge only after the complete Reference catalog activates and the production
+7. Run `check:reference-quality`; new Entries must pass their kind profile, and
+   remediation changes remove resolved rows from the quality baseline.
+8. Merge only after the complete Reference catalog activates and the production
    Web route renders offline.
 
 `npm run check:reference` validates the active catalog, compiles every example
@@ -165,10 +168,18 @@ same alternate data root used by the server.
 `npm run report:reference` loads that manifest when it matches the current
 compiler fingerprint, catalog version, example standard, and source digest.
 It reports stale, missing, malformed, or unlisted records as `not-checked`.
+The report also includes the number of structurally audited Entries, reviewed
+quality gaps, affected Entries, and findings grouped by quality area.
 Run `check:reference` after changing Reference examples, switching compiler
 toolchains, or updating the catalog version, then run `report:reference` to
 inspect coverage. The manifest is a rebuildable local cache: it is excluded
 from Git and learner backups and is not a substitute for the release gate.
+
+`npm run check:reference-quality` does not compile examples. It audits Markdown
+structure and manifest counts by Entry kind, then requires an exact match with
+`reference/quality-baseline.json`. A fixed finding must be removed from the
+baseline in the same change; a new finding must be corrected rather than
+baselined. Catalog version changes require an explicit baseline review.
 
 ## 8. Dependency management
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-cout",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/io/cout",
   "kind": "object",
   "title": "std::cout",
@@ -42,6 +42,12 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: standard iostream objects overview",
+      "url": "https://eel.is/c++draft/iostream.objects.overview",
+      "standardSection": "[iostream.objects.overview]"
+    },
+    {
+      "kind": "primary",
       "title": "C++ working draft: formatted output requirements",
       "url": "https://eel.is/c++draft/ostream.formatted.reqmts",
       "standardSection": "[ostream.formatted.reqmts]"
@@ -77,5 +83,5 @@
       "standardSection": "[lib.iostream.objects]"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-30"
 }

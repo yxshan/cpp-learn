@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-30 |
@@ -72,6 +72,33 @@ For a learning-quality **header Entry**, the reduced form must include:
 Header pages preview behavior only when it changes navigation or prevents a
 high-impact misconception. Detailed overloads, exceptions, and operation-level
 rules remain on entity pages so the same contract is not maintained twice.
+
+### Executable quality profiles
+
+`npm run check:reference-quality` applies structural profiles by Entry kind:
+
+- `function` and `member` require selection guidance, representative interface,
+  parameters/preconditions, returns, complexity, errors, lifetime/invalidation,
+  two examples, mistakes, a JavaScript comparison, related links, and sources;
+- `type` and `object` require the same semantic coverage but do not invent a
+  page-wide parameter or return section when those concepts belong to members;
+- `header` requires direct-include and anti-transitive-include guidance, a
+  learner-oriented facility table, an example, mistakes, related links, and
+  primary sources;
+- `landing` and `guide` Entries are excluded from this structural profile and
+  continue to receive navigation/design review.
+
+The checker recognizes controlled Chinese heading aliases and metadata counts.
+It proves that a topic is present and reviewable; it cannot prove that a claim
+is correct, complete, or well sourced. Primary-source fact review and the
+Standards/Spec review remain required.
+
+Existing debt is recorded in `reference/quality-baseline.json`. The gate is a
+ratchet: a newly detected gap fails, a resolved gap that remains in the
+baseline also fails, and a catalog-version mismatch requires the whole baseline
+to be reviewed. Never add a baseline item merely to make CI green. Add it only
+for reviewed inherited debt with a remediation owner/order; normal new or
+edited Entries must satisfy their profile immediately.
 
 ## 3. Selecting Entry granularity
 

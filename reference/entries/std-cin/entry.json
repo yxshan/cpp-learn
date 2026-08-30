@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-cin",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/io/cin",
   "kind": "object",
   "title": "std::cin",
@@ -44,6 +44,12 @@
     },
     {
       "kind": "primary",
+      "title": "C++ working draft: standard iostream objects overview",
+      "url": "https://eel.is/c++draft/iostream.objects.overview",
+      "standardSection": "[iostream.objects.overview]"
+    },
+    {
+      "kind": "primary",
       "title": "C++ working draft: formatted input requirements",
       "url": "https://eel.is/c++draft/istream.formatted.reqmts",
       "standardSection": "[istream.formatted.reqmts]"
@@ -79,5 +85,5 @@
       "standardSection": "[lib.iostream.objects]"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-30"
 }

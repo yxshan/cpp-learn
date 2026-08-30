@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-sort",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/algorithms/sort",
   "kind": "function",
   "title": "std::sort",
@@ -12,7 +12,7 @@
   "since": "c++98",
   "aliases": ["sort", "排序", "原地排序"],
   "categories": ["algorithms"],
-  "relatedEntryIds": ["std-vector"],
+  "relatedEntryIds": ["header-algorithm", "std-vector"],
   "content": {
     "format": "markdown",
     "path": "entries/std-sort/content.md"
@@ -63,5 +63,5 @@
       "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-30"
 }

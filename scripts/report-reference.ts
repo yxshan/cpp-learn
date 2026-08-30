@@ -12,6 +12,10 @@ import {
 } from "@cpp-learn/reference";
 
 import { resolveReferenceDataRoot } from "./reference-data-root.ts";
+import {
+  auditReferenceCatalog,
+  loadReferenceQualityBaseline,
+} from "./reference-content-quality.ts";
 
 const compiler = DEFAULT_NATIVE_CPP_COMPILER;
 const toolchain = await createNativeToolchainProbe({
@@ -31,5 +35,26 @@ const reference = createFilesystemReferenceCatalog({
     : {}),
 });
 const report = await createReferenceCoverageReport(reference);
+const qualityAudit = await auditReferenceCatalog(
+  resolve("reference", "catalog.json"),
+);
+const qualityBaseline = await loadReferenceQualityBaseline(
+  resolve("reference", "quality-baseline.json"),
+);
 
-console.log(JSON.stringify(report, undefined, 2));
+console.log(
+  JSON.stringify(
+    {
+      ...report,
+      quality: {
+        auditedEntryCount: qualityAudit.auditedEntryCount,
+        skippedEntryCount: qualityAudit.skippedEntryCount,
+        entriesWithFindings: qualityAudit.entriesWithFindings,
+        knownGapCount: qualityBaseline.knownGaps.length,
+        findingsByArea: qualityAudit.findingsByArea,
+      },
+    },
+    undefined,
+    2,
+  ),
+);

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-30 |
@@ -55,16 +55,35 @@ editorial role and upgrade status.
 |---|---|---|
 | Completed in quality batch 1 | `std::optional`, `std::make_unique`, `std::string_view` | Rewritten to the ordinary-entity learning-quality baseline with two verified examples each |
 | Completed in quality batch 2 | `<vector>`, `<array>`, `<deque>`, `<unordered_map>`, choosing a sequence container | Header facility maps, version boundaries, container decision rules, and differentiated invalidation guidance are now source-backed |
-| Completed in quality batch 3 | `std::vector`, `std::vector::push_back`, `std::vector::reserve`, `std::array`, `std::deque`, `std::unordered_map`, `std::sort`, `std::find`, `std::string`, `std::unique_ptr`, `std::cin`, `std::cout` | Each core entity now pairs its minimal example with a deterministic realistic example and explicit selection guidance |
+| Completed in quality batch 3 | `std::vector`, `std::vector::push_back`, `std::vector::reserve`, `std::array`, `std::deque`, `std::unordered_map`, `std::sort`, `std::find`, `std::string`, `std::unique_ptr`, `std::cin`, `std::cout` | Cleared the ordinary-entity example debt and added explicit selection guidance; later structural gaps remain tracked by the quality ratchet |
 | Completed in breadth batch 4 | `std::map`, `std::set`, `std::unordered_set`, `std::queue`, `std::priority_queue`, `std::stack`, `std::transform`, `std::count_if`, `std::all_of`, `std::lower_bound`, `std::remove_if`, `std::accumulate` | Twelve directly searchable entity pages add associative containers, adaptors, and high-frequency algorithms with two verified examples each |
 | Completed in breadth batch 5 | `<map>`, `<set>`, `<unordered_set>`, `<queue>`, `<stack>`, `<numeric>`, `std::binary_search`, `std::any_of`, `std::copy`, `std::reverse`, `std::unique`, `std::for_each` | Six facility maps close navigation around batch 4 and six ordinary algorithm pages define classic, policy, and ranges boundaries with verified examples |
 | Completed in breadth batch 6 | `<string>`, `<string_view>`, `<charconv>`, `<memory>`, `std::string::substr`, `std::string::find`, `std::string::append`, `std::from_chars`, `std::to_chars`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared` | Four facility maps and eight ordinary pages close owning/borrowed text, low-level conversion, and shared-ownership learning loops; cppreference informs page structure while WG21 sources govern facts |
-| Keep concise | Standard Library, Containers, Algorithms, `<algorithm>`, `<iostream>` | Landing/header role is primarily navigation; review links and scope instead of padding prose |
+| Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout` | Added missing mistakes, complexity, lifetime/invalidation, related-link, and JavaScript comparison coverage; all six now pass their kind profile |
+| Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
 Quality batches 1 through 3 and breadth batches 4 through 6 are complete. The existing
 ordinary-entity example debt remains cleared. The next batch can finish the
 remaining sequence-container and algorithm candidates, or move into utility,
 I/O, filesystem, or time vocabulary.
+
+### 3.1 Executable debt baseline
+
+The kind-aware audit currently checks 57 of 61 Entries; three landing Entries
+and one guide are intentionally reviewed outside the structural profile. After
+quality-ratchet batch 7, the checked-in baseline contains 43 known gaps across
+27 Entries, down from the initial 58 gaps across 35 Entries.
+
+| Remediation batch | Focus | Current gap areas |
+|---|---|---|
+| 8 | High-frequency algorithms | parameters, returns, complexity, lifetime |
+| 9 | Containers and smart ownership | selection, JavaScript comparison, related links |
+| 10 | Header navigation | direct-inclusion guidance, facility maps, related links |
+| 11 | String conversion and member operations | selection, parameters, lifetime |
+
+`reference/quality-baseline.json` is debt inventory, not an acceptance waiver.
+Every remediation removes the matching baseline rows in the same change. New
+Entries and materially rewritten Entries may not introduce new rows.
 
 ## 4. Planned 120-Entry catalog
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-find",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/algorithms/find",
   "kind": "function",
   "title": "std::find",
@@ -54,5 +54,5 @@
       "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-30"
 }
