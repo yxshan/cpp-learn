@@ -21,6 +21,7 @@
   "sources": [
     { "kind": "primary", "title": "C++ working draft: utility swap", "url": "https://eel.is/c++draft/utility.swap", "standardSection": "[utility.swap]" },
     { "kind": "primary", "title": "C++ working draft: swappable requirements", "url": "https://eel.is/c++draft/swappable.requirements", "standardSection": "[swappable.requirements]" },
+    { "kind": "primary", "title": "C++ working draft: data races", "url": "https://eel.is/c++draft/intro.races", "standardSection": "[intro.races]" },
     { "kind": "primary", "title": "C++ working draft: swap algorithms", "url": "https://eel.is/c++draft/alg.swap", "standardSection": "[alg.swap]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[utility.swap]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[utility.swap]" },

@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 6 are
+first three content-quality batches, and breadth-expansion batches 4 through 7 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin

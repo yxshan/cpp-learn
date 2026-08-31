@@ -22,6 +22,8 @@
     { "kind": "primary", "title": "C++ working draft: forward and move", "url": "https://eel.is/c++draft/forward", "standardSection": "[forward]" },
     { "kind": "primary", "title": "C++ working draft: call deduction", "url": "https://eel.is/c++draft/temp.deduct.call", "standardSection": "[temp.deduct.call]" },
     { "kind": "primary", "title": "C++ working draft: references", "url": "https://eel.is/c++draft/dcl.ref", "standardSection": "[dcl.ref]" },
+    { "kind": "primary", "title": "C++ working draft: temporary objects", "url": "https://eel.is/c++draft/class.temporary", "standardSection": "[class.temporary]" },
+    { "kind": "primary", "title": "C++ working draft: data races", "url": "https://eel.is/c++draft/intro.races", "standardSection": "[intro.races]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[forward]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[forward]" },
     { "kind": "primary", "title": "WG21 N1690: rvalue references", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1690.html" },

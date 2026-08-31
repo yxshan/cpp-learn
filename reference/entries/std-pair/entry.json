@@ -22,6 +22,8 @@
     { "kind": "primary", "title": "C++ working draft: pair class", "url": "https://eel.is/c++draft/pairs.pair", "standardSection": "[pairs.pair]" },
     { "kind": "primary", "title": "C++ working draft: pair specialized algorithms", "url": "https://eel.is/c++draft/pairs.spec", "standardSection": "[pairs.spec]" },
     { "kind": "primary", "title": "C++ working draft: pair tuple interface", "url": "https://eel.is/c++draft/pair.astuple", "standardSection": "[pair.astuple]" },
+    { "kind": "primary", "title": "C++ working draft: temporary objects", "url": "https://eel.is/c++draft/class.temporary", "standardSection": "[class.temporary]" },
+    { "kind": "primary", "title": "C++ working draft: data races", "url": "https://eel.is/c++draft/intro.races", "standardSection": "[intro.races]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[pairs.pair]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[pairs]" },
     { "kind": "primary", "title": "WG21 1997 public review draft: pairs", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-utilities.html", "standardSection": "[lib.pairs]" },
