@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { assertReferenceCompilationAccepted } from "./reference-example-verification.js";
+import {
+  assertReferenceCompilationAccepted,
+  referenceCompilerStandardFlag,
+} from "./reference-example-verification.js";
 
 const expectedFailure = {
   identity: "std-vector/invalid",
@@ -16,6 +19,12 @@ const expectedFailure = {
 };
 
 describe("Reference example compilation acceptance", () => {
+  it("maps stable manifest standards to compiler-compatible flags", () => {
+    expect(referenceCompilerStandardFlag("c++20")).toBe("c++20");
+    expect(referenceCompilerStandardFlag("c++23")).toBe("c++2b");
+    expect(referenceCompilerStandardFlag("c++26-draft")).toBe("c++2c");
+  });
+
   it("accepts an expected diagnostic only when compilation stayed within bounds", () => {
     expect(() =>
       assertReferenceCompilationAccepted(expectedFailure),

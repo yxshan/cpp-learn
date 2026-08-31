@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 3.4 |
+| Version | 3.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-31 |
@@ -54,7 +54,8 @@ Read in this order:
 36. [Stage 6.2 Phase 3 Reference Quality Ratchet Batch 8 Implementation Report](36-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-RATCHET-BATCH-8-IMPLEMENTATION-REPORT.md)
 37. [Stage 6.2 Phase 3 Reference Quality Debt Closure Implementation Report](37-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-DEBT-CLOSURE-IMPLEMENTATION-REPORT.md)
 38. [Stage 6.2 Phase 3 Breadth Expansion Batch 7 Implementation Report](38-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-7-IMPLEMENTATION-REPORT.md)
-39. [Domain Context](CONTEXT.md)
+39. [Stage 6.2 Phase 3 Breadth Expansion Batch 8 Implementation Report](39-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-8-IMPLEMENTATION-REPORT.md)
+40. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -76,6 +77,7 @@ API Reference research and editorial baselines:
 - [Breadth Expansion Batch 5 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH5_RESEARCH.md)
 - [Breadth Expansion Batch 6 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH6_RESEARCH.md)
 - [Breadth Expansion Batch 7 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH7_RESEARCH.md)
+- [Breadth Expansion Batch 8 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH8_RESEARCH.md)
 
 ## Architecture decisions
 

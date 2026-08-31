@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "std-any",
+  "version": 1,
+  "slug": "standard-library/utilities/any",
+  "kind": "type",
+  "title": "std::any",
+  "summary": "拥有一个可复制的运行时类型擦除值，并通过精确类型检查取回。",
+  "symbol": "std::any",
+  "header": "<any>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["any", "任意值", "类型擦除值", "bad_any_cast"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["std-variant", "std-optional", "std-function"],
+  "content": { "format": "markdown", "path": "entries/std-any/content.md" },
+  "examples": [
+    { "id": "exact-type-check", "path": "entries/std-any/examples/exact-type-check.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "int=42\ndouble=false\n" },
+    { "id": "replace-and-catch", "path": "entries/std-any/examples/replace-and-catch.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=ready\nbad cast\nhas_value=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: any", "url": "https://eel.is/c++draft/any", "standardSection": "[any]" },
+    { "kind": "primary", "title": "C++ working draft: any class", "url": "https://eel.is/c++draft/any.class", "standardSection": "[any.class]" },
+    { "kind": "primary", "title": "C++ working draft: any modifiers", "url": "https://eel.is/c++draft/any.modifiers", "standardSection": "[any.modifiers]" },
+    { "kind": "primary", "title": "C++ working draft: any casts", "url": "https://eel.is/c++draft/any.nonmembers", "standardSection": "[any.nonmembers]" },
+    { "kind": "primary", "title": "C++ working draft: library data races", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "C++ working draft: object lifetime", "url": "https://eel.is/c++draft/basic.life", "standardSection": "[basic.life]" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[any]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[any]" },
+    { "kind": "primary", "title": "WG21 N3804: Any design", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3804.html" },
+    { "kind": "secondary", "title": "cppreference 中文：std::any", "url": "https://zh.cppreference.com/w/cpp/utility/any" }
+  ],
+  "verifiedAt": "2026-08-31"
+}

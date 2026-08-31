@@ -2,7 +2,6 @@ import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
-import type { CppStandard } from "@cpp-learn/contracts";
 import {
   DEFAULT_NATIVE_CPP_COMPILER,
   createNativeToolchainProbe,
@@ -15,19 +14,11 @@ import {
   type ReferenceVerificationManifest,
 } from "@cpp-learn/reference";
 
-import { assertReferenceCompilationAccepted } from "./reference-example-verification.ts";
+import {
+  assertReferenceCompilationAccepted,
+  referenceCompilerStandardFlag,
+} from "./reference-example-verification.ts";
 import { resolveReferenceDataRoot } from "./reference-data-root.ts";
-
-const standardFlag: Readonly<Record<CppStandard, string>> = {
-  "c++98": "c++98",
-  "c++03": "c++03",
-  "c++11": "c++11",
-  "c++14": "c++14",
-  "c++17": "c++17",
-  "c++20": "c++20",
-  "c++23": "c++23",
-  "c++26-draft": "c++2c",
-};
 
 const reference = createFilesystemReferenceCatalog({
   catalogPath: resolve("reference", "catalog.json"),
@@ -73,7 +64,7 @@ for (const entryId of entryIds) {
       const compilation = await runBoundedProcess({
         executable: compiler,
         args: [
-          `-std=${standardFlag[example.standard]}`,
+          `-std=${referenceCompilerStandardFlag(example.standard)}`,
           "-Wall",
           "-Wextra",
           "-Wpedantic",

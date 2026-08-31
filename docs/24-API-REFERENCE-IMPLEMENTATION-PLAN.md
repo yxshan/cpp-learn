@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 7 are
+first three content-quality batches, and breadth-expansion batches 4 through 8 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -163,6 +163,13 @@ examples. `<utility>` supplies the navigation map, while `std::move`,
 generic exchange, and binary-value vocabulary. The pages keep the utility cast
 separate from the range algorithm, teach ADL at the generic swap boundary, and
 avoid importing C++23 pair-like and `forward_like` facilities into C++20.
+
+Breadth batch 8 advances the catalog from 66 to 71 Entries and from 118 to 128
+examples. `std::tuple`, `std::variant`, `std::any`, `std::expected`, and
+`std::function` establish product, sum, runtime-erased value, explicit result,
+and callable-erasure vocabulary. The first four C++20-capable entities keep
+their C++20 declaration boundary, while `std::expected` is correctly published
+and locally verified as C++23 through a compiler-compatible `c++2b` flag.
 
 ### Work packages
 

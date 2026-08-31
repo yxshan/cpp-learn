@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 7,
+  "catalogVersion": 8,
   "review": {
-    "id": "breadth-expansion-batch-7",
+    "id": "breadth-expansion-batch-8",
     "reviewedAt": "2026-08-31",
-    "fixedPoint": "875ecd6",
-    "scope": "Catalog version 7 adds five utility Entries at zero structural debt; no waivers remain."
+    "fixedPoint": "c53252d",
+    "scope": "Catalog version 8 adds five heterogeneous-value and callable Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "std-function",
+  "version": 1,
+  "slug": "standard-library/utilities/function",
+  "kind": "type",
+  "title": "std::function",
+  "summary": "把不同可复制 callable 擦除为一个拥有固定调用签名的包装器。",
+  "symbol": "std::function",
+  "header": "<functional>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["function", "回调", "callable wrapper", "函数包装器", "bad_function_call"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["std-any", "std-forward", "std-move"],
+  "content": { "format": "markdown", "path": "entries/std-function/content.md" },
+  "examples": [
+    { "id": "replace-operation", "path": "entries/std-function/examples/replace-operation.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "add=5\nmultiply=6\n" },
+    { "id": "empty-and-capture", "path": "entries/std-function/examples/empty-and-capture.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "empty call\ncount=1\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: polymorphic function wrappers", "url": "https://eel.is/c++draft/func.wrap.func", "standardSection": "[func.wrap.func]" },
+    { "kind": "primary", "title": "C++ working draft: function constructors", "url": "https://eel.is/c++draft/func.wrap.func.con", "standardSection": "[func.wrap.func.con]" },
+    { "kind": "primary", "title": "C++ working draft: function invocation", "url": "https://eel.is/c++draft/func.wrap.func.inv", "standardSection": "[func.wrap.func.inv]" },
+    { "kind": "primary", "title": "C++ working draft: bad_function_call", "url": "https://eel.is/c++draft/func.wrap.badcall", "standardSection": "[func.wrap.badcall]" },
+    { "kind": "primary", "title": "C++ working draft: library data races", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "C++ working draft: temporary objects", "url": "https://eel.is/c++draft/class.temporary", "standardSection": "[class.temporary]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[func.wrap.func]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[func.wrap.func]" },
+    { "kind": "primary", "title": "WG21 N1402: polymorphic function wrapper", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1402.html" },
+    { "kind": "primary", "title": "WG21 P2255R2: dangling references in function wrappers", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2255r2.html" },
+    { "kind": "secondary", "title": "cppreference 中文：std::function", "url": "https://zh.cppreference.com/w/cpp/utility/functional/function" }
+  ],
+  "verifiedAt": "2026-08-31"
+}

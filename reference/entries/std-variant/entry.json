@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "std-variant",
+  "version": 1,
+  "slug": "standard-library/utilities/variant",
+  "kind": "type",
+  "title": "std::variant",
+  "summary": "在编译期列出的候选类型中管理一个当前激活值。",
+  "symbol": "std::variant",
+  "header": "<variant>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["variant", "变体", "和类型", "tagged union", "联合类型"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["std-optional", "std-any", "std-expected", "std-tuple"],
+  "content": { "format": "markdown", "path": "entries/std-variant/content.md" },
+  "examples": [
+    { "id": "visit-response", "path": "entries/std-variant/examples/visit-response.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "status=200\nmessage=ready\n" },
+    { "id": "checked-access", "path": "entries/std-variant/examples/checked-access.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=42\nwrong alternative\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: variants", "url": "https://eel.is/c++draft/variant", "standardSection": "[variant]" },
+    { "kind": "primary", "title": "C++ working draft: variant status", "url": "https://eel.is/c++draft/variant.status", "standardSection": "[variant.status]" },
+    { "kind": "primary", "title": "C++ working draft: variant access", "url": "https://eel.is/c++draft/variant.get", "standardSection": "[variant.get]" },
+    { "kind": "primary", "title": "C++ working draft: variant visitation", "url": "https://eel.is/c++draft/variant.visit", "standardSection": "[variant.visit]" },
+    { "kind": "primary", "title": "C++ working draft: library data races", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "C++ working draft: object lifetime", "url": "https://eel.is/c++draft/basic.life", "standardSection": "[basic.life]" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[variant]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[variant]" },
+    { "kind": "primary", "title": "WG21 P0088R3: Variant design", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0088r3.html" },
+    { "kind": "secondary", "title": "cppreference 中文：std::variant", "url": "https://zh.cppreference.com/w/cpp/utility/variant" }
+  ],
+  "verifiedAt": "2026-08-31"
+}

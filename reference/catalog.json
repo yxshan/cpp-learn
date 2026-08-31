@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 7,
+  "version": 8,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -67,7 +67,12 @@
     "entries/std-move/entry.json",
     "entries/std-forward/entry.json",
     "entries/std-swap/entry.json",
-    "entries/std-pair/entry.json"
+    "entries/std-pair/entry.json",
+    "entries/std-tuple/entry.json",
+    "entries/std-variant/entry.json",
+    "entries/std-any/entry.json",
+    "entries/std-expected/entry.json",
+    "entries/std-function/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

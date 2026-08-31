@@ -1,4 +1,20 @@
+import type { CppStandard } from "@cpp-learn/contracts";
 import type { BoundedProcessResult } from "@cpp-learn/judge";
+
+const compilerStandardFlags: Readonly<Record<CppStandard, string>> = {
+  "c++98": "c++98",
+  "c++03": "c++03",
+  "c++11": "c++11",
+  "c++14": "c++14",
+  "c++17": "c++17",
+  "c++20": "c++20",
+  "c++23": "c++2b",
+  "c++26-draft": "c++2c",
+};
+
+export function referenceCompilerStandardFlag(standard: CppStandard): string {
+  return compilerStandardFlags[standard];
+}
 
 export interface ReferenceCompilationCheck {
   readonly identity: string;
