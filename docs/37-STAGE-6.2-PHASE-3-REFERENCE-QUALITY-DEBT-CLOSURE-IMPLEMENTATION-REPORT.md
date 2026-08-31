@@ -4,7 +4,7 @@
 |---|---|
 | Document ID | IMPL-6.2-P3-QUALITY-CLOSURE |
 | Version | 1.0 |
-| Status | In Review |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-31 |
 
@@ -64,8 +64,8 @@ facts; this report records the closure batch's coverage and verification.
 | Reference quality ratchet | Passed: 57/61 audited, 0 reviewed gaps, no regressions |
 | Reference examples | Passed: 61 Entries, 108 C++ examples |
 | Complete repository check | Passed: 70 Activities, 61 Entries, 108 C++ examples, 194 tests, production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed after one review/fix cycle; no remaining findings |
+| Spec review | Passed after one review/fix cycle; no remaining findings |
 
 ## 5. Follow-up
 
