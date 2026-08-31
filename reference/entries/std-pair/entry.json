@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "std-pair",
+  "version": 1,
+  "slug": "standard-library/utilities/pair",
+  "kind": "type",
+  "title": "std::pair",
+  "summary": "把两个可能不同类型的公开子对象组合成固定二元值。",
+  "symbol": "std::pair",
+  "header": "<utility>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["pair", "二元组", "键值对", "first second"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["header-utility", "std-move", "std-forward", "std-swap", "std-map"],
+  "content": { "format": "markdown", "path": "entries/std-pair/content.md" },
+  "examples": [
+    { "id": "return-status", "path": "entries/std-pair/examples/return-status.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "status=ok code=200\n" },
+    { "id": "lexicographic-order", "path": "entries/std-pair/examples/lexicographic-order.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first-less=true\nequal=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: pair class", "url": "https://eel.is/c++draft/pairs.pair", "standardSection": "[pairs.pair]" },
+    { "kind": "primary", "title": "C++ working draft: pair specialized algorithms", "url": "https://eel.is/c++draft/pairs.spec", "standardSection": "[pairs.spec]" },
+    { "kind": "primary", "title": "C++ working draft: pair tuple interface", "url": "https://eel.is/c++draft/pair.astuple", "standardSection": "[pair.astuple]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[pairs.pair]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[pairs]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft: pairs", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-utilities.html", "standardSection": "[lib.pairs]" },
+    { "kind": "primary", "title": "WG21 P0433R2: deduction guides", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0433r2.html" },
+    { "kind": "primary", "title": "WG21 P1032R1: constexpr pair operations", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1032r1.html" },
+    { "kind": "primary", "title": "WG21 P1614R2: three-way comparison", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1614r2.html" },
+    { "kind": "primary", "title": "WG21 P2165R4: pair-like compatibility", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2165r4.pdf" },
+    { "kind": "secondary", "title": "cppreference 中文：std::pair", "url": "https://zh.cppreference.com/w/cpp/utility/pair" }
+  ],
+  "verifiedAt": "2026-08-31"
+}

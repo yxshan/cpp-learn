@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "header-utility",
+  "version": 1,
+  "slug": "standard-library/headers/utility",
+  "kind": "header",
+  "title": "<utility>",
+  "summary": "声明 pair、交换、值类别转换和编译期辅助设施。",
+  "symbol": "<utility>",
+  "header": "<utility>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["utility header", "工具头文件", "值类别工具"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["std-move", "std-forward", "std-swap", "std-pair", "header-memory", "algorithms"],
+  "content": { "format": "markdown", "path": "entries/header-utility/content.md" },
+  "examples": [
+    { "id": "exchange-state", "path": "entries/header-utility/examples/exchange-state.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "old=idle\ncurrent=running\n" },
+    { "id": "utility-family", "path": "entries/header-utility/examples/utility-family.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "ok=200\nleft=2 right=1\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: utility synopsis", "url": "https://eel.is/c++draft/utility.syn", "standardSection": "[utility.syn]" },
+    { "kind": "primary", "title": "C++ working draft: header use", "url": "https://eel.is/c++draft/using.headers", "standardSection": "[using.headers]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[utility.syn]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[utility]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft: utilities", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-utilities.html", "standardSection": "[lib.utility]" },
+    { "kind": "primary", "title": "WG21 N3658: compile-time integer sequences", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3658.html" },
+    { "kind": "primary", "title": "WG21 N3668: exchange utility function", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3668.html" },
+    { "kind": "primary", "title": "WG21 N4380: as_const", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4380.html" },
+    { "kind": "primary", "title": "WG21 P0586R2: safe integral comparisons", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0586r2.html" },
+    { "kind": "secondary", "title": "cppreference 中文：<utility>", "url": "https://zh.cppreference.com/w/cpp/header/utility" }
+  ],
+  "verifiedAt": "2026-08-31"
+}

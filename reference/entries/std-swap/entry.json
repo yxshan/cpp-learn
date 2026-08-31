@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-swap",
+  "version": 1,
+  "slug": "standard-library/utilities/swap",
+  "kind": "function",
+  "title": "std::swap",
+  "summary": "交换两个同类型对象或同长度数组的值，并支持泛型 ADL 定制协议。",
+  "symbol": "std::swap",
+  "header": "<utility>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["swap", "交换值", "ADL swap", "可交换"],
+  "categories": ["utilities"],
+  "relatedEntryIds": ["header-utility", "std-move", "std-pair", "std-vector", "std-array"],
+  "content": { "format": "markdown", "path": "entries/std-swap/content.md" },
+  "examples": [
+    { "id": "swap-values-and-arrays", "path": "entries/std-swap/examples/swap-values-and-arrays.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "left=2 right=1\na=4,5,6 b=1,2,3\n" },
+    { "id": "adl-swap", "path": "entries/std-swap/examples/adl-swap.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first=cache\nsecond=api\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: utility swap", "url": "https://eel.is/c++draft/utility.swap", "standardSection": "[utility.swap]" },
+    { "kind": "primary", "title": "C++ working draft: swappable requirements", "url": "https://eel.is/c++draft/swappable.requirements", "standardSection": "[swappable.requirements]" },
+    { "kind": "primary", "title": "C++ working draft: swap algorithms", "url": "https://eel.is/c++draft/alg.swap", "standardSection": "[alg.swap]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[utility.swap]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[utility.swap]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft: swap", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/lib-algorithms.html", "standardSection": "[lib.alg.swap]" },
+    { "kind": "primary", "title": "WG21 P0879R0: constexpr swap", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0879r0.html" },
+    { "kind": "secondary", "title": "cppreference 中文：std::swap", "url": "https://zh.cppreference.com/w/cpp/algorithm/swap" }
+  ],
+  "verifiedAt": "2026-08-31"
+}

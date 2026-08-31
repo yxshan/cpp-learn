@@ -157,6 +157,13 @@ complexity, lifetime, and undefined-behavior claims remain grounded in WG21
 primary sources. JavaScript comparisons are limited to useful mental-model
 contrasts rather than claimed semantic equivalence.
 
+Breadth batch 7 advances the catalog from 61 to 66 Entries and from 108 to 118
+examples. `<utility>` supplies the navigation map, while `std::move`,
+`std::forward`, `std::swap`, and `std::pair` establish the C++20 value-category,
+generic exchange, and binary-value vocabulary. The pages keep the utility cast
+separate from the range algorithm, teach ADL at the generic swap boundary, and
+avoid importing C++23 pair-like and `forward_like` facilities into C++20.
+
 ### Work packages
 
 - Expand to 80–120 Entries across containers, algorithms, strings, memory,

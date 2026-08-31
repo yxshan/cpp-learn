@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 6,
+  "catalogVersion": 7,
   "review": {
-    "id": "quality-ratchet-debt-closure",
+    "id": "breadth-expansion-batch-7",
     "reviewedAt": "2026-08-31",
     "fixedPoint": "7b2769e",
-    "scope": "All structural debt inherited from catalog version 6 has been remediated; no waivers remain."
+    "scope": "Catalog version 7 adds five utility Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

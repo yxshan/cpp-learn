@@ -404,9 +404,9 @@ describe("Reference quality catalog audit", () => {
       resolve("reference", "catalog.json"),
     );
 
-    expect(audit.catalogVersion).toBe(6);
-    expect(audit.totalEntryCount).toBe(61);
-    expect(audit.auditedEntryCount).toBe(57);
+    expect(audit.catalogVersion).toBe(7);
+    expect(audit.totalEntryCount).toBe(66);
+    expect(audit.auditedEntryCount).toBe(62);
     expect(audit.skippedEntryCount).toBe(4);
     expect(audit.findings).toEqual([]);
     expect(audit.entriesWithFindings).toBe(0);

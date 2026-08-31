@@ -54,7 +54,7 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
       referenceVerificationManifestPath(dataRoot),
       JSON.stringify({
         schemaVersion: 1,
-        catalogVersion: 6,
+        catalogVersion: 7,
         compilerFingerprint: toolchain.compiler,
         examples: [
           {
@@ -92,7 +92,7 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
       expect(response.statusCode).toBe(200);
       expect(response.json()).toMatchObject({
         schemaVersion: 2,
-        catalogVersion: 6,
+        catalogVersion: 7,
         categories: expect.arrayContaining([
           expect.objectContaining({ id: "containers" }),
         ]),
