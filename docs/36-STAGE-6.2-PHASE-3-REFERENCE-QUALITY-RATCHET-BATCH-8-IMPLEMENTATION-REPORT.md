@@ -4,7 +4,7 @@
 |---|---|
 | Document ID | IMPL-6.2-P3-QUALITY-RATCHET-B8 |
 | Version | 1.0 |
-| Status | In Review |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-31 |
 
@@ -58,8 +58,8 @@ the quality gate now evaluates the upgraded content directly.
 | Entry-by-entry red/green quality checks | Passed: all 19 removed baseline findings were first reproduced and then cleared |
 | Reference quality ratchet | Passed: 57/61 audited, 22 reviewed gaps, no regressions |
 | Complete repository check | Passed: 70 Activities, 61 Entries, 108 C++ examples, 194 tests, production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed after one review/fix cycle; no remaining findings |
+| Spec review | Passed after one review/fix cycle; no remaining findings |
 
 ## 5. Remaining work
 
