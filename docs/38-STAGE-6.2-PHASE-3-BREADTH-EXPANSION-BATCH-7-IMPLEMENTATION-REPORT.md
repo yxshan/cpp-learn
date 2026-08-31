@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-022 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-31 |
 
@@ -53,8 +53,13 @@ are project-authored.
 | Reference quality ratchet | Passed: 62/66 audited, 0 reviewed gaps, no regressions |
 | Example verification | Passed: 118 total C++20 examples |
 | Complete repository check | Passed: docs, curriculum, 66-entry Reference, 118 examples, formatting, lint, types, 194 tests, and production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed against `7d1528d...875ecd6`; no remaining standard violation or smell finding |
+| Spec review | Passed against `7d1528d...875ecd6`; scope and acceptance counts match |
+
+The initial review found an inherited fixed point, one stale batch summary,
+missing thread-safety boundaries on four entity pages, and missing direct
+lifetime sources on three pages. Commit `875ecd6` resolves all findings and is
+the reviewed fixed point recorded by the zero-debt quality baseline.
 
 ## 6. Controlled limitations
 
