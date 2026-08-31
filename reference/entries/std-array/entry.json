@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-array",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/containers/array",
   "kind": "type",
   "title": "std::array",
@@ -65,5 +65,5 @@
       "standardSection": "[array]"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-31"
 }

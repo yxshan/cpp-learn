@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-optional",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/utilities/optional",
   "kind": "type",
   "title": "std::optional",
@@ -12,7 +12,7 @@
   "since": "c++17",
   "aliases": ["optional", "可选值", "可能为空的值"],
   "categories": ["utilities"],
-  "relatedEntryIds": ["std-string-view"],
+  "relatedEntryIds": ["std-string-view", "std-unique-ptr"],
   "content": {
     "format": "markdown",
     "path": "entries/std-optional/content.md"
@@ -77,5 +77,5 @@
       "standardSection": "[optional]"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-31"
 }

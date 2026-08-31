@@ -18,6 +18,13 @@
 见 [`[res.on.headers]`](https://eel.is/c++draft/res.on.headers)。只需要无序集合时使用
 `<unordered_set>`；需要按键排序的映射时使用 `<map>`。
 
+```cpp
+#include <unordered_map>
+```
+
+不要依赖其他容器头文件、预编译头或实现细节对 `<unordered_map>` 的传递包含；直接使用
+本头文件声明的实体，就应显式包含它。
+
 ## 头文件中的主要实体
 
 | 实体组 | 作用 | 版本提示 |
@@ -85,7 +92,7 @@ class unordered_map;
 ## 相关内容
 
 继续阅读 `std::unordered_map` 的元素访问、哈希一致性和异常规则。需要键排序时应比较
-`std::map`，而不是依赖无序映射的当前输出顺序。
+`std::map`，而不是依赖无序映射的当前输出顺序；对应的有序映射声明位于 `<map>`。
 
 ## 来源
 

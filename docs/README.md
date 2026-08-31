@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 3.2 |
+| Version | 3.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-31 |
@@ -52,7 +52,8 @@ Read in this order:
 34. [Stage 6.2 Phase 3 Breadth Expansion Batch 6 Implementation Report](34-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-6-IMPLEMENTATION-REPORT.md)
 35. [Stage 6.2 Phase 3 Reference Quality Ratchet Implementation Report](35-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-RATCHET-IMPLEMENTATION-REPORT.md)
 36. [Stage 6.2 Phase 3 Reference Quality Ratchet Batch 8 Implementation Report](36-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-RATCHET-BATCH-8-IMPLEMENTATION-REPORT.md)
-37. [Domain Context](CONTEXT.md)
+37. [Stage 6.2 Phase 3 Reference Quality Debt Closure Implementation Report](37-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-DEBT-CLOSURE-IMPLEMENTATION-REPORT.md)
+38. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

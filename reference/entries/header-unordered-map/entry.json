@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-unordered-map",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/headers/unordered-map",
   "kind": "header",
   "title": "<unordered_map>",
@@ -12,7 +12,7 @@
   "since": "c++11",
   "aliases": ["unordered_map header", "哈希表头文件", "无序映射头文件"],
   "categories": ["containers"],
-  "relatedEntryIds": ["std-unordered-map"],
+  "relatedEntryIds": ["std-unordered-map", "std-map", "header-map"],
   "content": {
     "format": "markdown",
     "path": "entries/header-unordered-map/content.md"
@@ -95,5 +95,5 @@
       "standardSection": "[unord.map.syn]"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-31"
 }

@@ -399,7 +399,7 @@ describe("Reference quality baseline ratchet", () => {
 });
 
 describe("Reference quality catalog audit", () => {
-  it("audits the checked-in catalog through the same public seam as the CLI", async () => {
+  it("keeps the checked-in catalog structurally debt-free through the CLI seam", async () => {
     const audit = await auditReferenceCatalog(
       resolve("reference", "catalog.json"),
     );
@@ -408,13 +408,8 @@ describe("Reference quality catalog audit", () => {
     expect(audit.totalEntryCount).toBe(61);
     expect(audit.auditedEntryCount).toBe(57);
     expect(audit.skippedEntryCount).toBe(4);
-    expect(audit.findings.length).toBeGreaterThan(0);
-    expect(audit.findings.map(({ entryId }) => entryId)).toEqual(
-      [...audit.findings.map(({ entryId }) => entryId)].sort(),
-    );
-    expect(
-      new Set(audit.findings.map(({ entryId, area }) => `${entryId}:${area}`))
-        .size,
-    ).toBe(audit.findings.length);
+    expect(audit.findings).toEqual([]);
+    expect(audit.entriesWithFindings).toBe(0);
+    expect(audit.findingsByArea).toEqual({});
   });
 });

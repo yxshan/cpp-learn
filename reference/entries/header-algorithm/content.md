@@ -6,11 +6,37 @@
 
 - 标准：C++98 起
 - 代表能力：查找、排序、计数、复制、变换
-- 常见输入：一对迭代器；C++20 还提供 `<ranges>` 中的范围算法
+- 常见输入：一对迭代器；C++20 起还可使用 ranges 算法重载
+
+## 直接包含
+
+直接使用本页算法时，应在对应源文件中显式包含：
+
+```cpp
+#include <algorithm>
+```
+
+不要依赖 `<vector>`、`<iostream>` 或其他头文件偶然传递包含 `<algorithm>`；这类间接
+可见性不是调用算法的可移植保证。`<ranges>` 提供范围核心设施，但
+`std::ranges::find`、`std::ranges::sort` 等范围算法仍由 `<algorithm>` 声明。
 
 ## 什么时候使用
 
 需要对容器执行可复用操作时，先寻找标准算法。算法通常比手写循环更直接地表达意图，也更容易核对复杂度和边界。
+
+## 主要设施
+
+| 设施组 | 代表实体 | 版本 |
+|---|---|---|
+| 查找与计数 | `std::find`、`std::find_if`、`std::count`、`std::count_if` | C++98 |
+| 排序与分区 | `std::sort`、`std::stable_sort`、`std::partition` | C++98 |
+| 复制与变换 | `std::copy`、`std::transform`、`std::reverse` | C++98 |
+| 条件量词 | `std::all_of`、`std::any_of`、`std::none_of` | C++11 |
+| 执行策略重载 | 多个算法的 policy 家族 | C++17 |
+| ranges 算法 | `std::ranges::find`、`std::ranges::sort`、`std::ranges::copy` | C++20 |
+
+这是一张学习导航表，不是完整 synopsis。具体算法的迭代器类别、返回类型、复杂度、失效和
+异常规则必须进入对应实体页核对。
 
 ## 基本模型
 

@@ -30,6 +30,18 @@ constexpr void reserve(size_type n);
 容量保持不变。调用不改变 `size()`。之后的插入在新大小超过容量前不会再次引起
 重新分配，完整保证见 [`[vector.capacity]`](https://eel.is/c++draft/vector.capacity)。
 
+## 返回值
+
+`reserve` 返回 `void`。调用者不能从返回值获知是否发生重新分配，也不能假定实际
+`capacity()` 恰好等于 `n`；需要观察容量时应在调用后读取 `capacity()`，并只依赖它至少
+达到请求值这一合同。
+
+## 复杂度
+
+最坏情况下与调用前的 `size()` 成线性关系，因为重新分配时至多需要移动或复制全部现有
+元素。若 `n <= capacity()`，不会发生重新分配；标准仍以最坏上界描述接口，不承诺某个
+实现的分配增长因子或常数成本。
+
 ## 生命周期与失效规则
 
 发生重新分配时，所有元素引用、指针、迭代器和尾后迭代器失效；没有重新分配时，
@@ -53,6 +65,12 @@ constexpr void reserve(size_type n);
 `reserve()` 不是 `resize()`；对只预留容量的空 vector 使用 `values[0]` 仍然非法。
 不要在每次 `push_back` 前调用 `reserve(size() + 1)`，这可能破坏容器原本的几何
 增长策略，造成反复线性移动。只有能估计后续规模时才适合一次性预留。
+
+## 与 JavaScript 的区别
+
+> JavaScript `Array` 没有可移植的 `reserve`/`capacity` 接口，运行时自行管理内部存储；
+> C++ `vector::reserve` 让调用者表达容量下界并直接影响地址稳定窗口。它仍不增加 `size()`，
+> 也不会像 JS 数组赋值那样自动创建可访问元素。
 
 ## 相关内容
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-vector-reserve",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/containers/vector/reserve",
   "kind": "member",
   "title": "std::vector::reserve",
@@ -52,5 +52,5 @@
       "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1004r2.pdf"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-31"
 }

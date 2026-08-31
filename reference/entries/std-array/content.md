@@ -60,6 +60,13 @@ struct array;
 需要增长时不要强行选择 `std::array`。也不要对 `std::array<T, 0>` 调用
 `front()`、`back()` 或下标访问。
 
+## 与 JavaScript 的区别
+
+> JavaScript `Array` 的长度可在运行时增长，元素类型也不进入容器的静态类型；
+> `std::array<T, N>` 把元素类型和固定数量 `N` 都写入类型。JS `TypedArray` 在“固定长度、
+> 连续数值存储”上更接近，但其底层缓冲区由运行时对象管理，也没有 C++ 迭代器失效与对象
+> 生命周期合同。
+
 ## 相关内容
 
 `<array>` 声明该类型；`std::vector` 适合运行时大小的连续序列。

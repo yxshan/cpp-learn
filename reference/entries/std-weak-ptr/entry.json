@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-weak-ptr",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/memory/weak-ptr",
   "kind": "type",
   "title": "std::weak_ptr",
@@ -30,5 +30,5 @@
     { "kind": "primary", "title": "WG21 P3037R5: constexpr shared_ptr and friends", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3037r5.pdf" },
     { "kind": "secondary", "title": "cppreference 中文：weak_ptr", "url": "https://zh.cppreference.com/cpp/memory/weak_ptr" }
   ],
-  "verifiedAt": "2026-08-30"
+  "verifiedAt": "2026-08-31"
 }

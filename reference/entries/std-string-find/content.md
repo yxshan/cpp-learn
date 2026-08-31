@@ -71,7 +71,7 @@ if (position != std::string::npos) {
 第一个示例找到 `env=production` 中 `=` 的位置 3。第二个示例搜索不存在的 `/admin`，先与
 `npos` 比较，再输出稳定的 `missing` 分支。
 
-## Notes
+## 什么时候使用
 
 从 `pos > size()` 开始搜索通常直接失败而不是抛出越界异常。find 的错误通道是 npos；这与
 `at()` 或非法 `substr(pos)` 的异常模型不同。

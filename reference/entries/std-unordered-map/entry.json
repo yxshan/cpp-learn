@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-unordered-map",
-  "version": 2,
+  "version": 3,
   "slug": "standard-library/containers/unordered-map",
   "kind": "type",
   "title": "std::unordered_map",
@@ -12,7 +12,7 @@
   "since": "c++11",
   "aliases": ["unordered_map", "哈希表", "无序映射", "键值表"],
   "categories": ["containers"],
-  "relatedEntryIds": ["header-unordered-map"],
+  "relatedEntryIds": ["header-unordered-map", "std-map"],
   "content": {
     "format": "markdown",
     "path": "entries/std-unordered-map/content.md"
@@ -70,5 +70,5 @@
       "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0458r2.html"
     }
   ],
-  "verifiedAt": "2026-08-28"
+  "verifiedAt": "2026-08-31"
 }

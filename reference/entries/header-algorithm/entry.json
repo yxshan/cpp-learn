@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-algorithm",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/algorithm",
   "kind": "header",
   "title": "<algorithm>",
@@ -29,5 +29,5 @@
       "standardSection": "[algorithms]"
     }
   ],
-  "verifiedAt": "2026-08-25"
+  "verifiedAt": "2026-08-31"
 }

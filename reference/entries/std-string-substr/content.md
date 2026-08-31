@@ -61,7 +61,7 @@ C++20 的 `[string.substr]` 没有为该成员单独规定渐进复杂度上界�
 最小示例从 `cpp-learner` 复制后缀 `learner`。工程示例先用 `find` 定位路由段，再用
 `substr(start, count)` 提取拥有型 `users`，适合把结果保存到请求对象之外。
 
-## Notes
+## 什么时候使用
 
 `count` 是最大长度，不要求剩余区间恰好包含这么多元素。若 `find` 返回 `npos`，不要直接把它
 当作 `pos` 传给 substr；先检查搜索结果，否则会抛 `out_of_range`。

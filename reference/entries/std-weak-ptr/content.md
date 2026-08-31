@@ -77,7 +77,7 @@ weak_ptr 自身销毁不会销毁被管理对象。不同 weak_ptr/shared_ptr �
 第一个示例在 owner 存活时 lock，得到值 42 和两个强所有者。第二个示例跨越 owner 作用域观察
 `expired` 从 false 变为 true，并验证之后 lock 返回空。
 
-## Notes
+## 什么时候使用
 
 打破环时要选择真正不拥有对方的一边，而不是机械地把任意字段改为 weak_ptr。对象关系应先有
 清楚的生命周期方向，智能指针再编码该设计。
