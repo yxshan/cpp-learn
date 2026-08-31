@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "catalogVersion": 6,
   "review": {
-    "id": "quality-ratchet-batches-9-11",
+    "id": "quality-ratchet-debt-closure",
     "reviewedAt": "2026-08-31",
     "fixedPoint": "7b2769e",
     "scope": "All structural debt inherited from catalog version 6 has been remediated; no waivers remain."

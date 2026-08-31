@@ -16,22 +16,29 @@ gaps, and zero not-applicable waivers. Three landing Entries and one guide
 remain intentionally outside the mechanical profile and continue to receive
 editorial review.
 
-This closure remediated 22 findings across 15 Entries. Together with batches 7
-and 8, the ratchet has reduced the original catalog debt from 58 findings
-across 35 Entries to zero.
+This single closure batch remediated 22 findings across 15 Entries through
+three internal slices. Together with batches 7 and 8, the ratchet has reduced
+the original catalog debt from 58 findings across 35 Entries to zero.
 
 ## 2. Delivered remediation
 
-| Batch | Entries | Cleared areas |
+| Slice | Entries | Cleared areas |
 |---|---|---|
-| 9 — containers and ownership | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr` | JavaScript comparisons, selection guidance, return and complexity sections, related links |
-| 10 — header navigation | `<algorithm>`, `<unordered_map>` | Direct-inclusion and transitive-include guidance, versioned facility map, related links |
-| 11 — strings and conversion | `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Selection guidance, parameter contract, lifetime and safety boundaries |
+| A — containers and ownership | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr` | JavaScript comparisons, selection guidance, return and complexity sections, related links |
+| B — header navigation | `<algorithm>`, `<unordered_map>` | Direct-inclusion and transitive-include guidance, versioned facility map, related links |
+| C — strings and conversion | `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Selection guidance, parameter contract, lifetime and safety boundaries |
 
 Every materially changed Entry has a new Entry version and a current
 verification date. Each slice first removed its inherited baseline rows to
 reproduce the exact failures, then added only enough source-backed content to
 make the public quality gate pass.
+
+This closure reuses the accepted primary-source research in
+`API_REFERENCE_QUALITY_UPGRADE_BATCH3_RESEARCH.md`,
+`API_REFERENCE_BREADTH_EXPANSION_BATCH5_RESEARCH.md`, and
+`API_REFERENCE_BREADTH_EXPANSION_BATCH6_RESEARCH.md`. Entry manifests carry
+the direct clauses, historical drafts, and WG21 proposals used for the changed
+facts; this report records the closure batch's coverage and verification.
 
 ## 3. Important corrections
 

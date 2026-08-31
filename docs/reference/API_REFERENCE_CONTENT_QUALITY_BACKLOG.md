@@ -61,7 +61,7 @@ editorial role and upgrade status.
 | Completed in breadth batch 6 | `<string>`, `<string_view>`, `<charconv>`, `<memory>`, `std::string::substr`, `std::string::find`, `std::string::append`, `std::from_chars`, `std::to_chars`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared` | Four facility maps and eight ordinary pages close owning/borrowed text, low-level conversion, and shared-ownership learning loops; cppreference informs page structure while WG21 sources govern facts |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
-| Completed in quality-ratchet batches 9–11 | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
+| Completed in quality-ratchet closure batch | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Three internal remediation slices cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
 Quality batches 1 through 3 and breadth batches 4 through 6 are complete. The existing
@@ -73,15 +73,15 @@ I/O, filesystem, or time vocabulary.
 
 The kind-aware audit currently checks 57 of 61 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
-quality-ratchet batches 9–11, the checked-in baseline contains no known gaps,
+the quality-ratchet closure batch, the checked-in baseline contains no known gaps,
 down from the initial 58 gaps across 35 Entries.
 
-| Remediation batch | Focus | Current gap areas |
+| Closure slice | Focus | Result |
 |---|---|---|
-| 8 | High-frequency algorithms | **Completed:** parameters, returns, complexity, selection, and lifetime |
-| 9 | Containers and smart ownership | **Completed:** selection, JavaScript comparison, return, complexity, and related links |
-| 10 | Header navigation | **Completed:** direct-inclusion guidance, facility maps, and related links |
-| 11 | String conversion and member operations | **Completed:** selection, parameters, and lifetime |
+| Prerequisite batch 8 | High-frequency algorithms | **Completed:** parameters, returns, complexity, selection, and lifetime |
+| A | Containers and smart ownership | **Completed:** selection, JavaScript comparison, return, complexity, and related links |
+| B | Header navigation | **Completed:** direct-inclusion guidance, facility maps, and related links |
+| C | String conversion and member operations | **Completed:** selection, parameters, and lifetime |
 
 `reference/quality-baseline.json` is now an empty reviewed debt inventory, not
 an acceptance waiver. It retains the approval fixed point and schema support
