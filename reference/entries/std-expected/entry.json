@@ -20,6 +20,7 @@
   ],
   "sources": [
     { "kind": "primary", "title": "C++ working draft: expected", "url": "https://eel.is/c++draft/expected", "standardSection": "[expected]" },
+    { "kind": "primary", "title": "C++ working draft: unexpected", "url": "https://eel.is/c++draft/expected.unexpected", "standardSection": "[expected.unexpected]" },
     { "kind": "primary", "title": "C++ working draft: expected object", "url": "https://eel.is/c++draft/expected.object", "standardSection": "[expected.object]" },
     { "kind": "primary", "title": "C++ working draft: expected observers", "url": "https://eel.is/c++draft/expected.object.obs", "standardSection": "[expected.object.obs]" },
     { "kind": "primary", "title": "C++ working draft: expected monadic operations", "url": "https://eel.is/c++draft/expected.object.monadic", "standardSection": "[expected.object.monadic]" },

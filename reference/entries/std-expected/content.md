@@ -44,10 +44,14 @@ public:
 
 ## 模板参数、构造与约束
 
-`T` 可以是 cv `void`，或完整的非数组对象类型；上面的 `T& value()` 代表普通非 void
-specialization，`expected<void, E>` 另有无返回值观察接口。`E` 必须是可作为 `unexpected<E>`
-参数的完整、可析构非数组对象类型，不能是 cv-qualified 类型。两者的构造、移动、赋值与析构
-能力继续决定具体 overload 是否可用。
+`remove_cv_t<T>` 可以是 `void`，或完整的非数组对象类型，但不能是 `std::in_place_t`、
+`std::unexpect_t` 或任何 `std::unexpected<X>` specialization；非 void 的 `T` 还必须满足
+Cpp17Destructible。上面的 `T& value()` 代表普通非 void specialization，`expected<void, E>` 另有
+无返回值观察接口。
+
+`E` 必须是 `std::unexpected<E>` 的合法模板参数：可析构的完整非数组对象类型，不能带 const/
+volatile，也不能本身是 `std::unexpected<X>` specialization。两者的其他构造、移动与赋值能力
+继续决定具体 overload 是否可用。
 
 使用 `std::unexpected(error)` 或 `std::unexpect` 标签明确构造错误分支。标准通过操作约束保持
 “总有一个分支”不变量，不需要也不保证动态分配。
