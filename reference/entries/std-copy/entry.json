@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-copy",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/copy",
   "kind": "function",
   "title": "std::copy",
@@ -83,5 +83,5 @@
       "standardSection": "[algorithms.parallel.exceptions]"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-30"
 }

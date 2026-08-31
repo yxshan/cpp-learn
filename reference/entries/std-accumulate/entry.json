@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-accumulate",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/accumulate",
   "kind": "function",
   "title": "std::accumulate",
@@ -71,5 +71,5 @@
       "standardSection": "accumulate"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-30"
 }

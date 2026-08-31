@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Active |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-30 |
+| Last updated | 2026-08-31 |
 
 ## 1. Purpose
 
@@ -60,6 +60,7 @@ editorial role and upgrade status.
 | Completed in breadth batch 5 | `<map>`, `<set>`, `<unordered_set>`, `<queue>`, `<stack>`, `<numeric>`, `std::binary_search`, `std::any_of`, `std::copy`, `std::reverse`, `std::unique`, `std::for_each` | Six facility maps close navigation around batch 4 and six ordinary algorithm pages define classic, policy, and ranges boundaries with verified examples |
 | Completed in breadth batch 6 | `<string>`, `<string_view>`, `<charconv>`, `<memory>`, `std::string::substr`, `std::string::find`, `std::string::append`, `std::from_chars`, `std::to_chars`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared` | Four facility maps and eight ordinary pages close owning/borrowed text, low-level conversion, and shared-ownership learning loops; cppreference informs page structure while WG21 sources govern facts |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
+| Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
 Quality batches 1 through 3 and breadth batches 4 through 6 are complete. The existing
@@ -71,12 +72,12 @@ I/O, filesystem, or time vocabulary.
 
 The kind-aware audit currently checks 57 of 61 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
-quality-ratchet batch 7, the checked-in baseline contains 41 known gaps across
-25 Entries, down from the initial 58 gaps across 35 Entries.
+quality-ratchet batch 8, the checked-in baseline contains 22 known gaps across
+15 Entries, down from the initial 58 gaps across 35 Entries.
 
 | Remediation batch | Focus | Current gap areas |
 |---|---|---|
-| 8 | High-frequency algorithms | parameters, returns, complexity, lifetime |
+| 8 | High-frequency algorithms | **Completed:** parameters, returns, complexity, selection, and lifetime |
 | 9 | Containers and smart ownership | selection, JavaScript comparison, related links |
 | 10 | Header navigation | direct-inclusion guidance, facility maps, related links |
 | 11 | String conversion and member operations | selection, parameters, lifetime |

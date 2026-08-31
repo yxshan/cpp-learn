@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-unique",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/unique",
   "kind": "function",
   "title": "std::unique",
@@ -77,5 +77,5 @@
       "standardSection": "[algorithms.parallel.exceptions]"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-31"
 }

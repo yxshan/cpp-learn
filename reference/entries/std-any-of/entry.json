@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-any-of",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/any-of",
   "kind": "function",
   "title": "std::any_of",
@@ -77,5 +77,5 @@
       "standardSection": "[algorithms.parallel.exceptions]"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-30"
 }

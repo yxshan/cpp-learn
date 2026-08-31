@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-lower-bound",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/lower-bound",
   "kind": "function",
   "title": "std::lower_bound",
@@ -65,5 +65,5 @@
       "standardSection": "lower_bound"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-30"
 }

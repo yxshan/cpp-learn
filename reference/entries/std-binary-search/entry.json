@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-binary-search",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/binary-search",
   "kind": "function",
   "title": "std::binary_search",
@@ -71,5 +71,5 @@
       "standardSection": "binary search"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-30"
 }

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "std-all-of",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/algorithms/all-of",
   "kind": "function",
   "title": "std::all_of",
@@ -65,5 +65,5 @@
       "standardSection": "all_of"
     }
   ],
-  "verifiedAt": "2026-08-29"
+  "verifiedAt": "2026-08-30"
 }
