@@ -25,14 +25,18 @@ class expected;
 template<class E>
 class unexpected;
 
-constexpr bool has_value() const noexcept;
-constexpr T& value() &;
-constexpr E& error() & noexcept;
+template<class T, class E>
+class expected {
+public:
+    constexpr bool has_value() const noexcept;
+    constexpr T& value() &;
+    constexpr E& error() & noexcept;
 
-template<class F> constexpr auto and_then(F&& function) &;
-template<class F> constexpr auto or_else(F&& function) &;
-template<class F> constexpr auto transform(F&& function) &;
-template<class F> constexpr auto transform_error(F&& function) &;
+    template<class F> constexpr auto and_then(F&& function) &;
+    template<class F> constexpr auto or_else(F&& function) &;
+    template<class F> constexpr auto transform(F&& function) &;
+    template<class F> constexpr auto transform_error(F&& function) &;
+};
 ```
 
 四个 monadic operations 已由 P2505R5 纳入 C++23/N4950。`has_error()` 不在 C++23，应使用
@@ -40,7 +44,11 @@ template<class F> constexpr auto transform_error(F&& function) &;
 
 ## 模板参数、构造与约束
 
-`T` 是成功值类型，`E` 是错误类型；两者构造、移动、赋值与析构能力决定对应 overload 是否可用。
+`T` 可以是 cv `void`，或完整的非数组对象类型；上面的 `T& value()` 代表普通非 void
+specialization，`expected<void, E>` 另有无返回值观察接口。`E` 必须是可作为 `unexpected<E>`
+参数的完整、可析构非数组对象类型，不能是 cv-qualified 类型。两者的构造、移动、赋值与析构
+能力继续决定具体 overload 是否可用。
+
 使用 `std::unexpected(error)` 或 `std::unexpect` 标签明确构造错误分支。标准通过操作约束保持
 “总有一个分支”不变量，不需要也不保证动态分配。
 

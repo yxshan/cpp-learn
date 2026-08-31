@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
+import type { CppStandard } from "@cpp-learn/contracts";
 import {
   DEFAULT_NATIVE_CPP_COMPILER,
   createNativeToolchainProbe,
@@ -16,7 +17,7 @@ import {
 
 import {
   assertReferenceCompilationAccepted,
-  referenceCompilerStandardFlag,
+  resolveReferenceCompilerStandardFlag,
 } from "./reference-example-verification.ts";
 import { resolveReferenceDataRoot } from "./reference-data-root.ts";
 
@@ -47,6 +48,41 @@ const toolchain = await createNativeToolchainProbe({
 if (!toolchain.ready || toolchain.compiler === undefined) {
   throw new Error("Reference content check failed: compiler unavailable");
 }
+const compilerStandardFlags = new Map<CppStandard, string>();
+const compilerStandardFlagFor = async (
+  standard: CppStandard,
+): Promise<string> => {
+  const cached = compilerStandardFlags.get(standard);
+  if (cached !== undefined) return cached;
+
+  const selected = await resolveReferenceCompilerStandardFlag({
+    standard,
+    probe: async (candidate) => {
+      const root = await mkdtemp(join(tmpdir(), "cpp-learn-standard-probe-"));
+      try {
+        const sourcePath = join(root, "probe.cpp");
+        await writeFile(sourcePath, "int main() { return 0; }\n", "utf8");
+        const result = await runBoundedProcess({
+          executable: compiler,
+          args: [`-std=${candidate}`, "-fsyntax-only", sourcePath],
+          cwd: root,
+          timeoutMs: 10_000,
+          maxOutputBytes: 64 * 1024,
+          environment: { ...environment, TMPDIR: root },
+        });
+        return (
+          result.exitCode === 0 &&
+          !result.timedOut &&
+          !result.outputLimitExceeded
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  });
+  compilerStandardFlags.set(standard, selected);
+  return selected;
+};
 const verificationExamples: ReferenceVerificationManifest["examples"][number][] =
   [];
 let exampleCount = 0;
@@ -61,10 +97,13 @@ for (const entryId of entryIds) {
       const sourcePath = join(root, `${entry.id}-${example.id}.cpp`);
       const outputPath = join(root, "example");
       await writeFile(sourcePath, example.source, "utf8");
+      const compilerStandardFlag = await compilerStandardFlagFor(
+        example.standard,
+      );
       const compilation = await runBoundedProcess({
         executable: compiler,
         args: [
-          `-std=${referenceCompilerStandardFlag(example.standard)}`,
+          `-std=${compilerStandardFlag}`,
           "-Wall",
           "-Wextra",
           "-Wpedantic",

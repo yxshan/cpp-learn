@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertReferenceCompilationAccepted,
-  referenceCompilerStandardFlag,
+  referenceCompilerStandardFlagCandidates,
+  resolveReferenceCompilerStandardFlag,
 } from "./reference-example-verification.js";
 
 const expectedFailure = {
@@ -19,10 +20,33 @@ const expectedFailure = {
 };
 
 describe("Reference example compilation acceptance", () => {
-  it("maps stable manifest standards to compiler-compatible flags", () => {
-    expect(referenceCompilerStandardFlag("c++20")).toBe("c++20");
-    expect(referenceCompilerStandardFlag("c++23")).toBe("c++2b");
-    expect(referenceCompilerStandardFlag("c++26-draft")).toBe("c++2c");
+  it("probes canonical standard flags before compiler draft aliases", async () => {
+    expect(referenceCompilerStandardFlagCandidates("c++20")).toEqual(["c++20"]);
+    expect(referenceCompilerStandardFlagCandidates("c++23")).toEqual([
+      "c++23",
+      "c++2b",
+    ]);
+
+    const attempts: string[] = [];
+    await expect(
+      resolveReferenceCompilerStandardFlag({
+        standard: "c++23",
+        probe: async (candidate) => {
+          attempts.push(candidate);
+          return candidate === "c++2b";
+        },
+      }),
+    ).resolves.toBe("c++2b");
+    expect(attempts).toEqual(["c++23", "c++2b"]);
+  });
+
+  it("reports a standard that has no compiler-supported spelling", async () => {
+    await expect(
+      resolveReferenceCompilerStandardFlag({
+        standard: "c++26-draft",
+        probe: async () => false,
+      }),
+    ).rejects.toThrow("does not support c++26-draft");
   });
 
   it("accepts an expected diagnostic only when compilation stayed within bounds", () => {

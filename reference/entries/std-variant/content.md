@@ -43,8 +43,9 @@ constexpr decltype(auto) visit(Visitor&& visitor, Variants&&... values);
 ## 模板参数、状态与约束
 
 `Types...` 是全部候选，类型可重复，但按类型的 `get<T>` 和 `holds_alternative<T>` 要求 `T` 恰好
-出现一次。默认构造激活索引 0，所以首个候选必须可默认构造；需要显式空样状态时可把
-`std::monostate` 放在第一项。
+出现一次。**默认构造 variant 时**会激活索引 0，因此只有使用默认构造器时才要求首个候选可默认
+构造；也可以用 in-place 构造直接建立其他候选。需要显式空样状态时可把 `std::monostate` 放在
+第一项。
 
 `index()` 返回当前索引；失值时返回 `variant_npos`。visitor 必须能以一致、合法的返回类型处理
 调用中所有可能的 alternative 组合。
