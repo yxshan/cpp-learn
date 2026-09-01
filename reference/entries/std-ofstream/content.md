@@ -18,20 +18,25 @@
 ## C++20 代表接口
 
 ```cpp
-class basic_ofstream : public basic_ostream<CharT, Traits> {
+template<class CharT, class Traits = std::char_traits<CharT>>
+class basic_ofstream : public std::basic_ostream<CharT, Traits> {
 public:
     basic_ofstream();
     explicit basic_ofstream(const char* path,
-                            ios_base::openmode mode = ios_base::out);
+                            std::ios_base::openmode mode = std::ios_base::out);
     explicit basic_ofstream(const std::string& path,
-                            ios_base::openmode mode = ios_base::out);
+                            std::ios_base::openmode mode = std::ios_base::out);
     bool is_open() const;
-    void open(/* path */, ios_base::openmode mode = ios_base::out);
+    void open(/* path */,
+              std::ios_base::openmode mode = std::ios_base::out);
     void close();
 };
+
+using ofstream = basic_ofstream<char>;
 ```
 
-构造/open 总加入 `out`。默认 out 截断；`app` 每次写前定位末尾，`ate` 只在打开后定位一次。
+这是学习用摘要；省略了析构、move、swap、`rdbuf()`、wchar alias 和部分路径/allocator 重载。构造/
+open 总加入 `out`。默认 out 截断；`app` 每次写前定位末尾，`ate` 只在打开后定位一次。
 
 ## 参数、返回与状态
 
@@ -61,7 +66,7 @@ RAII 保证资源清理尝试，不保证调用者观察到最终写入错误。
 ## 示例
 
 第一个示例默认写入、显式 close/check 后读回。第二个示例先截断写首行，再用 `app` 追加次行，
-证明它与 `ate` 的一次性定位不同。
+证明 `app` 会保留旧内容；它与 `ate` 的一次性定位差异由上面的模式合同说明。
 
 ## 常见错误
 
@@ -82,5 +87,5 @@ mode 与设施地图阅读 `<fstream>`；读回文件使用 `std::ifstream`；�
 
 ## 来源
 
-默认 mode、open/close、状态、生命周期和线程边界由 manifest 中的 Working Draft、N1146、N3337
-与 N4861 验证；cppreference 仅用于二级覆盖核对。
+默认 mode、open/close、状态、生命周期和线程边界由 manifest 中的 Working Draft、N1146、N3337、
+N4659、P0610R0 与 N4861 验证；cppreference 仅用于二级覆盖核对。

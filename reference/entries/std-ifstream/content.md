@@ -18,20 +18,25 @@
 ## C++20 代表接口
 
 ```cpp
-class basic_ifstream : public basic_istream<CharT, Traits> {
+template<class CharT, class Traits = std::char_traits<CharT>>
+class basic_ifstream : public std::basic_istream<CharT, Traits> {
 public:
     basic_ifstream();
     explicit basic_ifstream(const char* path,
-                            ios_base::openmode mode = ios_base::in);
+                            std::ios_base::openmode mode = std::ios_base::in);
     explicit basic_ifstream(const std::string& path,
-                            ios_base::openmode mode = ios_base::in);
+                            std::ios_base::openmode mode = std::ios_base::in);
     bool is_open() const;
-    void open(/* path */, ios_base::openmode mode = ios_base::in);
+    void open(/* path */,
+              std::ios_base::openmode mode = std::ios_base::in);
     void close();
 };
+
+using ifstream = basic_ifstream<char>;
 ```
 
-构造/open 总把 `in` 加入 mode；filesystem path overload 从 C++17 起。
+这是学习用摘要；省略了析构、move、swap、`rdbuf()`、wchar alias 和部分路径/allocator 重载。构造/
+open 总把 `in` 加入 mode；filesystem path overload 从 C++17 起。
 
 ## 参数、返回与状态
 
@@ -85,5 +90,5 @@ ifstream 拥有 filebuf；析构尝试关闭，move 转移文件关联，移后�
 
 ## 来源
 
-open/close、状态、版本、生命周期与线程边界由 manifest 中的 Working Draft、N1146、N3337 与
-N4861 验证；cppreference 仅用于二级覆盖核对。
+open/close、状态、版本、生命周期与线程边界由 manifest 中的 Working Draft、N1146、N3337、
+N4659、P0610R0 与 N4861 验证；cppreference 仅用于二级覆盖核对。

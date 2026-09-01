@@ -18,24 +18,30 @@
 ## C++20 代表接口
 
 ```cpp
-class basic_stringstream : public basic_iostream<CharT, Traits> {
+template<class CharT, class Traits = std::char_traits<CharT>,
+         class Allocator = std::allocator<CharT>>
+class basic_stringstream : public std::basic_iostream<CharT, Traits> {
 public:
     basic_stringstream();
     explicit basic_stringstream(
-        ios_base::openmode mode = ios_base::in | ios_base::out);
+        std::ios_base::openmode mode =
+            std::ios_base::in | std::ios_base::out);
     explicit basic_stringstream(
-        const basic_string<CharT, Traits, Allocator>& text,
-        ios_base::openmode mode = ios_base::in | ios_base::out);
+        const std::basic_string<CharT, Traits, Allocator>& text,
+        std::ios_base::openmode mode =
+            std::ios_base::in | std::ios_base::out);
 
-    basic_string<CharT, Traits, Allocator> str() const &;
-    basic_string<CharT, Traits, Allocator> str() &&; // C++20
-    basic_string_view<CharT, Traits> view() const noexcept; // C++20
-    void str(const basic_string<CharT, Traits, Allocator>& text);
+    std::basic_string<CharT, Traits, Allocator> str() const &;
+    std::basic_string<CharT, Traits, Allocator> str() &&; // C++20
+    std::basic_string_view<CharT, Traits> view() const noexcept; // C++20
+    void str(const std::basic_string<CharT, Traits, Allocator>& text);
 };
+
+using stringstream = basic_stringstream<char>;
 ```
 
-这是学习用摘要，实际模板还包含 allocator、move、swap 等重载；C++26 又增加 string-view-like
-构造和 `str` 重载，C++20 代码不能提前依赖它们。
+这是学习用摘要，省略了析构、allocator-aware 构造、move、swap、`rdbuf()`、wchar alias 和部分
+`str` 重载；C++26 又增加 string-view-like 构造和 `str` 重载，C++20 代码不能提前依赖它们。
 
 ## 参数、返回与读写位置
 

@@ -70,4 +70,5 @@ ofstream 的 `out` 会创建或截断文件。
 
 ## 来源
 
-设施、模式、open/close 与版本边界由 manifest 中的 Working Draft、N1146、N3337 与 N4861 验证。
+设施、模式、open/close 与版本边界由 manifest 中的 Working Draft、N1146、N3337、N4659、
+P0610R0、N4861、P2467R1 与 P1759R6 验证。

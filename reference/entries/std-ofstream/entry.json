@@ -20,11 +20,13 @@
   ],
   "sources": [
     { "kind": "primary", "title": "C++ working draft: ofstream", "url": "https://eel.is/c++draft/ofstream", "standardSection": "[ofstream]" },
-    { "kind": "primary", "title": "C++ working draft: file stream members", "url": "https://eel.is/c++draft/fstream.members", "standardSection": "[fstream.members]" },
+    { "kind": "primary", "title": "C++ working draft: ofstream members", "url": "https://eel.is/c++draft/ofstream.members", "standardSection": "[ofstream.members]" },
     { "kind": "primary", "title": "C++ working draft: filebuf members", "url": "https://eel.is/c++draft/filebuf.members", "standardSection": "[filebuf.members]" },
     { "kind": "primary", "title": "C++ working draft: iostream thread safety", "url": "https://eel.is/c++draft/iostreams.threadsafety", "standardSection": "[iostreams.threadsafety]" },
     { "kind": "primary", "title": "WG21 1998 working draft N1146", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/1998/n1146.pdf", "standardSection": "[lib.ofstream]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[ofstream]" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[ofstream]" },
+    { "kind": "primary", "title": "WG21 P0610R0: filesystem path overloads for file streams", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0610r0.html" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[ofstream]" },
     { "kind": "secondary", "title": "cppreference 中文：std::ofstream", "url": "https://zh.cppreference.com/w/cpp/io/basic_ofstream" }
   ],

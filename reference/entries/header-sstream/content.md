@@ -75,5 +75,5 @@ stream 而失效。同一字符串流对象的读写、定位和状态修改不�
 
 ## 来源
 
-设施清单、缓冲访问、状态与版本边界由 manifest 中的 Working Draft、N1146、N3337、N4861 与
-P0408R7 验证；cppreference 仅用于二级覆盖核对。
+设施清单、缓冲访问、状态与版本边界由 manifest 中的 Working Draft、N1146、N3337、N4861、
+P0408R7 与 P2495R3 验证；cppreference 仅用于二级覆盖核对。

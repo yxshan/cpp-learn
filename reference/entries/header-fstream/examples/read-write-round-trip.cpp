@@ -19,8 +19,11 @@ int main() {
     file.flush();
     if (!file) return 2;
     file.seekg(0);
+    if (!file) return 3;
 
     std::string line;
-    std::getline(file, line);
+    if (!std::getline(file, line)) return 4;
+    file.close();
+    if (!file) return 5;
     std::cout << line << '\n';
 }

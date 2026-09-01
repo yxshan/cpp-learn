@@ -25,9 +25,12 @@ int main() {
 
     std::array<unsigned char, 3> read{};
     std::ifstream input{path, std::ios::binary};
+    if (!input) return 3;
     input.read(reinterpret_cast<char*>(read.data()),
                static_cast<std::streamsize>(read.size()));
-    if (!input) return 3;
+    if (!input) return 4;
+    input.close();
+    if (!input) return 5;
     std::cout << "bytes=" << static_cast<int>(read[0]) << ','
               << static_cast<int>(read[1]) << ','
               << static_cast<int>(read[2]) << '\n';
