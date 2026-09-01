@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-027 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
 
@@ -71,8 +71,20 @@ prose, tables, JavaScript comparisons, and examples are project-authored.
 | Example verification | Passed: 178 total examples; 176 C++20 and 2 C++23 |
 | Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
 | Complete repository check | Passed: docs, curriculum, 96-entry Reference, 178 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed against `5e87403...cbe7853`; no remaining standards or smell finding |
+| Spec review | Passed against `5e87403...cbe7853`; scope, facts, counts, determinism, and acceptance behavior match |
+
+The initial reviews found an omitted temporary-range constraint for span, an
+over-broad `noexcept` statement, missing operation-specific type requirements
+for forward_list, a missing header-level concurrency warning, and imprecise
+insert exception wording. Commit `cbe7853` adds the
+`borrowed_range || const ElementType` boundary and its dangling warning,
+separates Throws contracts from exception specifications, records the relevant
+Insertable/EmplaceConstructible/Erasable requirements, restores the structural
+mutation synchronization warning, and states the modifier no-effects guarantee
+at standard-defined precision. Both review axes then reported zero remaining
+findings; `cbe7853` is the reviewed fixed point recorded by the quality
+baseline.
 
 ## 7. Controlled limitations
 
