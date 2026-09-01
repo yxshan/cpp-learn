@@ -64,8 +64,10 @@ dynamic_extent 版本在对象中保存运行时大小。非零 static span 不�
 默认构造为空。
 
 iterator/range 构造要求连续且形成有效范围，range 还需 sized。元素类型必须允许相应数组
-qualification conversion。构造 fixed span 时 source count 必须等于 N；从动态来源显式构造
-只阻止意外转换，不等于运行时检查。
+qualification conversion。range 构造还要求来源满足 `borrowed_range`，或者 ElementType 为
+const：因此可变 `span<T>` 不能绑定普通临时 range；`span<const T>` 虽可在某些表达式内观察
+临时连续 range，也不会延长其寿命，若把结果保存到完整表达式之后仍会悬空。构造 fixed span
+时 source count 必须等于 N；从动态来源显式构造只阻止意外转换，不等于运行时检查。
 
 ## 返回值、访问与 subview
 
@@ -78,8 +80,10 @@ Count 与 Offset 在当前范围内。
 
 ## 复杂度、异常与未定义行为
 
-所有 span 成员都是常数复杂度。构造和复制 view 不分配、不复制元素；普通 pointer/array
-构造为 noexcept，通用 range/iterator 构造可能传播其 data/size/difference 操作的异常。
+所有 span 成员都是常数复杂度。构造和复制 view 不分配、不复制元素；array 构造和 copy
+constructor 声明为 `noexcept`。iterator/count overload 的 Throws 合同为不抛出但声明本身没有
+`noexcept`；iterator/sentinel 与通用 range 构造分别可能传播 difference 或 data/size 操作的
+异常。
 
 C++20 没有 bounds-checked `at()`。越界 `operator[]`、空 span 的 front/back、越界 subview、
 fixed extent 与运行时 count 不一致，以及无效 pointer range 都违反前置条件并可能导致 UB；

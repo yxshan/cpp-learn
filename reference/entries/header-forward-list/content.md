@@ -49,6 +49,9 @@ iterator/reference 失效；擦除只使被擦节点对应者失效。
 `splice_after(first,last)` 和 `erase_after(first,last)` 围绕开区间 `(first,last)` 工作，
 不是常见的 `[first,last)`。违反 iterator、范围或 allocator 前置条件不是异常通道。
 
+节点稳定不等于线程安全：同一 forward_list 的无同步结构修改，或一边遍历一边修改链接，仍可能
+产生 data race；共享链结构需要由调用方使用 mutex 等机制同步。
+
 ## 示例
 
 第一个示例从 `before_begin()` 后逐个建立 1、2、3。第二个示例维护 predecessor，删除

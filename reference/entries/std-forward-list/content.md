@@ -53,7 +53,11 @@ public:
 这是学习摘要。remove 家族从 C++20 起返回删除数量；ranges-aware 成员为 C++23，广泛
 constexpr 能力为 C++26。
 
-## 前驱、参数与返回
+## 模板参数、类型要求、前驱与返回
+
+Allocator 的 `value_type` 必须与 T 相同。T 不需要为所有成员统一满足 CopyConstructible；它只需
+满足实际调用所要求的 Erasable、CopyInsertable、MoveInsertable 或
+EmplaceConstructible。元素析构需满足标准库 Destructible 的非抛出要求。
 
 `before_begin()` 是首元素之前的特殊 iterator：可以递增得到 begin，但不可解引用。
 `insert_after(pos, value)` 在 pos 后插入并返回新节点；pos 必须是 before_begin 或可解引用
@@ -74,8 +78,8 @@ size/tail；不能套用 list 的整表复杂度。
 
 ## 异常、前置条件与未定义行为
 
-插入可能因分配、元素构造或 allocator 抛异常；失败时通常无效果。sort 比较器抛出时元素仍在
-容器中，但顺序可能 unspecified。
+插入可能因分配、元素构造或 allocator 抛异常；forward_list modifier 条款明确这些成员抛异常时
+容器无效果。sort 比较器抛出时元素仍在容器中，但顺序可能 unspecified。
 
 空表 front/pop_front、解引用 before_begin/end、在没有后继时 erase_after、错误容器 iterator、
 无效 after-range、禁止的 self-splice、unequal allocator 跨容器迁移以及未排序 merge 输入都

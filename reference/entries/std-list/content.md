@@ -71,8 +71,8 @@ C++20 起返回删除数量；ranges-aware 成员是 C++23，广泛 constexpr �
 
 ## 异常、前置条件与未定义行为
 
-插入可能因分配、构造或 allocator 操作抛异常；单元素插入失败通常无效果。比较器在 sort
-中抛出时元素仍在容器内，但顺序可能 unspecified。
+插入可能因分配、构造或 allocator 操作抛异常；list modifier 条款明确插入抛异常时无效果。
+比较器在 sort 中抛出时元素仍在容器内，但顺序可能 unspecified。
 
 跨容器 splice/merge 要求 `get_allocator() == other.get_allocator()`；merge 还要求输入已排序。
 `erase(end())`、空表 front/back/pop、错误容器 iterator、无效范围及禁止的 self-splice
