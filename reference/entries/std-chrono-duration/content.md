@@ -96,5 +96,5 @@ duration 上并发读写仍是 data race。duration 本身不启动 timer，也�
 
 ## 来源
 
-约束、算术、转换、舍入和 UB 边界由 manifest 中的 Working Draft、N2661、N3337、P0092R1、
-N4659、N4861 与 LWG 3090/3503/4481 验证；cppreference 仅用于二级覆盖核对。
+约束、非成员算术、转换、舍入和 UB 边界由 manifest 中的 Working Draft、N2661、N3337、P0092R1、
+N4659、N4861 与 LWG 2094/3090/3503/4481 验证；cppreference 仅用于二级覆盖核对。

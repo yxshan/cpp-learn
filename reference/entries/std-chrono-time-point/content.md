@@ -23,6 +23,8 @@ class time_point {
 public:
     using clock = Clock;
     using duration = Duration;
+    using rep = typename duration::rep;
+    using period = typename duration::period;
     constexpr time_point();
     constexpr explicit time_point(const duration& offset);
     template<class Duration2>

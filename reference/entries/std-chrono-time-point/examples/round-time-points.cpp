@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <ratio>
 
 struct DemoClock {
     using rep = long long;
