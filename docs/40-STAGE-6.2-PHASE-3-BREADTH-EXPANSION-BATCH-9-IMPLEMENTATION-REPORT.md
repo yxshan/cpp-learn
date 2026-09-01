@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-024 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
 
@@ -55,8 +55,16 @@ coverage reference; all Chinese prose and examples are project-authored.
 | Example verification | Passed: 142 total examples; 140 C++20 and 2 C++23 |
 | Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
 | Complete repository check | Passed: docs, curriculum, 78-entry Reference, 142 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed against `3dd3c56...f0e37c0`; no remaining standards or smell finding |
+| Spec review | Passed against `3dd3c56...f0e37c0`; scope, counts, semantics, and acceptance behavior match |
+
+The initial reviews found non-self-contained representative declarations,
+missing version-owning proposals, two incorrect Working Draft member anchors,
+and file examples that did not consistently check open/operation/close. Commit
+`1d55bd0` resolves those findings. The first resolution pass accidentally
+described allocator-aware overloads on file streams; commit `f0e37c0` removes
+that claim. Both review axes then reported zero remaining findings, making
+`f0e37c0` the reviewed fixed point recorded by the quality baseline.
 
 ## 6. Controlled limitations
 
