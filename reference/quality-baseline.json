@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 11,
+  "catalogVersion": 12,
   "review": {
-    "id": "breadth-expansion-batch-11",
+    "id": "breadth-expansion-batch-12",
     "reviewedAt": "2026-09-01",
-    "fixedPoint": "e8670c0",
-    "scope": "Catalog version 11 adds five chrono Entries at zero structural debt; no waivers remain."
+    "fixedPoint": "5e87403",
+    "scope": "Catalog version 12 adds six linked-sequence and contiguous-view Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

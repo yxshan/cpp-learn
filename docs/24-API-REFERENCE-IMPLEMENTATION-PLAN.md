@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.11 |
+| Version | 1.12 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 10 are
+first three content-quality batches, and breadth-expansion batches 4 through 12 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -192,6 +192,13 @@ interval, clock-relative point, monotonic measurement, and civil-time
 conversion vocabulary. All ten new examples use fixed C++20 values: none call
 `now()`, sleep, inspect time zones, depend on locale, or assert
 implementation-defined clock resolution.
+
+Breadth batch 12 advances the catalog from 90 to 96 Entries and from 166 to 178
+examples. `<list>`, `std::list`, `<forward_list>`, `std::forward_list`,
+`<span>`, and `std::span` contrast owning node sequences with a non-owning
+contiguous view. All twelve examples use C++20 and fixed values; they avoid
+addresses, allocator/layout observations, dangling views, invalid ranges,
+timing, and unspecified output.
 
 ### Work packages
 

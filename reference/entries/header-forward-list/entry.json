@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "header-forward-list",
+  "version": 1,
+  "slug": "standard-library/headers/forward-list",
+  "kind": "header",
+  "title": "<forward_list>",
+  "summary": "声明单向链式序列 std::forward_list 及其 after-family 和擦除接口。",
+  "symbol": "<forward_list>",
+  "header": "<forward_list>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["forward_list header", "单向链表头文件", "单链表"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-forward-list", "header-list", "std-list", "header-span"],
+  "content": { "format": "markdown", "path": "entries/header-forward-list/content.md" },
+  "examples": [
+    { "id": "build-after-sentinel", "path": "entries/header-forward-list/examples/build-after-sentinel.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "values=1,2,3\n" },
+    { "id": "erase-with-predecessor", "path": "entries/header-forward-list/examples/erase-with-predecessor.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "erased=2\nvalues=1,3,5\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: forward_list synopsis", "url": "https://eel.is/c++draft/forward.list.syn", "standardSection": "[forward.list.syn]" },
+    { "kind": "primary", "title": "C++ working draft: sequence containers", "url": "https://eel.is/c++draft/sequences.general", "standardSection": "[sequences.general]" },
+    { "kind": "primary", "title": "C++ working draft: sequence container requirements", "url": "https://eel.is/c++draft/sequence.reqmts", "standardSection": "[sequence.reqmts]" },
+    { "kind": "primary", "title": "WG21 N2543: singly linked list", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2543.htm" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[forwardlist]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[forward.list]" },
+    { "kind": "primary", "title": "WG21 P0646R1: improving list removal interfaces", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0646r1.html" },
+    { "kind": "primary", "title": "WG21 P1206R7: ranges-aware container construction", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1206r7.html" },
+    { "kind": "primary", "title": "WG21 P3372R3: constexpr containers", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3372r3.html" },
+    { "kind": "secondary", "title": "cppreference 中文：<forward_list>", "url": "https://zh.cppreference.com/w/cpp/header/forward_list" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

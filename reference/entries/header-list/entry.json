@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "id": "header-list",
+  "version": 1,
+  "slug": "standard-library/headers/list",
+  "kind": "header",
+  "title": "<list>",
+  "summary": "声明双向链式序列 std::list 及其比较、交换和 C++20 擦除接口。",
+  "symbol": "<list>",
+  "header": "<list>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["list header", "双向链表头文件", "链式序列"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["std-list", "header-forward-list", "std-forward-list", "header-span"],
+  "content": { "format": "markdown", "path": "entries/header-list/content.md" },
+  "examples": [
+    { "id": "use-both-ends", "path": "entries/header-list/examples/use-both-ends.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "front=1\nback=4\nsize=4\nvalues=1,2,3,4\n" },
+    { "id": "erase-even-values", "path": "entries/header-list/examples/erase-even-values.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "erased=3\nvalues=1,3,5\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: list synopsis", "url": "https://eel.is/c++draft/list.syn", "standardSection": "[list.syn]" },
+    { "kind": "primary", "title": "C++ working draft: sequence containers", "url": "https://eel.is/c++draft/sequences.general", "standardSection": "[sequences.general]" },
+    { "kind": "primary", "title": "C++ working draft: sequence container requirements", "url": "https://eel.is/c++draft/sequence.reqmts", "standardSection": "[sequence.reqmts]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[list]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[list]" },
+    { "kind": "primary", "title": "WG21 P0646R1: improving list removal interfaces", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0646r1.html" },
+    { "kind": "primary", "title": "WG21 P1206R7: ranges-aware container construction", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1206r7.html" },
+    { "kind": "primary", "title": "WG21 P3372R3: constexpr containers", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3372r3.html" },
+    { "kind": "secondary", "title": "cppreference 中文：<list>", "url": "https://zh.cppreference.com/w/cpp/header/list" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

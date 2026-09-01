@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 11,
+  "version": 12,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -91,7 +91,13 @@
     "entries/std-chrono-duration/entry.json",
     "entries/std-chrono-time-point/entry.json",
     "entries/std-chrono-steady-clock/entry.json",
-    "entries/std-chrono-system-clock/entry.json"
+    "entries/std-chrono-system-clock/entry.json",
+    "entries/header-list/entry.json",
+    "entries/std-list/entry.json",
+    "entries/header-forward-list/entry.json",
+    "entries/std-forward-list/entry.json",
+    "entries/header-span/entry.json",
+    "entries/std-span/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

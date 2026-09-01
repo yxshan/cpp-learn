@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "id": "std-forward-list",
+  "version": 1,
+  "slug": "standard-library/containers/forward-list",
+  "kind": "type",
+  "title": "std::forward_list",
+  "summary": "拥有单向链接节点，并通过前驱位置执行轻量的 after-family 修改。",
+  "symbol": "std::forward_list",
+  "header": "<forward_list>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["forward_list", "单向链表", "单链表", "splice_after"],
+  "categories": ["containers"],
+  "relatedEntryIds": ["header-forward-list", "std-list", "std-span"],
+  "content": { "format": "markdown", "path": "entries/std-forward-list/content.md" },
+  "examples": [
+    { "id": "preserve-reference-through-insert", "path": "entries/std-forward-list/examples/preserve-reference-through-insert.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "saved=20\nvalues=10,15,20,30\n" },
+    { "id": "splice-after-one-node", "path": "entries/std-forward-list/examples/splice-after-one-node.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "moved=2\nsource=1,3\ntarget=2,10,20\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: forward_list overview", "url": "https://eel.is/c++draft/forward.list.overview", "standardSection": "[forward.list.overview]" },
+    { "kind": "primary", "title": "C++ working draft: forward_list constructors", "url": "https://eel.is/c++draft/forward.list.cons", "standardSection": "[forward.list.cons]" },
+    { "kind": "primary", "title": "C++ working draft: forward_list modifiers", "url": "https://eel.is/c++draft/forward.list.modifiers", "standardSection": "[forward.list.modifiers]" },
+    { "kind": "primary", "title": "C++ working draft: forward_list operations", "url": "https://eel.is/c++draft/forward.list.ops", "standardSection": "[forward.list.ops]" },
+    { "kind": "primary", "title": "C++ working draft: forward_list erasure", "url": "https://eel.is/c++draft/forward.list.erasure", "standardSection": "[forward.list.erasure]" },
+    { "kind": "primary", "title": "C++ working draft: container requirements", "url": "https://eel.is/c++draft/container.reqmts", "standardSection": "[container.reqmts]" },
+    { "kind": "primary", "title": "C++ working draft: allocator-aware containers", "url": "https://eel.is/c++draft/container.alloc.reqmts", "standardSection": "[container.alloc.reqmts]" },
+    { "kind": "primary", "title": "C++ working draft: container data races", "url": "https://eel.is/c++draft/container.requirements.dataraces", "standardSection": "[container.requirements.dataraces]" },
+    { "kind": "primary", "title": "WG21 N2543: singly linked list", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2543.htm" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[forwardlist]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[forward.list]" },
+    { "kind": "primary", "title": "WG21 P0646R1: improving list removal interfaces", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0646r1.html" },
+    { "kind": "primary", "title": "WG21 P1206R7: ranges-aware container construction", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1206r7.html" },
+    { "kind": "primary", "title": "WG21 P3372R3: constexpr containers", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3372r3.html" },
+    { "kind": "primary", "title": "LWG 2045: forward_list allocator precondition", "url": "https://cplusplus.github.io/LWG/issue2045" },
+    { "kind": "primary", "title": "LWG 2123: node-container allocator preconditions", "url": "https://cplusplus.github.io/LWG/issue2123" },
+    { "kind": "primary", "title": "LWG 3088: forward_list splice_after constraints", "url": "https://cplusplus.github.io/LWG/issue3088" },
+    { "kind": "secondary", "title": "cppreference 中文：std::forward_list", "url": "https://zh.cppreference.com/w/cpp/container/forward_list" }
+  ],
+  "verifiedAt": "2026-09-01"
+}
