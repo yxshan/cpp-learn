@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-filesystem-directory-iterator",
+  "version": 1,
+  "slug": "standard-library/filesystem/directory-iterator",
+  "kind": "type",
+  "title": "std::filesystem::directory_iterator",
+  "summary": "以顺序未指定的单遍输入迭代器枚举目录的直接子项。",
+  "symbol": "std::filesystem::directory_iterator",
+  "header": "<filesystem>",
+  "namespace": "std::filesystem",
+  "since": "c++17",
+  "aliases": ["directory_iterator", "目录迭代器", "遍历目录", "列出文件"],
+  "categories": ["filesystem"],
+  "relatedEntryIds": ["header-filesystem", "std-filesystem-path", "std-filesystem-directory-entry", "std-filesystem-exists"],
+  "content": { "format": "markdown", "path": "entries/std-filesystem-directory-iterator/content.md" },
+  "examples": [
+    { "id": "collect-and-sort", "path": "entries/std-filesystem-directory-iterator/examples/collect-and-sort.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "alpha.txt\nbeta.txt\n" },
+    { "id": "iterate-one-level", "path": "entries/std-filesystem-directory-iterator/examples/iterate-one-level.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "direct.txt\nnested\ndirect_entries=2\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: directory_iterator", "url": "https://eel.is/c++draft/fs.class.directory.iterator", "standardSection": "[fs.class.directory.iterator]" },
+    { "kind": "primary", "title": "C++ working draft: directory_iterator members", "url": "https://eel.is/c++draft/fs.dir.itr.members", "standardSection": "[fs.dir.itr.members]" },
+    { "kind": "primary", "title": "C++ working draft: filesystem race behavior", "url": "https://eel.is/c++draft/fs.race.behavior", "standardSection": "[fs.race.behavior]" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[fs.class.directory.iterator]" },
+    { "kind": "primary", "title": "LWG 3013: directory_iterator error_code overloads", "url": "https://cplusplus.github.io/LWG/issue3013" },
+    { "kind": "primary", "title": "LWG 3480: directory_iterator end", "url": "https://cplusplus.github.io/LWG/issue3480" },
+    { "kind": "primary", "title": "LWG 3719: directory_iterator and default sentinel", "url": "https://cplusplus.github.io/LWG/issue3719" },
+    { "kind": "secondary", "title": "cppreference 中文：std::filesystem::directory_iterator", "url": "https://zh.cppreference.com/w/cpp/filesystem/directory_iterator" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

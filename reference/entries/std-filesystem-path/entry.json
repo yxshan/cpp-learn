@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "std-filesystem-path",
+  "version": 1,
+  "slug": "standard-library/filesystem/path",
+  "kind": "type",
+  "title": "std::filesystem::path",
+  "summary": "以平台感知的值对象表示、组合和词法分解 pathname。",
+  "symbol": "std::filesystem::path",
+  "header": "<filesystem>",
+  "namespace": "std::filesystem",
+  "since": "c++17",
+  "aliases": ["filesystem path", "路径对象", "文件路径", "pathname"],
+  "categories": ["filesystem"],
+  "relatedEntryIds": ["header-filesystem", "std-filesystem-directory-entry", "std-filesystem-exists", "header-fstream"],
+  "content": { "format": "markdown", "path": "entries/std-filesystem-path/content.md" },
+  "examples": [
+    { "id": "decompose-relative-path", "path": "entries/std-filesystem-path/examples/decompose-relative-path.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "parent=docs/reference\nfilename=vector.md\nstem=vector\nextension=.md\n" },
+    { "id": "normalize-joined-path", "path": "entries/std-filesystem-path/examples/normalize-joined-path.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "raw=cache/items/../result.txt\nnormalized=cache/result.txt\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class path", "url": "https://eel.is/c++draft/fs.class.path", "standardSection": "[fs.class.path]" },
+    { "kind": "primary", "title": "C++ working draft: path conversions", "url": "https://eel.is/c++draft/fs.path.cvt", "standardSection": "[fs.path.cvt]" },
+    { "kind": "primary", "title": "C++ working draft: path append", "url": "https://eel.is/c++draft/fs.path.append", "standardSection": "[fs.path.append]" },
+    { "kind": "primary", "title": "C++ working draft: path generation", "url": "https://eel.is/c++draft/fs.path.gen", "standardSection": "[fs.path.gen]" },
+    { "kind": "primary", "title": "C++ working draft: path iterators", "url": "https://eel.is/c++draft/fs.path.itr", "standardSection": "[fs.path.itr]" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[fs.class.path]" },
+    { "kind": "primary", "title": "WG21 P0482R6: char8_t", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0482r6.html" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[fs.class.path]" },
+    { "kind": "primary", "title": "WG21 P2845R8: Formatting of std::filesystem::path", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2845r8.html" },
+    { "kind": "secondary", "title": "cppreference 中文：std::filesystem::path", "url": "https://zh.cppreference.com/w/cpp/filesystem/path" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

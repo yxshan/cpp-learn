@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.9 |
+| Version | 1.10 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 9 are
+first three content-quality batches, and breadth-expansion batches 4 through 10 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -177,6 +177,13 @@ examples. `std::cerr`, `std::getline`, `<fstream>`, `std::ifstream`,
 line-input, file-stream, and in-memory text-stream vocabulary. All fourteen
 examples use the C++20 profile; file examples run in isolated temporary working
 directories and clean up their relative-path fixtures through RAII.
+
+Breadth batch 10 advances the catalog from 78 to 85 Entries and from 142 to 156
+examples. `<filesystem>`, `std::filesystem::path`, `directory_entry`,
+`directory_iterator`, `exists`, `create_directories`, and `remove` establish a
+path-and-directory lifecycle slice. All fourteen new examples use C++20,
+relative ASCII roots, checked setup and operations, RAII cleanup, and sorted
+directory output where the standard leaves enumeration order unspecified.
 
 ### Work packages
 

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-filesystem-directory-entry",
+  "version": 1,
+  "slug": "standard-library/filesystem/directory-entry",
+  "kind": "type",
+  "title": "std::filesystem::directory_entry",
+  "summary": "把路径与可选的文件属性缓存包装为可刷新目录项值。",
+  "symbol": "std::filesystem::directory_entry",
+  "header": "<filesystem>",
+  "namespace": "std::filesystem",
+  "since": "c++17",
+  "aliases": ["directory_entry", "目录项", "文件属性缓存", "Dirent"],
+  "categories": ["filesystem"],
+  "relatedEntryIds": ["header-filesystem", "std-filesystem-path", "std-filesystem-directory-iterator", "std-filesystem-exists"],
+  "content": { "format": "markdown", "path": "entries/std-filesystem-directory-entry/content.md" },
+  "examples": [
+    { "id": "inspect-regular-entry", "path": "entries/std-filesystem-directory-entry/examples/inspect-regular-entry.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "name=note.txt\nregular=true\nbytes=3\n" },
+    { "id": "refresh-after-change", "path": "entries/std-filesystem-directory-entry/examples/refresh-after-change.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "before=1\nafter=2\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: directory_entry", "url": "https://eel.is/c++draft/fs.class.directory.entry", "standardSection": "[fs.class.directory.entry]" },
+    { "kind": "primary", "title": "C++ working draft: directory_entry modifiers", "url": "https://eel.is/c++draft/fs.dir.entry.mods", "standardSection": "[fs.dir.entry.mods]" },
+    { "kind": "primary", "title": "C++ working draft: directory_entry observers", "url": "https://eel.is/c++draft/fs.dir.entry.obs", "standardSection": "[fs.dir.entry.obs]" },
+    { "kind": "primary", "title": "C++ working draft: filesystem error reporting", "url": "https://eel.is/c++draft/fs.err.report", "standardSection": "[fs.err.report]" },
+    { "kind": "primary", "title": "C++ working draft: filesystem race behavior", "url": "https://eel.is/c++draft/fs.race.behavior", "standardSection": "[fs.race.behavior]" },
+    { "kind": "primary", "title": "WG21 P0317R1: Directory Entry Caching", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0317r1.html" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[fs.class.directory.entry]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::filesystem::directory_entry", "url": "https://zh.cppreference.com/w/cpp/filesystem/directory_entry" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "id": "std-filesystem-exists",
+  "version": 1,
+  "slug": "standard-library/filesystem/exists",
+  "kind": "function",
+  "title": "std::filesystem::exists",
+  "summary": "根据 file_status 或路径查询文件系统对象是否已知存在。",
+  "symbol": "std::filesystem::exists",
+  "header": "<filesystem>",
+  "namespace": "std::filesystem",
+  "since": "c++17",
+  "aliases": ["filesystem exists", "路径是否存在", "文件存在", "existsSync"],
+  "categories": ["filesystem"],
+  "relatedEntryIds": ["header-filesystem", "std-filesystem-path", "std-filesystem-directory-entry", "std-filesystem-create-directories", "std-filesystem-remove"],
+  "content": { "format": "markdown", "path": "entries/std-filesystem-exists/content.md" },
+  "examples": [
+    { "id": "reuse-file-status", "path": "entries/std-filesystem-exists/examples/reuse-file-status.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "known=true\nexists=true\n" },
+    { "id": "missing-clears-error", "path": "entries/std-filesystem-exists/examples/missing-clears-error.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "exists=false\nec_cleared=true\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: filesystem exists", "url": "https://eel.is/c++draft/fs.op.exists", "standardSection": "[fs.op.exists]" },
+    { "kind": "primary", "title": "C++ working draft: filesystem status", "url": "https://eel.is/c++draft/fs.op.status", "standardSection": "[fs.op.status]" },
+    { "kind": "primary", "title": "C++ working draft: filesystem error reporting", "url": "https://eel.is/c++draft/fs.err.report", "standardSection": "[fs.err.report]" },
+    { "kind": "primary", "title": "C++ working draft: filesystem race behavior", "url": "https://eel.is/c++draft/fs.race.behavior", "standardSection": "[fs.race.behavior]" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[fs.op.exists]" },
+    { "kind": "primary", "title": "LWG 2725: exists error reporting", "url": "https://cplusplus.github.io/LWG/issue2725" },
+    { "kind": "secondary", "title": "cppreference 中文：std::filesystem::exists", "url": "https://zh.cppreference.com/w/cpp/filesystem/exists" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

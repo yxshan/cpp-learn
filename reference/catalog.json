@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 9,
+  "version": 10,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -79,7 +79,14 @@
     "entries/std-ifstream/entry.json",
     "entries/std-ofstream/entry.json",
     "entries/header-sstream/entry.json",
-    "entries/std-stringstream/entry.json"
+    "entries/std-stringstream/entry.json",
+    "entries/header-filesystem/entry.json",
+    "entries/std-filesystem-path/entry.json",
+    "entries/std-filesystem-directory-entry/entry.json",
+    "entries/std-filesystem-directory-iterator/entry.json",
+    "entries/std-filesystem-exists/entry.json",
+    "entries/std-filesystem-create-directories/entry.json",
+    "entries/std-filesystem-remove/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
@@ -118,6 +125,12 @@
       "title": "输入与输出",
       "parentId": "standard-library",
       "order": 70
+    },
+    {
+      "id": "filesystem",
+      "title": "文件系统",
+      "parentId": "standard-library",
+      "order": 80
     }
   ],
   "redirects": [
