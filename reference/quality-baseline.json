@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 10,
+  "catalogVersion": 11,
   "review": {
-    "id": "breadth-expansion-batch-10",
+    "id": "breadth-expansion-batch-11",
     "reviewedAt": "2026-09-01",
-    "fixedPoint": "6db0709",
-    "scope": "Catalog version 10 adds seven filesystem Entries at zero structural debt; no waivers remain."
+    "fixedPoint": "a19114b",
+    "scope": "Catalog version 11 adds five chrono Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

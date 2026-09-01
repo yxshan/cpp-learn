@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "id": "std-chrono-duration",
+  "version": 1,
+  "slug": "standard-library/time/duration",
+  "kind": "type",
+  "title": "std::chrono::duration",
+  "summary": "用 count 与编译期有理数 Period 表示带单位的时间间隔。",
+  "symbol": "std::chrono::duration",
+  "header": "<chrono>",
+  "namespace": "std::chrono",
+  "since": "c++11",
+  "aliases": ["chrono duration", "时间间隔", "毫秒秒换算", "duration_cast"],
+  "categories": ["time"],
+  "relatedEntryIds": ["header-chrono", "std-chrono-time-point", "std-chrono-steady-clock", "std-chrono-system-clock"],
+  "content": { "format": "markdown", "path": "entries/std-chrono-duration/content.md" },
+  "examples": [
+    { "id": "convert-and-round", "path": "entries/std-chrono-duration/examples/convert-and-round.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "cast_positive=2\nfloor_positive=2\nceil_positive=3\nround_positive=2\ncast_negative=-2\nfloor_negative=-3\n" },
+    { "id": "mixed-unit-arithmetic", "path": "entries/std-chrono-duration/examples/mixed-unit-arithmetic.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "total_ms=2750\nquarter_seconds=11\nremainder_ms=750\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: duration", "url": "https://eel.is/c++draft/time.duration", "standardSection": "[time.duration]" },
+    { "kind": "primary", "title": "C++ working draft: duration constructors", "url": "https://eel.is/c++draft/time.duration.cons", "standardSection": "[time.duration.cons]" },
+    { "kind": "primary", "title": "C++ working draft: duration arithmetic", "url": "https://eel.is/c++draft/time.duration.arithmetic", "standardSection": "[time.duration.arithmetic]" },
+    { "kind": "primary", "title": "C++ working draft: duration cast", "url": "https://eel.is/c++draft/time.duration.cast", "standardSection": "[time.duration.cast]" },
+    { "kind": "primary", "title": "C++ working draft: duration algorithms", "url": "https://eel.is/c++draft/time.duration.alg", "standardSection": "[time.duration.alg]" },
+    { "kind": "primary", "title": "C++ working draft: floating-integral conversions", "url": "https://eel.is/c++draft/conv.fpint", "standardSection": "[conv.fpint]" },
+    { "kind": "primary", "title": "WG21 N2661: A Foundation to Sleep On", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2661.html" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[time.duration]" },
+    { "kind": "primary", "title": "WG21 P0092R1: chrono rounding", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0092r1.html" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[time.duration]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[time.duration]" },
+    { "kind": "primary", "title": "LWG 3090: duration conversion overflow", "url": "https://cplusplus.github.io/LWG/issue3090" },
+    { "kind": "primary", "title": "LWG 3503: chrono rounding to floating duration", "url": "https://cplusplus.github.io/LWG/issue3503" },
+    { "kind": "primary", "title": "LWG 4481: cv-qualified duration Rep", "url": "https://cplusplus.github.io/LWG/issue4481" },
+    { "kind": "secondary", "title": "cppreference 中文：std::chrono::duration", "url": "https://zh.cppreference.com/w/cpp/chrono/duration" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "id": "std-chrono-steady-clock",
+  "version": 1,
+  "slug": "standard-library/time/steady-clock",
+  "kind": "type",
+  "title": "std::chrono::steady_clock",
+  "summary": "提供不会随 physical time 前进而倒退的时钟，用于间隔和 deadline。",
+  "symbol": "std::chrono::steady_clock",
+  "header": "<chrono>",
+  "namespace": "std::chrono",
+  "since": "c++11",
+  "aliases": ["steady_clock", "单调时钟", "耗时测量", "deadline clock"],
+  "categories": ["time"],
+  "relatedEntryIds": ["header-chrono", "std-chrono-duration", "std-chrono-time-point", "std-chrono-system-clock"],
+  "content": { "format": "markdown", "path": "entries/std-chrono-steady-clock/content.md" },
+  "examples": [
+    { "id": "inspect-steady-contract", "path": "entries/std-chrono-steady-clock/examples/inspect-steady-contract.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "time_point_alias=true\nis_steady=true\nnow_noexcept=true\n" },
+    { "id": "construct-steady-deadline", "path": "entries/std-chrono-steady-clock/examples/construct-steady-deadline.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "deadline_ms=1250\nremaining_ms=75\nreached=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: Clock requirements", "url": "https://eel.is/c++draft/time.clock.req", "standardSection": "[time.clock.req]" },
+    { "kind": "primary", "title": "C++ working draft: steady_clock", "url": "https://eel.is/c++draft/time.clock.steady", "standardSection": "[time.clock.steady]" },
+    { "kind": "primary", "title": "C++ working draft: thread timing requirements", "url": "https://eel.is/c++draft/thread.req.timing", "standardSection": "[thread.req.timing]" },
+    { "kind": "primary", "title": "C++ working draft: data race avoidance", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "WG21 N2661: A Foundation to Sleep On", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2661.html" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[time.clock.steady]" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[time.clock.steady]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[time.clock.steady]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::chrono::steady_clock", "url": "https://zh.cppreference.com/w/cpp/chrono/steady_clock" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

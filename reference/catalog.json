@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 10,
+  "version": 11,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -86,7 +86,12 @@
     "entries/std-filesystem-directory-iterator/entry.json",
     "entries/std-filesystem-exists/entry.json",
     "entries/std-filesystem-create-directories/entry.json",
-    "entries/std-filesystem-remove/entry.json"
+    "entries/std-filesystem-remove/entry.json",
+    "entries/header-chrono/entry.json",
+    "entries/std-chrono-duration/entry.json",
+    "entries/std-chrono-time-point/entry.json",
+    "entries/std-chrono-steady-clock/entry.json",
+    "entries/std-chrono-system-clock/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
@@ -131,6 +136,12 @@
       "title": "文件系统",
       "parentId": "standard-library",
       "order": 80
+    },
+    {
+      "id": "time",
+      "title": "日期与时间",
+      "parentId": "standard-library",
+      "order": 90
     }
   ],
   "redirects": [

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "std-chrono-system-clock",
+  "version": 1,
+  "slug": "standard-library/time/system-clock",
+  "kind": "type",
+  "title": "std::chrono::system_clock",
+  "summary": "提供系统范围的实时墙上时钟，并连接 C++20 Unix/civil time。",
+  "symbol": "std::chrono::system_clock",
+  "header": "<chrono>",
+  "namespace": "std::chrono",
+  "since": "c++11",
+  "aliases": ["system_clock", "系统时钟", "墙上时钟", "Unix time"],
+  "categories": ["time"],
+  "relatedEntryIds": ["header-chrono", "std-chrono-duration", "std-chrono-time-point", "std-chrono-steady-clock"],
+  "content": { "format": "markdown", "path": "entries/std-chrono-system-clock/content.md" },
+  "examples": [
+    { "id": "inspect-system-epoch", "path": "entries/std-chrono-system-clock/examples/inspect-system-epoch.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "epoch_seconds=0\ny2k_seconds=946684800\n" },
+    { "id": "split-constructed-system-time", "path": "entries/std-chrono-system-clock/examples/split-constructed-system-time.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "date=2024-2-29\ntime=12:34:56\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: Clock requirements", "url": "https://eel.is/c++draft/time.clock.req", "standardSection": "[time.clock.req]" },
+    { "kind": "primary", "title": "C++ working draft: system_clock overview", "url": "https://eel.is/c++draft/time.clock.system.overview", "standardSection": "[time.clock.system.overview]" },
+    { "kind": "primary", "title": "C++ working draft: system_clock members", "url": "https://eel.is/c++draft/time.clock.system.members", "standardSection": "[time.clock.system.members]" },
+    { "kind": "primary", "title": "C++ working draft: clock_cast", "url": "https://eel.is/c++draft/time.clock.cast.fn", "standardSection": "[time.clock.cast.fn]" },
+    { "kind": "primary", "title": "C++ working draft: data race avoidance", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "WG21 N2661: A Foundation to Sleep On", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2661.html" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[time.clock.system]" },
+    { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[time.clock.system]" },
+    { "kind": "primary", "title": "WG21 P0355R7: Calendars and Time Zones", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0355r7.html" },
+    { "kind": "primary", "title": "WG21 P1466R3: Miscellaneous minor fixes for chrono", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1466r3.html" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[time.clock.system]" },
+    { "kind": "primary", "title": "LWG 3318: system_clock epoch", "url": "https://cplusplus.github.io/LWG/issue3318" },
+    { "kind": "secondary", "title": "cppreference 中文：std::chrono::system_clock", "url": "https://zh.cppreference.com/w/cpp/chrono/system_clock" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

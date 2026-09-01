@@ -525,8 +525,8 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
 
     await expect(reference.readiness()).resolves.toEqual({
       ready: true,
-      catalogVersion: 10,
-      entryCount: 85,
+      catalogVersion: 11,
+      entryCount: 90,
       activationDurationMs: expect.any(Number),
     });
     const navigation = await reference.getNavigation();
@@ -620,12 +620,23 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
         "std-filesystem-exists",
         "std-filesystem-create-directories",
         "std-filesystem-remove",
+        "header-chrono",
+        "std-chrono-duration",
+        "std-chrono-time-point",
+        "std-chrono-steady-clock",
+        "std-chrono-system-clock",
       ].sort(),
     );
     expect(navigation.categories).toContainEqual(
       expect.objectContaining({
         id: "filesystem",
         title: "文件系统",
+      }),
+    );
+    expect(navigation.categories).toContainEqual(
+      expect.objectContaining({
+        id: "time",
+        title: "日期与时间",
       }),
     );
     const result = await reference.search({ text: "std::sort" });

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.10 |
+| Version | 1.11 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
@@ -184,6 +184,14 @@ examples. `<filesystem>`, `std::filesystem::path`, `directory_entry`,
 path-and-directory lifecycle slice. All fourteen new examples use C++20,
 relative ASCII roots, checked setup and operations, RAII cleanup, and sorted
 directory output where the standard leaves enumeration order unspecified.
+
+Breadth batch 11 advances the catalog from 85 to 90 Entries and from 156 to 166
+examples. `<chrono>`, `std::chrono::duration`, `std::chrono::time_point`,
+`std::chrono::steady_clock`, and `std::chrono::system_clock` establish typed
+interval, clock-relative point, monotonic measurement, and civil-time
+conversion vocabulary. All ten new examples use fixed C++20 values: none call
+`now()`, sleep, inspect time zones, depend on locale, or assert
+implementation-defined clock resolution.
 
 ### Work packages
 

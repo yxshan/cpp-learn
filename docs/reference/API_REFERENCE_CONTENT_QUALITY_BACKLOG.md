@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 85 Entries. All have at least one primary source,
-and all 156 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 90 Entries. All have at least one primary source,
+and all 166 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -63,19 +63,20 @@ editorial role and upgrade status.
 | Completed in breadth batch 8 | `std::tuple`, `std::variant`, `std::any`, `std::expected`, `std::function` | Five ordinary pages establish heterogeneous product/sum values, runtime value and callable erasure, and C++23 explicit result handling; ten deterministic examples include two locally verified C++23 expected runs |
 | Completed in breadth batch 9 | `std::cerr`, `std::getline`, `<fstream>`, `std::ifstream`, `std::ofstream`, `<sstream>`, `std::stringstream` | Seven I/O pages establish diagnostic streams, line extraction, file mode/error boundaries, and in-memory stream state; fourteen deterministic C++20 examples include isolated relative-path file fixtures |
 | Completed in breadth batch 10 | `<filesystem>`, `std::filesystem::path`, `std::filesystem::directory_entry`, `std::filesystem::directory_iterator`, `std::filesystem::exists`, `std::filesystem::create_directories`, `std::filesystem::remove` | Seven filesystem pages establish path values, optional attribute caching, unordered single-pass traversal, query semantics, recursive creation, and single-object deletion; fourteen deterministic C++20 examples use isolated relative roots and sorted directory output |
+| Completed in breadth batch 11 | `<chrono>`, `std::chrono::duration`, `std::chrono::time_point`, `std::chrono::steady_clock`, `std::chrono::system_clock` | Five time pages distinguish typed intervals, clock-relative points, monotonic measurement, and system civil time; ten deterministic C++20 examples use fixed values without calling `now()`, sleeping, consulting time zones, or depending on locale |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
 | Completed in quality-ratchet closure batch | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Three internal remediation slices cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 and breadth batches 4 through 10 are complete. The
+Quality batches 1 through 3 and breadth batches 4 through 11 are complete. The
 existing ordinary-entity example debt remains cleared. The next batch can
-finish the remaining sequence-container and algorithm candidates, or move into
-time vocabulary.
+finish the remaining sequence-container and algorithm candidates, or begin the
+concurrency slice after its determinism requirements are fixed.
 
 ### 3.1 Executable debt baseline
 
-The kind-aware audit currently checks 81 of 85 Entries; three landing Entries
+The kind-aware audit currently checks 86 of 90 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
 the quality-ratchet closure batch, the checked-in baseline contains no known gaps,
 down from the initial 58 gaps across 35 Entries.
@@ -95,7 +96,7 @@ introduce debt; any new structural finding fails the gate immediately.
 
 ## 4. Planned 120-Entry catalog
 
-The current 85 Entries remain in scope. The following 35 candidates make the
+The current 90 Entries remain in scope. The following 30 candidates make the
 remaining catalog explicit. “Candidate” means editorially selected, not yet
 fact-verified or release-ready.
 
@@ -133,10 +134,10 @@ slice was delivered in breadth batch 9.
 The selected path, directory observation, traversal, creation, query, and
 single-object deletion slice was delivered in breadth batch 10.
 
-### 4.8 Time: 5 candidates
+### 4.8 Time: completed
 
-- `<chrono>`, `std::chrono::duration`, `std::chrono::time_point`.
-- `std::chrono::steady_clock`, `std::chrono::system_clock`.
+The selected duration, time-point, monotonic-clock, and system-clock slice was
+delivered in breadth batch 11.
 
 ### 4.9 Concurrency: 15 candidates
 
@@ -160,7 +161,7 @@ single-object deletion slice was delivered in breadth batch 10.
    product, sum, and result vocabulary completed in breadth batch 8.**
 5. Add I/O, filesystem, and time with deterministic examples.
    **I/O completed in breadth batch 9; filesystem completed in breadth batch
-   10; time remains.**
+   10; time completed in breadth batch 11.**
 6. Add concurrency last, after its nondeterministic-example and memory-model
    review requirements are explicit.
 
