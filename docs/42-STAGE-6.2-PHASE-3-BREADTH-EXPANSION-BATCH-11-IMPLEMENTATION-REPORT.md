@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-026 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
 
@@ -68,8 +68,17 @@ project-authored.
 | Example verification | Passed: 166 total examples; 164 C++20 and 2 C++23 |
 | Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
 | Complete repository check | Passed: docs, curriculum, 90-entry Reference, 166 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed against `a19114b...e8670c0`; no remaining standards or smell finding |
+| Spec review | Passed against `a19114b...e8670c0`; scope, facts, counts, determinism, and acceptance behavior match |
+
+The initial review found two examples relying on `<chrono>` to expose
+`std::milli`, two missing duration fact-owning sources, and omitted `rep` and
+`period` aliases in the representative `time_point` interface. Commit
+`e8670c0` adds direct `<ratio>` includes, registers
+`[time.duration.nonmember]` and LWG 2094, updates the source summary, and
+restores both public aliases. Both review axes then reported zero remaining
+findings; `e8670c0` is the reviewed fixed point recorded by the quality
+baseline.
 
 ## 7. Controlled limitations
 
