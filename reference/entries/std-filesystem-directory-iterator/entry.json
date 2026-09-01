@@ -23,6 +23,7 @@
     { "kind": "primary", "title": "C++ working draft: directory_iterator members", "url": "https://eel.is/c++draft/fs.dir.itr.members", "standardSection": "[fs.dir.itr.members]" },
     { "kind": "primary", "title": "C++ working draft: filesystem race behavior", "url": "https://eel.is/c++draft/fs.race.behavior", "standardSection": "[fs.race.behavior]" },
     { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[fs.class.directory.iterator]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[fs.class.directory.iterator]" },
     { "kind": "primary", "title": "LWG 3013: directory_iterator error_code overloads", "url": "https://cplusplus.github.io/LWG/issue3013" },
     { "kind": "primary", "title": "LWG 3480: directory_iterator end", "url": "https://cplusplus.github.io/LWG/issue3480" },
     { "kind": "primary", "title": "LWG 3719: directory_iterator and default sentinel", "url": "https://cplusplus.github.io/LWG/issue3719" },

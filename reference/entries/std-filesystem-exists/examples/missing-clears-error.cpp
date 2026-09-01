@@ -6,17 +6,25 @@ namespace fs = std::filesystem;
 
 struct Cleanup {
     fs::path root;
-    ~Cleanup() {
-        std::error_code ignored;
-        fs::remove_all(root, ignored);
+    ~Cleanup() noexcept {
+        try {
+            std::error_code ignored;
+            fs::remove_all(root, ignored);
+        } catch (...) {
+        }
     }
 };
+
+int fail(int code) {
+    std::cerr << "filesystem example failed\n";
+    return code;
+}
 
 int main() {
     const fs::path root{"batch10-exists-missing"};
     std::error_code ec;
     fs::remove_all(root, ec);
-    if (ec) return 1;
+    if (ec) return fail(1);
     Cleanup cleanup{root};
 
     ec = std::make_error_code(std::errc::permission_denied);

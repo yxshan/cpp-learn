@@ -42,8 +42,9 @@ public:
 
 ## 参数、前置条件与副作用
 
-p 指定要枚举的目录；options 可控制跟随目录 symlink 或跳过权限拒绝。默认构造产生 end，空目录
-构造也直接得到 end。end 不可解引用；递增或解引用 end 不满足迭代器前置条件。遍历不产生 `.`/`..`。
+p 指定要枚举的目录；普通 directory_iterator 不会递归，因此 `follow_directory_symlink` 不改变遍历
+深度，它在此接口上的主要可观察 option 是 `skip_permission_denied`。默认构造产生 end，空目录构造
+也直接得到 end。end 不可解引用；递增或解引用 end 不满足迭代器前置条件。遍历不产生 `.`/`..`。
 
 ## 返回值与单遍语义
 

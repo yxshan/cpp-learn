@@ -27,6 +27,9 @@
     { "kind": "primary", "title": "Filesystem TS N4100", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4100.pdf" },
     { "kind": "primary", "title": "WG21 P0218R1: Adopt the File System TS", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0218r1.html" },
     { "kind": "primary", "title": "C++17 final working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[fs.filesystem.syn]" },
+    { "kind": "primary", "title": "WG21 P0482R6: char8_t", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0482r6.html" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[fs.filesystem.syn]" },
+    { "kind": "primary", "title": "WG21 P2845R8: Formatting of std::filesystem::path", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2845r8.html" },
     { "kind": "secondary", "title": "cppreference 中文：<filesystem>", "url": "https://zh.cppreference.com/w/cpp/header/filesystem" }
   ],
   "verifiedAt": "2026-09-01"

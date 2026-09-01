@@ -620,16 +620,20 @@ Node `fs.rmSync(path)` 是近似对照；`recursive:true` 更接近 C++ `remove_
 ```cpp
 struct Cleanup {
   std::filesystem::path root;
-  ~Cleanup() {
-    std::error_code ignored;
-    std::filesystem::remove_all(root, ignored);
+  ~Cleanup() noexcept {
+    try {
+      std::error_code ignored;
+      std::filesystem::remove_all(root, ignored);
+    } catch (...) {
+    }
   }
 };
 ```
 
 随后在 main 开头先执行一次 checked `remove_all(root, ec)`，再构造 guard。析构忽略清理错误是因为
-不能从 destructor 抛异常；主流程中的每项操作仍必须检查。纯 path 示例没有外部状态，无需伪造
-cleanup。任何出错分支只写 `std::cerr` 并返回非零，不能把平台相关错误文本混入 expected stdout。
+不能从 destructor 抛异常；`remove_all(root, ec)` 自身仍可能因分配失败抛异常，所以 guard 还必须
+捕获所有异常。主流程中的每项操作仍必须检查。纯 path 示例没有外部状态，无需伪造 cleanup。任何
+出错分支只写 `std::cerr` 并返回非零，不能把平台相关错误文本混入 expected stdout。
 
 ## 11. 版本、缺陷报告与一级来源矩阵
 
