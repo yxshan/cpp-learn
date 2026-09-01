@@ -35,7 +35,7 @@ public:
 using ofstream = basic_ofstream<char>;
 ```
 
-这是学习用摘要；省略了析构、move、swap、`rdbuf()`、wchar alias 和部分路径/allocator 重载。构造/
+这是学习用摘要；省略了析构、move、swap、`rdbuf()`、wchar alias 和部分路径重载。构造/
 open 总加入 `out`。默认 out 截断；`app` 每次写前定位末尾，`ate` 只在打开后定位一次。
 
 ## 参数、返回与状态

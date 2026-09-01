@@ -35,7 +35,7 @@ public:
 using ifstream = basic_ifstream<char>;
 ```
 
-这是学习用摘要；省略了析构、move、swap、`rdbuf()`、wchar alias 和部分路径/allocator 重载。构造/
+这是学习用摘要；省略了析构、move、swap、`rdbuf()`、wchar alias 和部分路径重载。构造/
 open 总把 `in` 加入 mode；filesystem path overload 从 C++17 起。
 
 ## 参数、返回与状态
