@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-cerr",
+  "version": 1,
+  "slug": "standard-library/io/cerr",
+  "kind": "object",
+  "title": "std::cerr",
+  "summary": "向与 C stderr 关联的窄字符标准诊断流写入格式化输出。",
+  "symbol": "std::cerr",
+  "header": "<iostream>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["cerr", "标准错误", "诊断输出", "stderr"],
+  "categories": ["io"],
+  "relatedEntryIds": ["header-iostream", "std-cout", "std-cin", "header-sstream"],
+  "content": { "format": "markdown", "path": "entries/std-cerr/content.md" },
+  "examples": [
+    { "id": "inspect-diagnostic-stream", "path": "entries/std-cerr/examples/inspect-diagnostic-stream.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "unitbuf=true\ntied_to_cout=true\n" },
+    { "id": "capture-one-diagnostic", "path": "entries/std-cerr/examples/capture-one-diagnostic.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "captured=error=7\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: narrow stream objects", "url": "https://eel.is/c++draft/narrow.stream.objects", "standardSection": "[narrow.stream.objects]" },
+    { "kind": "primary", "title": "C++ working draft: ostream sentry", "url": "https://eel.is/c++draft/ostream.sentry", "standardSection": "[ostream.sentry]" },
+    { "kind": "primary", "title": "C++ working draft: iostream thread safety", "url": "https://eel.is/c++draft/iostreams.threadsafety", "standardSection": "[iostreams.threadsafety]" },
+    { "kind": "primary", "title": "C++ working draft: iostream objects overview", "url": "https://eel.is/c++draft/iostream.objects.overview", "standardSection": "[iostream.objects.overview]" },
+    { "kind": "primary", "title": "WG21 1998 working draft N1146", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/1998/n1146.pdf", "standardSection": "[lib.narrow.stream.objects]" },
+    { "kind": "primary", "title": "Post-C++03 working draft N1905", "url": "https://www.open-std.org/JTC1/SC22/WG21/docs/papers/2005/n1905.pdf", "standardSection": "[lib.narrow.stream.objects]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[narrow.stream.objects]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::cerr", "url": "https://zh.cppreference.com/w/cpp/io/cerr" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

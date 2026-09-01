@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "id": "header-fstream",
+  "version": 1,
+  "slug": "standard-library/headers/fstream",
+  "kind": "header",
+  "title": "<fstream>",
+  "summary": "声明文件缓冲以及只读、只写和双向文件流类型。",
+  "symbol": "<fstream>",
+  "header": "<fstream>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["fstream header", "文件流头文件", "文件读写"],
+  "categories": ["io"],
+  "relatedEntryIds": ["std-ifstream", "std-ofstream", "std-getline", "header-sstream"],
+  "content": { "format": "markdown", "path": "entries/header-fstream/content.md" },
+  "examples": [
+    { "id": "read-write-round-trip", "path": "entries/header-fstream/examples/read-write-round-trip.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "status=ready\n" },
+    { "id": "binary-byte-round-trip", "path": "entries/header-fstream/examples/binary-byte-round-trip.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "bytes=0,127,255\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: fstream synopsis", "url": "https://eel.is/c++draft/fstream.syn", "standardSection": "[fstream.syn]" },
+    { "kind": "primary", "title": "C++ working draft: filebuf members", "url": "https://eel.is/c++draft/filebuf.members", "standardSection": "[filebuf.members]" },
+    { "kind": "primary", "title": "C++ working draft: file streams", "url": "https://eel.is/c++draft/fstreams", "standardSection": "[fstreams]" },
+    { "kind": "primary", "title": "WG21 1998 working draft N1146", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/1998/n1146.pdf", "standardSection": "[lib.fstreams]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[fstreams]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[fstreams]" },
+    { "kind": "secondary", "title": "cppreference 中文：<fstream>", "url": "https://zh.cppreference.com/w/cpp/header/fstream" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

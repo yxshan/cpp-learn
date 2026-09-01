@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-getline",
+  "version": 1,
+  "slug": "standard-library/strings/getline",
+  "kind": "function",
+  "title": "std::getline",
+  "summary": "从字符输入流提取一行到 std::string，并消费分隔符。",
+  "symbol": "std::getline",
+  "header": "<string>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["getline", "整行输入", "读取一行", "残留换行"],
+  "categories": ["io", "strings"],
+  "relatedEntryIds": ["std-cin", "std-string", "header-sstream", "std-stringstream"],
+  "content": { "format": "markdown", "path": "entries/std-getline/content.md" },
+  "examples": [
+    { "id": "read-complete-lines", "path": "entries/std-getline/examples/read-complete-lines.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "1:alpha\n2:beta\n" },
+    { "id": "after-formatted-extraction", "path": "entries/std-getline/examples/after-formatted-extraction.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "age=42 ignored=1\nname=Ada Lovelace gcount=1\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: string I/O", "url": "https://eel.is/c++draft/string.io", "standardSection": "[string.io]" },
+    { "kind": "primary", "title": "C++ working draft: unformatted input", "url": "https://eel.is/c++draft/istream.unformatted", "standardSection": "[istream.unformatted]" },
+    { "kind": "primary", "title": "C++ working draft: iostate flags", "url": "https://eel.is/c++draft/iostate.flags", "standardSection": "[iostate.flags]" },
+    { "kind": "primary", "title": "C++ working draft: library data races", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "WG21 1998 working draft N1146", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/1998/n1146.pdf", "standardSection": "[lib.string.io]" },
+    { "kind": "primary", "title": "WG21 N1350: library issue resolutions", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1350.html", "standardSection": "LWG 91" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[string.io]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::getline", "url": "https://zh.cppreference.com/w/cpp/string/basic_string/getline" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

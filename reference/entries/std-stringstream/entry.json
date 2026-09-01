@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "std-stringstream",
+  "version": 1,
+  "slug": "standard-library/io/stringstream",
+  "kind": "type",
+  "title": "std::stringstream",
+  "summary": "在一个拥有字符串缓冲的双向流中执行格式化输入与输出。",
+  "symbol": "std::stringstream",
+  "header": "<sstream>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["stringstream", "字符串流", "双向字符串流", "内存文本流"],
+  "categories": ["io"],
+  "relatedEntryIds": ["header-sstream", "std-getline", "std-from-chars", "std-to-chars"],
+  "content": { "format": "markdown", "path": "entries/std-stringstream/content.md" },
+  "examples": [
+    { "id": "independent-read-write-positions", "path": "entries/std-stringstream/examples/independent-read-write-positions.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "buffer=Xbc\nfirst=X\n" },
+    { "id": "reset-after-failure", "path": "entries/std-stringstream/examples/reset-after-failure.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first_failed=true\nvalue=42\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: stringstream", "url": "https://eel.is/c++draft/stringstream", "standardSection": "[stringstream]" },
+    { "kind": "primary", "title": "C++ working draft: stringbuf members", "url": "https://eel.is/c++draft/stringbuf.members", "standardSection": "[stringbuf.members]" },
+    { "kind": "primary", "title": "C++ working draft: iostate flags", "url": "https://eel.is/c++draft/iostate.flags", "standardSection": "[iostate.flags]" },
+    { "kind": "primary", "title": "C++ working draft: data race avoidance", "url": "https://eel.is/c++draft/res.on.data.races", "standardSection": "[res.on.data.races]" },
+    { "kind": "primary", "title": "WG21 1998 working draft N1146", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/1998/n1146.pdf", "standardSection": "[lib.stringstream]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[stringstream]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[stringstream]" },
+    { "kind": "primary", "title": "WG21 P0408R7: Efficient Access to basic_stringbuf's Buffer", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0408r7.pdf" },
+    { "kind": "primary", "title": "WG21 P2495R3: Interfacing string streams with string_view", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2495r3.html" },
+    { "kind": "secondary", "title": "cppreference 中文：std::basic_stringstream", "url": "https://zh.cppreference.com/w/cpp/io/basic_stringstream" }
+  ],
+  "verifiedAt": "2026-09-01"
+}

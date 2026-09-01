@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 8,
+  "version": 9,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -72,7 +72,14 @@
     "entries/std-variant/entry.json",
     "entries/std-any/entry.json",
     "entries/std-expected/entry.json",
-    "entries/std-function/entry.json"
+    "entries/std-function/entry.json",
+    "entries/std-cerr/entry.json",
+    "entries/std-getline/entry.json",
+    "entries/header-fstream/entry.json",
+    "entries/std-ifstream/entry.json",
+    "entries/std-ofstream/entry.json",
+    "entries/header-sstream/entry.json",
+    "entries/std-stringstream/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

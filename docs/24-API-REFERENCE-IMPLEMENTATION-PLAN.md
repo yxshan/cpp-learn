@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 8 are
+first three content-quality batches, and breadth-expansion batches 4 through 9 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -170,6 +170,13 @@ examples. `std::tuple`, `std::variant`, `std::any`, `std::expected`, and
 and callable-erasure vocabulary. The first four C++20-capable entities keep
 their C++20 declaration boundary, while `std::expected` is correctly published
 and locally verified as C++23 through a compiler-compatible `c++2b` flag.
+
+Breadth batch 9 advances the catalog from 71 to 78 Entries and from 128 to 142
+examples. `std::cerr`, `std::getline`, `<fstream>`, `std::ifstream`,
+`std::ofstream`, `<sstream>`, and `std::stringstream` establish diagnostic,
+line-input, file-stream, and in-memory text-stream vocabulary. All fourteen
+examples use the C++20 profile; file examples run in isolated temporary working
+directories and clean up their relative-path fixtures through RAII.
 
 ### Work packages
 

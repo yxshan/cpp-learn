@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 71 Entries. All have at least one primary source,
-and all 128 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 78 Entries. All have at least one primary source,
+and all 142 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -61,19 +61,20 @@ editorial role and upgrade status.
 | Completed in breadth batch 6 | `<string>`, `<string_view>`, `<charconv>`, `<memory>`, `std::string::substr`, `std::string::find`, `std::string::append`, `std::from_chars`, `std::to_chars`, `std::shared_ptr`, `std::weak_ptr`, `std::make_shared` | Four facility maps and eight ordinary pages close owning/borrowed text, low-level conversion, and shared-ownership learning loops; cppreference informs page structure while WG21 sources govern facts |
 | Completed in breadth batch 7 | `<utility>`, `std::move`, `std::forward`, `std::swap`, `std::pair` | One versioned facility map and four ordinary pages establish value-category casts, perfect forwarding, ADL-aware exchange, and binary value semantics with ten verified examples |
 | Completed in breadth batch 8 | `std::tuple`, `std::variant`, `std::any`, `std::expected`, `std::function` | Five ordinary pages establish heterogeneous product/sum values, runtime value and callable erasure, and C++23 explicit result handling; ten deterministic examples include two locally verified C++23 expected runs |
+| Completed in breadth batch 9 | `std::cerr`, `std::getline`, `<fstream>`, `std::ifstream`, `std::ofstream`, `<sstream>`, `std::stringstream` | Seven I/O pages establish diagnostic streams, line extraction, file mode/error boundaries, and in-memory stream state; fourteen deterministic C++20 examples include isolated relative-path file fixtures |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
 | Completed in quality-ratchet closure batch | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Three internal remediation slices cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 and breadth batches 4 through 8 are complete. The existing
-ordinary-entity example debt remains cleared. The next batch can finish the
-remaining sequence-container and algorithm candidates, or move into I/O,
-filesystem, or time vocabulary.
+Quality batches 1 through 3 and breadth batches 4 through 9 are complete. The
+existing ordinary-entity example debt remains cleared. The next batch can
+finish the remaining sequence-container and algorithm candidates, or move into
+filesystem or time vocabulary.
 
 ### 3.1 Executable debt baseline
 
-The kind-aware audit currently checks 67 of 71 Entries; three landing Entries
+The kind-aware audit currently checks 74 of 78 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
 the quality-ratchet closure batch, the checked-in baseline contains no known gaps,
 down from the initial 58 gaps across 35 Entries.
@@ -93,7 +94,7 @@ introduce debt; any new structural finding fails the gate immediately.
 
 ## 4. Planned 120-Entry catalog
 
-The current 71 Entries remain in scope. The following 49 candidates make the
+The current 78 Entries remain in scope. The following 42 candidates make the
 remaining catalog explicit. “Candidate” means editorially selected, not yet
 fact-verified or release-ready.
 
@@ -121,11 +122,10 @@ The selected strings and conversion slice was delivered in breadth batch 6.
 The selected product, sum, erased-value, result, and callable vocabulary was
 delivered in breadth batch 8.
 
-### 4.6 I/O: 7 candidates
+### 4.6 I/O: completed
 
-- `std::cerr`, `std::getline`.
-- `<fstream>`, `std::ifstream`, `std::ofstream`.
-- `<sstream>`, `std::stringstream`.
+The selected diagnostic, line-input, file-stream, and in-memory text-stream
+slice was delivered in breadth batch 9.
 
 ### 4.7 Filesystem: 7 candidates
 
@@ -160,7 +160,8 @@ delivered in breadth batch 8.
    **String conversion and shared ownership completed in breadth batch 6;
    foundational utility vocabulary completed in breadth batch 7; callable,
    product, sum, and result vocabulary completed in breadth batch 8.**
-5. Add filesystem and time with deterministic examples.
+5. Add I/O, filesystem, and time with deterministic examples.
+   **I/O completed in breadth batch 9; filesystem and time remain.**
 6. Add concurrency last, after its nondeterministic-example and memory-model
    review requirements are explicit.
 
