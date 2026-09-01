@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-023 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-31 |
+| Last updated | 2026-09-01 |
 
 ## 1. Objective
 
@@ -22,8 +22,9 @@ callable erasure as separate design choices.
   `std::function`.
 - Added ten deterministic Run examples, increasing the catalog from 118 to 128
   examples: 126 use C++20 and the two `std::expected` examples use C++23.
-- Added a tested manifest-standard-to-compiler-flag seam so Apple Clang 15 can
-  verify stable manifest standard `c++23` with its supported `c++2b` spelling.
+- Added a tested manifest-standard-to-compiler-flag probe that prefers the
+  canonical spelling and lets Apple Clang 15 fall back from `c++23` to its
+  supported `c++2b` spelling.
 - Preserved the empty structural-debt baseline: 67 of 71 Entries are audited,
   with three landing Entries and one guide intentionally outside the profile.
 
@@ -50,14 +51,21 @@ examples are project-authored.
 | Gate | Result |
 |---|---|
 | Catalog RED/GREEN test | Passed: version 8 and five stable IDs failed before implementation, then passed |
-| Compiler flag RED/GREEN test | Passed: `c++23` manifest value maps to Apple Clang-compatible `c++2b` |
+| Compiler flag RED/GREEN test | Passed: probes canonical `c++23`, falls back to `c++2b`, and reports no supported spelling |
 | Reference activation | Passed: catalog version 8, 71 Entries |
 | Reference quality ratchet | Passed: 67/71 audited, 0 reviewed gaps, no regressions |
 | Example verification | Passed: 128 total examples; 126 C++20 and 2 C++23 |
-| Focused tests | Passed: 42 tests across Reference, quality, verification, and CLI contracts |
-| Complete repository check | Passed: docs, curriculum, 71-entry Reference, 128 examples, formatting, lint, types, 195 tests, and production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
+| Complete repository check | Passed: docs, curriculum, 71-entry Reference, 128 examples, formatting, lint, types, 196 tests, and production build |
+| Standards review | Passed against `c53252d...3934e37`; no remaining standard violation or smell finding |
+| Spec review | Passed against `c53252d...3934e37`; scope, versions, counts, and acceptance behavior match |
+
+The initial reviews found imprecise tuple assignment lifetime wording, an
+over-broad variant default-construction condition, incomplete expected
+declarations and template constraints, a fixed rather than probed compiler
+flag alias, and an over-specific function dispatch description. Commits
+`4d5953f` and `3934e37` resolve all findings; `3934e37` is the reviewed fixed
+point recorded by the zero-debt quality baseline.
 
 ## 6. Controlled limitations
 

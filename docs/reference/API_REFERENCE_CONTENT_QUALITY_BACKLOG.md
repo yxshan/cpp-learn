@@ -6,7 +6,7 @@
 | Version | 2.0 |
 | Status | Active |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-31 |
+| Last updated | 2026-09-01 |
 
 ## 1. Purpose
 

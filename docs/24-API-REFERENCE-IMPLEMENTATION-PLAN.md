@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-30 |
+| Last updated | 2026-09-01 |
 
 ## 1. Objective
 

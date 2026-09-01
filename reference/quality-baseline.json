@@ -3,8 +3,8 @@
   "catalogVersion": 8,
   "review": {
     "id": "breadth-expansion-batch-8",
-    "reviewedAt": "2026-08-31",
-    "fixedPoint": "c53252d",
+    "reviewedAt": "2026-09-01",
+    "fixedPoint": "3934e37",
     "scope": "Catalog version 8 adds five heterogeneous-value and callable Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
