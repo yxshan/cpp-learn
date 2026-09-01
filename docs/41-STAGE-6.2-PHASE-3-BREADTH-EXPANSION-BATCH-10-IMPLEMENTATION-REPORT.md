@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-025 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-01 |
 
@@ -71,8 +71,17 @@ and examples are project-authored.
 | Example verification | Passed: 156 total examples; 154 C++20 and 2 C++23 |
 | Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
 | Complete repository check | Passed: docs, curriculum, 85-entry Reference, 156 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending |
-| Spec review | Pending |
+| Standards review | Passed against `9cb688b...6db0709`; no remaining standards or smell finding |
+| Spec review | Passed against `9cb688b...6db0709`; scope, counts, semantics, determinism, and acceptance behavior match |
+
+The initial reviews found cleanup guards created after the first side effect,
+silent error exits, an exception path escaping `noexcept` cleanup destructors,
+an ordinary-iterator option description borrowed from recursive traversal, and
+missing version-owning sources. Commit `6db0709` moves every guard before the
+first fixture creation, routes failures through stderr, catches cleanup
+allocation exceptions, corrects the iterator boundary, and adds the owning
+WG21 sources. Both review axes then reported zero remaining findings;
+`6db0709` is the reviewed fixed point recorded by the quality baseline.
 
 ## 7. Controlled limitations
 
