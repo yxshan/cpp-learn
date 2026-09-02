@@ -45,7 +45,7 @@ public:
 
 ## 参数、调用与返回
 
-C++20 构造器在创建线程中对 callable 与参数做 decay-copy，再在新线程中调用副本；需要传引用时显式使用 `std::ref`，并保证被引用对象寿命。线程函数返回值会被忽略，需要结果时写入受同步保护的状态、使用 future/promise 或其他通道。
+C++20 构造器要求 callable 与各参数的 decay 后类型能分别从对应转发实参构造，并且 decay 后的 callable 能以 decay 后的参数调用。它在创建线程中完成这些参数实体化，再在新线程中调用副本；实体化或复制/移动抛出的异常留在创建线程，新的执行线程尚未开始。需要传引用时显式使用 `std::ref`，并保证被引用对象寿命。线程函数返回值会被忽略，需要结果时写入受同步保护的状态、使用 future/promise 或其他通道。
 
 `joinable()` 表示句柄当前代表一个尚未 join/detach 的线程；底层线程即使已经执行完，句柄在 join 前仍可 join。`join()` 和 `detach()` 返回 `void`。`hardware_concurrency()` 只是提示，无法确定时允许返回 0。
 
@@ -55,7 +55,7 @@ C++20 构造器在创建线程中对 callable 与参数做 decay-copy，再在�
 
 ## 异常与错误
 
-无法创建线程时构造器抛 `std::system_error`，典型错误为 `resource_unavailable_try_again`。`join()` 可报告自 join 导致的 `resource_deadlock_would_occur`、无效线程或不可 join；`detach()` 也会拒绝无效或不可 detach 的句柄。
+参数实体化失败会传播对应构造异常；无法创建线程时构造器抛 `std::system_error`，典型错误为 `resource_unavailable_try_again`。`join()` 可报告自 join 导致的 `resource_deadlock_would_occur`、无效线程或不可 join；`detach()` 也会拒绝无效或不可 detach 的句柄。
 
 线程入口的未捕获异常会调用 `std::terminate`，不会自动传播给创建线程。析构或移动赋值覆盖一个仍为 joinable 的句柄同样调用 `std::terminate`。
 

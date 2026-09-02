@@ -12,7 +12,7 @@
   "since": "c++11",
   "aliases": ["mutex header", "互斥头文件", "锁头文件", "RAII lock"],
   "categories": ["concurrency"],
-  "relatedEntryIds": ["std-mutex", "std-lock-guard", "header-thread", "std-thread"],
+  "relatedEntryIds": ["std-mutex", "std-lock-guard", "header-thread", "standard-library"],
   "content": { "format": "markdown", "path": "entries/header-mutex/content.md" },
   "examples": [
     { "id": "initialize-once", "path": "entries/header-mutex/examples/initialize-once.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "calls=1\nvalue=42\n" },
@@ -21,6 +21,7 @@
   "sources": [
     { "kind": "primary", "title": "C++ working draft: mutex synopsis", "url": "https://eel.is/c++draft/mutex.syn", "standardSection": "[mutex.syn]" },
     { "kind": "primary", "title": "C++ working draft: mutual exclusion", "url": "https://eel.is/c++draft/thread.mutex", "standardSection": "[thread.mutex]" },
+    { "kind": "primary", "title": "C++ working draft: call_once", "url": "https://eel.is/c++draft/thread.once.callonce", "standardSection": "[thread.once.callonce]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.mutex]" },
     { "kind": "primary", "title": "WG21 P0156R2: Variadic lock_guard", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0156r2.html" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.mutex]" },

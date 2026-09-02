@@ -20,6 +20,8 @@
   ],
   "sources": [
     { "kind": "primary", "title": "C++ working draft: class thread", "url": "https://eel.is/c++draft/thread.thread.class", "standardSection": "[thread.thread.class]" },
+    { "kind": "primary", "title": "C++ working draft: thread constructors", "url": "https://eel.is/c++draft/thread.thread.constr", "standardSection": "[thread.thread.constr]" },
+    { "kind": "primary", "title": "C++ working draft: thread members", "url": "https://eel.is/c++draft/thread.thread.member", "standardSection": "[thread.thread.member]" },
     { "kind": "primary", "title": "C++ working draft: multi-threaded executions and data races", "url": "https://eel.is/c++draft/intro.multithread", "standardSection": "[intro.multithread]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.thread.class]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.thread.class]" },

@@ -19,10 +19,14 @@
 |---|---|---|
 | `mutex`、`recursive_mutex` | 独占互斥 | C++11 |
 | `timed_mutex`、`recursive_timed_mutex` | 带超时的独占互斥 | C++11 |
+| `defer_lock_t`、`try_to_lock_t`、`adopt_lock_t` 与对应常量 | 选择锁包装器的构造策略 | C++11；inline constexpr 常量为 C++17 |
 | `lock_guard` | 不可移动的简单作用域锁 | C++11 |
 | `unique_lock` | 可移动、可延迟及可手动解锁的锁所有者 | C++11 |
 | `scoped_lock` | 同时持有一个或多个锁 | C++17 |
 | `lock`、`try_lock` | 协调多个 Lockable 对象 | C++11 |
+| `once_flag`、`call_once` | 跨线程执行一次成功初始化 | C++11 |
+
+对同一个 `once_flag`，至多一个 returning execution 会完成初始化；它的完成同步于 passive 调用返回。若 callable 抛出异常，本次是 exceptional execution，异常会传播，flag 不会永久完成，后续调用仍可重试。
 
 ## 什么时候选择
 
