@@ -31,9 +31,21 @@ ForwardIt remove(ExecutionPolicy&& policy, ForwardIt first,
 
 template<std::permutable I, std::sentinel_for<I> S,
          class T, class Proj = std::identity>
+    requires std::indirect_binary_predicate<
+        std::ranges::equal_to, std::projected<I, Proj>, const T*>
 constexpr std::ranges::subrange<I>
 std::ranges::remove(I first, S last,
                     const T& value, Proj proj = {});
+
+template<std::ranges::forward_range R,
+         class T, class Proj = std::identity>
+    requires std::permutable<std::ranges::iterator_t<R>> &&
+             std::indirect_binary_predicate<
+                 std::ranges::equal_to,
+                 std::projected<std::ranges::iterator_t<R>, Proj>,
+                 const T*>
+constexpr std::ranges::borrowed_subrange_t<R>
+std::ranges::remove(R&& range, const T& value, Proj proj = {});
 ```
 
 ranges 家族也接受 range。值参数的默认模板类型和 ranges execution-policy 重载属于 C++26，不属于 C++20/23。
@@ -50,7 +62,7 @@ ranges 家族也接受 range。值参数的默认模板类型和 ranges executio
 ## 返回值与尾部状态
 
 - 经典接口返回 `new_end`，即保留前缀 `[first, new_end)` 的逻辑末尾。
-- ranges 接口返回待擦除的 subrange `{new_end, last}`，而不是保留前缀。
+- ranges 接口返回待擦除的 subrange `{new_end, last}`，而不是保留前缀。range 重载的实际类型是 `borrowed_subrange_t<R>`；非 borrowed 临时 owner 的结果是 `std::ranges::dangling`，不会提供可悬空的尾部迭代器。
 - 算法保持保留元素的相对顺序，但不改变容器 `size()`。
 - `[new_end, last)` 中的对象仍有效，其值未指定。不得读取、打印或借它恢复被删元素。
 
@@ -90,7 +102,7 @@ remove 阶段不改变 vector 容量和 size，已有迭代器仍指向物理位
 
 ## 与 JavaScript 的区别
 
-JavaScript 的 `filter(x => x !== value)` 创建新数组，`splice` 会立即改变 length。C++ 范围 `remove` 在原存储中建立稳定保留前缀，只返回逻辑边界；容器缩短是第二步。ranges projection 类似按 `item.archived` 比较，但不创建映射数组。
+> JavaScript 的 `filter(x => x !== value)` 创建新数组，`splice` 会立即改变 length。C++ 范围 `remove` 在原存储中建立稳定保留前缀，只返回逻辑边界；容器缩短是第二步。ranges projection 类似按 `item.archived` 比较，但不创建映射数组。
 
 ## 相关内容
 

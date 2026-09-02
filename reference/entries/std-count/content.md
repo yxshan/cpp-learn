@@ -82,7 +82,7 @@ ranges 家族也接受 range。值参数的 C++26 默认类型和 ranges policy 
 
 ## 与 JavaScript 的区别
 
-JavaScript 常写 `array.filter(x => x === value).length`，会创建匹配数组；C++ `count` 直接累加。ranges projection 类似先读取 `item.status` 再比较，但不构造 `map()` 结果。
+> JavaScript 常写 `array.filter(x => x === value).length`，会创建匹配数组；C++ `count` 直接累加。ranges projection 类似先读取 `item.status` 再比较，但不构造 `map()` 结果。
 
 ## 相关内容
 

@@ -32,6 +32,11 @@ ForwardIt rotate(ExecutionPolicy&& policy, ForwardIt first,
 template<std::permutable I, std::sentinel_for<I> S>
 constexpr std::ranges::subrange<I>
 std::ranges::rotate(I first, I middle, S last);
+
+template<std::ranges::forward_range R>
+    requires std::permutable<std::ranges::iterator_t<R>>
+constexpr std::ranges::borrowed_subrange_t<R>
+std::ranges::rotate(R&& range, std::ranges::iterator_t<R> middle);
 ```
 
 ranges 家族也接受 range 加一个 `middle` 迭代器。C++26 才有 ranges policy 接口。
@@ -56,11 +61,11 @@ ranges 家族也接受 range 加一个 `middle` 迭代器。C++26 才有 ranges 
 
 交换或移动抛异常时，范围可能已部分重新排列，不会自动回滚。标准 execution policy 下，元素访问函数的未捕获异常会调用 `std::terminate`，分配失败可抛 `std::bad_alloc`。
 
-算法不增删元素，因此不会仅因旋转使 vector 的迭代器失效；但迭代器表示的是物理位置，旋转后该位置可能持有不同的逻辑值。返回迭代器只在容器仍存活且没有后续结构修改时有效。调用期间不能与其他线程无同步地访问被写入的元素。
+算法不增删元素，因此不会仅因旋转使 vector 的迭代器失效；但迭代器表示的是物理位置，旋转后该位置可能持有不同的逻辑值。返回迭代器只在容器仍存活且没有后续结构修改时有效。range 重载返回 `borrowed_subrange_t<R>`：非 borrowed 临时 owner 不会把可悬空迭代器暴露给调用者，结果类型会退化为 `std::ranges::dangling`。调用期间不能与其他线程无同步地访问被写入的元素。
 
 ## 示例
 
-“左旋并定位旧首元素”把前两个整数搬到末尾；ranges 示例对 array 左旋一位，并从返回 subrange 的 `.begin()` 得到旧首元素新位置。
+“左旋并定位旧首元素”把前两个整数搬到末尾；ranges 示例把固定工作队列轮换一位，并从返回 subrange 的 `.begin()` 得到旧首任务的新位置。
 
 ## 常见错误
 
@@ -72,7 +77,7 @@ ranges 家族也接受 range 加一个 `middle` 迭代器。C++26 才有 ranges 
 
 ## 与 JavaScript 的区别
 
-JavaScript 常用 `array.push(...array.splice(0, k))`，会通过 splice 改变数组长度并创建中间数组。`std::rotate` 在既有 C++ 范围内原地重排，不改变 size，并用迭代器表达分割位置。
+> JavaScript 常用 `array.push(...array.splice(0, k))`，会通过 splice 改变数组长度并创建中间数组。`std::rotate` 在既有 C++ 范围内原地重排，不改变 size，并用迭代器表达分割位置。
 
 ## 相关内容
 

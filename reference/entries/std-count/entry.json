@@ -36,6 +36,8 @@
     { "kind": "primary", "title": "WG21 P0024R2: parallel algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html", "standardSection": "count" },
     { "kind": "primary", "title": "WG21 P0202R3: constexpr algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html", "standardSection": "count" },
     { "kind": "primary", "title": "WG21 P0896R4: ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0896r4.pdf", "standardSection": "count" },
+    { "kind": "primary", "title": "WG21 P2248R8: Enabling list-initialization for algorithms", "url": "https://isocpp.org/files/papers/P2248R8.html", "standardSection": "algorithm value parameters" },
+    { "kind": "primary", "title": "WG21 P3179R9: parallel range algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3179r9.html", "standardSection": "count" },
     { "kind": "primary", "title": "C++ working draft: parallel algorithm exceptions", "url": "https://eel.is/c++draft/algorithms.parallel.exceptions", "standardSection": "[algorithms.parallel.exceptions]" },
     { "kind": "secondary", "title": "cppreference 中文：std::count", "url": "https://zh.cppreference.com/w/cpp/algorithm/count" }
   ],

@@ -33,6 +33,11 @@ template<std::input_iterator I, std::sentinel_for<I> S,
     requires std::indirectly_movable<I, O>
 constexpr std::ranges::move_result<I, O>
 std::ranges::move(I first, S last, O result);
+
+template<std::ranges::input_range R, std::weakly_incrementable O>
+    requires std::indirectly_movable<std::ranges::iterator_t<R>, O>
+constexpr std::ranges::move_result<std::ranges::borrowed_iterator_t<R>, O>
+std::ranges::move(R&& range, O result);
 ```
 
 ranges 家族还接受 range。C++26 才加入 ranges execution-policy 重载，不应把它当成 C++20 或 C++23 接口。
@@ -57,7 +62,9 @@ ranges 家族还接受 range。C++26 才加入 ranges execution-policy 重载，
 
 ## 移后状态、生命周期与失效
 
-被移动对象仍然存活，且处于“有效但未指定”的状态；只能执行其类型明确允许的操作，不能假设字符串一定为空或指针以外的任意类型一定恢复默认值。教学示例因此只读取目标，不输出源。
+移动不会结束源对象的生命周期。对 C++ 标准库类型，标准提供“有效但未指定”的通用移后保证；自定义类型的移后合同则由该类型自己的移动操作决定，范围算法的约束不会额外赋予这一保证。无论哪种类型，都不能凭空假设字符串一定为空或对象一定恢复默认值。教学示例因此只读取目标，不输出源。
+
+range 重载用 `borrowed_iterator_t<R>` 保存 `.in`：lvalue owner 或 borrowed range 可得到输入尾；若传入非 borrowed 临时 range，`.in` 的类型是 `std::ranges::dangling`。`.out` 仍来自调用者提供的目标，但它也只在目标对象及其位置继续有效时可用。
 
 算法不拥有输入和目标。两侧对象、迭代器及目标写入位置必须存活到相应访问结束。向固定大小目标移动不会改变容器结构；若输出适配器引发扩容，则按目标容器的规则使旧迭代器、指针和引用失效。
 
@@ -77,7 +84,7 @@ ranges 家族还接受 range。C++26 才加入 ranges execution-policy 重载，
 
 ## 与 JavaScript 的区别
 
-JavaScript 数组元素通常是引用或值的赋值，没有 C++ 的可观察移后对象合同。C++ 范围 `move` 更接近“逐槽调用移动赋值”，目标槽必须存在，源对象仍存在但其值不可作具体假设。
+> JavaScript 数组元素通常是引用或值的赋值，没有 C++ 的可观察移后对象合同。C++ 范围 `move` 更接近“逐槽调用移动赋值”，目标槽必须存在，源对象仍存在；标准库类型的值不可作具体假设，自定义类型则遵守自身合同。
 
 ## 相关内容
 

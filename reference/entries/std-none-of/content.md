@@ -74,7 +74,7 @@ ranges 家族也接受 range。ranges execution-policy 版本属于 C++26，而�
 
 ## 与 JavaScript 的区别
 
-语义可写成 `!array.some(predicate)`。现代 JavaScript 的 `every(x => !predicate(x))` 也等价；C++ 额外约束迭代器类别、谓词可调用性、对象生命周期和并行策略下的副作用。
+> 语义可写成 `!array.some(predicate)`。现代 JavaScript 的 `every(x => !predicate(x))` 也等价；C++ 额外约束迭代器类别、谓词可调用性、对象生命周期和并行策略下的副作用。
 
 ## 相关内容
 
