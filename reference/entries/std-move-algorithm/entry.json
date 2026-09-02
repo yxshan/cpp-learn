@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "id": "std-move-algorithm",
+  "version": 1,
+  "slug": "standard-library/algorithms/move",
+  "kind": "function",
+  "title": "std::move（范围算法）",
+  "summary": "把输入范围中的元素逐项移动赋值到已有的目标范围。",
+  "symbol": "std::move",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["move algorithm", "范围移动", "批量移动", "std move algorithm"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-copy", "std-move", "std-vector"],
+  "content": { "format": "markdown", "path": "entries/std-move-algorithm/content.md" },
+  "examples": [
+    {
+      "id": "move-owned-values",
+      "path": "entries/std-move-algorithm/examples/move-owned-values.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "written=3\nvalues=4,7,9\n"
+    },
+    {
+      "id": "move-string-batch-with-ranges",
+      "path": "entries/std-move-algorithm/examples/move-string-batch-with-ranges.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "written=2\nvalues=api,worker\n"
+    }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: move algorithms", "url": "https://eel.is/c++draft/alg.move", "standardSection": "[alg.move]" },
+    { "kind": "primary", "title": "C++ working draft: moved-from state", "url": "https://eel.is/c++draft/lib.types.movedfrom", "standardSection": "[lib.types.movedfrom]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[alg.move]" },
+    { "kind": "primary", "title": "WG21 P0024R2: parallel algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html", "standardSection": "move" },
+    { "kind": "primary", "title": "WG21 P0202R3: constexpr algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html", "standardSection": "move" },
+    { "kind": "primary", "title": "WG21 P0896R4: ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0896r4.pdf", "standardSection": "move" },
+    { "kind": "primary", "title": "LWG 2689: parallel move overlap", "url": "https://cplusplus.github.io/LWG/issue2689", "standardSection": "LWG 2689" },
+    { "kind": "secondary", "title": "cppreference 中文：std::move 范围算法", "url": "https://zh.cppreference.com/w/cpp/algorithm/move" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

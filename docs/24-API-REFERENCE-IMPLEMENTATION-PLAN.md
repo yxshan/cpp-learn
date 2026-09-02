@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.12 |
+| Version | 1.13 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-01 |
+| Last updated | 2026-09-02 |
 
 ## 1. Objective
 
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 12 are
+first three content-quality batches, and breadth-expansion batches 4 through 13 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -199,6 +199,13 @@ examples. `<list>`, `std::list`, `<forward_list>`, `std::forward_list`,
 contiguous view. All twelve examples use C++20 and fixed values; they avoid
 addresses, allocator/layout observations, dangling views, invalid ranges,
 timing, and unspecified output.
+
+Breadth batch 13 advances the catalog from 96 to 101 Entries and from 178 to
+188 examples. The range algorithms `std::move`, `std::count`, `std::none_of`,
+`std::rotate`, and `std::remove` complete the selected algorithm slice. All ten
+new examples use deterministic C++20 values and avoid moved-from source output,
+unspecified remove tails, predicate side effects, policy scheduling, timing,
+and implementation-dependent observations.
 
 ### Work packages
 

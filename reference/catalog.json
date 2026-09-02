@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 12,
+  "version": 13,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -97,7 +97,12 @@
     "entries/header-forward-list/entry.json",
     "entries/std-forward-list/entry.json",
     "entries/header-span/entry.json",
-    "entries/std-span/entry.json"
+    "entries/std-span/entry.json",
+    "entries/std-move-algorithm/entry.json",
+    "entries/std-count/entry.json",
+    "entries/std-none-of/entry.json",
+    "entries/std-rotate/entry.json",
+    "entries/std-remove-algorithm/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

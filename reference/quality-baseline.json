@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 12,
+  "catalogVersion": 13,
   "review": {
-    "id": "breadth-expansion-batch-12",
-    "reviewedAt": "2026-09-01",
-    "fixedPoint": "cbe7853",
-    "scope": "Catalog version 12 adds six linked-sequence and contiguous-view Entries at zero structural debt; no waivers remain."
+    "id": "breadth-expansion-batch-13",
+    "reviewedAt": "2026-09-02",
+    "fixedPoint": "b9a34b1",
+    "scope": "Catalog version 13 adds five algorithm Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

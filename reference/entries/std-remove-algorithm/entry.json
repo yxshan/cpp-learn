@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "id": "std-remove-algorithm",
+  "version": 1,
+  "slug": "standard-library/algorithms/remove",
+  "kind": "function",
+  "title": "std::remove（范围算法）",
+  "summary": "把不等于给定值的元素稳定压缩到范围前部并返回逻辑末尾。",
+  "symbol": "std::remove",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["remove algorithm", "范围 remove", "逻辑删除", "erase-remove"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-remove-if", "std-vector", "std-filesystem-remove"],
+  "content": { "format": "markdown", "path": "entries/std-remove-algorithm/content.md" },
+  "examples": [
+    {
+      "id": "erase-removed-values",
+      "path": "entries/std-remove-algorithm/examples/erase-removed-values.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "removed=3\nvalues=1,3,4\n"
+    },
+    {
+      "id": "remove-archived-with-projection",
+      "path": "entries/std-remove-algorithm/examples/remove-archived-with-projection.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "kept=2\nids=1,3\n"
+    }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: remove", "url": "https://eel.is/c++draft/alg.remove", "standardSection": "[alg.remove]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.alg.remove]" },
+    { "kind": "primary", "title": "C++ working draft: permutable", "url": "https://eel.is/c++draft/alg.req.permutable", "standardSection": "[alg.req.permutable]" },
+    { "kind": "primary", "title": "WG21 P0024R2: parallel algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html", "standardSection": "remove" },
+    { "kind": "primary", "title": "WG21 P0202R3: constexpr algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html", "standardSection": "remove" },
+    { "kind": "primary", "title": "WG21 P0896R4: ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0896r4.pdf", "standardSection": "remove" },
+    { "kind": "primary", "title": "LWG 2110: remove tail state", "url": "https://cplusplus.github.io/LWG/issue2110", "standardSection": "LWG 2110" },
+    { "kind": "secondary", "title": "cppreference 中文：std::remove 范围算法", "url": "https://zh.cppreference.com/w/cpp/algorithm/remove" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

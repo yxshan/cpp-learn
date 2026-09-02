@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 2.4 |
+| Version | 2.5 |
 | Status | Active |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-01 |
+| Last updated | 2026-09-02 |
 
 ## 1. Purpose
 
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 96 Entries. All have at least one primary source,
-and all 178 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 101 Entries. All have at least one primary source,
+and all 188 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -65,19 +65,20 @@ editorial role and upgrade status.
 | Completed in breadth batch 10 | `<filesystem>`, `std::filesystem::path`, `std::filesystem::directory_entry`, `std::filesystem::directory_iterator`, `std::filesystem::exists`, `std::filesystem::create_directories`, `std::filesystem::remove` | Seven filesystem pages establish path values, optional attribute caching, unordered single-pass traversal, query semantics, recursive creation, and single-object deletion; fourteen deterministic C++20 examples use isolated relative roots and sorted directory output |
 | Completed in breadth batch 11 | `<chrono>`, `std::chrono::duration`, `std::chrono::time_point`, `std::chrono::steady_clock`, `std::chrono::system_clock` | Five time pages distinguish typed intervals, clock-relative points, monotonic measurement, and system civil time; ten deterministic C++20 examples use fixed values without calling `now()`, sleeping, consulting time zones, or depending on locale |
 | Completed in breadth batch 12 | `<list>`, `std::list`, `<forward_list>`, `std::forward_list`, `<span>`, `std::span` | Six pages contrast owning bidirectional/singly-linked sequences with a borrowed contiguous view; twelve deterministic C++20 examples avoid addresses, allocator/layout output, invalid ranges, dangling owners, and unspecified behavior |
+| Completed in breadth batch 13 | `std::move` (range algorithm), `std::count`, `std::none_of`, `std::rotate`, `std::remove` (range algorithm) | Five pages complete the selected algorithm slice with explicit classic/policy/ranges boundaries; ten deterministic C++20 examples avoid moved-from source values, unspecified remove tails, predicate side effects, and policy scheduling |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
 | Completed in quality-ratchet closure batch | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Three internal remediation slices cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 and breadth batches 4 through 12 are complete. The
+Quality batches 1 through 3 and breadth batches 4 through 13 are complete. The
 existing ordinary-entity example debt remains cleared. The next batch can
-finish the remaining algorithm candidates, address the memory candidates, or
-begin concurrency after its determinism requirements are fixed.
+address the memory candidates or begin concurrency after its determinism
+requirements are fixed.
 
 ### 3.1 Executable debt baseline
 
-The kind-aware audit currently checks 92 of 96 Entries; three landing Entries
+The kind-aware audit currently checks 97 of 101 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
 the quality-ratchet closure batch, the checked-in baseline contains no known gaps,
 down from the initial 58 gaps across 35 Entries.
@@ -97,7 +98,7 @@ introduce debt; any new structural finding fails the gate immediately.
 
 ## 4. Planned 120-Entry catalog
 
-The current 96 Entries remain in scope. The following 24 candidates make the
+The current 101 Entries remain in scope. The following 19 candidates make the
 remaining catalog explicit. “Candidate” means editorially selected, not yet
 fact-verified or release-ready.
 
@@ -106,10 +107,10 @@ fact-verified or release-ready.
 The selected linked-sequence and contiguous-view slice was delivered in
 breadth batch 12.
 
-### 4.2 Algorithms and numeric operations: 5 candidates
+### 4.2 Algorithms and numeric operations: completed
 
-- `std::move` (algorithm), `std::count`, `std::none_of`.
-- `std::rotate`, `std::remove`.
+The selected range movement, counting, quantifier, rotation, and logical
+removal slice was delivered in breadth batch 13.
 
 ### 4.3 Strings and conversion: completed
 
@@ -157,7 +158,8 @@ delivered in breadth batch 11.
    **Associative/adaptor entity slice completed in breadth batch 4; its header
    maps and a second algorithm slice completed in breadth batch 5; the
    remaining linked-sequence and contiguous-view slice completed in breadth
-   batch 12.**
+   batch 12; the final selected algorithm slice completed in breadth batch
+   13.**
 4. Add string conversion, shared ownership, and utility vocabulary.
    **String conversion and shared ownership completed in breadth batch 6;
    foundational utility vocabulary completed in breadth batch 7; callable,

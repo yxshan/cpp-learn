@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "id": "std-rotate",
+  "version": 1,
+  "slug": "standard-library/algorithms/rotate",
+  "kind": "function",
+  "title": "std::rotate",
+  "summary": "把范围按给定中点左旋，使后半段移动到前面。",
+  "symbol": "std::rotate",
+  "header": "<algorithm>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["rotate algorithm", "范围旋转", "循环左移"],
+  "categories": ["algorithms"],
+  "relatedEntryIds": ["header-algorithm", "std-reverse", "std-vector", "std-remove-algorithm"],
+  "content": { "format": "markdown", "path": "entries/std-rotate/content.md" },
+  "examples": [
+    {
+      "id": "rotate-left-and-find-old-first",
+      "path": "entries/std-rotate/examples/rotate-left-and-find-old-first.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "old_first_index=3\nvalues=3,4,5,1,2\n"
+    },
+    {
+      "id": "rotate-array-with-ranges",
+      "path": "entries/std-rotate/examples/rotate-array-with-ranges.cpp",
+      "kind": "run",
+      "standard": "c++20",
+      "expectedStdout": "old_first_index=3\nvalues=20,30,40,10\n"
+    }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: rotate", "url": "https://eel.is/c++draft/alg.rotate", "standardSection": "[alg.rotate]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.alg.rotate]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[alg.rotate]" },
+    { "kind": "primary", "title": "WG21 P0024R2: parallel algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0024r2.html", "standardSection": "rotate" },
+    { "kind": "primary", "title": "WG21 P0202R3: constexpr algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0202r3.html", "standardSection": "rotate" },
+    { "kind": "primary", "title": "WG21 P0896R4: ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0896r4.pdf", "standardSection": "rotate" },
+    { "kind": "secondary", "title": "cppreference 中文：std::rotate", "url": "https://zh.cppreference.com/w/cpp/algorithm/rotate" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

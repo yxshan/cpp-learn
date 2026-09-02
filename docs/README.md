@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 3.9 |
+| Version | 4.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-01 |
+| Last updated | 2026-09-02 |
 
 ## Purpose
 
@@ -59,7 +59,8 @@ Read in this order:
 41. [Stage 6.2 Phase 3 Breadth Expansion Batch 10 Implementation Report](41-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-10-IMPLEMENTATION-REPORT.md)
 42. [Stage 6.2 Phase 3 Breadth Expansion Batch 11 Implementation Report](42-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-11-IMPLEMENTATION-REPORT.md)
 43. [Stage 6.2 Phase 3 Breadth Expansion Batch 12 Implementation Report](43-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-12-IMPLEMENTATION-REPORT.md)
-44. [Domain Context](CONTEXT.md)
+44. [Stage 6.2 Phase 3 Breadth Expansion Batch 13 Implementation Report](44-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-13-IMPLEMENTATION-REPORT.md)
+45. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -86,6 +87,7 @@ API Reference research and editorial baselines:
 - [Breadth Expansion Batch 10 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH10_RESEARCH.md)
 - [Breadth Expansion Batch 11 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH11_RESEARCH.md)
 - [Breadth Expansion Batch 12 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH12_RESEARCH.md)
+- [Breadth Expansion Batch 13 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH13_RESEARCH.md)
 
 ## Architecture decisions
 
