@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-enable-shared-from-this",
+  "version": 1,
+  "slug": "standard-library/memory/enable-shared-from-this",
+  "kind": "type",
+  "title": "std::enable_shared_from_this",
+  "summary": "让已由 shared_ptr 管理的对象从成员函数取得同一控制块的所有权句柄。",
+  "symbol": "std::enable_shared_from_this",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["enable_shared_from_this", "从 this 共享所有权", "shared_from_this"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["header-memory", "std-shared-ptr", "std-weak-ptr", "std-make-shared"],
+  "content": { "format": "markdown", "path": "entries/std-enable-shared-from-this/content.md" },
+  "examples": [
+    { "id": "share-service-from-member", "path": "entries/std-enable-shared-from-this/examples/share-service-from-member.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "same_owner=true\nowners=2\nid=42\n" },
+    { "id": "observe-object-without-owner", "path": "entries/std-enable-shared-from-this/examples/observe-object-without-owner.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "weak_expired=true\nshared_failed=true\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: enable_shared_from_this", "url": "https://eel.is/c++draft/util.smartptr.enab", "standardSection": "[util.smartptr.enab]" },
+    { "kind": "primary", "title": "C++ working draft: shared_ptr constructors", "url": "https://eel.is/c++draft/util.smartptr.shared.const", "standardSection": "[util.smartptr.shared.const]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[util.smartptr.enab]" },
+    { "kind": "primary", "title": "WG21 P0033R1: Re-enabling shared_from_this", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0033r1.html", "standardSection": "enable_shared_from_this" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[util.smartptr.enab]" },
+    { "kind": "primary", "title": "LWG 2529: enable_shared_from_this specification", "url": "https://cplusplus.github.io/LWG/issue2529", "standardSection": "LWG 2529" },
+    { "kind": "primary", "title": "C++ working draft: shared_ptr atomic access", "url": "https://eel.is/c++draft/util.smartptr.shared.atomic", "standardSection": "[util.smartptr.shared.atomic]" },
+    { "kind": "secondary", "title": "cppreference 中文：enable_shared_from_this", "url": "https://zh.cppreference.com/w/cpp/memory/enable_shared_from_this" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

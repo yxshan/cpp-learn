@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "header-memory",
-  "version": 1,
+  "version": 2,
   "slug": "standard-library/headers/memory",
   "kind": "header",
   "title": "<memory>",
@@ -12,7 +12,7 @@
   "since": "c++98",
   "aliases": ["memory header", "内存头文件", "智能指针头文件"],
   "categories": ["memory"],
-  "relatedEntryIds": ["std-unique-ptr", "std-make-unique", "std-shared-ptr", "std-weak-ptr", "std-make-shared", "standard-library"],
+  "relatedEntryIds": ["std-unique-ptr", "std-make-unique", "std-shared-ptr", "std-weak-ptr", "std-make-shared", "std-enable-shared-from-this", "std-allocator", "std-uninitialized-copy", "std-destroy", "standard-library"],
   "content": { "format": "markdown", "path": "entries/header-memory/content.md" },
   "examples": [{ "id": "ownership-family", "path": "entries/header-memory/examples/ownership-family.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "unique=7\nshared-count=2\n" }],
   "sources": [

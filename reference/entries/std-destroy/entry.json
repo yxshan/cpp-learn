@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "std-destroy",
+  "version": 1,
+  "slug": "standard-library/memory/destroy",
+  "kind": "function",
+  "title": "std::destroy",
+  "summary": "按范围结束活动对象的生命周期，但不释放其底层存储。",
+  "symbol": "std::destroy",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["destroy algorithm", "范围析构", "结束对象生命周期"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["header-memory", "std-allocator", "std-uninitialized-copy", "std-vector"],
+  "content": { "format": "markdown", "path": "entries/std-destroy/content.md" },
+  "examples": [
+    { "id": "destroy-tasks-in-forward-order", "path": "entries/std-destroy/examples/destroy-tasks-in-forward-order.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "destroy=1\ndestroy=2\ndestroy=3\n" },
+    { "id": "destroy-range-and-use-returned-end", "path": "entries/std-destroy/examples/destroy-range-and-use-returned-end.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "returned=2\ndestroyed=2\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: destroy algorithms", "url": "https://eel.is/c++draft/specialized.destroy", "standardSection": "[specialized.destroy]" },
+    { "kind": "primary", "title": "C++ working draft: raw-storage algorithm concepts", "url": "https://eel.is/c++draft/special.mem.concepts", "standardSection": "[special.mem.concepts]" },
+    { "kind": "primary", "title": "C++ working draft: object lifetime", "url": "https://eel.is/c++draft/basic.life", "standardSection": "[basic.life]" },
+    { "kind": "primary", "title": "WG21 P0040R3: Extending memory management tools", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0040r3.html", "standardSection": "destroy" },
+    { "kind": "primary", "title": "C++17 working draft N4659", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf", "standardSection": "[specialized.destroy]" },
+    { "kind": "primary", "title": "WG21 P0784R7: More constexpr containers", "url": "https://open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0784r7.html", "standardSection": "destroy" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[specialized.destroy]" },
+    { "kind": "primary", "title": "C++ working draft: parallel algorithm user requirements", "url": "https://eel.is/c++draft/algorithms.parallel.user", "standardSection": "[algorithms.parallel.user]" },
+    { "kind": "primary", "title": "LWG 2598: destroy requirements", "url": "https://cplusplus.github.io/LWG/issue2598", "standardSection": "LWG 2598" },
+    { "kind": "secondary", "title": "cppreference 中文：std::destroy", "url": "https://zh.cppreference.com/w/cpp/memory/destroy" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

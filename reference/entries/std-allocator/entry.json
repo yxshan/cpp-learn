@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 2,
+  "id": "std-allocator",
+  "version": 1,
+  "slug": "standard-library/memory/allocator",
+  "kind": "type",
+  "title": "std::allocator",
+  "summary": "标准容器默认使用的无状态分配器，用于取得和释放适合 T 对象的存储。",
+  "symbol": "std::allocator",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["allocator", "默认分配器", "内存分配器"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["header-memory", "std-vector", "std-uninitialized-copy", "std-destroy"],
+  "content": { "format": "markdown", "path": "entries/std-allocator/content.md" },
+  "examples": [
+    { "id": "allocate-construct-and-release", "path": "entries/std-allocator/examples/allocate-construct-and-release.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "values=7,9\n" },
+    { "id": "use-default-allocator-with-vector", "path": "entries/std-allocator/examples/use-default-allocator-with-vector.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "default_allocator=true\nvalues=3,5\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: default allocator", "url": "https://eel.is/c++draft/default.allocator", "standardSection": "[default.allocator]" },
+    { "kind": "primary", "title": "C++ working draft: allocator members", "url": "https://eel.is/c++draft/allocator.members", "standardSection": "[allocator.members]" },
+    { "kind": "primary", "title": "C++ working draft: allocator traits", "url": "https://eel.is/c++draft/allocator.traits", "standardSection": "[allocator.traits]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.default.allocator]" },
+    { "kind": "primary", "title": "WG21 P0174R2: Deprecating vestigial library parts", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0174r2.html", "standardSection": "allocator" },
+    { "kind": "primary", "title": "WG21 P0619R4: Reviewing deprecated facilities of C++17", "url": "https://wg21.link/P0619R4", "standardSection": "allocator" },
+    { "kind": "primary", "title": "WG21 P0784R7: More constexpr containers", "url": "https://open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0784r7.html", "standardSection": "allocator" },
+    { "kind": "primary", "title": "WG21 P0401R6: Providing size feedback in the Allocator interface", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0401r6.html", "standardSection": "allocate_at_least" },
+    { "kind": "secondary", "title": "cppreference 中文：std::allocator", "url": "https://zh.cppreference.com/w/cpp/memory/allocator" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

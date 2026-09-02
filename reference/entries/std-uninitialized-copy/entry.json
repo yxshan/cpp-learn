@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "std-uninitialized-copy",
+  "version": 1,
+  "slug": "standard-library/memory/uninitialized-copy",
+  "kind": "function",
+  "title": "std::uninitialized_copy",
+  "summary": "在尚无活动对象的目标存储中逐项复制构造对象。",
+  "symbol": "std::uninitialized_copy",
+  "header": "<memory>",
+  "namespace": "std",
+  "since": "c++98",
+  "aliases": ["uninitialized_copy", "未初始化复制", "原始存储复制构造"],
+  "categories": ["memory"],
+  "relatedEntryIds": ["header-memory", "std-copy", "std-allocator", "std-destroy"],
+  "content": { "format": "markdown", "path": "entries/std-uninitialized-copy/content.md" },
+  "examples": [
+    { "id": "copy-strings-into-raw-storage", "path": "entries/std-uninitialized-copy/examples/copy-strings-into-raw-storage.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "constructed=2\nvalues=api,worker\n" },
+    { "id": "copy-until-output-is-full", "path": "entries/std-uninitialized-copy/examples/copy-until-output-is-full.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "copied=2\nremaining=1\nvalues=3,5\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: uninitialized_copy", "url": "https://eel.is/c++draft/uninitialized.copy", "standardSection": "[uninitialized.copy]" },
+    { "kind": "primary", "title": "C++ working draft: specialized memory algorithms", "url": "https://eel.is/c++draft/specialized.algorithms.general", "standardSection": "[specialized.algorithms.general]" },
+    { "kind": "primary", "title": "C++ working draft: raw-storage algorithm concepts", "url": "https://eel.is/c++draft/special.mem.concepts", "standardSection": "[special.mem.concepts]" },
+    { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.uninitialized.copy]" },
+    { "kind": "primary", "title": "WG21 P0040R3: Extending memory management tools", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0040r3.html", "standardSection": "uninitialized_copy" },
+    { "kind": "primary", "title": "WG21 P0896R4: ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0896r4.pdf", "standardSection": "specialized memory algorithms" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[uninitialized.copy]" },
+    { "kind": "primary", "title": "WG21 P3508R0: Wording for constexpr specialized memory algorithms", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3508r0.html", "standardSection": "uninitialized_copy" },
+    { "kind": "primary", "title": "C++ working draft: parallel algorithm exceptions", "url": "https://eel.is/c++draft/algorithms.parallel.exceptions", "standardSection": "[algorithms.parallel.exceptions]" },
+    { "kind": "primary", "title": "LWG 3054: uninitialized algorithms and cleanup", "url": "https://cplusplus.github.io/LWG/issue3054", "standardSection": "LWG 3054" },
+    { "kind": "secondary", "title": "cppreference 中文：std::uninitialized_copy", "url": "https://zh.cppreference.com/w/cpp/memory/uninitialized_copy" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

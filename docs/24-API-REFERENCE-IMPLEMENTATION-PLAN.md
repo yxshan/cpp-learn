@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.13 |
+| Version | 1.14 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-02 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 13 are
+first three content-quality batches, and breadth-expansion batches 4 through 14 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -206,6 +206,13 @@ Breadth batch 13 advances the catalog from 96 to 101 Entries and from 178 to
 new examples use deterministic C++20 values and avoid moved-from source output,
 unspecified remove tails, predicate side effects, policy scheduling, timing,
 and implementation-dependent observations.
+
+Breadth batch 14 advances the catalog from 101 to 105 Entries and from 188 to
+196 examples. `std::enable_shared_from_this`, `std::allocator`,
+`std::uninitialized_copy`, and `std::destroy` connect shared-control-block
+access with raw-storage allocation, object construction, destruction, and
+deallocation. All eight examples use C++20 and avoid addresses, allocation
+counts, dead-object reads, unspecified cleanup order, and policy scheduling.
 
 ### Work packages
 

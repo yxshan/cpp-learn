@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 13,
+  "version": 14,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -102,7 +102,11 @@
     "entries/std-count/entry.json",
     "entries/std-none-of/entry.json",
     "entries/std-rotate/entry.json",
-    "entries/std-remove-algorithm/entry.json"
+    "entries/std-remove-algorithm/entry.json",
+    "entries/std-enable-shared-from-this/entry.json",
+    "entries/std-allocator/entry.json",
+    "entries/std-uninitialized-copy/entry.json",
+    "entries/std-destroy/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
