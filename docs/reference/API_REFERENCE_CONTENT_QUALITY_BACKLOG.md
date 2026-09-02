@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 2.6 |
+| Version | 2.7 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-02 |
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 105 Entries. All have at least one primary source,
-and all 196 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 110 Entries. All have at least one primary source,
+and all 206 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -67,19 +67,19 @@ editorial role and upgrade status.
 | Completed in breadth batch 12 | `<list>`, `std::list`, `<forward_list>`, `std::forward_list`, `<span>`, `std::span` | Six pages contrast owning bidirectional/singly-linked sequences with a borrowed contiguous view; twelve deterministic C++20 examples avoid addresses, allocator/layout output, invalid ranges, dangling owners, and unspecified behavior |
 | Completed in breadth batch 13 | `std::move` (range algorithm), `std::count`, `std::none_of`, `std::rotate`, `std::remove` (range algorithm) | Five pages complete the selected algorithm slice with explicit classic/policy/ranges boundaries; ten deterministic C++20 examples avoid moved-from source values, unspecified remove tails, predicate side effects, and policy scheduling |
 | Completed in breadth batch 14 | `std::enable_shared_from_this`, `std::allocator`, `std::uninitialized_copy`, `std::destroy` | Four pages connect shared control-block access with allocation, construction, destruction, and deallocation; eight deterministic C++20 examples avoid addresses, allocation counts, dead-object reads, unspecified cleanup order, and policy scheduling |
+| Completed in breadth batch 15 | `<thread>`, `std::thread`, `<mutex>`, `std::mutex`, `std::lock_guard` | Five pages establish thread-handle ownership, join visibility, non-recursive mutex synchronization, header-level once/multi-lock discovery, and scope-bound release; ten deterministic C++20 examples avoid worker output, timing, scheduling order, thread-ID representations, detach, and invalid lock ownership |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
 | Completed in quality-ratchet closure batch | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Three internal remediation slices cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 and breadth batches 4 through 14 are complete. The
-existing ordinary-entity example debt remains cleared. The next batch can
-begin concurrency after its determinism and memory-model requirements are
-fixed.
+Quality batches 1 through 3 and breadth batches 4 through 15 are complete. The
+existing ordinary-entity example debt remains cleared. Concurrency is now in
+progress under explicit determinism, ownership, and memory-model requirements.
 
 ### 3.1 Executable debt baseline
 
-The kind-aware audit currently checks 101 of 105 Entries; three landing Entries
+The kind-aware audit currently checks 106 of 110 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
 the quality-ratchet closure batch, the checked-in baseline contains no known gaps,
 down from the initial 58 gaps across 35 Entries.
@@ -99,7 +99,7 @@ introduce debt; any new structural finding fails the gate immediately.
 
 ## 4. Planned 120-Entry catalog
 
-The current 105 Entries remain in scope. The following 15 candidates make the
+The current 110 Entries remain in scope. The following 10 candidates make the
 remaining catalog explicit. “Candidate” means editorially selected, not yet
 fact-verified or release-ready.
 
@@ -142,11 +142,13 @@ single-object deletion slice was delivered in breadth batch 10.
 The selected duration, time-point, monotonic-clock, and system-clock slice was
 delivered in breadth batch 11.
 
-### 4.9 Concurrency: 15 candidates
+### 4.9 Concurrency: 5 delivered, 10 candidates
 
-- `<thread>`, `std::thread`, `std::jthread`.
-- `<mutex>`, `std::mutex`, `std::lock_guard`, `std::unique_lock`,
-  `std::scoped_lock`.
+- Delivered in breadth batch 15: `<thread>`, `std::thread`, `<mutex>`,
+  `std::mutex`, `std::lock_guard`.
+- Remaining thread lifecycle: `std::jthread`; retain until the local libc++ can
+  compile and execute its real C++20 stop-token contract.
+- Remaining lock ownership: `std::unique_lock`, `std::scoped_lock`.
 - `<condition_variable>`, `std::condition_variable`.
 - `<atomic>`, `std::atomic`.
 - `<future>`, `std::future`, `std::async`.
@@ -171,7 +173,9 @@ delivered in breadth batch 11.
    **I/O completed in breadth batch 9; filesystem completed in breadth batch
    10; time completed in breadth batch 11.**
 6. Add concurrency last, after its nondeterministic-example and memory-model
-   review requirements are explicit.
+   review requirements are explicit. **In progress:** breadth batch 15 delivers
+   thread and mutex foundations; ten candidates remain, including a toolchain-
+   gated `std::jthread` page.
 
 Each batch receives its own primary-source research note, implementation
 report, coverage report, example verification run, and two-axis review.

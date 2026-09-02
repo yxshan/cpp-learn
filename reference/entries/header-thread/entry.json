@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "id": "header-thread",
+  "version": 1,
+  "slug": "standard-library/headers/thread",
+  "kind": "header",
+  "title": "<thread>",
+  "summary": "声明线程句柄、当前线程操作以及 C++20 协作停止线程入口。",
+  "symbol": "<thread>",
+  "header": "<thread>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["thread header", "线程头文件", "并发线程"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["std-thread", "header-mutex", "std-mutex", "std-lock-guard"],
+  "content": { "format": "markdown", "path": "entries/header-thread/content.md" },
+  "examples": [
+    { "id": "run-independent-workers", "path": "entries/header-thread/examples/run-independent-workers.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "results=20,22\nsum=42\n" },
+    { "id": "inspect-thread-identities", "path": "entries/header-thread/examples/inspect-thread-identities.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "main_valid=true\ndifferent=true\njoined=true\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: thread synopsis", "url": "https://eel.is/c++draft/thread.syn", "standardSection": "[thread.syn]" },
+    { "kind": "primary", "title": "C++ working draft: threads", "url": "https://eel.is/c++draft/thread.threads", "standardSection": "[thread.threads]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread]" },
+    { "kind": "primary", "title": "WG21 P0660R10: Stop token and joining thread", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0660r10.pdf" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread]" },
+    { "kind": "secondary", "title": "cppreference 中文：<thread>", "url": "https://zh.cppreference.com/w/cpp/header/thread" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

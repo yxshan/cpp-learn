@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "id": "std-thread",
+  "version": 1,
+  "slug": "standard-library/concurrency/thread",
+  "kind": "type",
+  "title": "std::thread",
+  "summary": "独占表示一个执行线程，并要求显式 join 或 detach。",
+  "symbol": "std::thread",
+  "header": "<thread>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["thread", "线程句柄", "创建线程", "join"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-thread", "header-mutex", "std-mutex", "std-lock-guard"],
+  "content": { "format": "markdown", "path": "entries/std-thread/content.md" },
+  "examples": [
+    { "id": "join-and-observe-result", "path": "entries/std-thread/examples/join-and-observe-result.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "joinable_before=true\nresult=42\njoinable_after=false\n" },
+    { "id": "transfer-thread-ownership", "path": "entries/std-thread/examples/transfer-thread-ownership.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "source_joinable=false\nowner_joinable=true\nvalue=7\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class thread", "url": "https://eel.is/c++draft/thread.thread.class", "standardSection": "[thread.thread.class]" },
+    { "kind": "primary", "title": "C++ working draft: multi-threaded executions and data races", "url": "https://eel.is/c++draft/intro.multithread", "standardSection": "[intro.multithread]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.thread.class]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.thread.class]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::thread", "url": "https://zh.cppreference.com/w/cpp/thread/thread" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

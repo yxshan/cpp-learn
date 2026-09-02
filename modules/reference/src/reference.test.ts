@@ -525,8 +525,8 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
 
     await expect(reference.readiness()).resolves.toEqual({
       ready: true,
-      catalogVersion: 14,
-      entryCount: 105,
+      catalogVersion: 15,
+      entryCount: 110,
       activationDurationMs: expect.any(Number),
     });
     const navigation = await reference.getNavigation();
@@ -640,6 +640,11 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
         "std-allocator",
         "std-uninitialized-copy",
         "std-destroy",
+        "header-thread",
+        "std-thread",
+        "header-mutex",
+        "std-mutex",
+        "std-lock-guard",
       ].sort(),
     );
     expect(navigation.categories).toContainEqual(
@@ -652,6 +657,12 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
       expect.objectContaining({
         id: "time",
         title: "日期与时间",
+      }),
+    );
+    expect(navigation.categories).toContainEqual(
+      expect.objectContaining({
+        id: "concurrency",
+        title: "并发与同步",
       }),
     );
     const result = await reference.search({ text: "std::sort" });

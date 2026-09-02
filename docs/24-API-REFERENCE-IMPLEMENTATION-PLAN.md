@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.14 |
+| Version | 1.15 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-02 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 14 are
+first three content-quality batches, and breadth-expansion batches 4 through 15 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -213,6 +213,14 @@ Breadth batch 14 advances the catalog from 101 to 105 Entries and from 188 to
 access with raw-storage allocation, object construction, destruction, and
 deallocation. All eight examples use C++20 and avoid addresses, allocation
 counts, dead-object reads, unspecified cleanup order, and policy scheduling.
+
+Breadth batch 15 advances the catalog from 105 to 110 Entries and from 196 to
+206 examples. `<thread>`, `std::thread`, `<mutex>`, `std::mutex`, and
+`std::lock_guard` establish thread ownership, join synchronization, mutual
+exclusion, and scope-bound lock release. All ten examples use C++20 and avoid
+worker output, scheduling order, timing, thread-ID representations, mutex
+fairness, detach, and undefined ownership paths. `std::jthread` remains in the
+planned catalog until the local libc++ can execute its C++20 contract.
 
 ### Work packages
 

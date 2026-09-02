@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 14,
+  "catalogVersion": 15,
   "review": {
-    "id": "breadth-expansion-batch-14",
+    "id": "breadth-expansion-batch-15",
     "reviewedAt": "2026-09-02",
-    "fixedPoint": "ce079b0",
-    "scope": "Catalog version 14 adds four ownership, allocator, and raw-storage lifetime Entries at zero structural debt; no waivers remain."
+    "fixedPoint": "f8a25f8",
+    "scope": "Catalog version 15 adds five thread, mutex, and scoped-lock foundation Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

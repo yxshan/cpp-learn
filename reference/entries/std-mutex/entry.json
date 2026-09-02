@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "id": "std-mutex",
+  "version": 1,
+  "slug": "standard-library/concurrency/mutex",
+  "kind": "type",
+  "title": "std::mutex",
+  "summary": "提供不可复制、非递归的独占互斥所有权。",
+  "symbol": "std::mutex",
+  "header": "<mutex>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["mutex", "互斥量", "独占锁", "线程同步"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-mutex", "std-lock-guard", "header-thread", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/std-mutex/content.md" },
+  "examples": [
+    { "id": "publish-value-through-mutex", "path": "entries/std-mutex/examples/publish-value-through-mutex.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=42\n" },
+    { "id": "try-lock-while-owned", "path": "entries/std-mutex/examples/try-lock-while-owned.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "acquired=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: mutex requirements", "url": "https://eel.is/c++draft/thread.mutex.requirements", "standardSection": "[thread.mutex.requirements]" },
+    { "kind": "primary", "title": "C++ working draft: class mutex", "url": "https://eel.is/c++draft/thread.mutex.class", "standardSection": "[thread.mutex.class]" },
+    { "kind": "primary", "title": "C++ working draft: multi-threaded executions and data races", "url": "https://eel.is/c++draft/intro.multithread", "standardSection": "[intro.multithread]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.mutex.class]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.mutex.class]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::mutex", "url": "https://zh.cppreference.com/w/cpp/thread/mutex" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

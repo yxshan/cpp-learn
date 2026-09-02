@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "id": "std-lock-guard",
+  "version": 1,
+  "slug": "standard-library/concurrency/lock-guard",
+  "kind": "type",
+  "title": "std::lock_guard",
+  "summary": "在一个词法作用域内取得并自动释放互斥锁。",
+  "symbol": "std::lock_guard",
+  "header": "<mutex>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["lock_guard", "作用域锁", "RAII 锁", "adopt_lock"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-mutex", "std-mutex", "header-thread", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/std-lock-guard/content.md" },
+  "examples": [
+    { "id": "unlock-during-exception", "path": "entries/std-lock-guard/examples/unlock-during-exception.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "caught=true\nvalue=2\n" },
+    { "id": "adopt-an-existing-lock", "path": "entries/std-lock-guard/examples/adopt-an-existing-lock.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=8\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class lock_guard", "url": "https://eel.is/c++draft/thread.lock.guard", "standardSection": "[thread.lock.guard]" },
+    { "kind": "primary", "title": "C++ working draft: mutex requirements", "url": "https://eel.is/c++draft/thread.mutex.requirements", "standardSection": "[thread.mutex.requirements]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.lock.guard]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.lock.guard]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::lock_guard", "url": "https://zh.cppreference.com/w/cpp/thread/lock_guard" }
+  ],
+  "verifiedAt": "2026-09-02"
+}

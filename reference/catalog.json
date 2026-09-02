@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 14,
+  "version": 15,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -106,7 +106,12 @@
     "entries/std-enable-shared-from-this/entry.json",
     "entries/std-allocator/entry.json",
     "entries/std-uninitialized-copy/entry.json",
-    "entries/std-destroy/entry.json"
+    "entries/std-destroy/entry.json",
+    "entries/header-thread/entry.json",
+    "entries/std-thread/entry.json",
+    "entries/header-mutex/entry.json",
+    "entries/std-mutex/entry.json",
+    "entries/std-lock-guard/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
@@ -157,6 +162,12 @@
       "title": "日期与时间",
       "parentId": "standard-library",
       "order": 90
+    },
+    {
+      "id": "concurrency",
+      "title": "并发与同步",
+      "parentId": "standard-library",
+      "order": 100
     }
   ],
   "redirects": [
