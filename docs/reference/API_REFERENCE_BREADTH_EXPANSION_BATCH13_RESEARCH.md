@@ -507,8 +507,10 @@ JS 没有原生 `rotate`；常见写法 `arr.push(...arr.splice(0,k))` 会改变
    values=3,4,5,1,2
    ```
 
-2. `rotate-array-with-ranges.cpp`：`array<int,4>{10,20,30,40}` 以 `begin()+1`
-   调用 ranges overload，输出 `result.begin()` 相对位置和值序列。
+2. `rotate-array-with-ranges.cpp`：固定的 `array<WorkItem,4>` 工作队列使用
+   `10,20,30,40` 四个 ID，以 `begin()+1` 调用 ranges overload，输出
+   `result.begin()` 相对位置和轮换后的 ID 序列。采用小型领域对象是内容审查后的改进，
+   不改变原定确定性输出。
 
    直接包含：`<algorithm>`、`<array>`、`<iostream>`。
 
@@ -640,7 +642,7 @@ C++ 范围算法不会。Ranges projection 可类比按 `item.archived` 选值�
 | 5 | `std-none-of` / `check-empty-range.cpp` | empty array | vacuous truth | `empty_has_no_negative=true\n` |
 | 6 | `std-none-of` / `check-jobs-with-projection.cpp` | 固定 records | 无副作用 predicate | `all_healthy=true\n` |
 | 7 | `std-rotate` / `rotate-left-and-find-old-first.cpp` | 固定 vector | 规范 sequence order | `old_first_index=3\nvalues=3,4,5,1,2\n` |
-| 8 | `std-rotate` / `rotate-array-with-ranges.cpp` | 固定 array | lvalue borrowed range | `old_first_index=3\nvalues=20,30,40,10\n` |
+| 8 | `std-rotate` / `rotate-array-with-ranges.cpp` | 固定 WorkItem array | lvalue borrowed range | `old_first_index=3\nvalues=20,30,40,10\n` |
 | 9 | `std-remove-algorithm` / `erase-removed-values.cpp` | 固定 vector | erase 前计数、不读 tail | `removed=3\nvalues=1,3,4\n` |
 | 10 | `std-remove-algorithm` / `remove-archived-with-projection.cpp` | 固定 records | projection + erase tail | `kept=2\nids=1,3\n` |
 

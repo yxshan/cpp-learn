@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-028 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-02 |
 
@@ -69,10 +69,23 @@ project-authored.
 | Reference activation | Passed: catalog version 13, 101 Entries |
 | Reference quality ratchet | Passed: 97/101 audited, 0 reviewed gaps, no regressions |
 | Example verification | Passed: 188 total examples; 186 C++20 and 2 C++23 |
-| Focused tests | Pending final validation |
-| Complete repository check | Pending final validation |
-| Standards review | Pending two-axis review |
-| Spec review | Pending two-axis review |
+| Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
+| Complete repository check | Passed: docs, curriculum, 101-entry Reference, 188 examples, formatting, lint, types, 196 tests, and production build |
+| Standards review | Passed against `b9a34b1...88e67c5`; no remaining documented-standard violation or actionable smell |
+| Spec review | Passed against `b9a34b1...88e67c5` after synchronizing the reviewed work-queue example into the research baseline |
+
+The initial reviews found plain JavaScript-comparison paragraphs instead of
+learning cards, a missing ranges remove comparison constraint, two toy rotate
+examples, an over-broad moved-from guarantee, incomplete borrowed/dangling
+return guidance, and missing direct sources for C++26 and policy-exception
+claims. Commit `88e67c5` adds the required blockquotes and constraint, converts
+one rotate example into a deterministic `WorkItem` queue, limits the generic
+moved-from statement to its actual standard-library scope, documents
+`borrowed_iterator_t`/`borrowed_subrange_t`, and adds P2248R8, P3179R9, and
+parallel-exception sources where applicable. The research example matrix now
+records the reviewed domain scenario without changing its exact stdout. Both
+review axes report no remaining blocking finding; `88e67c5` is the reviewed
+fixed point recorded by the quality baseline.
 
 ## 7. Controlled limitations
 
