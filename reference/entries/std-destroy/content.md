@@ -63,7 +63,7 @@ ranges 还有 range 重载，返回 `borrowed_iterator_t<R>`；非 borrowed 临�
 
 ## 异常与 execution policy
 
-处理类型须满足不抛析构要求；主动从析构函数抛异常通常会导致 `std::terminate` 或不满足接口约束，算法没有“收集异常后回滚对象寿命”的合同。policy 重载可无序或并行销毁；用户不能依赖严格前向顺序。
+处理类型须满足不抛析构要求；主动从析构函数抛异常通常会导致 `std::terminate` 或不满足接口约束，算法没有“收集异常后回滚对象寿命”的合同。对标准 execution policy，元素访问函数抛出的未捕获异常会调用 `std::terminate`，并行化临时分配失败仍可抛 `std::bad_alloc`。policy 重载可无序或并行销毁；用户不能依赖严格前向顺序。
 
 ## 生命周期、失效与线程
 

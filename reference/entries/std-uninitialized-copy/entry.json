@@ -22,6 +22,7 @@
     { "kind": "primary", "title": "C++ working draft: uninitialized_copy", "url": "https://eel.is/c++draft/uninitialized.copy", "standardSection": "[uninitialized.copy]" },
     { "kind": "primary", "title": "C++ working draft: specialized memory algorithms", "url": "https://eel.is/c++draft/specialized.algorithms.general", "standardSection": "[specialized.algorithms.general]" },
     { "kind": "primary", "title": "C++ working draft: raw-storage algorithm concepts", "url": "https://eel.is/c++draft/special.mem.concepts", "standardSection": "[special.mem.concepts]" },
+    { "kind": "primary", "title": "C++ working draft: object lifetime", "url": "https://eel.is/c++draft/basic.life", "standardSection": "[basic.life]" },
     { "kind": "primary", "title": "WG21 1997 public review draft N2356", "url": "https://www.open-std.org/jtc1/sc22/open/n2356/", "standardSection": "[lib.uninitialized.copy]" },
     { "kind": "primary", "title": "WG21 P0040R3: Extending memory management tools", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0040r3.html", "standardSection": "uninitialized_copy" },
     { "kind": "primary", "title": "WG21 P0896R4: ranges", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0896r4.pdf", "standardSection": "specialized memory algorithms" },
