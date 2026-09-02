@@ -36,6 +36,11 @@ template<class NoThrowForwardIterator, class Size>
 constexpr NoThrowForwardIterator
 destroy_n(NoThrowForwardIterator first, Size n);
 
+namespace std::ranges {
+  template<std::destructible T>
+  constexpr void destroy_at(T* location) noexcept;
+}
+
 template</* no-throw-input-iterator */ class I,
          /* no-throw-sentinel-for<I> */ class S>
   requires std::destructible<std::iter_value_t<I>>
