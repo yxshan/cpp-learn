@@ -4,7 +4,7 @@
   "review": {
     "id": "breadth-expansion-batch-14",
     "reviewedAt": "2026-09-02",
-    "fixedPoint": "006f63e",
+    "fixedPoint": "ce079b0",
     "scope": "Catalog version 14 adds four ownership, allocator, and raw-storage lifetime Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},

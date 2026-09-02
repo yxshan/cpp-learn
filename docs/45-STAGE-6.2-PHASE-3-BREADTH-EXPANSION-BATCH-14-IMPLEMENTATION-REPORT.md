@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-029 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-02 |
 
@@ -68,10 +68,21 @@ examples are project-authored.
 | Reference activation | Passed: catalog version 14, 105 Entries |
 | Reference quality ratchet | Passed: 101/105 audited, 0 reviewed gaps, no regressions |
 | Example verification | Passed: 196 total examples; 194 C++20 and 2 C++23 |
-| Focused tests | Pending final validation |
-| Complete repository check | Pending final validation |
-| Standards review | Pending two-axis review |
-| Spec review | Pending two-axis review |
+| Focused tests | Passed: 43 tests across Reference, quality, verification, and CLI contracts |
+| Complete repository check | Passed: docs, curriculum, 105-entry Reference, 196 examples, formatting, lint, types, 196 tests, and production build |
+| Standards review | Passed against `006f63e...ce079b0`; no remaining documented-standard violation or actionable smell |
+| Spec review | Passed against `006f63e...ce079b0`; scope, versions, lifetime contracts, manifests, examples, counts, and acceptance behavior match |
+
+The implementation review identified two precision improvements before
+acceptance. Commit `84fb9d2` states the standard-policy `terminate` and
+`bad_alloc` boundary for `destroy`, adds direct N4861, P0593R6, object-lifetime,
+and parallel-exception sources where their fact groups are taught, and refreshes
+the modified `<memory>` manifest verification date. The Spec review then found
+that the representative C++20 destroy family omitted
+`std::ranges::destroy_at`; commit `ce079b0` adds the constrained `constexpr`
+`noexcept` declaration. Both review axes approved the resulting diff with no
+remaining finding. `ce079b0` is the reviewed fixed point recorded by the
+quality baseline.
 
 ## 7. Controlled limitations
 
