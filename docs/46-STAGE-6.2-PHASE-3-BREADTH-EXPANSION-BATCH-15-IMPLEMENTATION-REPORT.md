@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-030 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-02 |
 
@@ -68,8 +68,17 @@ comparisons, declarations, and examples are project-authored.
 | Example verification | Passed: 206 total examples; 204 C++20 and 2 C++23 |
 | Focused tests | Passed: 39 tests across Reference, quality, and CLI contracts |
 | Complete repository check | Passed: docs, curriculum, 110-entry Reference, 206 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending two-axis review |
-| Spec review | Pending two-axis review |
+| Standards review | Passed against `f8a25f8...d1e897b`; no remaining documented-standard violation or actionable smell |
+| Spec review | Passed against `f8a25f8...d1e897b`; scope, navigation, facilities, examples, versions, counts, and toolchain boundary match |
+
+The first review found four standards issues and two specification gaps. Commit
+`a62aa85` removes an unsupported OS-thread mapping claim, adds the C++20
+`std::thread` constructor constraints, parameter-materialization errors, and
+direct constructor/member sources, restores both Header-to-Standard-Library
+navigation relationships, and completes the `<mutex>` map with lock tags and
+the `call_once` retry/synchronization contract. Commit `d1e897b` then pins the
+quality baseline to that reviewed repair point. Both original reviewers
+approved the resulting diff with no new finding.
 
 ## 7. Controlled limitations
 
