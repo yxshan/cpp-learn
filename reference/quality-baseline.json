@@ -3,8 +3,8 @@
   "catalogVersion": 16,
   "review": {
     "id": "breadth-expansion-batch-16",
-    "reviewedAt": "2026-09-03",
-    "fixedPoint": "29d5c49",
+    "reviewedAt": "2026-09-04",
+    "fixedPoint": "31b2689",
     "scope": "Catalog version 16 adds four lock-ownership and condition-variable Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
