@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-032 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-04 |
 
@@ -66,8 +66,13 @@ tables, and examples are project-authored.
 | Batch example strict compile/run | Passed: 4/4 with `clang++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -pthread` and exact stdout |
 | Reference activation and quality | Passed: catalog version 17, 116 Entries, 112/116 audited, 0 reviewed gaps, no regressions |
 | Complete repository check | Passed: docs, curriculum, 116-entry Reference, 218 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending |
-| Specification review | Pending |
+| Standards review | Accepted after direct wait/specialization/version sources were added, the P1135R6 title was corrected, and Header/Entity responsibilities were separated |
+| Specification review | Accepted after initialization history, operation contracts, specialization capabilities, and C++20 CAS failure-order wording were corrected |
+
+The review repair pass also removed a C++11-only compare-exchange restriction
+that had accidentally been stated as a C++20 rule. The accepted C++20 contract
+for the two-order overload forbids `release` and `acq_rel` as the failure order;
+it does not retain the removed "failure no stronger than success" wording.
 
 ## 7. Controlled limitations
 
