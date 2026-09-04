@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "id": "header-atomic",
+  "version": 1,
+  "slug": "standard-library/headers/atomic",
+  "kind": "header",
+  "title": "<atomic>",
+  "summary": "提供原子对象、内存序、等待通知、原子标志和内存栅栏设施。",
+  "symbol": "<atomic>",
+  "header": "<atomic>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["atomic header", "原子操作头文件", "memory_order", "atomic_flag"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["std-atomic", "std-thread", "std-mutex", "std-condition-variable"],
+  "content": { "format": "markdown", "path": "entries/header-atomic/content.md" },
+  "examples": [
+    { "id": "release-acquire-publication", "path": "entries/header-atomic/examples/release-acquire-publication.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "ready=true\nobserved=42\n" },
+    { "id": "atomic-flag-state", "path": "entries/header-atomic/examples/atomic-flag-state.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first=false\nsecond=true\nafter_clear=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: <atomic> synopsis", "url": "https://eel.is/c++draft/atomics.syn", "standardSection": "[atomics.syn]" },
+    { "kind": "primary", "title": "C++ working draft: order and consistency", "url": "https://eel.is/c++draft/atomics.order", "standardSection": "[atomics.order]" },
+    { "kind": "primary", "title": "C++ working draft: atomic flag", "url": "https://eel.is/c++draft/atomics.flag", "standardSection": "[atomics.flag]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[atomics]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[atomics.syn]" },
+    { "kind": "primary", "title": "P1135R6: Consistent comparison for atomic waiting", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1135r6.html", "standardSection": "atomic waiting and notifying" },
+    { "kind": "secondary", "title": "cppreference 中文：<atomic>", "url": "https://zh.cppreference.com/w/cpp/header/atomic" }
+  ],
+  "verifiedAt": "2026-09-04"
+}

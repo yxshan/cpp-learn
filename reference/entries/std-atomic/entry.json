@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-atomic",
+  "version": 1,
+  "slug": "standard-library/concurrency/atomic",
+  "kind": "type",
+  "title": "std::atomic",
+  "summary": "为单个对象提供不可分割访问、显式内存顺序和等待通知操作。",
+  "symbol": "std::atomic",
+  "header": "<atomic>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["atomic", "原子变量", "原子操作", "CAS", "memory order"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-atomic", "std-thread", "std-mutex", "std-condition-variable"],
+  "content": { "format": "markdown", "path": "entries/std-atomic/content.md" },
+  "examples": [
+    { "id": "relaxed-counter", "path": "entries/std-atomic/examples/relaxed-counter.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "counter=2000\n" },
+    { "id": "compare-exchange-expected", "path": "entries/std-atomic/examples/compare-exchange-expected.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first=false\nexpected_after_failure=7\nsecond=true\nstate=9\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class template atomic", "url": "https://eel.is/c++draft/atomics.types.generic", "standardSection": "[atomics.types.generic]" },
+    { "kind": "primary", "title": "C++ working draft: order and consistency", "url": "https://eel.is/c++draft/atomics.order", "standardSection": "[atomics.order]" },
+    { "kind": "primary", "title": "C++ working draft: lock-free property", "url": "https://eel.is/c++draft/atomics.lockfree", "standardSection": "[atomics.lockfree]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[atomics.types.generic]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[atomics.types.generic]" },
+    { "kind": "primary", "title": "P0883R2: Fixing atomic initialization", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0883r2", "standardSection": "atomic initialization" },
+    { "kind": "primary", "title": "P0418R2: Fail or succeed", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0418r2.html", "standardSection": "compare_exchange failure ordering" },
+    { "kind": "secondary", "title": "cppreference 中文：std::atomic", "url": "https://zh.cppreference.com/w/cpp/atomic/atomic" }
+  ],
+  "verifiedAt": "2026-09-04"
+}

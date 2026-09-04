@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 16,
+  "version": 17,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -115,7 +115,9 @@
     "entries/std-unique-lock/entry.json",
     "entries/std-scoped-lock/entry.json",
     "entries/header-condition-variable/entry.json",
-    "entries/std-condition-variable/entry.json"
+    "entries/std-condition-variable/entry.json",
+    "entries/header-atomic/entry.json",
+    "entries/std-atomic/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

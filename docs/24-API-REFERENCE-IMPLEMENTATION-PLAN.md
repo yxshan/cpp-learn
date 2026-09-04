@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.16 |
+| Version | 1.17 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-04 |
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 16 are
+first three content-quality batches, and breadth-expansion batches 4 through 17 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -230,6 +230,14 @@ examples use C++20 and avoid sleep, wake-order assertions, lost-notification
 assumptions, cross-thread mutex ownership transfer, and invalid adopt/release
 paths. The complete catalog now contains 212 C++20 examples and the two
 existing C++23 `std::expected` examples.
+
+Breadth batch 17 advances the catalog from 114 to 116 Entries and from 214 to
+218 examples. `<atomic>` and `std::atomic` establish atomic-object identity,
+memory-order selection, release/acquire publication, compare-and-exchange,
+blocking wait/notify, and honest lock-free boundaries. All four new examples
+use C++20 and avoid polling, sleep, timing, worker output, schedule order, and
+implementation-defined lock-free snapshots. The complete catalog now contains
+216 C++20 examples and the two existing C++23 `std::expected` examples.
 
 ### Work packages
 

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 16,
+  "catalogVersion": 17,
   "review": {
-    "id": "breadth-expansion-batch-16",
+    "id": "breadth-expansion-batch-17",
     "reviewedAt": "2026-09-04",
-    "fixedPoint": "31b2689",
-    "scope": "Catalog version 16 adds four lock-ownership and condition-variable Entries at zero structural debt; no waivers remain."
+    "fixedPoint": "b4bdcc1",
+    "scope": "Catalog version 17 adds two atomic-operation Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],
