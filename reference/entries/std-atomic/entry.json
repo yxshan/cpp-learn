@@ -20,12 +20,19 @@
   ],
   "sources": [
     { "kind": "primary", "title": "C++ working draft: class template atomic", "url": "https://eel.is/c++draft/atomics.types.generic", "standardSection": "[atomics.types.generic]" },
+    { "kind": "primary", "title": "C++ working draft: integral atomic specializations", "url": "https://eel.is/c++draft/atomics.types.int", "standardSection": "[atomics.types.int]" },
+    { "kind": "primary", "title": "C++ working draft: pointer atomic specializations", "url": "https://eel.is/c++draft/atomics.types.pointer", "standardSection": "[atomics.types.pointer]" },
+    { "kind": "primary", "title": "C++ working draft: floating-point atomic specializations", "url": "https://eel.is/c++draft/atomics.types.float", "standardSection": "[atomics.types.float]" },
+    { "kind": "primary", "title": "C++ working draft: atomic waiting and notifying", "url": "https://eel.is/c++draft/atomics.wait", "standardSection": "[atomics.wait]" },
     { "kind": "primary", "title": "C++ working draft: order and consistency", "url": "https://eel.is/c++draft/atomics.order", "standardSection": "[atomics.order]" },
     { "kind": "primary", "title": "C++ working draft: lock-free property", "url": "https://eel.is/c++draft/atomics.lockfree", "standardSection": "[atomics.lockfree]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[atomics.types.generic]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[atomics.types.generic]" },
     { "kind": "primary", "title": "P0883R2: Fixing atomic initialization", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0883r2", "standardSection": "atomic initialization" },
     { "kind": "primary", "title": "P0418R2: Fail or succeed", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0418r2.html", "standardSection": "compare_exchange failure ordering" },
+    { "kind": "primary", "title": "P0718R2: Revising atomic_shared_ptr for C++20", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0718r2.html", "standardSection": "atomic smart-pointer specializations" },
+    { "kind": "primary", "title": "P1135R6: The C++20 Synchronization Library", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1135r6.html", "standardSection": "atomic waiting and notifying" },
+    { "kind": "primary", "title": "P1831R1: Deprecating volatile: library", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p1831r1.html", "standardSection": "volatile atomic overload deprecation" },
     { "kind": "secondary", "title": "cppreference 中文：std::atomic", "url": "https://zh.cppreference.com/w/cpp/atomic/atomic" }
   ],
   "verifiedAt": "2026-09-04"

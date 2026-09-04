@@ -53,7 +53,13 @@ struct atomic {
 
 C++20 主模板要求 `T` 满足 Cpp17CopyConstructible 与 Cpp17CopyAssignable，并且 `is_trivially_copyable_v<T>`、copy/move constructible、copy/move assignable 五个 trait 都为 true，否则程序 ill-formed。实际代码应使用 cv-unqualified `T`；当前草案已显式把这一点加入约束。
 
-标准整数特化从 C++11 起提供 `fetch_add/sub/and/or/xor`，`bool` 没有这些整数算术。指针特化提供 fetch_add/sub。浮点特化和 `<memory>` 中的 `atomic<shared_ptr<T>>`、`atomic<weak_ptr<T>>` 从 C++20 起提供。整数原子 fetch 的有符号回绕有标准定义，但由指针算术产生的无效地址仍不能解引用。
+| 类别 | 起始版本 | 在主模板之外增加或限制的能力 |
+|---|---|---|
+| `atomic<bool>` | C++11 | 提供主模板的 load/store/exchange/CAS；不提供整数 fetch 算术与位运算 |
+| 标准整数特化 | C++11 | 增加 `fetch_add/sub/and/or/xor` 及对应复合赋值；有符号整数运算使用二进制补码且不产生未定义结果 |
+| `atomic<T*>` | C++11 | 增加 `fetch_add/sub` 与 `+=/-=`；指针算术要求 `T` 是完整对象类型，结果即使是未定义地址也不能解引用 |
+| `atomic<Floating>` | C++20 | 增加 `fetch_add/sub` 与 `+=/-=`；浮点环境可以不同于调用线程，结果不可表示时结果值未指定，但该操作不会因此产生未定义行为 |
+| `atomic<shared_ptr<T>>`、`atomic<weak_ptr<T>>` | C++20 | 在 `<memory>` 中声明，原子化的是智能指针控制状态；不是任意 `shared_ptr` 成员访问的自动同步 |
 
 ## 初始化、参数与返回值
 
@@ -62,6 +68,16 @@ C++20 `atomic()` 用 `T()` 初始化，值构造器保存 desired；构造都不
 `compare_exchange_*` 把 expected 作为 in/out 参数。比较成功时写入 desired、返回 true，expected 不变；失败时 atomic 不写 desired、返回 false，并把观察到的实际值写回 expected。Weak 允许伪失败，通常放入循环；只尝试一次时使用 strong。
 
 单 order CAS 在 success 为 acq_rel 时将 failure 推导为 acquire，success 为 release 时推导为 relaxed。双 order CAS 的 failure 不能是 release 或 acq_rel。纯 store 只能用 relaxed/release/seq_cst；纯 load 和 wait 只能用 relaxed/consume/acquire/seq_cst。
+
+| 操作 | 返回值 | C++20 合法 order |
+|---|---|---|
+| `store(desired, order)` | `void` | relaxed、release、seq_cst |
+| `load(order)` | 读取到的 `T` | relaxed、consume、acquire、seq_cst |
+| `exchange(desired, order)` | 修改前的 `T` | 六种 order 均可 |
+| `compare_exchange_*` | 是否写入 desired 的 `bool`；失败时回写 expected | success 可用六种；failure 不得为 release/acq_rel，且不得强于 success |
+| 整数、指针或浮点特化的 `fetch_*` | 修改前的值 | 六种 order 均可 |
+| `wait(old, order)` | `void` | relaxed、consume、acquire、seq_cst |
+| `notify_one()`、`notify_all()` | `void` | 没有 order 参数；通知本身不建立发布语义 |
 
 ## 原子性、同步与线程安全
 
@@ -110,4 +126,4 @@ Atomic 的大小和对齐可以不同于 `T`。对象必须在所有并发访问
 
 ## 来源
 
-类型约束、初始化、操作返回、CAS、内存序、lock-free、volatile 与生命周期合同由 manifest 中的 `[atomics.types.generic]`、`[atomics.order]`、`[atomics.lockfree]`、N3337、N4861、P0883R2 与 P0418R2 验证；cppreference 中文页仅用于二级结构核对。
+类型约束、初始化、操作返回、CAS、等待通知、各类特化、内存序、lock-free、volatile 与生命周期合同由 manifest 中的 `[atomics.types.generic]`、`[atomics.types.int]`、`[atomics.types.pointer]`、`[atomics.types.float]`、`[atomics.wait]`、`[atomics.order]`、`[atomics.lockfree]`、N3337、N4861、P0883R2、P0418R2、P0718R2、P1135R6 与 P1831R1 验证；cppreference 中文页仅用于二级结构核对。

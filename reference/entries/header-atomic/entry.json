@@ -24,7 +24,9 @@
     { "kind": "primary", "title": "C++ working draft: atomic flag", "url": "https://eel.is/c++draft/atomics.flag", "standardSection": "[atomics.flag]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[atomics]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[atomics.syn]" },
-    { "kind": "primary", "title": "P1135R6: Consistent comparison for atomic waiting", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1135r6.html", "standardSection": "atomic waiting and notifying" },
+    { "kind": "primary", "title": "P0883R2: Fixing atomic initialization", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0883r2", "standardSection": "atomic initialization" },
+    { "kind": "primary", "title": "P1135R6: The C++20 Synchronization Library", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1135r6.html", "standardSection": "atomic waiting and notifying" },
+    { "kind": "primary", "title": "P3475R2: Defang and deprecate memory_order::consume", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3475r2.pdf", "standardSection": "memory_order::consume deprecation" },
     { "kind": "secondary", "title": "cppreference 中文：<atomic>", "url": "https://zh.cppreference.com/w/cpp/header/atomic" }
   ],
   "verifiedAt": "2026-09-04"

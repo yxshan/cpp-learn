@@ -20,6 +20,7 @@
 | `memory_order` 与命名常量 | 选择 relaxed、acquire、release、acq_rel、seq_cst 等顺序 | C++11 |
 | `ATOMIC_*_LOCK_FREE` 宏 | 以 0/1/2 表示从不/有时/总是 lock-free | C++11 |
 | `atomic<T>` 及整数、指针特化 | load/store、exchange、CAS 和特化 RMW | C++11 |
+| `atomic_bool`、`atomic_int` 等别名 | 常用基础类型和定宽整数的 `atomic<T>` 别名（定宽别名在对应整数类型存在时提供） | C++11 |
 | `atomic_ref<T>` | 对满足约束的既有对象建立原子引用 | C++20 |
 | `atomic_*` 非成员函数 | 成员原子操作的函数式镜像 | C++11 |
 | `atomic_wait`、`atomic_notify_*` | 等待原子值改变并唤醒等待者 | C++20 |
@@ -44,11 +45,11 @@
 
 默认 order 是 `seq_cst`，适合先建立正确模型，但它仍不会把多个独立调用合并成事务。C++20 仍有 `consume`；当前工作草案已把它降为 deprecated 兼容项并按 acquire 语义处理，阅读新版材料时要区分版本。
 
-## 原子性、发布与等待
+## 阅读地图与发布边界
 
 `memory_order::relaxed` 保证单个原子对象不撕裂并遵守自己的 modification order，不发布其他普通数据。经典发布协议是：生产者先写 payload，再 release-store 一个原子标志；消费者用 acquire-load 或 acquire-wait 读到该 release sequence 的值后，才可安全读取 payload。
 
-C++20 `wait(old)` 在当前值仍等于 old 时阻塞并重试；内部可能伪解除阻塞，但只有观察到不同值才返回。`notify_one/all` 是唤醒机制，不保存通知，也不替代 release/acquire 同步边。值若经历 A→B→A，等待者可能看不到短暂的 B；要观察每个事件，应使用 generation counter、队列或更高层协议。
+本页用于先定位设施和理解发布边界。`wait` / `notify` 的返回合同、合法 order、A→B→A 变化风险，以及各特化可用的 RMW 操作集中在 `std::atomic` 页面，避免把头文件索引误当成完整类型文档。
 
 ## Lock-free、复杂度与进度
 
@@ -56,11 +57,11 @@ C++20 `wait(old)` 在当前值仍等于 old 时阻塞并重试；内部可能伪
 
 标准没有为这些设施提供统一大 O、固定延迟、公平、wait-free 或 lock-free 进度保证。Atomic 的价值是不可分割操作和明确内存模型，而不是“必然比 mutex 快”。不要把本机 `is_lock_free()` 输出写成跨平台结论。
 
-## 初始化、生命周期与错误边界
+## 初始化与兼容边界
 
-C++20 默认构造的 atomic 以 `T()` 初始化，`atomic_flag{}` 为 clear；C++11 默认构造模型不同，旧代码可能使用现已 deprecated 的初始化 API。构造本身不是原子操作，对象必须完整构造并安全发布后才能并发访问。最后一次访问结束前也不能销毁对象。
+C++11 中，默认构造的 `atomic<T>` 不包含已初始化的 `T` 值；早期代码因此会见到 `atomic_init`、`ATOMIC_VAR_INIT` 和 `ATOMIC_FLAG_INIT`。C++20 修正为值初始化：默认构造的 `atomic<T>` 含 `T()`，`atomic_flag{}` 为 clear，同时把这些旧初始化 API 标记为 deprecated。新代码优先使用直接构造或列表初始化。
 
-纯 store 不能使用 consume/acquire/acq_rel；纯 load、wait 和 flag test 不能使用 release/acq_rel；flag clear 只能用 relaxed/release/seq_cst。违反这些内存序前置条件不是可捕获的业务错误。`volatile` 也不提供线程同步，不能替代 atomic 或 mutex。
+构造本身不是原子操作；对象必须完整构造并安全发布后才能并发访问，也必须活过最后一次访问。具体成员函数的合法 order 和失败行为见 `std::atomic`。`volatile` 不提供线程同步，不能替代 atomic 或 mutex。
 
 ## 示例
 
@@ -72,7 +73,7 @@ C++20 默认构造的 atomic 以 `T()` 初始化，`atomic_flag{}` 为 clear；C
 - 把 `load()` 后计算再 `store()` 当成一个原子 RMW。
 - 认为 seq_cst 能把多个对象组成事务。
 - 假设所有 atomic 都 lock-free、O(1) 或比 mutex 快。
-- 给 load、store、wait、clear 传入不合法 memory order。
+- 忽略上表和具体类型页，为操作传入不合法 memory order。
 - 把 notify 当作保存状态的事件令牌。
 - 用 `volatile` 代替原子同步。
 - 依赖 `<thread>` 对 `<atomic>` 的传递包含。
@@ -88,4 +89,4 @@ C++20 默认构造的 atomic 以 `T()` 初始化，`atomic_flag{}` 为 clear；C
 
 ## 来源
 
-设施地图、合法内存序、release/acquire、lock-free、C++20 wait/notify 和初始化边界由 manifest 中的 `[atomics.syn]`、`[atomics.order]`、`[atomics.flag]`、N3337、N4861 与 P1135R6 验证；cppreference 中文页仅用于二级结构核对。
+设施地图、合法内存序、release/acquire、lock-free、C++11/C++20 初始化差异、C++20 wait/notify 和 `consume` 的当前状态由 manifest 中的 `[atomics.syn]`、`[atomics.order]`、`[atomics.flag]`、N3337、N4861、P0883R2、P1135R6 与 P3475R2 验证；cppreference 中文页仅用于二级结构核对。
