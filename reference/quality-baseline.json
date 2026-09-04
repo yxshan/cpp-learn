@@ -4,7 +4,7 @@
   "review": {
     "id": "breadth-expansion-batch-17",
     "reviewedAt": "2026-09-04",
-    "fixedPoint": "0c79d66",
+    "fixedPoint": "86a8fd2",
     "scope": "Catalog version 17 adds two atomic-operation Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
