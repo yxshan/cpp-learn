@@ -227,7 +227,6 @@ contender_acquired=false
 template<class... MutexTypes>
 class scoped_lock {
 public:
-  using mutex_type = Mutex; // 仅当参数包恰有一个类型
   explicit scoped_lock(MutexTypes&...);
   explicit scoped_lock(std::adopt_lock_t, MutexTypes&...);
   ~scoped_lock();
@@ -236,7 +235,8 @@ public:
 };
 ```
 
-一个 mutex 时只需 Cpp17BasicLockable，普通构造调用一次 lock；多 mutex 时每个类型须
+仅当参数包恰有一个类型时，类还公开 `mutex_type`，表示该唯一 mutex 类型。一个 mutex
+时只需 Cpp17BasicLockable，普通构造调用一次 lock；多 mutex 时每个类型须
 满足 Cpp17Lockable，构造调用 `std::lock`，用未指定 lock/try_lock/unlock 序列避免死锁。
 零参数可构造且无效果。
 
@@ -350,8 +350,9 @@ unique_lock<mutex>；condition_variable_any 可等待用户 BasicLockable。C++2
 stop-token overload 属于版本地图，但当前 libc++ 缺完整 jthread/stop-token 支持，不以
 fallback 伪装验证。
 
-`notify_all_at_thread_exit` 移动接收已 locked 的 unique_lock，安排当前线程退出时通知和
-释放；锁持有至 thread exit，可能扩大 lock-order deadlock。cv_status 只说明 timed wait
+`notify_all_at_thread_exit` 移动接收已 locked 的 unique_lock，安排当前线程退出时先通知、
+再释放交出的锁；通知排在线程存储期对象销毁之后。锁持有至 thread exit，可能扩大
+lock-order deadlock。cv_status 只说明 timed wait
 是否超时，不代表业务 predicate。
 
 Header 无统一复杂度、公平或 wake 顺序保证。CV 构造可因非内存资源不足抛 system_error；

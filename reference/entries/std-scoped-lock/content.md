@@ -21,8 +21,6 @@
 template<class... MutexTypes>
 class scoped_lock {
 public:
-  using mutex_type = Mutex; // 仅当 sizeof...(MutexTypes) == 1
-
   explicit scoped_lock(MutexTypes&... mutexes);
   explicit scoped_lock(std::adopt_lock_t, MutexTypes&... mutexes);
   ~scoped_lock();
@@ -32,7 +30,7 @@ public:
 };
 ```
 
-参数包可以为空，此时构造与析构都无效果。一个 mutex 时该类型须满足 BasicLockable；多个 mutex 时每个类型须满足 Lockable，以支持 `lock`、`try_lock` 与回退解锁。
+仅当参数包恰有一个类型时，类还公开 `mutex_type`，它就是该唯一 mutex 类型；零个或多个类型时没有这个成员。参数包可以为空，此时构造与析构都无效果。一个 mutex 时该类型须满足 BasicLockable；多个 mutex 时每个类型须满足 Lockable，以支持 `lock`、`try_lock` 与回退解锁。
 
 ## 参数、取得与释放
 

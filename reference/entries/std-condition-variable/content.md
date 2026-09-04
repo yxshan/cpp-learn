@@ -43,7 +43,7 @@ public:
 };
 ```
 
-`wait_until` 和 `wait_for` 另有返回 `bool` 的谓词重载；此处省略 native handle。
+`wait_until` 和 `wait_for` 另有返回 `bool` 的谓词重载；此处省略 native handle。上方采用 C++20 最终工作草案 N4861 的 const-reference 时间参数；当前工作草案已将这些参数改为按值传递，因此阅读更新标准的签名时会看到差异。
 
 ## 参数、返回与等待过程
 

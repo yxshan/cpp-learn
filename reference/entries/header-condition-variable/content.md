@@ -20,7 +20,7 @@
 | `condition_variable` | 只与 `unique_lock<mutex>` 配合的高效条件变量 | C++11 |
 | `condition_variable_any` | 可与满足 BasicLockable 的用户锁类型配合 | C++11 |
 | `cv_status` | 定时等待结果：`timeout` 或 `no_timeout` | C++11 |
-| `notify_all_at_thread_exit` | 在线程退出、锁释放后通知所有等待者 | C++11 |
+| `notify_all_at_thread_exit` | 在线程退出时通知所有等待者，随后释放交出的锁 | C++11 |
 | `condition_variable_any` 的 stop-token 等待 | 可停止的谓词等待 | C++20 |
 
 `cv_status::no_timeout` 只表示等待并非因超时返回，不保证业务谓词已经为 true。非谓词定时等待仍可能伪唤醒。
@@ -31,7 +31,7 @@
 
 推荐协议是：持有同一 mutex 修改状态；解锁后或仍持锁时发送通知；等待者以同一 mutex 构造 `unique_lock`，并调用带谓词的 `wait`。谓词才是事实来源，通知只是提示重新检查。
 
-`notify_all_at_thread_exit(condition, std::move(lock))` 接管一个已持锁的 `unique_lock<mutex>`。调用线程退出时，它先完成受保护线程局部对象相关的退出阶段并释放锁，再通知等待者；移入后不要再使用原 lock 管理该 mutex。
+`notify_all_at_thread_exit(condition, std::move(lock))` 接管一个已持锁的 `unique_lock<mutex>`。通知排在线程存储期对象销毁之后，规定效果等价于先调用 `condition.notify_all()`、再调用交出锁的 `unlock()`；等待者虽已解除阻塞，仍要等该 mutex 解锁后才能重新取得它。移入后不要再使用原 lock 管理该 mutex。
 
 ## 返回、复杂度与异常
 

@@ -44,7 +44,14 @@ public:
 
   void lock();
   bool try_lock();
+  template<class Rep, class Period>
+  bool try_lock_for(
+      const std::chrono::duration<Rep, Period>& timeout_duration);
+  template<class Clock, class Duration>
+  bool try_lock_until(
+      const std::chrono::time_point<Clock, Duration>& timeout_time);
   void unlock();
+  void swap(unique_lock& other) noexcept;
   mutex_type* release() noexcept;
   bool owns_lock() const noexcept;
   explicit operator bool() const noexcept;
@@ -52,7 +59,7 @@ public:
 };
 ```
 
-定时构造和 `try_lock_for` / `try_lock_until` 只在 `Mutex` 满足相应 TimedLockable 合同时可用。此处省略 `swap` 和非成员重载。
+定时构造和 `try_lock_for` / `try_lock_until` 只在 `Mutex` 满足相应 TimedLockable 合同时可用。此处省略非成员 `swap`。C++20 最终工作草案 N4861 没有在移动赋值声明上拼写 `noexcept`，但规定它不抛异常；当前工作草案已把该声明写成 `noexcept`。上方保留 C++20 的声明形态。
 
 ## 状态、参数与返回值
 

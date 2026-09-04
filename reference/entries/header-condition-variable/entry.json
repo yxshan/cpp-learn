@@ -20,7 +20,7 @@
   ],
   "sources": [
     { "kind": "primary", "title": "C++ working draft: condition variables", "url": "https://eel.is/c++draft/thread.condition", "standardSection": "[thread.condition]" },
-    { "kind": "primary", "title": "C++ working draft: notify_all_at_thread_exit", "url": "https://eel.is/c++draft/thread.condition#notify_all_at_thread_exit", "standardSection": "[thread.condition.condvarany]" },
+    { "kind": "primary", "title": "C++ working draft: notify_all_at_thread_exit", "url": "https://eel.is/c++draft/thread.condition.nonmember", "standardSection": "[thread.condition.nonmember]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.condition]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.condition]" },
     { "kind": "secondary", "title": "cppreference 中文：<condition_variable>", "url": "https://zh.cppreference.com/w/cpp/header/condition_variable" }
