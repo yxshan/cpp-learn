@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "id": "std-condition-variable",
+  "version": 1,
+  "slug": "standard-library/concurrency/condition-variable",
+  "kind": "type",
+  "title": "std::condition_variable",
+  "summary": "让线程在释放互斥锁的同时等待，并在通知后重新检查共享状态。",
+  "symbol": "std::condition_variable",
+  "header": "<condition_variable>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["condition_variable", "条件变量", "wait notify", "生产者消费者"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-condition-variable", "std-unique-lock", "std-mutex", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/std-condition-variable/content.md" },
+  "examples": [
+    { "id": "wait-for-published-value", "path": "entries/std-condition-variable/examples/wait-for-published-value.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "observed=42\nready=true\n" },
+    { "id": "wake-all-subscribers", "path": "entries/std-condition-variable/examples/wake-all-subscribers.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first=42\nsecond=43\ncount=2\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class condition_variable", "url": "https://eel.is/c++draft/thread.condition.condvar", "standardSection": "[thread.condition.condvar]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.condition.condvar]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.condition.condvar]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::condition_variable", "url": "https://zh.cppreference.com/w/cpp/thread/condition_variable" }
+  ],
+  "verifiedAt": "2026-09-03"
+}

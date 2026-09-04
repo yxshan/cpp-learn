@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 15,
+  "version": 16,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -111,7 +111,11 @@
     "entries/std-thread/entry.json",
     "entries/header-mutex/entry.json",
     "entries/std-mutex/entry.json",
-    "entries/std-lock-guard/entry.json"
+    "entries/std-lock-guard/entry.json",
+    "entries/std-unique-lock/entry.json",
+    "entries/std-scoped-lock/entry.json",
+    "entries/header-condition-variable/entry.json",
+    "entries/std-condition-variable/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },

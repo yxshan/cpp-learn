@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "id": "std-unique-lock",
+  "version": 1,
+  "slug": "standard-library/concurrency/unique-lock",
+  "kind": "type",
+  "title": "std::unique_lock",
+  "summary": "以可移动的 RAII 对象管理互斥量，并支持延迟、尝试和提前解锁。",
+  "symbol": "std::unique_lock",
+  "header": "<mutex>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["unique_lock", "可移动锁", "延迟加锁", "锁所有权"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-mutex", "std-mutex", "std-lock-guard", "header-condition-variable", "std-condition-variable"],
+  "content": { "format": "markdown", "path": "entries/std-unique-lock/content.md" },
+  "examples": [
+    { "id": "defer-lock-and-relock", "path": "entries/std-unique-lock/examples/defer-lock-and-relock.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "owns_before=false\nowns_after_lock=true\nvalue=42\n" },
+    { "id": "release-lock-ownership", "path": "entries/std-unique-lock/examples/release-lock-ownership.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "owns=false\nassociated=false\ncontender_acquired=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class unique_lock", "url": "https://eel.is/c++draft/thread.lock.unique", "standardSection": "[thread.lock.unique]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.lock.unique]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.lock.unique]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::unique_lock", "url": "https://zh.cppreference.com/w/cpp/thread/unique_lock" }
+  ],
+  "verifiedAt": "2026-09-03"
+}

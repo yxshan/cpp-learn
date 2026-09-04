@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "id": "header-condition-variable",
+  "version": 1,
+  "slug": "standard-library/headers/condition-variable",
+  "kind": "header",
+  "title": "<condition_variable>",
+  "summary": "提供线程等待共享状态变化及发送通知的条件变量设施。",
+  "symbol": "<condition_variable>",
+  "header": "<condition_variable>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["condition_variable header", "条件变量头文件", "cv_status", "notify_all_at_thread_exit"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["std-condition-variable", "std-unique-lock", "header-mutex", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/header-condition-variable/content.md" },
+  "examples": [
+    { "id": "notify-at-thread-exit", "path": "entries/header-condition-variable/examples/notify-at-thread-exit.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "finished=true\nvalue=42\n" },
+    { "id": "wait-with-condition-variable-any", "path": "entries/header-condition-variable/examples/wait-with-condition-variable-any.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "ready=true\nvalue=42\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: condition variables", "url": "https://eel.is/c++draft/thread.condition", "standardSection": "[thread.condition]" },
+    { "kind": "primary", "title": "C++ working draft: notify_all_at_thread_exit", "url": "https://eel.is/c++draft/thread.condition#notify_all_at_thread_exit", "standardSection": "[thread.condition.condvarany]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[thread.condition]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.condition]" },
+    { "kind": "secondary", "title": "cppreference 中文：<condition_variable>", "url": "https://zh.cppreference.com/w/cpp/header/condition_variable" }
+  ],
+  "verifiedAt": "2026-09-03"
+}

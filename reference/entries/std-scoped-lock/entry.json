@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "id": "std-scoped-lock",
+  "version": 1,
+  "slug": "standard-library/concurrency/scoped-lock",
+  "kind": "type",
+  "title": "std::scoped_lock",
+  "summary": "在一个作用域内安全取得并释放一个或多个互斥锁。",
+  "symbol": "std::scoped_lock",
+  "header": "<mutex>",
+  "namespace": "std",
+  "since": "c++17",
+  "aliases": ["scoped_lock", "多锁", "死锁规避", "作用域锁"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-mutex", "std-mutex", "std-lock-guard", "std-unique-lock"],
+  "content": { "format": "markdown", "path": "entries/std-scoped-lock/content.md" },
+  "examples": [
+    { "id": "update-two-balances", "path": "entries/std-scoped-lock/examples/update-two-balances.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "left=1000\nright=1000\ntotal=2000\n" },
+    { "id": "adopt-locks-after-std-lock", "path": "entries/std-scoped-lock/examples/adopt-locks-after-std-lock.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "left=3\nright=4\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class scoped_lock", "url": "https://eel.is/c++draft/thread.lock.scoped", "standardSection": "[thread.lock.scoped]" },
+    { "kind": "primary", "title": "P0156R2: Variadic lock_guard", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0156r2.html", "standardSection": "scoped_lock proposal" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[thread.lock.scoped]" },
+    { "kind": "secondary", "title": "cppreference 中文：std::scoped_lock", "url": "https://zh.cppreference.com/w/cpp/thread/scoped_lock" }
+  ],
+  "verifiedAt": "2026-09-03"
+}

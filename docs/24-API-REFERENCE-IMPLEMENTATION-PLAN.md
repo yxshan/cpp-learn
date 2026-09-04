@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.15 |
+| Version | 1.16 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-02 |
+| Last updated | 2026-09-03 |
 
 ## 1. Objective
 
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 15 are
+first three content-quality batches, and breadth-expansion batches 4 through 16 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -221,6 +221,15 @@ exclusion, and scope-bound lock release. All ten examples use C++20 and avoid
 worker output, scheduling order, timing, thread-ID representations, mutex
 fairness, detach, and undefined ownership paths. `std::jthread` remains in the
 planned catalog until the local libc++ can execute its C++20 contract.
+
+Breadth batch 16 advances the catalog from 110 to 114 Entries and from 206 to
+214 examples. `std::unique_lock`, `std::scoped_lock`, `<condition_variable>`,
+and `std::condition_variable` establish movable lock ownership, coordinated
+multi-lock ownership, predicate-based waiting, and notification. All eight new
+examples use C++20 and avoid sleep, wake-order assertions, lost-notification
+assumptions, cross-thread mutex ownership transfer, and invalid adopt/release
+paths. The complete catalog now contains 212 C++20 examples and the two
+existing C++23 `std::expected` examples.
 
 ### Work packages
 

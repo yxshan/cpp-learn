@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 15,
+  "catalogVersion": 16,
   "review": {
-    "id": "breadth-expansion-batch-15",
-    "reviewedAt": "2026-09-02",
-    "fixedPoint": "a62aa85",
-    "scope": "Catalog version 15 adds five thread, mutex, and scoped-lock foundation Entries at zero structural debt; no waivers remain."
+    "id": "breadth-expansion-batch-16",
+    "reviewedAt": "2026-09-03",
+    "fixedPoint": "29d5c49",
+    "scope": "Catalog version 16 adds four lock-ownership and condition-variable Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],
