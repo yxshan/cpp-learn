@@ -74,7 +74,7 @@ C++20 `atomic()` 用 `T()` 初始化，值构造器保存 desired；构造都不
 | `store(desired, order)` | `void` | relaxed、release、seq_cst |
 | `load(order)` | 读取到的 `T` | relaxed、consume、acquire、seq_cst |
 | `exchange(desired, order)` | 修改前的 `T` | 六种 order 均可 |
-| `compare_exchange_*` | 是否写入 desired 的 `bool`；失败时回写 expected | success 可用六种；failure 不得为 release/acq_rel，且不得强于 success |
+| `compare_exchange_*` | 是否写入 desired 的 `bool`；失败时回写 expected | success 可用六种；failure 不得为 release/acq_rel |
 | 整数、指针或浮点特化的 `fetch_*` | 修改前的值 | 六种 order 均可 |
 | `wait(old, order)` | `void` | relaxed、consume、acquire、seq_cst |
 | `notify_one()`、`notify_all()` | `void` | 没有 order 参数；通知本身不建立发布语义 |
