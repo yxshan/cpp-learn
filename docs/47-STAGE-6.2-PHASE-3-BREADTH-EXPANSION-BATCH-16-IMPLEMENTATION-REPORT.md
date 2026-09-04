@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-031 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-03 |
+| Last updated | 2026-09-04 |
 
 ## 1. Objective
 
@@ -68,8 +68,22 @@ examples are project-authored.
 | Batch example strict compile/run | Passed: 8/8 with `clang++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -pthread` and exact stdout |
 | Reference activation and quality | Passed: catalog version 16, 114 Entries, 110/114 audited, 0 reviewed gaps, no regressions |
 | Complete repository check | Passed: docs, curriculum, 114-entry Reference, 214 examples, formatting, lint, types, 196 tests, and production build |
-| Standards review | Pending |
-| Specification review | Pending |
+| Standards review | Accepted after repair commit `31b2689`; all four hard findings closed, one non-blocking test-maintenance smell retained |
+| Specification review | Accepted after repair commit `31b2689`; all four scope/contract findings closed with no scope creep |
+
+The initial two-axis review found an inverted `notify_all_at_thread_exit`
+description, incorrect source-section metadata, an invalid illustrative
+`scoped_lock` alias, two omitted C++20/current-draft declaration differences,
+and incomplete timed-lock declaration coverage. Repair commit `31b2689`
+corrects the contracts and the research record. Commit `d2e47d2` pins the
+quality baseline to that reviewed repair point. Both original reviewers then
+accepted the narrow re-review.
+
+The Standards reviewer also noted that catalog version and count literals are
+repeated across three explicit contract tests. This is a non-blocking
+maintenance judgment: the repetition increases update cost, while keeping the
+assertions independent makes silent catalog drift harder. Centralizing those
+expectations remains an optional later refactor, outside this content batch.
 
 ## 7. Controlled limitations
 

@@ -6,7 +6,7 @@
 | Version | 4.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-03 |
+| Last updated | 2026-09-04 |
 
 ## Purpose
 
