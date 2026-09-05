@@ -4,9 +4,12 @@ import remarkGfm from "remark-gfm";
 
 import type {
   ReferenceEntryDetail,
+  ReferenceExampleView,
+  ReferencePlaygroundRunResult,
   ReferenceSearchItem,
 } from "@cpp-learn/contracts";
 
+import { runReferenceExample } from "./api.js";
 import { referenceEntryUrl, referenceSearchUrl } from "./reference-location.js";
 import type { ReferenceLinkTarget } from "./reference-links.js";
 
@@ -106,6 +109,152 @@ function CodeBlock({
       <span className="sr-only" aria-live="polite">
         {message}
       </span>
+    </div>
+  );
+}
+
+const playgroundVerdictLabels: Readonly<
+  Record<ReferencePlaygroundRunResult["verdict"], string>
+> = {
+  success: "运行成功",
+  compile_error: "编译失败",
+  runtime_error: "运行失败",
+  timeout: "运行超时",
+  output_limit: "输出超限",
+  cancelled: "运行已取消",
+  system_error: "运行环境异常",
+};
+
+function ReferenceExamplePlayground({
+  entryId,
+  example,
+}: {
+  readonly entryId: string;
+  readonly example: ReferenceExampleView;
+}) {
+  const [open, setOpen] = useState(false);
+  const [source, setSource] = useState(example.source);
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<ReferencePlaygroundRunResult>();
+  const [error, setError] = useState<string>();
+
+  if (example.kind !== "run" || example.verification === "unsupported") {
+    return null;
+  }
+
+  const execute = async (): Promise<void> => {
+    setRunning(true);
+    setResult(undefined);
+    setError(undefined);
+    try {
+      setResult(await runReferenceExample(entryId, example.id, source));
+    } catch {
+      setError("暂时无法运行该示例，请检查本机编译环境后重试。");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div className="reference-playground">
+      <button
+        type="button"
+        className="reference-playground-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        {open ? "收起 Playground" : "在 Playground 中运行"}
+      </button>
+      {open && (
+        <div className="reference-playground-panel">
+          <div className="reference-playground-heading">
+            <div>
+              <strong>临时代码区</strong>
+              <span>运行结果不会计入课程进度或掌握证据。</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSource(example.source);
+                setResult(undefined);
+                setError(undefined);
+              }}
+              disabled={running || source === example.source}
+            >
+              重置代码
+            </button>
+          </div>
+          <label htmlFor={`reference-playground-${entryId}-${example.id}`}>
+            编辑 {example.id}.cpp
+          </label>
+          <textarea
+            id={`reference-playground-${entryId}-${example.id}`}
+            value={source}
+            spellCheck={false}
+            onChange={(event) => {
+              setSource(event.target.value);
+              setResult(undefined);
+              setError(undefined);
+            }}
+          />
+          <div className="reference-playground-actions">
+            <button
+              type="button"
+              onClick={() => void execute()}
+              disabled={running || source.trim().length === 0}
+            >
+              {running ? "运行中…" : "运行代码"}
+            </button>
+            <span>{example.standard.toUpperCase()} · 本机临时执行</span>
+          </div>
+          {(result || error) && (
+            <div
+              className={`reference-playground-result${result?.verdict === "success" ? " is-success" : " is-error"}`}
+              role="status"
+              aria-label="运行结果"
+            >
+              <strong>
+                {result
+                  ? playgroundVerdictLabels[result.verdict]
+                  : "运行请求失败"}
+              </strong>
+              {result ? (
+                result.stdout || result.stderr ? (
+                  <div className="reference-playground-streams">
+                    {result.stdout && (
+                      <div className="reference-playground-stream">
+                        <span>stdout</span>
+                        <pre>{result.stdout}</pre>
+                      </div>
+                    )}
+                    {result.stderr && (
+                      <div className="reference-playground-stream">
+                        <span>stderr / 编译诊断</span>
+                        <pre>{result.stderr}</pre>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="reference-playground-empty">
+                    程序没有产生输出。
+                  </p>
+                )
+              ) : (
+                <pre>{error}</pre>
+              )}
+              {result && (
+                <small>
+                  {result.toolchain.compiler} · {result.stages.length}{" "}
+                  个执行阶段
+                </small>
+              )}
+            </div>
+          )}
+          <p className="reference-playground-notice">
+            当前为可信任的本地执行环境，不是用于运行未知代码的安全沙箱。
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -261,7 +410,7 @@ export function ReferenceArticle({
             <h2 id="reference-examples-title">完整示例</h2>
           </div>
           {entry.examples.map((example) => (
-            <div key={example.id}>
+            <div className="reference-example" key={example.id}>
               <header>
                 <code>{example.id}.cpp</code>
                 <span>
@@ -269,6 +418,10 @@ export function ReferenceArticle({
                 </span>
               </header>
               <CodeBlock className="language-cpp">{example.source}</CodeBlock>
+              <ReferenceExamplePlayground
+                entryId={entry.id}
+                example={example}
+              />
               {example.expectedStdout !== undefined && (
                 <pre className="reference-output" aria-label="预期输出">
                   {example.expectedStdout}

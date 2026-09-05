@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 4.6 |
+| Version | 4.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
@@ -66,7 +66,8 @@ Read in this order:
 48. [Stage 6.2 Phase 3 Breadth Expansion Batch 17 Implementation Report](48-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-17-IMPLEMENTATION-REPORT.md)
 49. [Stage 6.2 Phase 3 Breadth Expansion Batch 18 Implementation Report](49-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-18-IMPLEMENTATION-REPORT.md)
 50. [Stage 6.2 Phase 3 Breadth Expansion Batch 19 Implementation Report](50-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-19-IMPLEMENTATION-REPORT.md)
-51. [Domain Context](CONTEXT.md)
+51. [Stage 6.2 Phase 4 Playground Tracer Bullet Implementation Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
+52. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

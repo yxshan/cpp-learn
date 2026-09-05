@@ -297,6 +297,99 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
   });
 });
 
+describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
+  it("runs a published example without dispatching a learning command", async () => {
+    const platform = createUnusedPlatform();
+    const dispatch = vi.spyOn(platform, "dispatch");
+    const run = vi.fn().mockResolvedValue({
+      schemaVersion: 1,
+      runId: "ref_run_test",
+      entryId: "std-vector",
+      exampleId: "basic",
+      verdict: "success",
+      stdout: "4\n",
+      stderr: "",
+      stages: [],
+      toolchain: {
+        compiler: "Apple Clang 15",
+        standard: "c++20",
+        flags: ["-std=c++20"],
+      },
+    });
+    const server = createServer({
+      platform,
+      reference: createReferenceFixture(),
+      referencePlayground: { run },
+    });
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      payload: {
+        schemaVersion: 1,
+        source: '#include <iostream>\nint main() { std::cout << "4\\n"; }\n',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      schemaVersion: 1,
+      verdict: "success",
+      stdout: "4\n",
+    });
+    expect(run).toHaveBeenCalledWith({
+      runId: expect.stringMatching(/^ref_run_/),
+      entryId: "std-vector",
+      exampleId: "basic",
+      standard: "c++20",
+      source: expect.stringContaining('std::cout << "4\\n"'),
+      stdin: "",
+    });
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(platform.query).not.toHaveBeenCalled();
+    await server.close();
+  });
+
+  it("rejects invalid, oversized, missing, and cross-origin runs before execution", async () => {
+    const run = vi.fn();
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+      referencePlayground: { run },
+    });
+
+    const responses = await Promise.all([
+      server.inject({
+        method: "POST",
+        url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+        payload: { schemaVersion: 1, source: "" },
+      }),
+      server.inject({
+        method: "POST",
+        url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+        payload: { schemaVersion: 1, source: "x".repeat(64 * 1024 + 1) },
+      }),
+      server.inject({
+        method: "POST",
+        url: "/api/v1/reference/entries/std-vector/examples/missing/runs",
+        payload: { schemaVersion: 1, source: "int main() {}\n" },
+      }),
+      server.inject({
+        method: "POST",
+        url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+        headers: { origin: "https://attacker.example" },
+        payload: { schemaVersion: 1, source: "int main() {}\n" },
+      }),
+    ]);
+
+    expect(responses.map((response) => response.statusCode)).toEqual([
+      400, 413, 404, 403,
+    ]);
+    expect(run).not.toHaveBeenCalled();
+    await server.close();
+  });
+});
+
 describe("[T-OPS-001] integrated Web hosting", () => {
   it("serves the built Web entry point when a Web root is configured", async () => {
     const webRoot = await mkdtemp(join(tmpdir(), "cpp-learn-web-"));

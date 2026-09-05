@@ -5,6 +5,7 @@ import { createFilesystemCurriculum } from "@cpp-learn/curriculum";
 import {
   DEFAULT_NATIVE_CPP_COMPILER,
   createNativeJudge,
+  createNativeReferencePlayground,
   createNativeToolchainProbe,
   executeProcess,
 } from "@cpp-learn/judge";
@@ -166,7 +167,12 @@ export async function createProductionApplication(
       record: () => record.readiness(),
     },
   });
-  return { platform, reference };
+  const referencePlayground = createNativeReferencePlayground({
+    compiler: referenceCompiler,
+    compilerFingerprint:
+      referenceToolchain.compiler ?? `${referenceCompiler} unavailable`,
+  });
+  return { platform, reference, referencePlayground };
 }
 
 type ProductionApplication = Awaited<
@@ -186,6 +192,7 @@ export function createProductionHttpServer(
     ...options,
     platform: application.platform,
     reference: application.reference,
+    referencePlayground: application.referencePlayground,
   });
 }
 

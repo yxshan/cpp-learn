@@ -275,6 +275,12 @@ under its declared profile.
 
 ## 7. Phase 4: Reference Playground
 
+Current state: the first vertical tracer bullet is delivered. A published Run
+example can be edited and executed through a fixed native compiler profile,
+with temporary-root cleanup and no Learning Platform command or state
+mutation. Phase 4 remains open until HTTP cancellation, the complete bounded
+failure-path browser matrix, and explicit discard behavior are accepted.
+
 ### Work packages
 
 1. Define temporary Playground and example-run contracts.

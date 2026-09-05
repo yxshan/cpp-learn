@@ -11,6 +11,9 @@ import {
   type JudgeReport,
   type JudgeReportStage,
   type JudgeSpec,
+  type CppStandard,
+  type ReferencePlaygroundRunResult,
+  type ReferencePlaygroundVerdict,
   type ToolchainReadiness,
 } from "@cpp-learn/contracts";
 
@@ -390,6 +393,202 @@ function failedToolInspectionVerdict(
   return result.outputLimitExceeded || result.timedOut || result.exitCode !== 0
     ? "judge_system_error"
     : undefined;
+}
+
+export interface ReferencePlaygroundRunRequest {
+  readonly runId: string;
+  readonly entryId: string;
+  readonly exampleId: string;
+  readonly standard: CppStandard;
+  readonly source: string;
+  readonly stdin: string;
+  readonly signal?: AbortSignal;
+}
+
+export interface ReferencePlayground {
+  run(
+    request: ReferencePlaygroundRunRequest,
+  ): Promise<ReferencePlaygroundRunResult>;
+}
+
+export interface NativeReferencePlaygroundDependencies {
+  readonly run?: BoundedProcessRunner;
+  readonly compiler?: string;
+  readonly compilerFingerprint?: string;
+  readonly monotonicClock?: () => number;
+  readonly timeoutMs?: number;
+  readonly maxOutputBytes?: number;
+  readonly createExecutionRoot?: () => Promise<string>;
+  readonly removeExecutionRoot?: (root: string) => Promise<void>;
+  readonly writeSource?: (path: string, source: string) => Promise<void>;
+}
+
+function referenceStandardFlag(standard: CppStandard): string {
+  if (standard === "c++26-draft") return "-std=c++2c";
+  return `-std=${standard}`;
+}
+
+function playgroundFailureVerdict(
+  result: BoundedProcessResult,
+  fallback: "compile_error" | "runtime_error",
+): ReferencePlaygroundVerdict | undefined {
+  return result.cancelled
+    ? "cancelled"
+    : result.outputLimitExceeded
+      ? "output_limit"
+      : result.timedOut
+        ? "timeout"
+        : result.exitCode !== 0
+          ? fallback
+          : undefined;
+}
+
+function combinePlaygroundOutput(first: string, second: string): string {
+  if (!first) return second;
+  if (!second) return first;
+  return `${first}${first.endsWith("\n") ? "" : "\n"}${second}`;
+}
+
+export function createNativeReferencePlayground(
+  dependencies: NativeReferencePlaygroundDependencies = {},
+): ReferencePlayground {
+  const run = dependencies.run ?? runBoundedProcess;
+  const compiler = dependencies.compiler ?? DEFAULT_NATIVE_CPP_COMPILER;
+  const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
+  const monotonicClock = dependencies.monotonicClock ?? (() => Date.now());
+  const timeoutMs = dependencies.timeoutMs ?? 2_000;
+  const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
+  const createExecutionRoot =
+    dependencies.createExecutionRoot ??
+    (() => mkdtemp(join(tmpdir(), "cpp-learn-reference-")));
+  const removeExecutionRoot =
+    dependencies.removeExecutionRoot ??
+    ((root) => rm(root, { recursive: true, force: true }));
+  const writeSource =
+    dependencies.writeSource ??
+    ((path, source) => writeFile(path, source, "utf8"));
+
+  return {
+    async run(request) {
+      const root = await createExecutionRoot();
+      const sourcePath = join(root, "main.cpp");
+      const executablePath = join(root, "program");
+      const flags = [
+        referenceStandardFlag(request.standard),
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+      ];
+      const environment = {
+        PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+        LANG: "C",
+        LC_ALL: "C",
+        HOME: root,
+        TMPDIR: root,
+      };
+      const cancellation = request.signal
+        ? { signal: request.signal }
+        : ({} as const);
+      const stages: ReferencePlaygroundRunResult["stages"][number][] = [];
+      try {
+        await writeSource(sourcePath, request.source);
+        const compileStarted = monotonicClock();
+        const compiled = await run({
+          executable: compiler,
+          args: [...flags, "main.cpp", "-o", executablePath],
+          cwd: root,
+          timeoutMs,
+          maxOutputBytes,
+          environment,
+          ...cancellation,
+        });
+        const compileVerdict = playgroundFailureVerdict(
+          compiled,
+          "compile_error",
+        );
+        stages.push({
+          kind: "compile",
+          outcome: compileVerdict ? "fail" : "pass",
+          durationMs: Math.max(0, monotonicClock() - compileStarted),
+          stdout: compiled.stdout,
+          stderr: compiled.stderr,
+          ...(compileVerdict === "compile_error"
+            ? { diagnostics: compilerDiagnostics(compiled.stderr) }
+            : {}),
+        });
+        if (compileVerdict) {
+          return {
+            schemaVersion: SCHEMA_VERSION,
+            runId: request.runId,
+            entryId: request.entryId,
+            exampleId: request.exampleId,
+            verdict: compileVerdict,
+            stdout: compiled.stdout,
+            stderr: compiled.stderr,
+            stages,
+            toolchain: {
+              compiler: compilerFingerprint,
+              standard: request.standard,
+              flags,
+            },
+          };
+        }
+
+        const runStarted = monotonicClock();
+        const executed = await run({
+          executable: executablePath,
+          args: [],
+          cwd: root,
+          timeoutMs,
+          maxOutputBytes,
+          environment,
+          stdin: request.stdin,
+          ...cancellation,
+        });
+        const runVerdict = playgroundFailureVerdict(executed, "runtime_error");
+        stages.push({
+          kind: "run",
+          outcome: runVerdict ? "fail" : "pass",
+          durationMs: Math.max(0, monotonicClock() - runStarted),
+          stdout: executed.stdout,
+          stderr: executed.stderr,
+        });
+        return {
+          schemaVersion: SCHEMA_VERSION,
+          runId: request.runId,
+          entryId: request.entryId,
+          exampleId: request.exampleId,
+          verdict: runVerdict ?? "success",
+          stdout: executed.stdout,
+          stderr: combinePlaygroundOutput(compiled.stderr, executed.stderr),
+          stages,
+          toolchain: {
+            compiler: compilerFingerprint,
+            standard: request.standard,
+            flags,
+          },
+        };
+      } catch (error) {
+        return {
+          schemaVersion: SCHEMA_VERSION,
+          runId: request.runId,
+          entryId: request.entryId,
+          exampleId: request.exampleId,
+          verdict: "system_error",
+          stdout: "",
+          stderr: error instanceof Error ? error.message : "Playground failed",
+          stages,
+          toolchain: {
+            compiler: compilerFingerprint,
+            standard: request.standard,
+            flags,
+          },
+        };
+      } finally {
+        await removeExecutionRoot(root);
+      }
+    },
+  };
 }
 
 export function createNativeJudge(

@@ -20,6 +20,7 @@ import {
   revealHint,
   saveWorkspace,
   restoreBackup,
+  runReferenceExample,
   submitReflection,
 } from "./api.js";
 
@@ -414,6 +415,48 @@ describe("[T-REF-006] Reference API Adapter", () => {
       "/api/v1/reference/resolve?slug=containers%2Fvector",
       "/api/v1/reference/entries/std-vector",
     ]);
+  });
+
+  it("runs edited Reference source through the isolated Playground endpoint", async () => {
+    const result = {
+      schemaVersion: 1,
+      runId: "ref_run_1",
+      entryId: "std-vector",
+      exampleId: "basic",
+      verdict: "success",
+      stdout: "4\n",
+      stderr: "",
+      stages: [],
+      toolchain: {
+        compiler: "Apple Clang 15",
+        standard: "c++20",
+        flags: ["-std=c++20"],
+      },
+    };
+    const request = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await expect(
+      runReferenceExample("std-vector", "basic", "int main() {}\n", request),
+    ).resolves.toEqual(result);
+    expect(request).toHaveBeenCalledWith(
+      "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          schemaVersion: 1,
+          source: "int main() {}\n",
+        }),
+      },
+    );
   });
 
   it("exposes the Reference HTTP status for degraded and missing views", async () => {

@@ -11,6 +11,7 @@ import {
   type ProgressResult,
   type ReferenceEntryDetail,
   type ReferenceNavigation,
+  type ReferencePlaygroundRunResult,
   type ReferenceSearchQuery,
   type ReferenceSearchResult,
   type ReferenceSlugResolution,
@@ -118,6 +119,26 @@ export async function getReferenceEntry(
     { headers: { accept: "application/json" } },
     request,
     REFERENCE_SCHEMA_VERSION,
+  );
+}
+
+export async function runReferenceExample(
+  entryId: string,
+  exampleId: string,
+  source: string,
+  request: Request = fetch,
+): Promise<ReferencePlaygroundRunResult> {
+  return requestJson(
+    `/api/v1/reference/entries/${encodeURIComponent(entryId)}/examples/${encodeURIComponent(exampleId)}/runs`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ schemaVersion: 1, source }),
+    },
+    request,
   );
 }
 

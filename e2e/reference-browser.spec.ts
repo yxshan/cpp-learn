@@ -225,3 +225,36 @@ test("[T-REF-008] Reference browsing makes no external network request", async (
   ).toBeVisible();
   expect(externalRequests).toEqual([]);
 });
+
+test("[T-REF-009] edited Reference example runs without changing learning state", async ({
+  page,
+  request,
+}) => {
+  const dashboardBefore = await request
+    .get(`${e2eApiOrigin}/api/v1/dashboard`)
+    .then((response) => response.json());
+
+  await page.goto("/reference/standard-library/containers/vector");
+  await page
+    .getByRole("button", { name: "在 Playground 中运行" })
+    .first()
+    .click();
+  const editor = page.getByLabel("编辑 vector-basics.cpp");
+  await expect(editor).toBeVisible();
+  await editor.fill(
+    '#include <iostream>\n\nint main() {\n  std::cout << "playground stdout\\n";\n  std::cerr << "playground stderr\\n";\n}\n',
+  );
+  await page.getByRole("button", { name: "运行代码" }).click();
+
+  await expect(page.getByRole("status", { name: "运行结果" })).toContainText(
+    "playground stdout",
+  );
+  await expect(page.getByRole("status", { name: "运行结果" })).toContainText(
+    "playground stderr",
+  );
+  await expect(page.getByText("运行成功")).toBeVisible();
+  const dashboardAfter = await request
+    .get(`${e2eApiOrigin}/api/v1/dashboard`)
+    .then((response) => response.json());
+  expect(dashboardAfter).toEqual(dashboardBefore);
+});

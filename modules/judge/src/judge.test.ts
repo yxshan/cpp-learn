@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createNativeJudge,
+  createNativeReferencePlayground,
   createNativeToolchainProbe,
   createToolchainCheckStage,
   runBoundedProcess,
@@ -96,6 +97,112 @@ describe("[T-MODULE-001] JudgeStage Interface", () => {
       stage.execute({ jobId: "job_1", snapshotId: "snap_1" }),
     ).resolves.toEqual({ kind: "prepare", outcome: "pass", durationMs: 12 });
   });
+});
+
+describe("[T-REF-009] Reference Playground execution", () => {
+  it("uses a fixed compiler profile and returns program output without grading it", async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "",
+        stderr: "main.cpp: warning: demonstration warning\n",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "changed output\n",
+        stderr: "runtime note\n",
+        timedOut: false,
+        outputLimitExceeded: false,
+      });
+    const playground = createNativeReferencePlayground({
+      run,
+      compiler: "/usr/bin/clang++",
+      compilerFingerprint: "Apple Clang 15",
+      createExecutionRoot: async () => "/tmp/reference-playground-test",
+      removeExecutionRoot: async () => undefined,
+      writeSource: async () => undefined,
+    });
+
+    await expect(
+      playground.run({
+        runId: "ref_run_1",
+        entryId: "std-vector",
+        exampleId: "basic",
+        standard: "c++20",
+        source: "int main() {}\n",
+        stdin: "",
+      }),
+    ).resolves.toMatchObject({
+      schemaVersion: 1,
+      runId: "ref_run_1",
+      verdict: "success",
+      stdout: "changed output\n",
+      stderr: "main.cpp: warning: demonstration warning\nruntime note\n",
+      toolchain: { compiler: "Apple Clang 15", standard: "c++20" },
+    });
+    expect(run).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        executable: "/usr/bin/clang++",
+        args: [
+          "-std=c++20",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "main.cpp",
+          "-o",
+          "/tmp/reference-playground-test/program",
+        ],
+        cwd: "/tmp/reference-playground-test",
+      }),
+    );
+    expect(run).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        executable: "/tmp/reference-playground-test/program",
+        args: [],
+        stdin: "",
+      }),
+    );
+  });
+
+  it.each([
+    ["compile_error", { exitCode: 1 }],
+    ["timeout", { exitCode: null, timedOut: true }],
+    ["output_limit", { exitCode: null, outputLimitExceeded: true }],
+  ] as const)(
+    "classifies %s without starting an unsafe second stage",
+    async (verdict, override) => {
+      const run = vi.fn().mockResolvedValue({
+        stdout: "",
+        stderr: "diagnostic",
+        timedOut: false,
+        outputLimitExceeded: false,
+        ...override,
+      });
+      const playground = createNativeReferencePlayground({
+        run,
+        createExecutionRoot: async () => "/tmp/reference-playground-test",
+        removeExecutionRoot: async () => undefined,
+        writeSource: async () => undefined,
+      });
+
+      const result = await playground.run({
+        runId: `ref_run_${verdict}`,
+        entryId: "std-vector",
+        exampleId: "basic",
+        standard: "c++20",
+        source: "int main() {}\n",
+        stdin: "",
+      });
+
+      expect(result.verdict).toBe(verdict);
+      expect(run).toHaveBeenCalledTimes(1);
+    },
+  );
 });
 
 describe("[T-JUDGE-001] immutable snapshot execution", () => {

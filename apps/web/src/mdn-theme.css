@@ -1271,6 +1271,181 @@ footer {
   background: #f6f6f6;
 }
 
+.reference-playground {
+  margin: -10px 0 18px;
+  border: 1px solid #b8b8b8;
+  border-top: 0;
+  background: #ffffff;
+}
+
+.reference-playground-toggle {
+  min-height: 40px;
+  margin: 10px 12px;
+  padding: 0 12px;
+  color: #005aab;
+  border: 1px solid #8cb4ff;
+  border-radius: 3px;
+  background: #f0f7ff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.reference-playground-toggle:hover {
+  border-color: #0069c2;
+  background: #e6f2ff;
+}
+
+.reference-playground-panel {
+  padding: 18px;
+  border-top: 1px solid var(--line);
+  background: #f6f6f6;
+}
+
+.reference-playground-heading,
+.reference-playground-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reference-playground-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.reference-playground-heading strong {
+  color: #1b1b1b;
+  font-size: 14px;
+}
+
+.reference-playground-heading span,
+.reference-playground-actions span,
+.reference-playground-result small,
+.reference-playground-notice {
+  color: #5e5e5e;
+  font-size: 11px;
+}
+
+.reference-playground-heading > button {
+  min-height: 34px;
+  padding-inline: 11px;
+  color: #343434;
+  border: 1px solid #b8b8b8;
+  border-radius: 3px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.reference-playground-heading > button:disabled {
+  color: #858585;
+  cursor: not-allowed;
+  background: #ededed;
+}
+
+.reference-playground-panel > label {
+  margin: 18px 0 7px;
+  display: block;
+  color: #343434;
+  font: 11px var(--mono);
+}
+
+.reference-playground-panel textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 16px;
+  resize: vertical;
+  color: #1b1b1b;
+  border: 1px solid #858585;
+  border-radius: 3px;
+  background: #ffffff;
+  font: 13px/1.65 var(--mono);
+  tab-size: 2;
+}
+
+.reference-playground-actions {
+  margin-top: 12px;
+}
+
+.reference-playground-actions > button {
+  min-height: 38px;
+  padding-inline: 16px;
+  color: #ffffff;
+  border: 1px solid #0069c2;
+  border-radius: 3px;
+  background: #0069c2;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reference-playground-actions > button:hover:not(:disabled) {
+  background: #005aab;
+}
+
+.reference-playground-actions > button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.reference-playground-result {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #d8d8d8;
+  border-left: 4px solid #b3261e;
+  background: #ffffff;
+}
+
+.reference-playground-result.is-success {
+  border-left-color: #2e7d32;
+}
+
+.reference-playground-result > strong {
+  display: block;
+  color: #1b1b1b;
+  font-size: 13px;
+}
+
+.reference-playground-result pre {
+  margin: 10px 0;
+  padding: 12px;
+  overflow-x: auto;
+  color: #e2e2e2;
+  background: #1b1b1b;
+  font: 12px/1.6 var(--mono);
+  white-space: pre-wrap;
+}
+
+.reference-playground-streams {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.reference-playground-stream > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #4e4e4e;
+  font: 600 11px/1.4 var(--mono);
+}
+
+.reference-playground-stream pre {
+  margin: 0;
+}
+
+.reference-playground-empty {
+  margin: 10px 0;
+  color: #4e4e4e;
+  font-size: 13px;
+}
+
+.reference-playground-notice {
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+
 .reference-related button,
 .reference-related a {
   border-color: #b8b8b8;
@@ -1334,6 +1509,18 @@ footer {
 
   .reference-header {
     min-height: 116px;
+    padding: max(10px, env(safe-area-inset-top)) 16px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+
+  .reference-search {
+    min-width: 0;
+    grid-column: 1 / -1;
+  }
+
+  .reference-search > div {
+    min-width: 0;
   }
 
   .reference-mobile-tools {
@@ -1361,6 +1548,21 @@ footer {
 
   .reference-definition-grid > div:nth-child(-n + 2) {
     border-color: var(--line);
+  }
+
+  .reference-playground-heading,
+  .reference-playground-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reference-playground-heading > button,
+  .reference-playground-actions > button {
+    width: 100%;
+  }
+
+  .reference-playground-panel textarea {
+    min-height: 260px;
   }
 }
 

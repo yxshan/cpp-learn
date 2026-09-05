@@ -14,6 +14,9 @@ export default defineConfig({
   testDir: "./e2e",
   testIgnore: "reference-production.spec.ts",
   fullyParallel: false,
+  // Both browser suites share one bounded native compiler service and fixture
+  // store. Serial workers keep those integration boundaries deterministic.
+  workers: 1,
   retries: 0,
   reporter: "list",
   use: {

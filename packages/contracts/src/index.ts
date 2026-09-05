@@ -124,6 +124,40 @@ export interface ReferenceEntryDetail {
   readonly relatedActivityIds: readonly string[];
 }
 
+export type ReferencePlaygroundVerdict =
+  | "success"
+  | "compile_error"
+  | "runtime_error"
+  | "timeout"
+  | "output_limit"
+  | "cancelled"
+  | "system_error";
+
+export interface ReferencePlaygroundStage {
+  readonly kind: "compile" | "run";
+  readonly outcome: "pass" | "fail" | "system_error";
+  readonly durationMs: number;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly diagnostics?: readonly JudgeDiagnostic[];
+}
+
+export interface ReferencePlaygroundRunResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly runId: string;
+  readonly entryId: string;
+  readonly exampleId: string;
+  readonly verdict: ReferencePlaygroundVerdict;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly stages: readonly ReferencePlaygroundStage[];
+  readonly toolchain: {
+    readonly compiler: string;
+    readonly standard: CppStandard;
+    readonly flags: readonly string[];
+  };
+}
+
 export interface ReferenceSearchQuery {
   readonly text: string;
   readonly kind?: ReferenceEntryKind;

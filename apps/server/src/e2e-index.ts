@@ -24,6 +24,7 @@ const application = await createProductionApplication(storagePaths);
 const server = createServer({
   platform: application.platform,
   reference: application.reference,
+  referencePlayground: application.referencePlayground,
   archive: createProductionDataArchive(storagePaths),
   logger: true,
   webRoot,

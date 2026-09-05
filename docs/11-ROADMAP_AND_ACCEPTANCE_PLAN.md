@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-25 |
@@ -184,10 +184,11 @@ Acceptance:
 
 ## 11. Stage 6.2: C++ API Reference
 
-**Status:** Phase 1 accepted on 2026-08-25; Web vertical release remains
-planned. Reproducible Phase 1 evidence is recorded in the [Stage 6.2 Phase 1
-Implementation Report](25-STAGE-6.2-PHASE-1-IMPLEMENTATION-REPORT.md). Design
-and remaining acceptance sources are the [Reference Module
+**Status:** Phases 1–3 accepted; the controlled catalog contains 120 Entries
+and 226 locally verified examples. Phase 4 is in progress: its first
+edit-and-run tracer bullet is recorded in the [Playground Tracer Bullet
+Implementation Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md).
+Design and remaining acceptance sources are the [Reference Module
 Design](22-API-REFERENCE-MODULE-DESIGN.md) and [Implementation
 Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md).
 

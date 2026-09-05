@@ -1,9 +1,12 @@
+import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import Fastify, { type FastifyInstance, type FastifyReply } from "fastify";
 import fastifyStatic from "@fastify/static";
+
+import type { ReferencePlayground } from "@cpp-learn/judge";
 
 import {
   CPP_STANDARDS,
@@ -20,10 +23,12 @@ import {
 } from "@cpp-learn/reference";
 
 const MAX_ARCHIVE_REQUEST_BYTES = 64 * 1024 * 1024;
+const MAX_REFERENCE_PLAYGROUND_SOURCE_BYTES = 64 * 1024;
 
 export interface ServerDependencies {
   readonly platform: LearningPlatform;
   readonly reference?: ReferenceCatalog;
+  readonly referencePlayground?: ReferencePlayground;
   readonly logger?: boolean;
   readonly webRoot?: string;
   readonly archive?: {
@@ -49,6 +54,24 @@ interface ExecuteActivityBody {
   readonly schemaVersion: 1;
   readonly commandId: string;
   readonly attemptId?: string;
+}
+
+interface ReferencePlaygroundRunBody {
+  readonly schemaVersion: 1;
+  readonly source: string;
+}
+
+function isReferencePlaygroundRunBody(
+  value: unknown,
+): value is ReferencePlaygroundRunBody {
+  if (typeof value !== "object" || value === null) return false;
+  const body = value as Record<string, unknown>;
+  return (
+    Object.keys(body).length === 2 &&
+    body["schemaVersion"] === 1 &&
+    typeof body["source"] === "string" &&
+    body["source"].length > 0
+  );
 }
 
 function isExecuteActivityBody(value: unknown): value is ExecuteActivityBody {
@@ -296,6 +319,62 @@ export function createServer(
         });
       }
       return result;
+    },
+  );
+
+  server.post<{
+    Params: { entryId: string; exampleId: string };
+    Body: unknown;
+  }>(
+    "/api/v1/reference/entries/:entryId/examples/:exampleId/runs",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      if (!isReferencePlaygroundRunBody(request.body)) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: { code: "validation_error", message: "Invalid run request" },
+        });
+      }
+      if (
+        Buffer.byteLength(request.body.source, "utf8") >
+        MAX_REFERENCE_PLAYGROUND_SOURCE_BYTES
+      ) {
+        return reply.code(413).send({
+          schemaVersion: 1,
+          error: { code: "source_too_large" },
+        });
+      }
+      const reference = await readyReference(reply);
+      if (!reference) return;
+      const entry = await reference.getEntry(request.params.entryId);
+      const example = entry?.examples.find(
+        (candidate) => candidate.id === request.params.exampleId,
+      );
+      if (!entry || !example || example.kind !== "run") {
+        return reply.code(404).send({
+          schemaVersion: 1,
+          error: { code: "reference_example_not_found" },
+        });
+      }
+      if (!dependencies.referencePlayground) {
+        return reply.code(503).send({
+          schemaVersion: 1,
+          error: { code: "playground_unavailable" },
+        });
+      }
+      return dependencies.referencePlayground.run({
+        runId: `ref_run_${randomUUID()}`,
+        entryId: entry.id,
+        exampleId: example.id,
+        standard: example.standard,
+        source: request.body.source,
+        stdin: example.stdin ?? "",
+      });
     },
   );
 
