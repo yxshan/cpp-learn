@@ -22,6 +22,8 @@
     { "kind": "primary", "title": "C++ working draft: <future> synopsis", "url": "https://eel.is/c++draft/future.syn", "standardSection": "[future.syn]" },
     { "kind": "primary", "title": "C++ working draft: futures overview", "url": "https://eel.is/c++draft/futures", "standardSection": "[futures]" },
     { "kind": "primary", "title": "C++ working draft: shared state", "url": "https://eel.is/c++draft/futures.state", "standardSection": "[futures.state]" },
+    { "kind": "primary", "title": "C++ working draft: class template promise", "url": "https://eel.is/c++draft/futures.promise", "standardSection": "[futures.promise]" },
+    { "kind": "primary", "title": "C++ working draft: class future_error", "url": "https://eel.is/c++draft/futures.future.error", "standardSection": "[futures.future.error]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[futures]" },
     { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[future.syn]" },
     { "kind": "secondary", "title": "cppreference 中文：<future>", "url": "https://zh.cppreference.com/w/cpp/header/future" }

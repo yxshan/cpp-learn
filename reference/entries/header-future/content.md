@@ -35,13 +35,16 @@
 
 需要任务队列、并发上限、组合 continuation、取消或服务级调度时，应使用更合适的执行框架。C++20 标准 future 没有 `.then()`、`when_all()` 或内建取消操作。
 
-## Shared state 与错误边界
+## 错误码导航
 
-Provider 把值或异常写入独立的 shared state，return object 只持有对状态的引用。Provider 在状态尚未 ready 时放弃它，会存入 `future_errc::broken_promise` 异常；这不同于 timeout 和无 state。
+| `future_errc` | 协议含义 | 典型来源 |
+|---|---|---|
+| `broken_promise` | Provider 未设置 result 就放弃 shared state | 未兑现的 `promise` 析构 |
+| `future_already_retrieved` | 同一 provider 已经生成过 return object | 对同一 `promise` 再次调用 `get_future()` |
+| `promise_already_satisfied` | Shared state 已经保存值或异常 | 再次调用 `set_value()` 或 `set_exception()` |
+| `no_state` | 要求 provider state 的操作没有关联 state | 对 moved-from `promise` 调用要求 state 的成员 |
 
-`future_errc` 还包含 `future_already_retrieved`、`promise_already_satisfied` 与 `no_state`。枚举的具体整数值和 `future_error::what()` 文本不是可移植输出。尤其不能把 invalid `future` 的错误路径概括为“保证抛 no_state”：C++20 对它的大多数成员调用规定为未定义行为，只有实现检测并抛出该异常的建议。
-
-标准没有为整个设施组规定统一大 O、分配次数、线程池行为或等待时延。由 `std::async` 创建且尚未 ready 的 shared state 在最后一个引用释放时可能阻塞；不能把这条例外推广到所有 future 析构。
+这些枚举值互不相同且非零，但具体整数和 `future_error::what()` 文本由实现决定。`no_state` 也不是 invalid `future` 的通用恢复通道；它的成员前置条件与 C++20 未定义行为边界见 `std::future` 页面。
 
 ## 示例
 
@@ -54,7 +57,7 @@ Provider 把值或异常写入独立的 shared state，return object 只持有�
 - 认为不带 policy 的 `async` 一定并行执行。
 - 复制 `future` 或对它多次调用 `get()`。
 - 把 timed wait 当成取消任务。
-- 认为所有 future 析构都阻塞，或都绝不阻塞。
+- 未查看具体 state 来源就断言 future 析构一定阻塞或一定不阻塞。
 - 把 `future_error(no_state)` 当作 invalid future 的可移植保证。
 - 把非标准 continuation 写成 C++20 标准接口。
 
@@ -68,4 +71,4 @@ Provider 把值或异常写入独立的 shared state，return object 只持有�
 
 ## 来源
 
-设施地图、直接包含、provider/return object/shared state 分工及错误类型由 manifest 中的 `[future.syn]`、`[futures]`、`[futures.state]`、N3337 与 N4861 验证；cppreference 中文页仅用于二级信息结构核对。
+设施地图、直接包含、provider/return object/shared state 分工及错误类型由 manifest 中的 `[future.syn]`、`[futures]`、`[futures.state]`、`[futures.promise]`、`[futures.future.error]`、N3337 与 N4861 验证；cppreference 中文页仅用于二级信息结构核对。

@@ -67,7 +67,7 @@ public:
 | `wait_for(rel_time)` | 相对 duration | `ready`、`timeout` 或 `deferred` | 不启动函数，报告 `deferred` |
 | `wait_until(abs_time)` | 指定 clock 的绝对 time point | `ready`、`timeout` 或 `deferred` | 不启动函数，报告 `deferred` |
 
-Timed wait 返回 timeout 不会取消 provider，也不会消费 shared state；之后仍可再次等待或调用 `get()`。相对等待建议使用 monotonic/steady 计时，绝对等待会受所选 clock 调整影响；截止点不是硬实时返回保证。
+Timed wait 返回 timeout 不会取消 provider，也不会消费 shared state；之后仍可再次等待或调用 `get()`。调用者只向 `wait_for` 传入 duration，标准建议实现内部以 steady clock 度量相对等待；`wait_until` 则使用调用者给出的 clock 和绝对时间点，其调整可能影响等待长度。两者的截止点都不是硬实时返回保证。
 
 ## 复杂度与阻塞
 
@@ -112,4 +112,4 @@ Wrapper 必须活到成员调用结束；move、get 或 share 后的旧对象不
 
 ## 来源
 
-类型约束、状态迁移、三类 `get()` 返回、等待结果、异常传播、同步和最后引用阻塞规则由 manifest 中的 `[futures.unique.future]`、`[futures.state]`、`[futures.future.error]`、`[thread.req.timing]`、N3337、N4861 与 N3776 验证；cppreference 中文页仅用于二级覆盖核对。
+类型约束、状态迁移、三类 `get()` 返回、等待结果、deferred 触发、异常传播、同步和最后引用阻塞规则由 manifest 中的 `[futures.unique.future]`、`[futures.state]`、`[futures.async]`、`[futures.future.error]`、`[thread.req.timing]`、N3337、N4861 与 N3776 验证；cppreference 中文页仅用于二级覆盖核对。

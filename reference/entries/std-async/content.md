@@ -35,7 +35,7 @@ C++20 N4861 以 `decay-copy(std::forward<...>(...))` 描述 callable 与参数�
 
 `f` 是 callable，`args...` 是调用实参，`policy` 是 `std::launch` bitmask。C++20 要求 decay 后对象能由对应转发实参构造，并且 decay 后 callable 能以 decay 后参数调用；N4861 还包含后来由 LWG 3476 删除的冗余 MoveConstructible 条件。
 
-C++20 会在调用 `async` 的线程中先 decay-copy callable 与参数。默认因此保存值副本，而不是自动借用原 lvalue；要传引用必须显式使用 `std::ref` / `std::cref`，并确保 referent 活到任务完成。裸指针、引用包装和引用捕获也不会延长目标生命周期。
+C++20 会在调用 `async` 的线程中先 decay-copy callable 与参数。默认因此保存值副本，而不是自动借用原 lvalue；实际调用时，保存的 callable 与参数以 rvalue 交给 `invoke`，所以可以承载满足约束的 move-only payload。要传引用必须显式使用 `std::ref` / `std::cref`，并确保 referent 活到任务完成。裸指针、引用包装和引用捕获也不会延长目标生命周期。
 
 | 调用或 policy | 执行方式 | 可观察边界 |
 |---|---|---|
@@ -59,7 +59,7 @@ C++20 对参数 decay-copy 初始化异常的规范存在 LWG 3582 记录的措�
 
 `async` 调用 synchronizes-with callable 的调用，callable 完成 sequenced-before state ready。选择 `launch::async` 时，成功检测 ready 或最后释放 state 与关联线程完成之间还有规定同步关系。
 
-必须保存返回的 future 并最终 wait/get。若显式 async 的返回临时量在完整表达式末尾释放最后一个、尚未 ready 的 async-created state，它可能等待任务完成，使连续“丢弃 future”的调用意外串行。明确 deferred 的 future 若在首次非定时等待前销毁，其 callable 可以永不执行。
+丢弃返回 future 在语言上合法，但若调用者要求任务完成或需要观察值与异常，就应保存它并最终 wait/get。若显式 async 的返回临时量在完整表达式末尾释放最后一个、尚未 ready 的 async-created state，它可能等待任务完成，使连续“丢弃 future”的调用意外串行。明确 deferred 的 future 若在首次非定时等待前销毁，其 callable 可以永不执行。
 
 Decay-copy 的值由 shared state 管理；`std::ref`、指针和引用捕获指向的对象仍由调用者管理。对同一个 future wrapper 的并发操作也需要外部同步。
 

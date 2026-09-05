@@ -21,6 +21,7 @@
   "sources": [
     { "kind": "primary", "title": "C++ working draft: class template future", "url": "https://eel.is/c++draft/futures.unique.future", "standardSection": "[futures.unique.future]" },
     { "kind": "primary", "title": "C++ working draft: shared state", "url": "https://eel.is/c++draft/futures.state", "standardSection": "[futures.state]" },
+    { "kind": "primary", "title": "C++ working draft: function template async", "url": "https://eel.is/c++draft/futures.async", "standardSection": "[futures.async]" },
     { "kind": "primary", "title": "C++ working draft: future errors", "url": "https://eel.is/c++draft/futures.future.error", "standardSection": "[futures.future.error]" },
     { "kind": "primary", "title": "C++ working draft: timing specifications", "url": "https://eel.is/c++draft/thread.req.timing", "standardSection": "[thread.req.timing]" },
     { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[futures.unique.future]" },
