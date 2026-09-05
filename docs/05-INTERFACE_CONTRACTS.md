@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-28 |
+| Last updated | 2026-09-05 |
 
 ## 1. Contract policy
 
@@ -60,6 +60,7 @@ GET /api/v1/reference
 GET /api/v1/reference/search?q=vector&standard=c%2B%2B20
 GET /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
 GET /api/v1/reference/entries/:entryId
+POST /api/v1/reference/entries/:entryId/examples/:exampleId/runs
 ```
 
 Reference navigation, search, resolution, and detail payloads use
@@ -101,6 +102,33 @@ Invalid filters return `400 validation_error`; unknown IDs and slugs return
 Reference returns `503 reference_unavailable` with only closed readiness issue
 codes. Reference queries are read-only and do not create a Workspace, Attempt,
 Judge job, or Evidence.
+
+The Playground POST accepts the shared
+`ReferencePlaygroundRunRequestDto` from `packages/contracts`:
+
+```json
+{
+  "schemaVersion": 1,
+  "source": "#include <iostream>\nint main() {}\n"
+}
+```
+
+The body rejects unknown fields and empty source; UTF-8 source is limited to
+64 KiB. Entry and Example must resolve to a published `run` example. Its
+declared standard and stdin are server-owned; paths, compiler/runtime
+executables, arguments, flags, and environment are never accepted from the
+client. A `200` response is a shared `ReferencePlaygroundRunResult` containing
+the run/Entry/Example IDs, explicit verdict, stdout, stderr, compile/run stages,
+diagnostics, and selected toolchain profile. Actual output is not compared with
+the published expected output and does not create a Grade.
+
+Validation, origin, lookup, source-size, admission, and capability failures use
+`400 validation_error`, `403 origin_rejected`,
+`404 reference_example_not_found`, `413 source_too_large`,
+`429 playground_busy` (with `Retry-After`), and
+`503 playground_unavailable` or `reference_unavailable`. The local Adapter
+admits one native Playground execution by default. HTTP request cancellation is
+not yet part of this tracer-bullet contract.
 
 ### Workspace
 

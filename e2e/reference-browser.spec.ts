@@ -245,16 +245,45 @@ test("[T-REF-009] edited Reference example runs without changing learning state"
     '#include <iostream>\n\nint main() {\n  std::cout << "playground stdout\\n";\n  std::cerr << "playground stderr\\n";\n}\n',
   );
   await page.getByRole("button", { name: "运行代码" }).click();
+  await expect(editor).toBeDisabled();
 
   await expect(page.getByRole("status", { name: "运行结果" })).toContainText(
     "playground stdout",
+    { timeout: 10_000 },
   );
   await expect(page.getByRole("status", { name: "运行结果" })).toContainText(
     "playground stderr",
+    { timeout: 10_000 },
   );
   await expect(page.getByText("运行成功")).toBeVisible();
   const dashboardAfter = await request
     .get(`${e2eApiOrigin}/api/v1/dashboard`)
     .then((response) => response.json());
   expect(dashboardAfter).toEqual(dashboardBefore);
+});
+
+test("[T-REF-009] same-named examples do not leak state across Entry navigation", async ({
+  page,
+}) => {
+  await page.goto("/reference/standard-library/algorithms/count-if");
+  await page
+    .getByRole("button", { name: "在 Playground 中运行" })
+    .first()
+    .click();
+  const countIfEditor = page.getByLabel("编辑 count-even.cpp");
+  await countIfEditor.fill("// state must not cross the Entry boundary\n");
+
+  await page
+    .locator(
+      '.reference-related a[href="/reference/standard-library/headers/algorithm"]',
+    )
+    .click();
+  await page
+    .getByRole("button", { name: "在 Playground 中运行" })
+    .first()
+    .click();
+
+  await expect(page.getByLabel("编辑 count-even.cpp")).not.toHaveValue(
+    /state must not cross/,
+  );
 });

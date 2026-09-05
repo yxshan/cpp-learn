@@ -190,6 +190,7 @@ function ReferenceExamplePlayground({
           <textarea
             id={`reference-playground-${entryId}-${example.id}`}
             value={source}
+            disabled={running}
             spellCheck={false}
             onChange={(event) => {
               setSource(event.target.value);
@@ -410,7 +411,10 @@ export function ReferenceArticle({
             <h2 id="reference-examples-title">完整示例</h2>
           </div>
           {entry.examples.map((example) => (
-            <div className="reference-example" key={example.id}>
+            <div
+              className="reference-example"
+              key={`${entry.id}:${example.id}`}
+            >
               <header>
                 <code>{example.id}.cpp</code>
                 <span>

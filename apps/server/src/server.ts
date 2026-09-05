@@ -15,6 +15,7 @@ import {
   type CppStandard,
   type LearningPlatform,
   type ReferenceEntryKind,
+  type ReferencePlaygroundRunRequestDto,
   type ReferenceVerification,
 } from "@cpp-learn/contracts";
 import {
@@ -29,6 +30,7 @@ export interface ServerDependencies {
   readonly platform: LearningPlatform;
   readonly reference?: ReferenceCatalog;
   readonly referencePlayground?: ReferencePlayground;
+  readonly referencePlaygroundMaxConcurrentRuns?: number;
   readonly logger?: boolean;
   readonly webRoot?: string;
   readonly archive?: {
@@ -56,14 +58,9 @@ interface ExecuteActivityBody {
   readonly attemptId?: string;
 }
 
-interface ReferencePlaygroundRunBody {
-  readonly schemaVersion: 1;
-  readonly source: string;
-}
-
 function isReferencePlaygroundRunBody(
   value: unknown,
-): value is ReferencePlaygroundRunBody {
+): value is ReferencePlaygroundRunRequestDto {
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
   return (
@@ -140,6 +137,14 @@ export function createServer(
   dependencies: ServerDependencies,
 ): FastifyInstance {
   const server = Fastify({ logger: dependencies.logger ?? false });
+  const configuredPlaygroundConcurrency =
+    dependencies.referencePlaygroundMaxConcurrentRuns ?? 1;
+  const referencePlaygroundMaxConcurrentRuns =
+    Number.isInteger(configuredPlaygroundConcurrency) &&
+    configuredPlaygroundConcurrency > 0
+      ? configuredPlaygroundConcurrency
+      : 1;
+  let referencePlaygroundInFlight = 0;
 
   if (dependencies.webRoot) {
     void server.register(fastifyStatic, {
@@ -367,14 +372,28 @@ export function createServer(
           error: { code: "playground_unavailable" },
         });
       }
-      return dependencies.referencePlayground.run({
-        runId: `ref_run_${randomUUID()}`,
-        entryId: entry.id,
-        exampleId: example.id,
-        standard: example.standard,
-        source: request.body.source,
-        stdin: example.stdin ?? "",
-      });
+      if (referencePlaygroundInFlight >= referencePlaygroundMaxConcurrentRuns) {
+        return reply
+          .header("Retry-After", "1")
+          .code(429)
+          .send({
+            schemaVersion: 1,
+            error: { code: "playground_busy" },
+          });
+      }
+      referencePlaygroundInFlight += 1;
+      try {
+        return await dependencies.referencePlayground.run({
+          runId: `ref_run_${randomUUID()}`,
+          entryId: entry.id,
+          exampleId: example.id,
+          standard: example.standard,
+          source: request.body.source,
+          stdin: example.stdin ?? "",
+        });
+      } finally {
+        referencePlaygroundInFlight -= 1;
+      }
     },
   );
 

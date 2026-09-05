@@ -423,9 +423,35 @@ export interface NativeReferencePlaygroundDependencies {
   readonly writeSource?: (path: string, source: string) => Promise<void>;
 }
 
-function referenceStandardFlag(standard: CppStandard): string {
-  if (standard === "c++26-draft") return "-std=c++2c";
-  return `-std=${standard}`;
+const compilerStandardFlagCandidates: Readonly<
+  Record<CppStandard, readonly string[]>
+> = {
+  "c++98": ["c++98"],
+  "c++03": ["c++03"],
+  "c++11": ["c++11"],
+  "c++14": ["c++14"],
+  "c++17": ["c++17"],
+  "c++20": ["c++20"],
+  "c++23": ["c++23", "c++2b"],
+  "c++26-draft": ["c++26", "c++2c"],
+};
+
+export function referenceCompilerStandardFlagCandidates(
+  standard: CppStandard,
+): readonly string[] {
+  return compilerStandardFlagCandidates[standard];
+}
+
+export async function resolveReferenceCompilerStandardFlag(options: {
+  readonly standard: CppStandard;
+  readonly probe: (candidate: string) => Promise<boolean>;
+}): Promise<string> {
+  for (const candidate of referenceCompilerStandardFlagCandidates(
+    options.standard,
+  )) {
+    if (await options.probe(candidate)) return candidate;
+  }
+  throw new Error(`compiler does not support ${options.standard}`);
 }
 
 function playgroundFailureVerdict(
@@ -443,6 +469,19 @@ function playgroundFailureVerdict(
           : undefined;
 }
 
+function compilerRejectedStandardFlag(
+  result: BoundedProcessResult,
+  standardFlag: string,
+): boolean {
+  const diagnostic = result.stderr.toLocaleLowerCase("en-US");
+  return (
+    diagnostic.includes(`-std=${standardFlag}`.toLocaleLowerCase("en-US")) &&
+    /(unknown|unrecognized|unsupported|not supported|invalid value)/.test(
+      diagnostic,
+    )
+  );
+}
+
 function combinePlaygroundOutput(first: string, second: string): string {
   if (!first) return second;
   if (!second) return first;
@@ -456,7 +495,7 @@ export function createNativeReferencePlayground(
   const compiler = dependencies.compiler ?? DEFAULT_NATIVE_CPP_COMPILER;
   const compilerFingerprint = dependencies.compilerFingerprint ?? compiler;
   const monotonicClock = dependencies.monotonicClock ?? (() => Date.now());
-  const timeoutMs = dependencies.timeoutMs ?? 2_000;
+  const timeoutMs = dependencies.timeoutMs ?? 5_000;
   const maxOutputBytes = dependencies.maxOutputBytes ?? 64 * 1024;
   const createExecutionRoot =
     dependencies.createExecutionRoot ??
@@ -470,38 +509,64 @@ export function createNativeReferencePlayground(
 
   return {
     async run(request) {
-      const root = await createExecutionRoot();
-      const sourcePath = join(root, "main.cpp");
-      const executablePath = join(root, "program");
-      const flags = [
-        referenceStandardFlag(request.standard),
+      const standardFlagCandidates = referenceCompilerStandardFlagCandidates(
+        request.standard,
+      );
+      let flags = [
+        `-std=${standardFlagCandidates[0]}`,
         "-Wall",
         "-Wextra",
         "-Wpedantic",
       ];
-      const environment = {
-        PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
-        LANG: "C",
-        LC_ALL: "C",
-        HOME: root,
-        TMPDIR: root,
-      };
       const cancellation = request.signal
         ? { signal: request.signal }
         : ({} as const);
       const stages: ReferencePlaygroundRunResult["stages"][number][] = [];
+      let root: string | undefined;
+      let result: ReferencePlaygroundRunResult;
       try {
+        root = await createExecutionRoot();
+        const sourcePath = join(root, "main.cpp");
+        const executablePath = join(root, "program");
+        const environment = {
+          PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+          LANG: "C",
+          LC_ALL: "C",
+          HOME: root,
+          TMPDIR: root,
+        };
         await writeSource(sourcePath, request.source);
         const compileStarted = monotonicClock();
-        const compiled = await run({
-          executable: compiler,
-          args: [...flags, "main.cpp", "-o", executablePath],
-          cwd: root,
-          timeoutMs,
-          maxOutputBytes,
-          environment,
-          ...cancellation,
-        });
+        let compiled: BoundedProcessResult | undefined;
+        for (const [index, standardFlag] of standardFlagCandidates.entries()) {
+          flags = [`-std=${standardFlag}`, "-Wall", "-Wextra", "-Wpedantic"];
+          compiled = await run({
+            executable: compiler,
+            args: [...flags, "main.cpp", "-o", executablePath],
+            cwd: root,
+            timeoutMs,
+            maxOutputBytes,
+            environment,
+            ...cancellation,
+          });
+          const compileVerdict = playgroundFailureVerdict(
+            compiled,
+            "compile_error",
+          );
+          const hasFallback = index < standardFlagCandidates.length - 1;
+          if (
+            compileVerdict !== "compile_error" ||
+            !hasFallback ||
+            !compilerRejectedStandardFlag(compiled, standardFlag)
+          ) {
+            break;
+          }
+        }
+        if (compiled === undefined) {
+          throw new Error(
+            `No compiler flag is declared for ${request.standard}`,
+          );
+        }
         const compileVerdict = playgroundFailureVerdict(
           compiled,
           "compile_error",
@@ -517,7 +582,7 @@ export function createNativeReferencePlayground(
             : {}),
         });
         if (compileVerdict) {
-          return {
+          result = {
             schemaVersion: SCHEMA_VERSION,
             runId: request.runId,
             entryId: request.entryId,
@@ -532,44 +597,47 @@ export function createNativeReferencePlayground(
               flags,
             },
           };
+        } else {
+          const runStarted = monotonicClock();
+          const executed = await run({
+            executable: executablePath,
+            args: [],
+            cwd: root,
+            timeoutMs,
+            maxOutputBytes,
+            environment,
+            stdin: request.stdin,
+            ...cancellation,
+          });
+          const runVerdict = playgroundFailureVerdict(
+            executed,
+            "runtime_error",
+          );
+          stages.push({
+            kind: "run",
+            outcome: runVerdict ? "fail" : "pass",
+            durationMs: Math.max(0, monotonicClock() - runStarted),
+            stdout: executed.stdout,
+            stderr: executed.stderr,
+          });
+          result = {
+            schemaVersion: SCHEMA_VERSION,
+            runId: request.runId,
+            entryId: request.entryId,
+            exampleId: request.exampleId,
+            verdict: runVerdict ?? "success",
+            stdout: executed.stdout,
+            stderr: combinePlaygroundOutput(compiled.stderr, executed.stderr),
+            stages,
+            toolchain: {
+              compiler: compilerFingerprint,
+              standard: request.standard,
+              flags,
+            },
+          };
         }
-
-        const runStarted = monotonicClock();
-        const executed = await run({
-          executable: executablePath,
-          args: [],
-          cwd: root,
-          timeoutMs,
-          maxOutputBytes,
-          environment,
-          stdin: request.stdin,
-          ...cancellation,
-        });
-        const runVerdict = playgroundFailureVerdict(executed, "runtime_error");
-        stages.push({
-          kind: "run",
-          outcome: runVerdict ? "fail" : "pass",
-          durationMs: Math.max(0, monotonicClock() - runStarted),
-          stdout: executed.stdout,
-          stderr: executed.stderr,
-        });
-        return {
-          schemaVersion: SCHEMA_VERSION,
-          runId: request.runId,
-          entryId: request.entryId,
-          exampleId: request.exampleId,
-          verdict: runVerdict ?? "success",
-          stdout: executed.stdout,
-          stderr: combinePlaygroundOutput(compiled.stderr, executed.stderr),
-          stages,
-          toolchain: {
-            compiler: compilerFingerprint,
-            standard: request.standard,
-            flags,
-          },
-        };
       } catch (error) {
-        return {
+        result = {
           schemaVersion: SCHEMA_VERSION,
           runId: request.runId,
           entryId: request.entryId,
@@ -584,9 +652,26 @@ export function createNativeReferencePlayground(
             flags,
           },
         };
-      } finally {
-        await removeExecutionRoot(root);
       }
+      if (root !== undefined) {
+        try {
+          await removeExecutionRoot(root);
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Playground cleanup failed";
+          result = {
+            ...result,
+            verdict: "system_error",
+            stderr: combinePlaygroundOutput(
+              result.stderr,
+              `Temporary-root cleanup failed: ${message}`,
+            ),
+          };
+        }
+      }
+      return result;
     },
   };
 }

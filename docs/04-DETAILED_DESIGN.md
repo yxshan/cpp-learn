@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-09-05 |
 
 ## 1. Package layout
 
@@ -340,12 +340,22 @@ Reference readiness is reported through bootstrap. Missing or invalid
 Reference content disables Reference routes with a safe capability error but
 does not block Dashboard, Activity, Workspace, Run, or Grade startup.
 
-### Future Playground seam
+### Reference Playground seam
 
-A Reference Example may later create a temporary Playground Source Snapshot and
-use a closed Judge execution profile. The Playground has no Activity identity,
-private tests, Attempt, Evidence policy, Concept transition, or Review effect.
-This execution contract is deferred until the read-only Reference is accepted.
+A published `run` Reference Example may create a temporary, non-Activity source
+root and use a closed native Judge execution profile. The Playground has no
+Activity identity, private tests, Attempt, Evidence policy, Concept transition,
+or Review effect. The first tracer bullet accepts edited source only; standard
+and stdin come from the published Example, while compiler flags, environment,
+working paths, time, output, and global concurrency remain Adapter-owned.
+
+The HTTP Adapter admits one native Playground execution by default and returns
+`429 playground_busy` with `Retry-After` when occupied. The Runner tries a
+documented draft-standard alias only when the compiler explicitly rejects the
+canonical flag, and returns infrastructure and cleanup failures as structured
+`system_error` outcomes. Browser state is keyed by Entry plus Example so
+same-named examples cannot share source or results across navigation. HTTP
+cancellation and the complete failure-path browser matrix remain deferred.
 
 The complete model, rollout, and rollback are defined in [C++ API Reference
 Module Design](22-API-REFERENCE-MODULE-DESIGN.md).

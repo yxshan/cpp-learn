@@ -1,36 +1,9 @@
-import type { CppStandard } from "@cpp-learn/contracts";
 import type { BoundedProcessResult } from "@cpp-learn/judge";
 
-const compilerStandardFlagCandidates: Readonly<
-  Record<CppStandard, readonly string[]>
-> = {
-  "c++98": ["c++98"],
-  "c++03": ["c++03"],
-  "c++11": ["c++11"],
-  "c++14": ["c++14"],
-  "c++17": ["c++17"],
-  "c++20": ["c++20"],
-  "c++23": ["c++23", "c++2b"],
-  "c++26-draft": ["c++26", "c++2c"],
-};
-
-export function referenceCompilerStandardFlagCandidates(
-  standard: CppStandard,
-): readonly string[] {
-  return compilerStandardFlagCandidates[standard];
-}
-
-export async function resolveReferenceCompilerStandardFlag(options: {
-  readonly standard: CppStandard;
-  readonly probe: (candidate: string) => Promise<boolean>;
-}): Promise<string> {
-  for (const candidate of referenceCompilerStandardFlagCandidates(
-    options.standard,
-  )) {
-    if (await options.probe(candidate)) return candidate;
-  }
-  throw new Error(`compiler does not support ${options.standard}`);
-}
+export {
+  referenceCompilerStandardFlagCandidates,
+  resolveReferenceCompilerStandardFlag,
+} from "@cpp-learn/judge";
 
 export interface ReferenceCompilationCheck {
   readonly identity: string;

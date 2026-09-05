@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | SEC-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-09-05 |
 
 ## 1. Security posture
 
@@ -127,8 +127,11 @@ Controls:
 - Keep repository paths and authoring diagnostics out of public DTOs.
 - Mark external source links and apply safe new-tab behavior consistently.
 - Browsing, searching, and copying are read-only and append no learning event.
-- A later Playground uses a temporary non-Activity root, closed compiler
-  profile, output limits, timeout, cancellation, and process cleanup.
+- The local Playground uses a temporary non-Activity root, a closed compiler
+  profile, source/output limits, timeout, process cleanup, and default global
+  concurrency of one. Busy requests receive bounded back-pressure rather than
+  starting another compiler. HTTP cancellation remains required before full
+  Playground acceptance.
 
 ### Local HTTP exposure
 

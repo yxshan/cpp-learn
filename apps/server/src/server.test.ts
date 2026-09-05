@@ -9,6 +9,7 @@ import type {
   LearningBootstrapResult,
   JudgeReport,
   LearningPlatform,
+  ReferencePlaygroundRunResult,
 } from "@cpp-learn/contracts";
 import { createNativeJudge } from "@cpp-learn/judge";
 import {
@@ -386,6 +387,58 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       400, 413, 404, 403,
     ]);
     expect(run).not.toHaveBeenCalled();
+    await server.close();
+  });
+
+  it("applies back-pressure while the bounded native runner is occupied", async () => {
+    let releaseRun: (() => void) | undefined;
+    const run = vi.fn(
+      () =>
+        new Promise<ReferencePlaygroundRunResult>((resolve) => {
+          releaseRun = () =>
+            resolve({
+              schemaVersion: 1,
+              runId: "ref_run_slow",
+              entryId: "std-vector",
+              exampleId: "basic",
+              verdict: "success",
+              stdout: "",
+              stderr: "",
+              stages: [],
+              toolchain: {
+                compiler: "clang",
+                standard: "c++20",
+                flags: ["-std=c++20"],
+              },
+            });
+        }),
+    );
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+      referencePlayground: { run },
+    });
+    const payload = { schemaVersion: 1, source: "int main() {}\n" };
+    const first = server.inject({
+      method: "POST",
+      url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      payload,
+    });
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+
+    const rejected = await server.inject({
+      method: "POST",
+      url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      payload,
+    });
+    expect(rejected.statusCode).toBe(429);
+    expect(rejected.headers["retry-after"]).toBe("1");
+    expect(rejected.json()).toMatchObject({
+      error: { code: "playground_busy" },
+    });
+
+    releaseRun?.();
+    await expect(first).resolves.toMatchObject({ statusCode: 200 });
     await server.close();
   });
 });

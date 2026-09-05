@@ -158,6 +158,11 @@ export interface ReferencePlaygroundRunResult {
   };
 }
 
+export interface ReferencePlaygroundRunRequestDto {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly source: string;
+}
+
 export interface ReferenceSearchQuery {
   readonly text: string;
   readonly kind?: ReferenceEntryKind;

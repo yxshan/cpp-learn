@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-035 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | In Review |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
@@ -26,20 +26,23 @@ work.
   compiler profile.
 - Added a native Reference Playground Adapter that writes exactly one
   `main.cpp` into a fresh temporary root, compiles it with a fixed
-  declared-standard warning profile, runs the resulting executable, and removes
-  the root in a `finally` boundary.
+  declared-standard warning profile, runs the resulting executable, and reports
+  creation, execution, and cleanup failures as structured system errors.
 - Added
   `POST /api/v1/reference/entries/:entryId/examples/:exampleId/runs`.
 - Restricted the HTTP Adapter to an existing published example whose kind is
   `run`; the client can provide source text but cannot provide paths,
   executables, flags, environment variables, or command arguments.
 - Added a 64 KiB UTF-8 source limit, strict request shape, loopback-origin
-  enforcement, and deterministic 400/403/404/413/503 responses.
+  enforcement, global single-run admission, and deterministic
+  400/403/404/413/429/503 responses.
 - Added an inline Reference Playground with editable source, Run, Reset,
   structured outcome, stdout/stderr, compiler identity, and an explicit native
   execution warning.
 - Kept the Playground outside the Learning Platform command path and all
   learner-owned Activity Workspaces.
+- Keyed browser editing state by Entry and Example, and disabled editing during
+  a run so displayed output always belongs to the visible source revision.
 
 ## 3. Public behavior
 
@@ -62,7 +65,9 @@ expose the Run control in this slice.
 The implementation reuses the bounded native-process seam and fixed argument
 arrays. It does not use a shell and does not accept build arguments from the
 browser. Each run receives a fresh temporary working directory, bounded time,
-bounded aggregate output, a closed environment, and unconditional cleanup.
+bounded aggregate output, a closed environment, and cleanup whose failure is
+reported. The HTTP Adapter admits one native run at a time by default and
+returns bounded back-pressure for overlapping requests.
 
 The application remains a trusted local single-user product. Native execution
 is not an adversarial sandbox: C++ code can invoke operating-system APIs outside
@@ -74,11 +79,11 @@ process, network, memory, and CPU boundary.
 
 | Test | Evidence | Result |
 |---|---|---|
-| Runner contract | `modules/judge/src/judge.test.ts` verifies fixed flags, temporary paths, output-not-Grade behavior, and compile timeout/output classifications | Passed |
-| HTTP contract | `apps/server/src/server.test.ts` verifies published-example lookup, strict body validation, byte limit, origin rejection, and zero Learning Platform dispatch/query calls | Passed |
+| Runner contract | `modules/judge/src/judge.test.ts` verifies fixed flags, compatible draft aliases, temporary-root lifecycle failures, output-not-Grade behavior, and compile timeout/output classifications | Passed |
+| HTTP contract | `apps/server/src/server.test.ts` verifies published-example lookup, strict body validation, byte limit, origin rejection, single-run admission, and zero Learning Platform dispatch/query calls | Passed |
 | Web API contract | `apps/web/src/api.test.ts` verifies the versioned example-specific POST request | Passed |
-| Browser tracer bullet | `e2e/reference-browser.spec.ts` edits and runs `std::vector` source through real Clang, observes separately labelled stdout and stderr, and proves Dashboard state is byte-for-byte unchanged | Passed; full suite 15/15 |
-| Static gates | Docs, formatting, ESLint, TypeScript, 206 Vitest tests, production build, 70-activity curriculum validation, and 120-Entry/226-example Reference validation | Passed |
+| Browser tracer bullet | `e2e/reference-browser.spec.ts` edits and runs `std::vector` source through real Clang, observes separately labelled stdout and stderr, proves Dashboard state is byte-for-byte unchanged, and prevents same-ID state reuse across Entries | Passed; full suite 16/16 |
+| Static gates | Docs, formatting, ESLint, TypeScript, 211 Vitest tests, production build, 70-activity curriculum validation, and 120-Entry/226-example Reference validation | Passed |
 
 The Playwright integration harness uses one worker because both browser files
 share a single fixture store and bounded native compiler service. This keeps the
@@ -90,7 +95,7 @@ gate deterministic without changing product-side admission behavior.
   cancellation endpoint wired to the Runner's `AbortSignal`.
 - Add browser coverage for compiler diagnostics, runtime failure, timeout,
   output limit, reset, close/discard, and 390-pixel layout.
-- Define concurrency admission and per-client in-flight limits.
+- Add per-client quotas if the local single-user HTTP boundary is expanded.
 - Decide whether a later editor enhancement should lazy-load Monaco or retain
   the lightweight textarea.
 - Add container/Linux execution before any public or multi-user deployment.

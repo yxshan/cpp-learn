@@ -11,6 +11,7 @@ import {
   type ProgressResult,
   type ReferenceEntryDetail,
   type ReferenceNavigation,
+  type ReferencePlaygroundRunRequestDto,
   type ReferencePlaygroundRunResult,
   type ReferenceSearchQuery,
   type ReferenceSearchResult,
@@ -128,6 +129,7 @@ export async function runReferenceExample(
   source: string,
   request: Request = fetch,
 ): Promise<ReferencePlaygroundRunResult> {
+  const body: ReferencePlaygroundRunRequestDto = { schemaVersion: 1, source };
   return requestJson(
     `/api/v1/reference/entries/${encodeURIComponent(entryId)}/examples/${encodeURIComponent(exampleId)}/runs`,
     {
@@ -136,7 +138,7 @@ export async function runReferenceExample(
         accept: "application/json",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ schemaVersion: 1, source }),
+      body: JSON.stringify(body),
     },
     request,
   );

@@ -157,6 +157,7 @@ describe("[T-REF-009] Reference Playground execution", () => {
           "/tmp/reference-playground-test/program",
         ],
         cwd: "/tmp/reference-playground-test",
+        timeoutMs: 5_000,
       }),
     );
     expect(run).toHaveBeenNthCalledWith(
@@ -165,8 +166,93 @@ describe("[T-REF-009] Reference Playground execution", () => {
         executable: "/tmp/reference-playground-test/program",
         args: [],
         stdin: "",
+        timeoutMs: 5_000,
       }),
     );
+  });
+
+  it("falls back to the compiler draft alias used by Reference verification", async () => {
+    const run = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: "",
+        stderr: "unknown argument: -std=c++23",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: "ok\n",
+        stderr: "",
+        timedOut: false,
+        outputLimitExceeded: false,
+      });
+    const playground = createNativeReferencePlayground({
+      run,
+      createExecutionRoot: async () => "/tmp/reference-playground-test",
+      removeExecutionRoot: async () => undefined,
+      writeSource: async () => undefined,
+    });
+
+    const result = await playground.run({
+      runId: "ref_run_alias",
+      entryId: "std-vector",
+      exampleId: "basic",
+      standard: "c++23",
+      source: "int main() {}\n",
+      stdin: "",
+    });
+
+    expect(result).toMatchObject({
+      verdict: "success",
+      toolchain: { flags: ["-std=c++2b", "-Wall", "-Wextra", "-Wpedantic"] },
+    });
+    expect(run).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        args: expect.arrayContaining(["-std=c++2b"]),
+      }),
+    );
+    expect(run).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not retry a recognized standard flag when learner source is invalid", async () => {
+    const run = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: "",
+      stderr: "main.cpp:3: error: expected ';' after expression",
+      timedOut: false,
+      outputLimitExceeded: false,
+    });
+    const playground = createNativeReferencePlayground({
+      run,
+      createExecutionRoot: async () => "/tmp/reference-playground-test",
+      removeExecutionRoot: async () => undefined,
+      writeSource: async () => undefined,
+    });
+
+    const result = await playground.run({
+      runId: "ref_run_source_error",
+      entryId: "std-vector",
+      exampleId: "basic",
+      standard: "c++23",
+      source: "int main() { invalid }\n",
+      stdin: "",
+    });
+
+    expect(result).toMatchObject({
+      verdict: "compile_error",
+      toolchain: { flags: ["-std=c++23", "-Wall", "-Wextra", "-Wpedantic"] },
+    });
+    expect(run).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -203,6 +289,60 @@ describe("[T-REF-009] Reference Playground execution", () => {
       expect(run).toHaveBeenCalledTimes(1);
     },
   );
+
+  it("returns structured system errors and still attempts temporary-root cleanup", async () => {
+    const removeExecutionRoot = vi
+      .fn()
+      .mockRejectedValue(new Error("cleanup failed"));
+    const playground = createNativeReferencePlayground({
+      run: vi.fn().mockRejectedValue(new Error("compiler crashed")),
+      createExecutionRoot: async () => "/tmp/reference-playground-test",
+      removeExecutionRoot,
+      writeSource: async () => undefined,
+    });
+
+    await expect(
+      playground.run({
+        runId: "ref_run_system_error",
+        entryId: "std-vector",
+        exampleId: "basic",
+        standard: "c++20",
+        source: "int main() {}\n",
+        stdin: "",
+      }),
+    ).resolves.toMatchObject({
+      verdict: "system_error",
+      stderr: expect.stringContaining("cleanup failed"),
+    });
+    expect(removeExecutionRoot).toHaveBeenCalledWith(
+      "/tmp/reference-playground-test",
+    );
+  });
+
+  it("turns temporary-root creation failure into a structured system error", async () => {
+    const removeExecutionRoot = vi.fn();
+    const playground = createNativeReferencePlayground({
+      createExecutionRoot: async () => {
+        throw new Error("temporary root unavailable");
+      },
+      removeExecutionRoot,
+    });
+
+    await expect(
+      playground.run({
+        runId: "ref_run_root_error",
+        entryId: "std-vector",
+        exampleId: "basic",
+        standard: "c++20",
+        source: "int main() {}\n",
+        stdin: "",
+      }),
+    ).resolves.toMatchObject({
+      verdict: "system_error",
+      stderr: "temporary root unavailable",
+    });
+    expect(removeExecutionRoot).not.toHaveBeenCalled();
+  });
 });
 
 describe("[T-JUDGE-001] immutable snapshot execution", () => {
