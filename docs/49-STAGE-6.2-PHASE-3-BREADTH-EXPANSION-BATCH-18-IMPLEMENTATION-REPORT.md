@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-033 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
 
@@ -71,9 +71,14 @@ project-authored.
 | Catalog RED/GREEN test | Passed: version 18, 119-entry count, and three stable IDs failed before implementation, then passed |
 | Batch example strict compile/run | Passed: 6/6 with `clang++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -pthread` and exact stdout |
 | Reference activation and quality | Passed: catalog version 18, 119 Entries, 115/119 audited, 0 reviewed gaps, no regressions |
-| Complete repository check | Pending |
-| Standards review | Pending |
-| Specification review | Pending |
+| Complete repository check | Passed: docs, curriculum, 119-entry Reference, 224 examples, formatting, lint, types, 196 tests, and production build |
+| Standards review | Accepted after Header/Entity responsibilities, direct deferred sources, conditional async-result guidance, and the v18 fixed point were corrected |
+| Specification review | Accepted after the complete future error map, rvalue invocation contract, and `wait_for` clock wording were added |
+
+The review repair pass kept the Header page as a compact facility and error-code
+navigation map while moving operation-level blocking and state contracts to the
+entity pages. It also distinguishes legal future disposal from the engineering
+need to retain a future when completion, values, or exceptions must be observed.
 
 ## 7. Controlled limitations
 
