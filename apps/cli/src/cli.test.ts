@@ -11,13 +11,12 @@ import type {
   JudgeReport,
   LearningPlatform,
 } from "@cpp-learn/contracts";
-import {
-  DEFAULT_NATIVE_CPP_COMPILER,
-  createNativeToolchainProbe,
-  executeProcess,
-} from "@cpp-learn/judge";
+import { createNativeToolchainProbe, executeProcess } from "@cpp-learn/judge";
 import { createLearningPlatform } from "@cpp-learn/learning-platform";
-import { referenceVerificationManifestPath } from "@cpp-learn/reference";
+import {
+  referenceVerificationManifestPath,
+  resolveReferenceCppCompiler,
+} from "@cpp-learn/reference";
 import { createServer } from "@cpp-learn/server";
 import {
   createProductionApplication,
@@ -44,7 +43,7 @@ describe("[T-REF-005] CLI serve Reference composition", () => {
     const dataRoot = join(runtimeRoot, "data");
     const toolchain = await createNativeToolchainProbe({
       execute: executeProcess,
-      compiler: DEFAULT_NATIVE_CPP_COMPILER,
+      compiler: resolveReferenceCppCompiler(),
     })();
     if (!toolchain.ready || toolchain.compiler === undefined) {
       throw new Error("Test requires the configured C++ toolchain");

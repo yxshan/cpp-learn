@@ -2,14 +2,46 @@ import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   createFilesystemReferenceCatalog,
   createInMemoryReferenceCatalog,
+  resolveReferenceCppCompiler,
   type ReferenceCatalogManifest,
   type ReferenceEntryManifest,
 } from "./index.js";
+
+describe("Reference native toolchain selection", () => {
+  it("accepts an existing explicit absolute compiler path", () => {
+    const exists = vi.fn(() => true);
+
+    expect(resolveReferenceCppCompiler(" /custom/clang++ ", exists)).toBe(
+      "/custom/clang++",
+    );
+    expect(exists).toHaveBeenCalledWith("/custom/clang++");
+  });
+
+  it("rejects relative and missing explicit compiler paths", () => {
+    expect(() => resolveReferenceCppCompiler("clang++", () => true)).toThrow(
+      /absolute path/u,
+    );
+    expect(() =>
+      resolveReferenceCppCompiler("/missing/clang++", () => false),
+    ).toThrow(/does not exist/u);
+  });
+
+  it("selects an installed Homebrew LLVM and otherwise uses system Clang", () => {
+    expect(
+      resolveReferenceCppCompiler(undefined, (path) =>
+        path.startsWith("/usr/local/"),
+      ),
+    ).toBe("/usr/local/opt/llvm/bin/clang++");
+    expect(resolveReferenceCppCompiler(undefined, () => false)).toBe(
+      "/usr/bin/clang++",
+    );
+  });
+});
 
 const entry = (
   id: string,

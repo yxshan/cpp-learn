@@ -53,7 +53,9 @@ public:
 
 ## 参数、调用与返回
 
-启动构造函数会在创建线程中 materialize callable 与各参数的衰减副本。新线程优先尝试调用 `invoke(f, get_stop_token(), args...)`；只有该形式不良构时，才尝试不注入 token 的 `invoke(f, args...)`。因此自动注入的 `std::stop_token` 必须是 callable 的第一个参数；两种形式都可调用时，带 token 的形式优先。
+启动构造函数的 `F` 去除 cv/ref 后不能是 `jthread` 本身；`F` 与每个 `Args` 必须能分别构造其衰减后保存对象，这些保存类型还要满足 C++20 的 MoveConstructible 要求。带 token 与不带 token 的两种调用形式必须至少有一种可调用，否则程序不良构。
+
+callable 与参数的衰减副本在调用构造函数的线程（构造线程）中 materialize。新 worker 线程优先尝试调用 `invoke(f, get_stop_token(), args...)`；只有该形式不良构时，才尝试不注入 token 的 `invoke(f, args...)`。因此自动注入的 `std::stop_token` 必须是 callable 的第一个参数；两种形式都可调用时，带 token 的形式优先。
 
 callable 不接收 token 也是合法的，但它没有观察内部停止请求的入口。线程函数返回值会被忽略；需要结果时必须另设通道。构造完成与新线程开始调用 callable 副本之间有同步关系。
 
@@ -61,7 +63,7 @@ callable 不接收 token 也是合法的，但它没有观察内部停止请求�
 |---|---|
 | 默认构造 | 空句柄，`joinable() == false`，内部 source 不可停止 |
 | `joinable()` | 当前 ID 是否不是默认 ID；线程函数自然返回后、join 前仍为 `true` |
-| `get_stop_token()` | 关联内部 stop state 的观察者；空对象得到 disengaged token |
+| `get_stop_token()` | 关联内部 stop state 的观察者；默认构造或 moved-from 对象得到 disengaged token |
 | `get_stop_source()` | 内部请求端的副本；它与已发出的 token 共享状态 |
 | `request_stop()` | 首次真正把状态改为“已请求”时为 `true`，之后为 `false` |
 | `join()` / `detach()` | 返回 `void`；成功后当前句柄不再表示线程 |
@@ -79,7 +81,7 @@ callable 不接收 token 也是合法的，但它没有观察内部停止请求�
 
 移动构造同时转移线程句柄和 stop state；源对象变为空，已交给 worker 的 token 仍与目标 owner 管理的同一状态关联。移动赋值若目标原来 joinable，会先对旧线程请求停止并 join，再接管来源，因此即使签名为 `noexcept` 也可能阻塞。
 
-成功 `join()` 后，被管理线程的完成同步于调用返回。`detach()` 则切断 RAII 停止与等待责任，不延长引用、指针、`this`、`string_view` 或 `span` 的生命周期。先前复制出的 token/source 可以在句柄 join、detach 或移动后继续拥有 stop state；所以 `stop_possible()` 与 `joinable()` 不是同一个问题。
+成功 `join()` 后，被管理线程的完成同步于调用返回。`detach()` 则切断 RAII 停止与等待责任，不延长引用、指针、`this`、`string_view` 或 `span` 的生命周期。join/detach 只清空线程表示，不清空当前 `jthread` 的 stop source；当前对象及先前复制出的 token/source 仍可引用同一 stop state。移动后的 source 才恢复为默认构造的不可停止状态，所以 `stop_possible()` 与 `joinable()` 不是同一个问题。
 
 对同一个 `jthread` wrapper 并发 join、detach、move 或查询不会自动安全。stop state 的线程安全保证不能扩展成对整个句柄和任意共享对象的保护。
 
@@ -89,7 +91,7 @@ callable 不接收 token 也是合法的，但它没有观察内部停止请求�
 
 ## 异常与错误
 
-callable 或参数副本的构造错误发生在创建线程；无法创建系统线程时，启动构造函数抛 `std::system_error`，典型 code 为 `resource_unavailable_try_again`。线程入口若让异常逃逸会调用 `std::terminate`，不会自动传播给 owner。
+callable 或参数副本的构造错误发生在调用构造函数的线程（构造线程）；无法创建系统线程时，启动构造函数抛 `std::system_error`，典型 code 为 `resource_unavailable_try_again`。线程入口若让异常逃逸会调用 `std::terminate`，不会自动传播给 owner。
 
 `join()` 可用 `system_error` 报告自 join、底层线程无效或对象不可 join；`detach()` 也会拒绝无效或不可 detach 的句柄。对空对象调用它们不是无操作。`request_stop()` 是 `noexcept`，但同步执行的 stop callback 若抛出异常会 terminate。
 

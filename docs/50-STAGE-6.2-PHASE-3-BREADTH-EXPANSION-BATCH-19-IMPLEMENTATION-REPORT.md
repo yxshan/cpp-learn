@@ -20,10 +20,12 @@ library and keeping the verification fingerprint consistent in every adapter.
 - Added one learning-quality `std::jthread` type page and two deterministic
   C++20 Run examples, increasing the catalog from 224 to 226 examples.
 - Raised the structural audit from 115/119 to 116/120 with zero known gaps.
-- Added a shared native compiler selector: `CPP_LEARN_CPP_COMPILER` overrides
-  an installed Homebrew LLVM preference, with `/usr/bin/clang++` as fallback.
-- Kept compiler selection shared by Judge, Reference verification, coverage
-  reporting, and server composition so cached results remain fingerprint-bound.
+- Added a Reference compiler selector: `CPP_LEARN_REFERENCE_COMPILER`
+  overrides an installed Homebrew LLVM preference, with `/usr/bin/clang++` as
+  fallback; explicit paths must be absolute and exist.
+- Kept that selection shared by Reference verification, coverage reporting,
+  and server composition so cached results remain fingerprint-bound, while the
+  native Judge retains its Apple Clang integration baseline.
 
 ## 3. Learning and correctness boundaries
 
@@ -61,7 +63,7 @@ the missing library feature with a `std::thread` fallback or an empty probe.
 | Gate | Result |
 |---|---|
 | Catalog RED/GREEN test | Passed: version 19, 120-entry count, and `std-jthread` failed before implementation, then passed |
-| Toolchain selection tests | Passed: explicit override, Homebrew LLVM discovery, and system fallback |
+| Toolchain selection tests | Passed: validated absolute override, missing/relative rejection, Homebrew LLVM discovery, and system fallback |
 | Batch example cross-check | Passed with Homebrew LLVM 22.1.6 and GCC 15.2.0 under strict C++20 with exact stdout |
 | Reference activation and quality | Passed: catalog version 19, 120 Entries, 116/120 audited, zero reviewed gaps |
 | Complete repository check | Passed: docs, 70 curriculum cases, 120-entry Reference, 226 examples, formatting, lint, types, 198 tests, and production build |
@@ -75,7 +77,7 @@ the missing library feature with a `std::thread` fallback or an empty probe.
 - The page does not cover stop-aware condition-variable overloads, thread
   attributes from later standards, thread pools, coroutines, or sender/receiver.
 - Automatic toolchain discovery checks conventional Homebrew LLVM paths; other
-  installations use `CPP_LEARN_CPP_COMPILER`.
+  installations use `CPP_LEARN_REFERENCE_COMPILER`.
 - Cooperative stopping cannot guarantee prompt exit from arbitrary blocking
   work, and no example claims such a guarantee.
 

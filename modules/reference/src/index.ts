@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { readFile, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
@@ -29,6 +30,42 @@ export {
   createReferenceCoverageReport,
   type ReferenceCoverageReport,
 } from "./coverage.ts";
+
+const MODERN_REFERENCE_CPP_COMPILER_CANDIDATES = [
+  "/opt/homebrew/opt/llvm/bin/clang++",
+  "/usr/local/opt/llvm/bin/clang++",
+] as const;
+
+export const REFERENCE_CPP_COMPILER_ENVIRONMENT_VARIABLE =
+  "CPP_LEARN_REFERENCE_COMPILER";
+
+export function resolveReferenceCppCompiler(
+  configuredCompiler: string | undefined = process.env[
+    REFERENCE_CPP_COMPILER_ENVIRONMENT_VARIABLE
+  ],
+  pathExists: (path: string) => boolean = existsSync,
+): string {
+  const configured = configuredCompiler?.trim();
+  if (configured) {
+    if (!isAbsolute(configured)) {
+      throw new Error(
+        `${REFERENCE_CPP_COMPILER_ENVIRONMENT_VARIABLE} must be an absolute path`,
+      );
+    }
+    if (!pathExists(configured)) {
+      throw new Error(
+        `${REFERENCE_CPP_COMPILER_ENVIRONMENT_VARIABLE} does not exist: ${configured}`,
+      );
+    }
+    return configured;
+  }
+
+  return (
+    MODERN_REFERENCE_CPP_COMPILER_CANDIDATES.find((candidate) =>
+      pathExists(candidate),
+    ) ?? "/usr/bin/clang++"
+  );
+}
 
 export interface ReferenceCatalogManifest {
   readonly schemaVersion: 1;

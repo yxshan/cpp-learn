@@ -6,14 +6,15 @@
 | Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-30 |
+| Last updated | 2026-09-05 |
 
 ## 1. Supported baseline
 
 - Apple Silicon macOS.
 - Node.js and npm versions compatible with the locked toolchain.
-- A C++20 compiler and standard library. The project prefers an installed
-  Homebrew LLVM before falling back to the system Apple Clang.
+- Apple Clang with C++20 language support for the native Judge baseline.
+- A standard library implementing the features used by Reference examples;
+  Reference verification prefers an installed Homebrew LLVM when available.
 - CMake and Git.
 - SQLite development headers/library supplied by the reference macOS SDK.
 - Modern Chromium/WebKit browser for development.
@@ -85,12 +86,13 @@ composition roots; omitting them retains the default learner paths. The Web
 development proxy accepts `CPP_LEARN_API_URL`, while production static serving
 continues to use same-origin `/api` routes.
 
-`CPP_LEARN_CPP_COMPILER` selects an explicit native C++ compiler by absolute
-path. Without it, the shared selector checks the standard Homebrew LLVM paths
-and then falls back to `/usr/bin/clang++`. Toolchain readiness, Judge execution,
-Reference example verification, coverage reporting, and the server-side
-verification fingerprint all use this same selection. After changing it, rerun
-`npm run check:reference` before starting the server.
+`CPP_LEARN_REFERENCE_COMPILER` selects the Reference verification compiler by
+an existing absolute path. Without it, the Reference selector checks the
+standard Homebrew LLVM paths and then falls back to `/usr/bin/clang++`.
+Reference checks, coverage reporting, and the server-side verification
+fingerprint share this selection. The native Judge remains on the documented
+system Apple Clang baseline. After changing the Reference compiler, rerun
+`npm run check:reference` and start the server with the same variable.
 
 ## 5. Logging and observability
 

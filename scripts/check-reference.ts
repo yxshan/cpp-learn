@@ -4,7 +4,6 @@ import { dirname, join, resolve } from "node:path";
 
 import type { CppStandard } from "@cpp-learn/contracts";
 import {
-  DEFAULT_NATIVE_CPP_COMPILER,
   createNativeToolchainProbe,
   executeProcess,
   runBoundedProcess,
@@ -12,6 +11,7 @@ import {
 import {
   createFilesystemReferenceCatalog,
   referenceVerificationManifestPath,
+  resolveReferenceCppCompiler,
   type ReferenceVerificationManifest,
 } from "@cpp-learn/reference";
 
@@ -35,7 +35,7 @@ const navigation = await reference.getNavigation();
 const entryIds = [
   ...new Set(navigation.categories.flatMap((category) => category.entryIds)),
 ];
-const compiler = DEFAULT_NATIVE_CPP_COMPILER;
+const compiler = resolveReferenceCppCompiler();
 const environment = {
   PATH: "/usr/bin:/bin",
   LANG: "C",
@@ -146,7 +146,14 @@ for (const entryId of entryIds) {
           execution.stdout !== example.expectedStdout
         ) {
           throw new Error(
-            `${entry.id}/${example.id} produced an invalid result:\n${execution.stderr}${execution.stdout}`,
+            [
+              `${entry.id}/${example.id} produced an invalid result`,
+              `exitCode=${String(execution.exitCode)}`,
+              `timedOut=${String(execution.timedOut)}`,
+              `outputLimitExceeded=${String(execution.outputLimitExceeded)}`,
+              `stderr=${JSON.stringify(execution.stderr)}`,
+              `stdout=${JSON.stringify(execution.stdout)}`,
+            ].join("\n"),
           );
         }
       }

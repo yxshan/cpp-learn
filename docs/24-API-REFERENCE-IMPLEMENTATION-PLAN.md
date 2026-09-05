@@ -252,11 +252,11 @@ Breadth batch 19 advances the catalog from 119 to 120 Entries and from 224 to
 token-first callable selection, one-shot cooperative stopping, RAII stop/join,
 move-only ownership, and explicit blocking and detach boundaries. Both new
 examples use C++20 and deterministic atomic handshakes without sleep, worker
-output, timing, thread IDs, or scheduling-order assumptions. The shared native
+output, timing, thread IDs, or scheduling-order assumptions. The Reference
 toolchain selector now prefers an explicit override or installed Homebrew LLVM
 before the system Apple Clang, allowing the real C++20 stop-token contract to
 be verified while keeping compiler fingerprints consistent across checks,
-reports, Judge composition, and the running server. The complete catalog
+reports, and the running server without changing the native Judge baseline. The complete catalog
 contains 224 C++20 examples and two C++23 `std::expected` examples.
 
 ### Work packages

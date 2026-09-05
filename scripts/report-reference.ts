@@ -1,14 +1,11 @@
 import { resolve } from "node:path";
 
-import {
-  DEFAULT_NATIVE_CPP_COMPILER,
-  createNativeToolchainProbe,
-  executeProcess,
-} from "@cpp-learn/judge";
+import { createNativeToolchainProbe, executeProcess } from "@cpp-learn/judge";
 import {
   createFilesystemReferenceCatalog,
   createReferenceCoverageReport,
   referenceVerificationManifestPath,
+  resolveReferenceCppCompiler,
 } from "@cpp-learn/reference";
 
 import { resolveReferenceDataRoot } from "./reference-data-root.ts";
@@ -17,7 +14,7 @@ import {
   loadReferenceQualityBaseline,
 } from "./reference-content-quality.ts";
 
-const compiler = DEFAULT_NATIVE_CPP_COMPILER;
+const compiler = resolveReferenceCppCompiler();
 const toolchain = await createNativeToolchainProbe({
   execute: executeProcess,
   compiler,

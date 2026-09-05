@@ -6,7 +6,7 @@
 | Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-30 |
+| Last updated | 2026-09-05 |
 
 ## 1. Audience and purpose
 
@@ -398,12 +398,12 @@ production server use the manifest only when its catalog version and compiler
 fingerprint match, then independently bind every result to the example's
 declared standard and source SHA-256 digest.
 
-The shared native-toolchain selector honors `CPP_LEARN_CPP_COMPILER` first,
+The Reference toolchain selector honors `CPP_LEARN_REFERENCE_COMPILER` first,
 then uses an installed Homebrew LLVM on Apple Silicon or Intel macOS, and falls
 back to `/usr/bin/clang++`. Use the override for another verified compiler:
 
 ```bash
-CPP_LEARN_CPP_COMPILER=/absolute/path/to/clang++ npm run check:reference
+CPP_LEARN_REFERENCE_COMPILER=/absolute/path/to/clang++ npm run check:reference
 ```
 
 The same variable must be present when starting the server so the verification

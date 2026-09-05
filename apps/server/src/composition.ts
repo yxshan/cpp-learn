@@ -17,6 +17,7 @@ import {
   createFilesystemReferenceCatalog,
   createUnavailableReferenceCatalog,
   referenceVerificationManifestPath,
+  resolveReferenceCppCompiler,
   type ReferenceCatalog,
 } from "@cpp-learn/reference";
 import { createFilesystemWorkspace } from "@cpp-learn/workspace";
@@ -103,6 +104,11 @@ export async function createProductionApplication(
     compiler,
   });
   const toolchain = await toolchainProbe();
+  const referenceCompiler = resolveReferenceCppCompiler();
+  const referenceToolchain = await createNativeToolchainProbe({
+    execute: executeProcess,
+    compiler: referenceCompiler,
+  })();
   const referenceReadiness = await baseReference.readiness();
   let reference: ReferenceCatalog = baseReference;
   if (referenceReadiness.ready) {
@@ -115,11 +121,12 @@ export async function createProductionApplication(
           catalogPath: referenceCatalogPath,
           relatedActivityIdsByEntryId:
             activityIndex.relatedActivityIdsByEntryId,
-          ...(toolchain.ready && toolchain.compiler !== undefined
+          ...(referenceToolchain.ready &&
+          referenceToolchain.compiler !== undefined
             ? {
                 verification: {
                   manifestPath: referenceVerificationManifestPath(dataRoot),
-                  compilerFingerprint: toolchain.compiler,
+                  compilerFingerprint: referenceToolchain.compiler,
                 },
               }
             : {}),
