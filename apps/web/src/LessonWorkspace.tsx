@@ -682,7 +682,7 @@ export function LessonWorkspace({
           <Editor
             height="100%"
             language="cpp"
-            theme="vs-dark"
+            theme="vs-light"
             value={sources[activePath] ?? ""}
             onChange={(value) => {
               updateActiveSource(value ?? "");
