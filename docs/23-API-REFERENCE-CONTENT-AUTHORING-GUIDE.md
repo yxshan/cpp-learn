@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-30 |
@@ -315,7 +315,8 @@ Before review, verify where relevant:
 - Thread-safety implications.
 - `constexpr` and `noexcept` status by standard version.
 - Undefined, unspecified, or implementation-defined behavior.
-- Local Apple Clang/libc++ support without confusing it with standard status.
+- Selected local compiler and standard-library support without confusing it
+  with standard status.
 
 ## 9. Sources and licensing
 
@@ -396,6 +397,19 @@ atomically publishes the local verification manifest. The report and
 production server use the manifest only when its catalog version and compiler
 fingerprint match, then independently bind every result to the example's
 declared standard and source SHA-256 digest.
+
+The shared native-toolchain selector honors `CPP_LEARN_CPP_COMPILER` first,
+then uses an installed Homebrew LLVM on Apple Silicon or Intel macOS, and falls
+back to `/usr/bin/clang++`. Use the override for another verified compiler:
+
+```bash
+CPP_LEARN_CPP_COMPILER=/absolute/path/to/clang++ npm run check:reference
+```
+
+The same variable must be present when starting the server so the verification
+manifest fingerprint matches the active toolchain. A new Entry may claim local
+verification only when its real feature contract compiles and runs; feature
+test bypasses, empty probes, or fallback implementations do not qualify.
 
 `not-checked` means no current local toolchain result is available for that
 example. It does not mean the example failed. Typical causes are a first run,

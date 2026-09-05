@@ -525,8 +525,8 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
 
     await expect(reference.readiness()).resolves.toEqual({
       ready: true,
-      catalogVersion: 18,
-      entryCount: 119,
+      catalogVersion: 19,
+      entryCount: 120,
       activationDurationMs: expect.any(Number),
     });
     const navigation = await reference.getNavigation();
@@ -654,6 +654,7 @@ describe("[T-REF-001] filesystem Reference Adapter", () => {
         "header-future",
         "std-future",
         "std-async",
+        "std-jthread",
       ].sort(),
     );
     expect(navigation.categories).toContainEqual(

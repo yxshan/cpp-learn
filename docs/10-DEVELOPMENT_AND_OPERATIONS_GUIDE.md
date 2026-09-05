@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-08-30 |
@@ -12,7 +12,8 @@
 
 - Apple Silicon macOS.
 - Node.js and npm versions compatible with the locked toolchain.
-- Apple Clang with C++20 support.
+- A C++20 compiler and standard library. The project prefers an installed
+  Homebrew LLVM before falling back to the system Apple Clang.
 - CMake and Git.
 - SQLite development headers/library supplied by the reference macOS SDK.
 - Modern Chromium/WebKit browser for development.
@@ -83,6 +84,13 @@ explicit storage overrides. They support controlled test and maintenance
 composition roots; omitting them retains the default learner paths. The Web
 development proxy accepts `CPP_LEARN_API_URL`, while production static serving
 continues to use same-origin `/api` routes.
+
+`CPP_LEARN_CPP_COMPILER` selects an explicit native C++ compiler by absolute
+path. Without it, the shared selector checks the standard Homebrew LLVM paths
+and then falls back to `/usr/bin/clang++`. Toolchain readiness, Judge execution,
+Reference example verification, coverage reporting, and the server-side
+verification fingerprint all use this same selection. After changing it, rerun
+`npm run check:reference` before starting the server.
 
 ## 5. Logging and observability
 

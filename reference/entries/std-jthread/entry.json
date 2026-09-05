@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "id": "std-jthread",
+  "version": 1,
+  "slug": "standard-library/concurrency/jthread",
+  "kind": "type",
+  "title": "std::jthread",
+  "summary": "以 move-only 线程句柄结合一次性协作停止，并在析构时请求停止后 join。",
+  "symbol": "std::jthread",
+  "header": "<thread>",
+  "namespace": "std",
+  "since": "c++20",
+  "aliases": ["jthread", "joining thread", "协作停止", "stop_token", "request_stop"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-thread", "std-thread", "std-atomic"],
+  "content": { "format": "markdown", "path": "entries/std-jthread/content.md" },
+  "examples": [
+    { "id": "request-cooperative-stop", "path": "entries/std-jthread/examples/request-cooperative-stop.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "first_request=true\nsecond_request=false\ncheckpoints=2\njoinable=false\n" },
+    { "id": "stop-and-join-on-destruction", "path": "entries/std-jthread/examples/stop-and-join-on-destruction.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "stop_observed=true\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++20 final working draft: class jthread", "url": "https://timsong-cpp.github.io/cppwp/n4861/thread.jthread.class", "standardSection": "[thread.jthread.class]" },
+    { "kind": "primary", "title": "C++20 final working draft: jthread constructors", "url": "https://timsong-cpp.github.io/cppwp/n4861/thread.jthread.cons", "standardSection": "[thread.jthread.cons]" },
+    { "kind": "primary", "title": "C++20 final working draft: jthread members", "url": "https://timsong-cpp.github.io/cppwp/n4861/thread.jthread.mem", "standardSection": "[thread.jthread.mem]" },
+    { "kind": "primary", "title": "C++20 final working draft: jthread stop handling", "url": "https://timsong-cpp.github.io/cppwp/n4861/thread.jthread.stop", "standardSection": "[thread.jthread.stop]" },
+    { "kind": "primary", "title": "C++ working draft: jthread constructors", "url": "https://eel.is/c++draft/thread.jthread.cons", "standardSection": "[thread.jthread.cons]" },
+    { "kind": "primary", "title": "C++ working draft: jthread members", "url": "https://eel.is/c++draft/thread.jthread.mem", "standardSection": "[thread.jthread.mem]" },
+    { "kind": "primary", "title": "C++ working draft: jthread stop handling", "url": "https://eel.is/c++draft/thread.jthread.stop", "standardSection": "[thread.jthread.stop]" },
+    { "kind": "primary", "title": "C++ working draft: stoppable-source semantics", "url": "https://eel.is/c++draft/stoptoken.concepts", "standardSection": "[stoptoken.concepts]" },
+    { "kind": "primary", "title": "WG21 P0660R10: Stop token and joining thread", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0660r10.pdf" },
+    { "kind": "secondary", "title": "cppreference 中文：std::jthread", "url": "https://zh.cppreference.com/w/cpp/thread/jthread" }
+  ],
+  "verifiedAt": "2026-09-05"
+}

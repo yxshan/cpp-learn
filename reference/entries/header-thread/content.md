@@ -55,7 +55,7 @@
 
 ## 相关内容
 
-线程句柄合同阅读 `std::thread`；共享数据保护从 `<mutex>`、`std::mutex` 和 `std::lock_guard` 开始。`std::jthread` 会在本地标准库真正支持其 C++20 接口后再提供独立可运行页面。
+显式生命周期合同阅读 `std::thread`；协作停止与析构等待阅读 `std::jthread`。共享数据保护从 `<mutex>`、`std::mutex` 和 `std::lock_guard` 开始。
 
 ## 来源
 

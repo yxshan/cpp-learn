@@ -85,7 +85,7 @@ C++20 构造器要求 callable 与各参数的 decay 后类型能分别从对应
 
 ## 相关内容
 
-头文件地图见 `<thread>`；共享状态的最小互斥原语见 `std::mutex`，日常作用域加锁优先用 `std::lock_guard`。
+头文件地图见 `<thread>`；C++20 结构化停止与析构等待见 `std::jthread`。共享状态的最小互斥原语见 `std::mutex`，日常作用域加锁优先用 `std::lock_guard`。
 
 ## 来源
 

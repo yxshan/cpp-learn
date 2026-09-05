@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-BACKLOG-001 |
-| Version | 3.0 |
+| Version | 3.1 |
 | Status | Active |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
@@ -47,8 +47,8 @@ itself a defect.
 
 ## 3. Existing-catalog audit
 
-The active catalog contains 119 Entries. All have at least one primary source,
-and all 224 examples pass the local toolchain gate. Depth still varies by
+The active catalog contains 120 Entries. All have at least one primary source,
+and all 226 examples pass the local toolchain gate. Depth still varies by
 editorial role and upgrade status.
 
 | Action | Entries | Reason |
@@ -71,18 +71,19 @@ editorial role and upgrade status.
 | Completed in breadth batch 16 | `std::unique_lock`, `std::scoped_lock`, `<condition_variable>`, `std::condition_variable` | Four pages establish movable lock state, deadlock-avoiding multi-lock ownership, header-level condition-variable discovery, and predicate waiting; eight deterministic C++20 examples avoid sleep, timing, wake order, lost-notification assumptions, and invalid release/adopt ownership |
 | Completed in breadth batch 17 | `<atomic>`, `std::atomic` | Two pages establish atomic facility discovery, memory-order selection, release/acquire publication, compare-and-exchange, wait/notify, and lock-free boundaries; four deterministic C++20 examples avoid polling, timing, worker output, schedule order, and implementation-defined snapshots |
 | Completed in breadth batch 18 | `<future>`, `std::future`, `std::async` | Three pages establish future facility discovery, single-consumer shared-state ownership, launch policy, deferred execution, exception propagation, and narrowly scoped destructor blocking; six deterministic C++20 examples avoid sleep, timing, worker output, default-policy assumptions, and implementation-defined error text |
+| Completed in breadth batch 19 | `std::jthread` | One page completes structured thread ownership, token-first callable selection, one-shot cooperative stopping, RAII stop/join, move/detach boundaries, and toolchain capability selection; two deterministic C++20 examples use atomic handshakes without sleep, worker output, timing, or scheduling assumptions |
 | Completed in quality-ratchet batch 7 | `std::vector`, `std::sort`, `std::find`, `std::unique_ptr`, `std::cin`, `std::cout`, `<iostream>`, `<charconv>` | Added missing mistakes, complexity, lifetime/invalidation, related-link, JavaScript comparison, direct-inclusion, facility-map, and per-facility version coverage; all eight now pass their kind profile |
 | Completed in quality-ratchet batch 8 | `std::accumulate`, `std::all_of`, `std::any_of`, `std::binary_search`, `std::copy`, `std::for_each`, `std::lower_bound`, `std::remove_if`, `std::reverse`, `std::unique` | Added explicit parameter/precondition, return, complexity, selection, and lifetime/invalidation coverage where the audit identified gaps; all ten now pass the callable profile |
 | Completed in quality-ratchet closure batch | `std::array`, `std::deque`, `std::unordered_map`, `std::vector::reserve`, `std::optional`, `std::make_shared`, `std::shared_ptr`, `std::weak_ptr`, `<algorithm>`, `<unordered_map>`, `std::from_chars`, `std::to_chars`, `std::string::append`, `std::string::find`, `std::string::substr` | Three internal remediation slices cleared every remaining JavaScript comparison, related-link, selection, return, complexity, direct-inclusion, facility-map, parameter, and lifetime finding; the structural debt baseline is now empty |
 | Keep concise | Standard Library, Containers, Algorithms | Landing role is primarily navigation; review links and scope instead of padding prose |
 
-Quality batches 1 through 3 and breadth batches 4 through 18 are complete. The
+Quality batches 1 through 3 and breadth batches 4 through 19 are complete. The
 existing ordinary-entity example debt remains cleared. Concurrency is now in
-progress under explicit determinism, ownership, and memory-model requirements.
+scope-complete under explicit determinism, ownership, and memory-model requirements.
 
 ### 3.1 Executable debt baseline
 
-The kind-aware audit currently checks 115 of 119 Entries; three landing Entries
+The kind-aware audit currently checks 116 of 120 Entries; three landing Entries
 and one guide are intentionally reviewed outside the structural profile. After
 the quality-ratchet closure batch, the checked-in baseline contains no known gaps,
 down from the initial 58 gaps across 35 Entries.
@@ -102,9 +103,8 @@ introduce debt; any new structural finding fails the gate immediately.
 
 ## 4. Planned 120-Entry catalog
 
-The current 119 Entries remain in scope. The following candidate makes the
-remaining catalog explicit. “Candidate” means editorially selected, not yet
-fact-verified or release-ready.
+The current 120 Entries complete the controlled catalog. Further expansion
+requires a new reviewed backlog rather than opportunistic additions.
 
 ### 4.1 Containers: completed
 
@@ -145,7 +145,7 @@ single-object deletion slice was delivered in breadth batch 10.
 The selected duration, time-point, monotonic-clock, and system-clock slice was
 delivered in breadth batch 11.
 
-### 4.9 Concurrency: 14 delivered, 1 candidate
+### 4.9 Concurrency: 15 delivered, complete
 
 - Delivered in breadth batch 15: `<thread>`, `std::thread`, `<mutex>`,
   `std::mutex`, `std::lock_guard`.
@@ -153,8 +153,9 @@ delivered in breadth batch 11.
   `<condition_variable>`, `std::condition_variable`.
 - Delivered in breadth batch 17: `<atomic>`, `std::atomic`.
 - Delivered in breadth batch 18: `<future>`, `std::future`, `std::async`.
-- Remaining thread lifecycle: `std::jthread`; retain until the local libc++ can
-  compile and execute its real C++20 stop-token contract.
+- Delivered in breadth batch 19: `std::jthread`; Homebrew LLVM 22 and GCC 15
+  compile and execute its real C++20 stop-token contract, while the project
+  continues to report the system Apple Clang 15 limitation honestly.
 
 ## 5. Delivery order
 
@@ -176,10 +177,10 @@ delivered in breadth batch 11.
    **I/O completed in breadth batch 9; filesystem completed in breadth batch
    10; time completed in breadth batch 11.**
 6. Add concurrency last, after its nondeterministic-example and memory-model
-   review requirements are explicit. **In progress:** breadth batches 15 through
-   18 deliver thread/mutex foundations, lock ownership, condition-variable
-   waiting, atomic operations, and future-based result transport; the sole
-   remaining candidate is the toolchain-gated `std::jthread` page.
+   review requirements are explicit. **Completed:** breadth batches 15 through
+   19 deliver thread/mutex foundations, lock ownership, condition-variable
+   waiting, atomic operations, future-based result transport, and structured
+   cooperative stopping with `std::jthread`.
 
 Each batch receives its own primary-source research note, implementation
 report, coverage report, example verification run, and two-axis review.

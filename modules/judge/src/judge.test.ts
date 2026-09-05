@@ -7,6 +7,7 @@ import {
   createNativeJudge,
   createNativeToolchainProbe,
   createToolchainCheckStage,
+  resolveNativeCppCompiler,
   runBoundedProcess,
   type JudgeStage,
 } from "./index.js";
@@ -18,6 +19,26 @@ const verdictFixtureRoot = fileURLToPath(
 );
 
 describe("[T-COMPAT-001] Native Judge toolchain probe", () => {
+  it("honors an explicit compiler before probing known modern installations", () => {
+    const exists = vi.fn(() => true);
+
+    expect(resolveNativeCppCompiler("/custom/clang++", exists)).toBe(
+      "/custom/clang++",
+    );
+    expect(exists).not.toHaveBeenCalled();
+  });
+
+  it("selects an installed modern LLVM and otherwise keeps the system fallback", () => {
+    expect(
+      resolveNativeCppCompiler(undefined, (path) =>
+        path.startsWith("/usr/local/"),
+      ),
+    ).toBe("/usr/local/opt/llvm/bin/clang++");
+    expect(resolveNativeCppCompiler(undefined, () => false)).toBe(
+      "/usr/bin/clang++",
+    );
+  });
+
   it("reports the compiler identity from an argument-array process call", async () => {
     const execute = vi.fn().mockResolvedValue({
       exitCode: 0,

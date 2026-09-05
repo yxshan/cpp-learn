@@ -12,7 +12,7 @@
   "since": "c++11",
   "aliases": ["thread", "线程句柄", "创建线程", "join"],
   "categories": ["concurrency"],
-  "relatedEntryIds": ["header-thread", "header-mutex", "std-mutex", "std-lock-guard"],
+  "relatedEntryIds": ["header-thread", "std-jthread", "header-mutex", "std-mutex", "std-lock-guard"],
   "content": { "format": "markdown", "path": "entries/std-thread/content.md" },
   "examples": [
     { "id": "join-and-observe-result", "path": "entries/std-thread/examples/join-and-observe-result.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "joinable_before=true\nresult=42\njoinable_after=false\n" },

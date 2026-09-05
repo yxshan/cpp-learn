@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.18 |
+| Version | 1.19 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
@@ -116,8 +116,8 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 18 are
-delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
+first three content-quality batches, and breadth-expansion batches 4 through 19
+are delivered. The controlled 120-Entry Phase 3 catalog target is complete.
 
 Before further breadth expansion, the content-quality program upgrades thin
 vertical-release Entries against the learning-quality definition in the
@@ -246,6 +246,18 @@ exception-propagation contracts. All six new examples use C++20 and avoid
 sleep, worker output, default-policy assumptions, wall-clock timing, and
 implementation-defined error text. The complete catalog now contains 222
 C++20 examples and the two existing C++23 `std::expected` examples.
+
+Breadth batch 19 advances the catalog from 119 to 120 Entries and from 224 to
+226 examples. `std::jthread` completes the controlled concurrency slice with
+token-first callable selection, one-shot cooperative stopping, RAII stop/join,
+move-only ownership, and explicit blocking and detach boundaries. Both new
+examples use C++20 and deterministic atomic handshakes without sleep, worker
+output, timing, thread IDs, or scheduling-order assumptions. The shared native
+toolchain selector now prefers an explicit override or installed Homebrew LLVM
+before the system Apple Clang, allowing the real C++20 stop-token contract to
+be verified while keeping compiler fingerprints consistent across checks,
+reports, Judge composition, and the running server. The complete catalog
+contains 224 C++20 examples and two C++23 `std::expected` examples.
 
 ### Work packages
 

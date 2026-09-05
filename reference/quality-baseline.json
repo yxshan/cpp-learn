@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 18,
+  "catalogVersion": 19,
   "review": {
-    "id": "breadth-expansion-batch-18",
+    "id": "breadth-expansion-batch-19",
     "reviewedAt": "2026-09-05",
-    "fixedPoint": "2906226",
-    "scope": "Catalog version 18 adds three future-result Entries at zero structural debt; no waivers remain."
+    "fixedPoint": "dc941f9",
+    "scope": "Catalog version 19 adds std::jthread at zero structural debt and completes the controlled 120-Entry target; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

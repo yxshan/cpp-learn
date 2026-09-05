@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
@@ -14,7 +15,31 @@ import {
   type ToolchainReadiness,
 } from "@cpp-learn/contracts";
 
-export const DEFAULT_NATIVE_CPP_COMPILER = "/usr/bin/clang++";
+const MODERN_NATIVE_CPP_COMPILER_CANDIDATES = [
+  "/opt/homebrew/opt/llvm/bin/clang++",
+  "/usr/local/opt/llvm/bin/clang++",
+] as const;
+
+export const NATIVE_CPP_COMPILER_ENVIRONMENT_VARIABLE =
+  "CPP_LEARN_CPP_COMPILER";
+
+export function resolveNativeCppCompiler(
+  configuredCompiler: string | undefined = process.env[
+    NATIVE_CPP_COMPILER_ENVIRONMENT_VARIABLE
+  ],
+  pathExists: (path: string) => boolean = existsSync,
+): string {
+  const configured = configuredCompiler?.trim();
+  if (configured) return configured;
+
+  return (
+    MODERN_NATIVE_CPP_COMPILER_CANDIDATES.find((candidate) =>
+      pathExists(candidate),
+    ) ?? "/usr/bin/clang++"
+  );
+}
+
+export const DEFAULT_NATIVE_CPP_COMPILER = resolveNativeCppCompiler();
 
 export interface ProcessResult {
   readonly exitCode: number | null;

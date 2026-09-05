@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": 18,
+  "version": 19,
   "entries": [
     "entries/standard-library/entry.json",
     "entries/header-vector/entry.json",
@@ -120,7 +120,8 @@
     "entries/std-atomic/entry.json",
     "entries/header-future/entry.json",
     "entries/std-future/entry.json",
-    "entries/std-async/entry.json"
+    "entries/std-async/entry.json",
+    "entries/std-jthread/entry.json"
   ],
   "categories": [
     { "id": "standard-library", "title": "标准库", "order": 10 },
