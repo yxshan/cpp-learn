@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "id": "header-future",
+  "version": 1,
+  "slug": "standard-library/headers/future",
+  "kind": "header",
+  "title": "<future>",
+  "summary": "提供异步结果的 provider、shared state、future、任务包装和启动策略。",
+  "symbol": "<future>",
+  "header": "<future>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["future header", "异步结果头文件", "promise", "packaged_task", "future_error"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["std-future", "std-async", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/header-future/content.md" },
+  "examples": [
+    { "id": "promise-value-channel", "path": "entries/header-future/examples/promise-value-channel.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "value=42\n" },
+    { "id": "packaged-task-result", "path": "entries/header-future/examples/packaged-task-result.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "result=42\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: <future> synopsis", "url": "https://eel.is/c++draft/future.syn", "standardSection": "[future.syn]" },
+    { "kind": "primary", "title": "C++ working draft: futures overview", "url": "https://eel.is/c++draft/futures", "standardSection": "[futures]" },
+    { "kind": "primary", "title": "C++ working draft: shared state", "url": "https://eel.is/c++draft/futures.state", "standardSection": "[futures.state]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[futures]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[future.syn]" },
+    { "kind": "secondary", "title": "cppreference 中文：<future>", "url": "https://zh.cppreference.com/w/cpp/header/future" }
+  ],
+  "verifiedAt": "2026-09-05"
+}

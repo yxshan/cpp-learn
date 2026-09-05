@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": 17,
+  "catalogVersion": 18,
   "review": {
-    "id": "breadth-expansion-batch-17",
-    "reviewedAt": "2026-09-04",
-    "fixedPoint": "86a8fd2",
-    "scope": "Catalog version 17 adds two atomic-operation Entries at zero structural debt; no waivers remain."
+    "id": "breadth-expansion-batch-18",
+    "reviewedAt": "2026-09-05",
+    "fixedPoint": "872997b",
+    "scope": "Catalog version 18 adds three future-result Entries at zero structural debt; no waivers remain."
   },
   "acceptedEntryVersions": {},
   "knownGaps": [],

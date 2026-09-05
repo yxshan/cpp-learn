@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.17 |
+| Version | 1.18 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-04 |
+| Last updated | 2026-09-05 |
 
 ## 1. Objective
 
@@ -116,7 +116,7 @@ integration, accessibility, and Playwright gates.
 
 Current state: the first expansion batch, category/standard/verification
 filters, coverage reporting, compiler-bound local verification manifests, the
-first three content-quality batches, and breadth-expansion batches 4 through 17 are
+first three content-quality batches, and breadth-expansion batches 4 through 18 are
 delivered. Catalog expansion toward the 80–120 Entry target remains in progress.
 
 Before further breadth expansion, the content-quality program upgrades thin
@@ -238,6 +238,14 @@ blocking wait/notify, and honest lock-free boundaries. All four new examples
 use C++20 and avoid polling, sleep, timing, worker output, schedule order, and
 implementation-defined lock-free snapshots. The complete catalog now contains
 216 C++20 examples and the two existing C++23 `std::expected` examples.
+
+Breadth batch 18 advances the catalog from 116 to 119 Entries and from 218 to
+224 examples. `<future>`, `std::future`, and `std::async` establish provider,
+shared-state, single-consumer result, launch-policy, deferred-execution, and
+exception-propagation contracts. All six new examples use C++20 and avoid
+sleep, worker output, default-policy assumptions, wall-clock timing, and
+implementation-defined error text. The complete catalog now contains 222
+C++20 examples and the two existing C++23 `std::expected` examples.
 
 ### Work packages
 

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "std-async",
+  "version": 1,
+  "slug": "standard-library/concurrency/async",
+  "kind": "function",
+  "title": "std::async",
+  "summary": "按显式或实现选择的 launch policy 执行 callable，并返回关联 future。",
+  "symbol": "std::async",
+  "header": "<future>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["async", "异步任务", "launch async", "launch deferred", "异步函数"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-future", "std-future", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/std-async/content.md" },
+  "examples": [
+    { "id": "deferred-copy", "path": "entries/std-async/examples/deferred-copy.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "status=deferred\nresult=42\nsource=100\n" },
+    { "id": "exception-result", "path": "entries/std-async/examples/exception-result.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "caught=task failed\nvalid=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: function template async", "url": "https://eel.is/c++draft/futures.async", "standardSection": "[futures.async]" },
+    { "kind": "primary", "title": "C++ working draft: shared state", "url": "https://eel.is/c++draft/futures.state", "standardSection": "[futures.state]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[futures.async]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[futures.async]" },
+    { "kind": "primary", "title": "P0849R8: auto(x): decay-copy in the language", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0849r8.html", "standardSection": "C++23 materialization wording" },
+    { "kind": "primary", "title": "N3776: Wording for ~future", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3776.pdf", "standardSection": "async future shared-state release" },
+    { "kind": "primary", "title": "LWG 2021: Further incorrect usages of result_of", "url": "https://cplusplus.github.io/LWG/issue2021", "standardSection": "async decay and result type" },
+    { "kind": "primary", "title": "LWG 2752: Throws clauses of async and packaged_task are unimplementable", "url": "https://cplusplus.github.io/LWG/issue2752", "standardSection": "async allocation failure" },
+    { "kind": "primary", "title": "LWG 3476: thread and jthread constructors require that the parameters be move-constructible but never move construct the parameters", "url": "https://cplusplus.github.io/LWG/issue3476", "standardSection": "async constraints" },
+    { "kind": "primary", "title": "LWG 3582: Unclear where std::async exceptions are handled", "url": "https://cplusplus.github.io/LWG/issue3582", "standardSection": "argument materialization exceptions" },
+    { "kind": "secondary", "title": "cppreference 中文：std::async", "url": "https://zh.cppreference.com/w/cpp/thread/async" }
+  ],
+  "verifiedAt": "2026-09-05"
+}

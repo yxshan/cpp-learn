@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "id": "std-future",
+  "version": 1,
+  "slug": "standard-library/concurrency/future",
+  "kind": "type",
+  "title": "std::future",
+  "summary": "以 move-only 单消费者句柄等待并一次性取出 shared state 的值或异常。",
+  "symbol": "std::future",
+  "header": "<future>",
+  "namespace": "std",
+  "since": "c++11",
+  "aliases": ["future", "异步结果", "shared state", "broken_promise", "wait_for"],
+  "categories": ["concurrency"],
+  "relatedEntryIds": ["header-future", "std-async", "std-thread"],
+  "content": { "format": "markdown", "path": "entries/std-future/content.md" },
+  "examples": [
+    { "id": "single-consumption", "path": "entries/std-future/examples/single-consumption.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "before=true\nvalue=ready\nafter=false\n" },
+    { "id": "broken-promise", "path": "entries/std-future/examples/broken-promise.cpp", "kind": "run", "standard": "c++20", "expectedStdout": "broken_promise=true\nvalid_after_get=false\n" }
+  ],
+  "sources": [
+    { "kind": "primary", "title": "C++ working draft: class template future", "url": "https://eel.is/c++draft/futures.unique.future", "standardSection": "[futures.unique.future]" },
+    { "kind": "primary", "title": "C++ working draft: shared state", "url": "https://eel.is/c++draft/futures.state", "standardSection": "[futures.state]" },
+    { "kind": "primary", "title": "C++ working draft: future errors", "url": "https://eel.is/c++draft/futures.future.error", "standardSection": "[futures.future.error]" },
+    { "kind": "primary", "title": "C++ working draft: timing specifications", "url": "https://eel.is/c++draft/thread.req.timing", "standardSection": "[thread.req.timing]" },
+    { "kind": "primary", "title": "C++11 working draft N3337", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf", "standardSection": "[futures.unique.future]" },
+    { "kind": "primary", "title": "C++20 final working draft N4861", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/n4861.pdf", "standardSection": "[futures.unique.future]" },
+    { "kind": "primary", "title": "N3776: Wording for ~future", "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3776.pdf", "standardSection": "future shared-state release" },
+    { "kind": "secondary", "title": "cppreference 中文：std::future", "url": "https://zh.cppreference.com/w/cpp/thread/future" }
+  ],
+  "verifiedAt": "2026-09-05"
+}
