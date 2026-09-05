@@ -4,7 +4,7 @@
   "review": {
     "id": "breadth-expansion-batch-19",
     "reviewedAt": "2026-09-05",
-    "fixedPoint": "dc941f9",
+    "fixedPoint": "e0127a8",
     "scope": "Catalog version 19 adds std::jthread at zero structural debt and completes the controlled 120-Entry target; no waivers remain."
   },
   "acceptedEntryVersions": {},

@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-034 |
-| Version | 1.0 |
-| Status | In Review |
+| Version | 1.1 |
+| Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
 
@@ -66,9 +66,15 @@ the missing library feature with a `std::thread` fallback or an empty probe.
 | Toolchain selection tests | Passed: validated absolute override, missing/relative rejection, Homebrew LLVM discovery, and system fallback |
 | Batch example cross-check | Passed with Homebrew LLVM 22.1.6 and GCC 15.2.0 under strict C++20 with exact stdout |
 | Reference activation and quality | Passed: catalog version 19, 120 Entries, 116/120 audited, zero reviewed gaps |
-| Complete repository check | Passed: docs, 70 curriculum cases, 120-entry Reference, 226 examples, formatting, lint, types, 198 tests, and production build |
-| Standards review | Pending |
-| Specification review | Pending |
+| Complete repository check | Passed: docs, 70 curriculum cases, 120-entry Reference, 226 examples, formatting, lint, types, 199 tests, and production build |
+| Standards review | Accepted after the modern compiler selector was scoped to Reference, explicit paths were validated, and normative document dates were corrected |
+| Specification review | Accepted after stop-state persistence, constructing-thread wording, and the complete C++20 constructor constraints were corrected |
+
+The repair pass keeps the native Judge on its explicit Apple Clang integration
+baseline while binding Reference verification and server display to the same
+capable compiler fingerprint. It also clarifies that join/detach remove the
+thread representation without discarding the stop state, and that callable and
+argument materialization occurs in the thread invoking the constructor.
 
 ## 7. Controlled limitations
 
