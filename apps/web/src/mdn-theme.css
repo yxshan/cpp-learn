@@ -1310,9 +1310,14 @@ footer {
   gap: 16px;
 }
 
-.reference-playground-heading > div {
+.reference-playground-heading-copy {
   display: grid;
   gap: 4px;
+}
+
+.reference-playground-heading-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .reference-playground-heading strong {
@@ -1328,7 +1333,7 @@ footer {
   font-size: 11px;
 }
 
-.reference-playground-heading > button {
+.reference-playground-heading-actions > button {
   min-height: 34px;
   padding-inline: 11px;
   color: #343434;
@@ -1339,7 +1344,7 @@ footer {
   font-size: 11px;
 }
 
-.reference-playground-heading > button:disabled {
+.reference-playground-heading-actions > button:disabled {
   color: #858585;
   cursor: not-allowed;
   background: #ededed;
@@ -1388,6 +1393,20 @@ footer {
 .reference-playground-actions > button:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.reference-playground-actions > .reference-playground-cancel {
+  margin-right: auto;
+  color: #8b1e18;
+  border-color: #c9a19e;
+  background: #ffffff;
+}
+
+.reference-playground-actions
+  > .reference-playground-cancel:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: #8b1e18;
+  background: #8b1e18;
 }
 
 .reference-playground-result {
@@ -1556,9 +1575,18 @@ footer {
     flex-direction: column;
   }
 
-  .reference-playground-heading > button,
+  .reference-playground-heading-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .reference-playground-heading-actions > button,
   .reference-playground-actions > button {
     width: 100%;
+  }
+
+  .reference-playground-actions > .reference-playground-cancel {
+    margin-right: 0;
   }
 
   .reference-playground-panel textarea {

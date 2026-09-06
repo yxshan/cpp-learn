@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,6 +14,7 @@ import {
   type CppStandard,
   type LearningPlatform,
   type ReferenceEntryKind,
+  type ReferencePlaygroundCancellationRequestDto,
   type ReferencePlaygroundRunRequestDto,
   type ReferenceVerification,
 } from "@cpp-learn/contracts";
@@ -25,6 +25,8 @@ import {
 
 const MAX_ARCHIVE_REQUEST_BYTES = 64 * 1024 * 1024;
 const MAX_REFERENCE_PLAYGROUND_SOURCE_BYTES = 64 * 1024;
+const REFERENCE_PLAYGROUND_RUN_ID =
+  /^ref_run_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 export interface ServerDependencies {
   readonly platform: LearningPlatform;
@@ -64,11 +66,21 @@ function isReferencePlaygroundRunBody(
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
   return (
-    Object.keys(body).length === 2 &&
+    Object.keys(body).length === 3 &&
     body["schemaVersion"] === 1 &&
+    typeof body["runId"] === "string" &&
+    REFERENCE_PLAYGROUND_RUN_ID.test(body["runId"]) &&
     typeof body["source"] === "string" &&
     body["source"].length > 0
   );
+}
+
+function isReferencePlaygroundCancellationBody(
+  value: unknown,
+): value is ReferencePlaygroundCancellationRequestDto {
+  if (typeof value !== "object" || value === null) return false;
+  const body = value as Record<string, unknown>;
+  return Object.keys(body).length === 1 && body["schemaVersion"] === 1;
 }
 
 function isExecuteActivityBody(value: unknown): value is ExecuteActivityBody {
@@ -145,6 +157,7 @@ export function createServer(
       ? configuredPlaygroundConcurrency
       : 1;
   let referencePlaygroundInFlight = 0;
+  const activeReferencePlaygroundRuns = new Map<string, AbortController>();
 
   if (dependencies.webRoot) {
     void server.register(fastifyStatic, {
@@ -372,6 +385,12 @@ export function createServer(
           error: { code: "playground_unavailable" },
         });
       }
+      if (activeReferencePlaygroundRuns.has(request.body.runId)) {
+        return reply.code(409).send({
+          schemaVersion: 1,
+          error: { code: "playground_run_id_conflict" },
+        });
+      }
       if (referencePlaygroundInFlight >= referencePlaygroundMaxConcurrentRuns) {
         return reply
           .header("Retry-After", "1")
@@ -381,19 +400,60 @@ export function createServer(
             error: { code: "playground_busy" },
           });
       }
+      const controller = new AbortController();
       referencePlaygroundInFlight += 1;
+      activeReferencePlaygroundRuns.set(request.body.runId, controller);
       try {
         return await dependencies.referencePlayground.run({
-          runId: `ref_run_${randomUUID()}`,
+          runId: request.body.runId,
           entryId: entry.id,
           exampleId: example.id,
           standard: example.standard,
           source: request.body.source,
           stdin: example.stdin ?? "",
+          signal: controller.signal,
         });
       } finally {
+        if (
+          activeReferencePlaygroundRuns.get(request.body.runId) === controller
+        ) {
+          activeReferencePlaygroundRuns.delete(request.body.runId);
+        }
         referencePlaygroundInFlight -= 1;
       }
+    },
+  );
+
+  server.post<{ Params: { runId: string }; Body: unknown }>(
+    "/api/v1/reference/runs/:runId/cancellations",
+    async (request, reply) => {
+      if (!isAllowedMutationOrigin(request.headers.origin)) {
+        return reply.code(403).send({
+          schemaVersion: 1,
+          error: { code: "origin_rejected", message: "Origin is not loopback" },
+        });
+      }
+      if (
+        !REFERENCE_PLAYGROUND_RUN_ID.test(request.params.runId) ||
+        !isReferencePlaygroundCancellationBody(request.body)
+      ) {
+        return reply.code(400).send({
+          schemaVersion: 1,
+          error: {
+            code: "validation_error",
+            message: "Invalid Playground cancellation request",
+          },
+        });
+      }
+      const controller = activeReferencePlaygroundRuns.get(
+        request.params.runId,
+      );
+      controller?.abort();
+      return {
+        schemaVersion: 1,
+        runId: request.params.runId,
+        cancelled: controller !== undefined,
+      };
     },
   );
 

@@ -287,3 +287,79 @@ test("[T-REF-009] same-named examples do not leak state across Entry navigation"
     /state must not cross/,
   );
 });
+
+test("[T-REF-009] Playground exposes bounded failure outcomes and cancellation", async ({
+  page,
+}) => {
+  await page.goto("/reference/standard-library/containers/vector");
+  await page
+    .getByRole("button", { name: "在 Playground 中运行" })
+    .first()
+    .click();
+  const editor = page.getByLabel("编辑 vector-basics.cpp");
+  const run = page.getByRole("button", { name: "运行代码" });
+  const status = page.getByRole("status", { name: "运行结果" });
+
+  await editor.fill("int main( {}\n");
+  await run.click();
+  await expect(status).toContainText("编译失败", { timeout: 10_000 });
+  await expect(status).toContainText(/error|错误/i);
+
+  await editor.fill("int main() { return 7; }\n");
+  await run.click();
+  await expect(status).toContainText("运行失败", { timeout: 10_000 });
+
+  await editor.fill(
+    '#include <iostream>\n\nint main() {\n  for (;;) { std::cout << "0123456789"; }\n}\n',
+  );
+  await run.click();
+  await expect(status).toContainText("输出超限", { timeout: 10_000 });
+
+  const sleepingSource =
+    "#include <chrono>\n#include <thread>\n\nint main() {\n" +
+    "  std::this_thread::sleep_for(std::chrono::seconds(30));\n}\n";
+  await editor.fill(sleepingSource);
+  await run.click();
+  await page.getByRole("button", { name: "取消运行" }).click();
+  await expect(status).toContainText("运行已取消", { timeout: 10_000 });
+
+  await editor.fill(sleepingSource);
+  await run.click();
+  await expect(status).toContainText("运行超时", { timeout: 12_000 });
+});
+
+test("[T-REF-009] Reset and explicit discard stay usable at 390 pixels", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/reference/standard-library/containers/vector");
+  await page
+    .getByRole("button", { name: "在 Playground 中运行" })
+    .first()
+    .click();
+  const editor = page.getByLabel("编辑 vector-basics.cpp");
+
+  await editor.fill("// reset marker\n");
+  await page.getByRole("button", { name: "重置代码" }).click();
+  await expect(editor).toHaveValue(/std::vector/);
+
+  await editor.fill("// discard marker\n");
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "放弃修改并关闭" }).click();
+  await expect(
+    page.getByRole("button", { name: "在 Playground 中运行" }).first(),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "在 Playground 中运行" })
+    .first()
+    .click();
+  await expect(page.getByLabel("编辑 vector-basics.cpp")).toHaveValue(
+    /std::vector/,
+  );
+
+  const widths = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth,
+    viewport: innerWidth,
+  }));
+  expect(widths.document).toBeLessThanOrEqual(widths.viewport);
+});

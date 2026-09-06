@@ -11,6 +11,8 @@ import {
   type ProgressResult,
   type ReferenceEntryDetail,
   type ReferenceNavigation,
+  type ReferencePlaygroundCancellationRequestDto,
+  type ReferencePlaygroundCancellationResult,
   type ReferencePlaygroundRunRequestDto,
   type ReferencePlaygroundRunResult,
   type ReferenceSearchQuery,
@@ -126,12 +128,38 @@ export async function getReferenceEntry(
 export async function runReferenceExample(
   entryId: string,
   exampleId: string,
+  runId: string,
   source: string,
   request: Request = fetch,
 ): Promise<ReferencePlaygroundRunResult> {
-  const body: ReferencePlaygroundRunRequestDto = { schemaVersion: 1, source };
+  const body: ReferencePlaygroundRunRequestDto = {
+    schemaVersion: 1,
+    runId,
+    source,
+  };
   return requestJson(
     `/api/v1/reference/entries/${encodeURIComponent(entryId)}/examples/${encodeURIComponent(exampleId)}/runs`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    },
+    request,
+  );
+}
+
+export async function cancelReferenceRun(
+  runId: string,
+  request: Request = fetch,
+): Promise<ReferencePlaygroundCancellationResult> {
+  const body: ReferencePlaygroundCancellationRequestDto = {
+    schemaVersion: 1,
+  };
+  return requestJson(
+    `/api/v1/reference/runs/${encodeURIComponent(runId)}/cancellations`,
     {
       method: "POST",
       headers: {

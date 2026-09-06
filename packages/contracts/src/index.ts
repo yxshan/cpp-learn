@@ -160,7 +160,18 @@ export interface ReferencePlaygroundRunResult {
 
 export interface ReferencePlaygroundRunRequestDto {
   readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly runId: string;
   readonly source: string;
+}
+
+export interface ReferencePlaygroundCancellationRequestDto {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+}
+
+export interface ReferencePlaygroundCancellationResult {
+  readonly schemaVersion: typeof SCHEMA_VERSION;
+  readonly runId: string;
+  readonly cancelled: boolean;
 }
 
 export interface ReferenceSearchQuery {

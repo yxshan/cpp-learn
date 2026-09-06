@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { BootstrapResult } from "@cpp-learn/contracts";
 
 import {
+  cancelReferenceRun,
   cancelJob,
   executeActivity,
   exportBackup,
@@ -441,7 +442,13 @@ describe("[T-REF-006] Reference API Adapter", () => {
     );
 
     await expect(
-      runReferenceExample("std-vector", "basic", "int main() {}\n", request),
+      runReferenceExample(
+        "std-vector",
+        "basic",
+        "ref_run_00000000-0000-4000-8000-000000000001",
+        "int main() {}\n",
+        request,
+      ),
     ).resolves.toEqual(result);
     expect(request).toHaveBeenCalledWith(
       "/api/v1/reference/entries/std-vector/examples/basic/runs",
@@ -453,8 +460,38 @@ describe("[T-REF-006] Reference API Adapter", () => {
         },
         body: JSON.stringify({
           schemaVersion: 1,
+          runId: "ref_run_00000000-0000-4000-8000-000000000001",
           source: "int main() {}\n",
         }),
+      },
+    );
+  });
+
+  it("cancels a Reference run through its stable ID", async () => {
+    const result = {
+      schemaVersion: 1,
+      runId: "ref_run_00000000-0000-4000-8000-000000000001",
+      cancelled: true,
+    };
+    const request = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await expect(cancelReferenceRun(result.runId, request)).resolves.toEqual(
+      result,
+    );
+    expect(request).toHaveBeenCalledWith(
+      `/api/v1/reference/runs/${result.runId}/cancellations`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ schemaVersion: 1 }),
       },
     );
   });

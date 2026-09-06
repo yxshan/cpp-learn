@@ -11,7 +11,10 @@ import type {
   LearningPlatform,
   ReferencePlaygroundRunResult,
 } from "@cpp-learn/contracts";
-import { createNativeJudge } from "@cpp-learn/judge";
+import {
+  createNativeJudge,
+  type ReferencePlaygroundRunRequest,
+} from "@cpp-learn/judge";
 import {
   createJsonlLearningRecord,
   createLocalDataArchive,
@@ -299,6 +302,8 @@ describe("[T-REF-005] HTTP Reference Adapter", () => {
 });
 
 describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
+  const runId = "ref_run_00000000-0000-4000-8000-000000000001";
+
   it("runs a published example without dispatching a learning command", async () => {
     const platform = createUnusedPlatform();
     const dispatch = vi.spyOn(platform, "dispatch");
@@ -328,6 +333,7 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
       payload: {
         schemaVersion: 1,
+        runId,
         source: '#include <iostream>\nint main() { std::cout << "4\\n"; }\n',
       },
     });
@@ -339,12 +345,13 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       stdout: "4\n",
     });
     expect(run).toHaveBeenCalledWith({
-      runId: expect.stringMatching(/^ref_run_/),
+      runId,
       entryId: "std-vector",
       exampleId: "basic",
       standard: "c++20",
       source: expect.stringContaining('std::cout << "4\\n"'),
       stdin: "",
+      signal: expect.any(AbortSignal),
     });
     expect(dispatch).not.toHaveBeenCalled();
     expect(platform.query).not.toHaveBeenCalled();
@@ -363,23 +370,27 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       server.inject({
         method: "POST",
         url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
-        payload: { schemaVersion: 1, source: "" },
+        payload: { schemaVersion: 1, runId, source: "" },
       }),
       server.inject({
         method: "POST",
         url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
-        payload: { schemaVersion: 1, source: "x".repeat(64 * 1024 + 1) },
+        payload: {
+          schemaVersion: 1,
+          runId,
+          source: "x".repeat(64 * 1024 + 1),
+        },
       }),
       server.inject({
         method: "POST",
         url: "/api/v1/reference/entries/std-vector/examples/missing/runs",
-        payload: { schemaVersion: 1, source: "int main() {}\n" },
+        payload: { schemaVersion: 1, runId, source: "int main() {}\n" },
       }),
       server.inject({
         method: "POST",
         url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
         headers: { origin: "https://attacker.example" },
-        payload: { schemaVersion: 1, source: "int main() {}\n" },
+        payload: { schemaVersion: 1, runId, source: "int main() {}\n" },
       }),
     ]);
 
@@ -418,11 +429,14 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       reference: createReferenceFixture(),
       referencePlayground: { run },
     });
-    const payload = { schemaVersion: 1, source: "int main() {}\n" };
+    const payload = { schemaVersion: 1, runId, source: "int main() {}\n" };
     const first = server.inject({
       method: "POST",
       url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
-      payload,
+      payload: {
+        ...payload,
+        runId: "ref_run_00000000-0000-4000-8000-000000000002",
+      },
     });
     await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1));
 
@@ -439,6 +453,77 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
 
     releaseRun?.();
     await expect(first).resolves.toMatchObject({ statusCode: 200 });
+    await server.close();
+  });
+
+  it("cancels an active run through its client-visible ID", async () => {
+    const run = vi.fn(
+      ({ signal, ...request }: ReferencePlaygroundRunRequest) =>
+        new Promise<ReferencePlaygroundRunResult>((resolve) => {
+          signal?.addEventListener(
+            "abort",
+            () =>
+              resolve({
+                schemaVersion: 1,
+                runId: request.runId,
+                entryId: request.entryId,
+                exampleId: request.exampleId,
+                verdict: "cancelled",
+                stdout: "",
+                stderr: "",
+                stages: [],
+                toolchain: {
+                  compiler: "clang",
+                  standard: request.standard,
+                  flags: ["-std=c++20"],
+                },
+              }),
+            { once: true },
+          );
+        }),
+    );
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+      referencePlayground: { run },
+    });
+    const activeRun = server.inject({
+      method: "POST",
+      url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      payload: { schemaVersion: 1, runId, source: "int main() {}\n" },
+    });
+    await vi.waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+
+    const conflictingRun = await server.inject({
+      method: "POST",
+      url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      payload: { schemaVersion: 1, runId, source: "int main() {}\n" },
+    });
+    expect(conflictingRun.statusCode).toBe(409);
+    expect(conflictingRun.json()).toMatchObject({
+      error: { code: "playground_run_id_conflict" },
+    });
+
+    const cancellation = await server.inject({
+      method: "POST",
+      url: `/api/v1/reference/runs/${runId}/cancellations`,
+      payload: { schemaVersion: 1 },
+    });
+    expect(cancellation.statusCode).toBe(200);
+    expect(cancellation.json()).toEqual({
+      schemaVersion: 1,
+      runId,
+      cancelled: true,
+    });
+    await expect(activeRun).resolves.toMatchObject({ statusCode: 200 });
+    expect((await activeRun).json()).toMatchObject({ verdict: "cancelled" });
+
+    const completedCancellation = await server.inject({
+      method: "POST",
+      url: `/api/v1/reference/runs/${runId}/cancellations`,
+      payload: { schemaVersion: 1 },
+    });
+    expect(completedCancellation.json()).toMatchObject({ cancelled: false });
     await server.close();
   });
 });

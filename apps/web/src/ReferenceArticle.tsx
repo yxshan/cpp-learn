@@ -9,7 +9,11 @@ import type {
   ReferenceSearchItem,
 } from "@cpp-learn/contracts";
 
-import { runReferenceExample } from "./api.js";
+import {
+  HttpRequestError,
+  cancelReferenceRun,
+  runReferenceExample,
+} from "./api.js";
 import { referenceEntryUrl, referenceSearchUrl } from "./reference-location.js";
 import type { ReferenceLinkTarget } from "./reference-links.js";
 
@@ -137,22 +141,64 @@ function ReferenceExamplePlayground({
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<ReferencePlaygroundRunResult>();
   const [error, setError] = useState<string>();
+  const [activeRunId, setActiveRunId] = useState<string>();
+  const [cancelling, setCancelling] = useState(false);
 
   if (example.kind !== "run" || example.verification === "unsupported") {
     return null;
   }
 
   const execute = async (): Promise<void> => {
+    const runId = `ref_run_${globalThis.crypto.randomUUID()}`;
     setRunning(true);
+    setActiveRunId(runId);
     setResult(undefined);
     setError(undefined);
     try {
-      setResult(await runReferenceExample(entryId, example.id, source));
-    } catch {
-      setError("暂时无法运行该示例，请检查本机编译环境后重试。");
+      setResult(await runReferenceExample(entryId, example.id, runId, source));
+    } catch (caught) {
+      setError(
+        caught instanceof HttpRequestError && caught.status === 429
+          ? "本机编译器正在处理另一个任务，请稍后重试。"
+          : "暂时无法运行该示例，请检查本机编译环境后重试。",
+      );
     } finally {
       setRunning(false);
+      setActiveRunId(undefined);
+      setCancelling(false);
     }
+  };
+
+  const cancel = async (): Promise<void> => {
+    if (!activeRunId || cancelling) return;
+    setCancelling(true);
+    try {
+      const cancellation = await cancelReferenceRun(activeRunId);
+      if (!cancellation.cancelled) {
+        setError("运行已经结束，无需取消。");
+        setCancelling(false);
+      }
+    } catch {
+      setError("取消请求失败，运行仍会受超时限制。");
+      setCancelling(false);
+    }
+  };
+
+  const restoreOriginal = (): void => {
+    setSource(example.source);
+    setResult(undefined);
+    setError(undefined);
+  };
+
+  const discard = (): void => {
+    if (
+      source !== example.source &&
+      !window.confirm("确定放弃当前 Playground 修改并关闭吗？")
+    ) {
+      return;
+    }
+    restoreOriginal();
+    setOpen(false);
   };
 
   return (
@@ -168,21 +214,22 @@ function ReferenceExamplePlayground({
       {open && (
         <div className="reference-playground-panel">
           <div className="reference-playground-heading">
-            <div>
+            <div className="reference-playground-heading-copy">
               <strong>临时代码区</strong>
               <span>运行结果不会计入课程进度或掌握证据。</span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setSource(example.source);
-                setResult(undefined);
-                setError(undefined);
-              }}
-              disabled={running || source === example.source}
-            >
-              重置代码
-            </button>
+            <div className="reference-playground-heading-actions">
+              <button
+                type="button"
+                onClick={restoreOriginal}
+                disabled={running || source === example.source}
+              >
+                重置代码
+              </button>
+              <button type="button" onClick={discard} disabled={running}>
+                放弃修改并关闭
+              </button>
+            </div>
           </div>
           <label htmlFor={`reference-playground-${entryId}-${example.id}`}>
             编辑 {example.id}.cpp
@@ -206,6 +253,16 @@ function ReferenceExamplePlayground({
             >
               {running ? "运行中…" : "运行代码"}
             </button>
+            {running && (
+              <button
+                type="button"
+                className="reference-playground-cancel"
+                onClick={() => void cancel()}
+                disabled={cancelling}
+              >
+                {cancelling ? "正在取消…" : "取消运行"}
+              </button>
+            )}
             <span>{example.standard.toUpperCase()} · 本机临时执行</span>
           </div>
           {(result || error) && (
