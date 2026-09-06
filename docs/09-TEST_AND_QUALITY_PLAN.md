@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -127,6 +127,10 @@ Reference content CI additionally validates:
 - Real-browser coverage includes compile failure, runtime failure, timeout,
   output limit, cancellation, reset/discard, Entry-isolated source, unchanged
   Dashboard state, and the 390-pixel layout.
+- Authoring Phase A0 uses golden member/type/header profiles through the Module
+  Interface and strict artifact-schema fixtures. It proves idempotent resume,
+  fail-closed identity conflict, unsafe-path rejection, defensive in-memory
+  storage, and absence of canonical publication behavior.
 
 ## 5. Security tests
 

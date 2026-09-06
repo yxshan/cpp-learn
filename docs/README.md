@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 4.8 |
+| Version | 4.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -69,7 +69,8 @@ Read in this order:
 51. [Stage 6.2 Phase 4 Playground Tracer Bullet Implementation Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
 52. [Stage 6.2 Phase 4 Playground Completion Implementation Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md)
 53. [C++ API Reference Content Authoring Tools Design and Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
-54. [Domain Context](CONTEXT.md)
+54. [Stage 6.3 Phase A0 Reference Authoring Contracts Implementation Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md)
+55. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -112,7 +113,7 @@ API Reference research and editorial baselines:
 - [ADR-0004: Native judge first, container adapter later](adr/0004-native-judge-first.md)
 - [ADR-0005: Declarative curriculum content](adr/0005-declarative-curriculum-content.md)
 - [ADR-0006: Separate declarative C++ API Reference Module](adr/0006-separate-declarative-api-reference.md)
-- [ADR-0007 (proposed): Local Reference authoring Module with CLI-first Adapter](adr/0007-local-reference-authoring-pipeline.md)
+- [ADR-0007: Local Reference authoring Module with CLI-first Adapter](adr/0007-local-reference-authoring-pipeline.md)
 
 ## Archive
 

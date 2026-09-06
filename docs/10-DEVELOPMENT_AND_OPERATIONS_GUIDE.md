@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
@@ -152,6 +152,12 @@ The Learning Record exposes rebuild through its maintenance Interface and automa
 6. Merge only after traceability and content quality gates pass.
 
 ### C++ Reference Entries
+
+Phase A0 of the local Authoring Module is accepted for contracts and in-memory
+draft preparation. It is not yet an operator command and cannot publish. Until
+Phase A1 connects the CLI and filesystem draft Adapter, authors continue using
+the controlled manual steps below. See the [Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
+and [Phase A0 Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md).
 
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -70,7 +70,7 @@ promises.
 
 ## 4. Deep Module boundary
 
-The `Reference Authoring Module` hides draft storage, templates, schema details,
+The target `Reference Authoring Module` hides draft storage, templates, schema details,
 catalog graph updates, claim ledgers, compiler cache keys, preview artifacts,
 and atomic filesystem publication behind three operations:
 
@@ -81,6 +81,11 @@ interface ReferenceAuthoring {
   publish(request: PublishDraftRequest): Promise<PublishResult>;
 }
 ```
+
+Phase A0 exposes only `prepare`; an Interface does not advertise `check` or
+`publish` before those behaviors exist. Phase A1 adds `check`, and Phase A2 adds
+`publish`, preserving the request/result vocabulary established by the
+versioned artifact Schemas.
 
 - `prepare` creates or resumes a draft and materializes the selected Entry-kind
   profile, related-Entry context, and reusable fact sheet.
@@ -225,14 +230,19 @@ No correctness rule may exist only in React.
 
 ### Phase A0: contracts and golden fixtures
 
+**Status: Accepted.** See the [Phase A0 Implementation Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md).
+
 - Define draft, fact, source, report, and publication schemas.
 - Capture golden fixtures for one `member`, one `type`, and one `header` Entry.
 - Extract reusable validation functions from the existing scripts without
   changing their current command behavior.
 - Establish full-vs-incremental equivalence tests.
 
-Exit: the Module Interface and risk vocabulary are stable enough for one
-tracer-bullet draft; no canonical files are written.
+Exit met: strict draft/fact/source/report/publication Schemas, deterministic
+member/type/header golden profiles, non-publishing `prepare`, safe resume and
+conflict handling, and the in-memory draft Adapter are executable. Candidate
+`entry.json` deliberately remains release-invalid until later checks resolve
+its missing facts and sources; no canonical files are written.
 
 ### Phase A1: CLI prepare/check tracer bullet
 
@@ -311,8 +321,9 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Start Phase A0 with one `member` golden fixture and keep existing commands as the
-release oracle. The first implementation PR should add only schemas, an
-in-memory draft repository, `prepare`, and failing/passing contract tests. It
-must not publish content. This is the smallest slice that validates the Module
-seam before UI or AI integration increases cost.
+Start Phase A1 with a confined filesystem draft Adapter and a CLI `prepare`
+command calling the accepted Module Interface. Then add the smallest real
+`check` slice: validate the prepared artifacts, require fact/source mappings,
+and emit human-readable plus JSON findings without compiling or publishing.
+Keep existing Reference commands as the release oracle and do not add canonical
+writes, UI, or AI behavior in this slice.

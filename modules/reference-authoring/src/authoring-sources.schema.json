@@ -1,0 +1,39 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-sources.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "draftId", "sources"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "sources": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "title", "url", "verifiedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["primary", "secondary", "vendor"] },
+        "title": { "type": "string", "minLength": 1 },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "verifiedAt": { "type": "string", "format": "date" },
+        "standardSection": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

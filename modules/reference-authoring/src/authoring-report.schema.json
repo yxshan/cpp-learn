@@ -1,0 +1,54 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-report.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "draftId",
+    "draftRevision",
+    "status",
+    "findings",
+    "cacheEvidence"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "draftRevision": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["not_checked", "blocked", "ready"] },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "cacheEvidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/cacheRecord" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "risk", "code", "path", "message"],
+      "properties": {
+        "severity": { "enum": ["hard", "warning"] },
+        "risk": { "enum": ["high", "medium", "low"] },
+        "code": { "$ref": "#/$defs/id" },
+        "path": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "cacheRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "status"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["hit", "miss", "not_checked"] }
+      }
+    }
+  }
+}

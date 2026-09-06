@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -19,6 +19,7 @@ modules/
   learning-platform/        teaching rules and orchestration
   curriculum/               content loading and validation
   reference/                C++ Reference lookup, navigation, and search
+  reference-authoring/      local Reference draft preparation and checks
   workspace/                learner files and snapshots
   judge/                    jobs, workers, stages, reports
   learning-record/          events and projections
@@ -35,6 +36,19 @@ data/                       events, projections, snapshots, logs
 ```
 
 Only `apps/server` is the composition root. Modules accept dependencies and do not instantiate production Adapters internally.
+
+### Reference Authoring Module seam
+
+Phase A0 exposes `prepare({ target })` through the `ReferenceAuthoring`
+Interface. It validates a stable Entry target, selects a controlled authoring
+profile, scaffolds versioned draft/fact/source/report artifacts plus Markdown
+and example files, resumes an identical draft, and rejects identity conflicts.
+It cannot publish canonical Reference content.
+
+The in-memory draft repository Adapter defensively copies on reads and writes.
+A filesystem Adapter becomes the second implementation of that internal seam in
+Phase A1; the CLI and later Web Author Console remain outside the Module and
+must not reproduce profile or validation rules.
 
 ## 2. Learning Platform Module
 

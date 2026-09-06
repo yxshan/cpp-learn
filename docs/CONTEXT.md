@@ -92,6 +92,22 @@ A temporary non-Activity code area for experimenting with a Reference Example.
 It may use the Judge execution seam but has no Attempt or Evidence policy.
 _Avoid_: Workspace, sandbox, Exercise
 
+**Authoring Draft**:
+A versioned, non-canonical working set used to prepare one Reference Entry. It
+may contain incomplete candidate content and cannot be served to the Learner or
+published without later checks.
+_Avoid_: Reference Entry, unpublished page, CMS record
+
+**Fact Sheet**:
+The structured claim groups for an Authoring Draft, including verification
+state and links to Source Ledger records.
+_Avoid_: generated article, copied source notes
+
+**Source Ledger**:
+The versioned source records used to verify Fact Sheet claim groups. A ledger
+records provenance but does not authorize copying source prose.
+_Avoid_: bibliography only, mirrored source page
+
 ## Platform operations
 
 **Workspace**:

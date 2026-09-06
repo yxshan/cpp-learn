@@ -1,0 +1,110 @@
+[
+  {
+    "name": "member",
+    "target": {
+      "entryId": "std-vector-insert",
+      "kind": "member",
+      "slug": "standard-library/containers/vector/insert",
+      "title": "std::vector::insert"
+    },
+    "profile": "callable",
+    "factKinds": [
+      "selection",
+      "signature",
+      "availability",
+      "parameters",
+      "return",
+      "errors",
+      "complexity",
+      "lifetime_invalidation",
+      "thread_safety",
+      "examples",
+      "pitfalls",
+      "js_comparison"
+    ],
+    "requiredHeadings": [
+      "## 快速信息",
+      "## 什么时候使用",
+      "## 声明与重载",
+      "## 参数与前置条件",
+      "## 返回值",
+      "## 复杂度",
+      "## 异常与错误",
+      "## 生命周期与失效",
+      "## 线程安全",
+      "## 示例",
+      "## 常见误区",
+      "## 与 JavaScript 对照",
+      "## 相关条目",
+      "## 来源"
+    ],
+    "examplePaths": ["examples/minimal.cpp", "examples/realistic.cpp"]
+  },
+  {
+    "name": "type",
+    "target": {
+      "entryId": "std-vector",
+      "kind": "type",
+      "slug": "standard-library/containers/vector",
+      "title": "std::vector"
+    },
+    "profile": "entity",
+    "factKinds": [
+      "selection",
+      "signature",
+      "availability",
+      "ownership",
+      "errors",
+      "complexity",
+      "lifetime_invalidation",
+      "thread_safety",
+      "examples",
+      "pitfalls",
+      "js_comparison"
+    ],
+    "requiredHeadings": [
+      "## 快速信息",
+      "## 什么时候使用",
+      "## 类型与所有权",
+      "## 复杂度",
+      "## 异常与错误",
+      "## 生命周期与失效",
+      "## 线程安全",
+      "## 示例",
+      "## 常见误区",
+      "## 与 JavaScript 对照",
+      "## 相关条目",
+      "## 来源"
+    ],
+    "examplePaths": ["examples/minimal.cpp", "examples/realistic.cpp"]
+  },
+  {
+    "name": "header",
+    "target": {
+      "entryId": "header-vector",
+      "kind": "header",
+      "slug": "standard-library/headers/vector",
+      "title": "<vector>"
+    },
+    "profile": "header",
+    "factKinds": [
+      "scope",
+      "availability",
+      "direct_include",
+      "facility_map",
+      "examples",
+      "pitfalls"
+    ],
+    "requiredHeadings": [
+      "## 快速信息",
+      "## 何时直接包含",
+      "## 设施地图",
+      "## 标准版本边界",
+      "## 示例",
+      "## 常见误区",
+      "## 相关条目",
+      "## 来源"
+    ],
+    "examplePaths": ["examples/minimal.cpp"]
+  }
+]

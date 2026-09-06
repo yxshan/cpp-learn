@@ -1,0 +1,79 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-facts.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "draftId", "groups"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "groups": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/group" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "factKind": {
+      "enum": [
+        "selection",
+        "signature",
+        "availability",
+        "parameters",
+        "return",
+        "ownership",
+        "errors",
+        "complexity",
+        "lifetime_invalidation",
+        "thread_safety",
+        "scope",
+        "direct_include",
+        "facility_map",
+        "examples",
+        "pitfalls",
+        "js_comparison"
+      ]
+    },
+    "group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "summary", "sourceIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "$ref": "#/$defs/factKind" },
+        "status": { "enum": ["unverified", "verified", "not_applicable"] },
+        "summary": { "type": "string" },
+        "sourceIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "decision": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "verified" } } },
+          "then": {
+            "properties": {
+              "sourceIds": { "type": "array", "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "status": { "const": "not_applicable" } }
+          },
+          "then": {
+            "properties": {
+              "decision": { "type": "string", "minLength": 1 }
+            },
+            "required": ["decision"]
+          }
+        }
+      ]
+    }
+  }
+}

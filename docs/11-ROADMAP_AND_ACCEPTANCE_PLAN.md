@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -228,9 +228,10 @@ Acceptance:
 
 ## 12. Stage 6.3: Reference content authoring tools
 
-**Status:** Planned. Design and phased acceptance are controlled by the [Content
+**Status:** Phase A0 accepted; Phase A1 planned. Design and phased acceptance are controlled by the [Content
 Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
-and proposed [ADR-0007](adr/0007-local-reference-authoring-pipeline.md).
+and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
+A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md).
 
 Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
 
@@ -241,9 +242,10 @@ Deliver a local Reference Authoring Module with CLI-first and later Web Adapters
 - constrained AI context packs that cannot promote unverified facts; and
 - batch metrics proving throughput gains without a quality regression.
 
-Acceptance begins with golden fixtures and a non-publishing `prepare`/`check`
-tracer bullet. Canonical writes, AI assistance, and the Web Author Console remain
-separately gated later slices.
+The accepted Phase A0 contains strict authoring artifact Schemas, member/type/
+header golden profiles, the non-publishing `prepare` Interface, and an in-memory
+draft Adapter. Filesystem drafts, `check`, canonical writes, AI assistance, and
+the Web Author Console remain separately gated later slices.
 
 ## 13. Global definition of done
 

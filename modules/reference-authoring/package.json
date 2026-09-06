@@ -1,0 +1,12 @@
+{
+  "name": "@cpp-learn/reference-authoring",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@cpp-learn/contracts": "*",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}

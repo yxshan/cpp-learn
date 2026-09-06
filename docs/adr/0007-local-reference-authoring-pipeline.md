@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Local Reference authoring Module with CLI-first Adapter
