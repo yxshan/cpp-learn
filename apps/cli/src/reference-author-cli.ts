@@ -50,17 +50,7 @@ export async function runReferenceAuthorCli(
       target: { entryId, kind, slug, title },
     });
     if (json) {
-      dependencies.stdout(
-        `${JSON.stringify(
-          result.ok
-            ? {
-                ok: true,
-                created: result.created,
-                draft: result.workspace.draft,
-              }
-            : result,
-        )}\n`,
-      );
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (result.ok) {
       dependencies.stdout(
         `${result.created ? "Created" : "Resumed"} draft ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision}\n`,
@@ -81,9 +71,7 @@ export async function runReferenceAuthorCli(
     }
     const result = await dependencies.authoring.check({ draftId });
     if (json) {
-      dependencies.stdout(
-        `${JSON.stringify(result.ok ? result.report : result)}\n`,
-      );
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
       dependencies.stderr(
         `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
@@ -94,11 +82,11 @@ export async function runReferenceAuthorCli(
       );
       for (const finding of result.report.findings) {
         dependencies.stdout(
-          `${finding.severity.toUpperCase()} ${finding.code} ${finding.path}: ${finding.message}\n`,
+          `${finding.severity.toUpperCase()} [${finding.risk.toUpperCase()}] ${finding.code} ${finding.path}: ${finding.message}\n`,
         );
       }
     }
-    return result.ok && result.report.status === "ready" ? 0 : 1;
+    return result.ok ? 0 : 1;
   }
 
   dependencies.stderr(`${prepareUsage}${checkUsage}`);

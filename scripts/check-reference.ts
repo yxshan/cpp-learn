@@ -1,24 +1,15 @@
-import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
-import type { CppStandard } from "@cpp-learn/contracts";
-import {
-  createNativeToolchainProbe,
-  executeProcess,
-  runBoundedProcess,
-} from "@cpp-learn/judge";
+import { createNativeToolchainProbe, executeProcess } from "@cpp-learn/judge";
 import {
   createFilesystemReferenceCatalog,
+  createReferenceExampleVerifier,
   referenceVerificationManifestPath,
   resolveReferenceCppCompiler,
   type ReferenceVerificationManifest,
 } from "@cpp-learn/reference";
 
-import {
-  assertReferenceCompilationAccepted,
-  resolveReferenceCompilerStandardFlag,
-} from "./reference-example-verification.ts";
 import { resolveReferenceDataRoot } from "./reference-data-root.ts";
 
 const reference = createFilesystemReferenceCatalog({
@@ -36,11 +27,6 @@ const entryIds = [
   ...new Set(navigation.categories.flatMap((category) => category.entryIds)),
 ];
 const compiler = resolveReferenceCppCompiler();
-const environment = {
-  PATH: "/usr/bin:/bin",
-  LANG: "C",
-  LC_ALL: "C",
-};
 const toolchain = await createNativeToolchainProbe({
   execute: executeProcess,
   compiler,
@@ -48,41 +34,7 @@ const toolchain = await createNativeToolchainProbe({
 if (!toolchain.ready || toolchain.compiler === undefined) {
   throw new Error("Reference content check failed: compiler unavailable");
 }
-const compilerStandardFlags = new Map<CppStandard, string>();
-const compilerStandardFlagFor = async (
-  standard: CppStandard,
-): Promise<string> => {
-  const cached = compilerStandardFlags.get(standard);
-  if (cached !== undefined) return cached;
-
-  const selected = await resolveReferenceCompilerStandardFlag({
-    standard,
-    probe: async (candidate) => {
-      const root = await mkdtemp(join(tmpdir(), "cpp-learn-standard-probe-"));
-      try {
-        const sourcePath = join(root, "probe.cpp");
-        await writeFile(sourcePath, "int main() { return 0; }\n", "utf8");
-        const result = await runBoundedProcess({
-          executable: compiler,
-          args: [`-std=${candidate}`, "-fsyntax-only", sourcePath],
-          cwd: root,
-          timeoutMs: 10_000,
-          maxOutputBytes: 64 * 1024,
-          environment: { ...environment, TMPDIR: root },
-        });
-        return (
-          result.exitCode === 0 &&
-          !result.timedOut &&
-          !result.outputLimitExceeded
-        );
-      } finally {
-        await rm(root, { recursive: true, force: true });
-      }
-    },
-  });
-  compilerStandardFlags.set(standard, selected);
-  return selected;
-};
+const verifyExample = createReferenceExampleVerifier({ compiler });
 const verificationExamples: ReferenceVerificationManifest["examples"][number][] =
   [];
 let exampleCount = 0;
@@ -92,81 +44,18 @@ for (const entryId of entryIds) {
   if (!entry) throw new Error(`Reference navigation contains ${entryId}`);
   for (const example of entry.examples) {
     exampleCount += 1;
-    const root = await mkdtemp(join(tmpdir(), "cpp-learn-reference-"));
-    try {
-      const sourcePath = join(root, `${entry.id}-${example.id}.cpp`);
-      const outputPath = join(root, "example");
-      await writeFile(sourcePath, example.source, "utf8");
-      const compilerStandardFlag = await compilerStandardFlagFor(
-        example.standard,
-      );
-      const compilation = await runBoundedProcess({
-        executable: compiler,
-        args: [
-          `-std=${compilerStandardFlag}`,
-          "-Wall",
-          "-Wextra",
-          "-Wpedantic",
-          "-Werror",
-          sourcePath,
-          "-o",
-          outputPath,
-        ],
-        cwd: root,
-        timeoutMs: 10_000,
-        maxOutputBytes: 64 * 1024,
-        environment: { ...environment, TMPDIR: root },
-      });
-
-      assertReferenceCompilationAccepted({
-        identity: `${entry.id}/${example.id}`,
-        kind: example.kind,
-        ...(example.expectedDiagnosticCategory === undefined
-          ? {}
-          : {
-              expectedDiagnosticCategory: example.expectedDiagnosticCategory,
-            }),
-        compilation,
-      });
-
-      if (example.kind === "run") {
-        const execution = await runBoundedProcess({
-          executable: outputPath,
-          args: [],
-          cwd: root,
-          timeoutMs: 2_000,
-          maxOutputBytes: 64 * 1024,
-          environment: { ...environment, TMPDIR: root },
-          ...(example.stdin === undefined ? {} : { stdin: example.stdin }),
-        });
-        if (
-          execution.exitCode !== 0 ||
-          execution.timedOut ||
-          execution.outputLimitExceeded ||
-          execution.stdout !== example.expectedStdout
-        ) {
-          throw new Error(
-            [
-              `${entry.id}/${example.id} produced an invalid result`,
-              `exitCode=${String(execution.exitCode)}`,
-              `timedOut=${String(execution.timedOut)}`,
-              `outputLimitExceeded=${String(execution.outputLimitExceeded)}`,
-              `stderr=${JSON.stringify(execution.stderr)}`,
-              `stdout=${JSON.stringify(execution.stdout)}`,
-            ].join("\n"),
-          );
-        }
-      }
-      verificationExamples.push({
-        entryId: entry.id,
-        exampleId: example.id,
-        sourceDigest: example.digest,
-        standard: example.standard,
-        verification: "verified",
-      });
-    } finally {
-      await rm(root, { recursive: true, force: true });
-    }
+    await verifyExample({
+      identity: `${entry.id}/${example.id}`,
+      example,
+      source: example.source,
+    });
+    verificationExamples.push({
+      entryId: entry.id,
+      exampleId: example.id,
+      sourceDigest: example.digest,
+      standard: example.standard,
+      verification: "verified",
+    });
   }
 }
 

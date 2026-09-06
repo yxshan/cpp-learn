@@ -7,7 +7,9 @@
     "draftId",
     "draftRevision",
     "status",
+    "affectedEntryIds",
     "findings",
+    "reviewQueue",
     "cacheEvidence"
   ],
   "properties": {
@@ -15,9 +17,27 @@
     "draftId": { "$ref": "#/$defs/id" },
     "draftRevision": { "type": "integer", "minimum": 1 },
     "status": { "enum": ["not_checked", "blocked", "ready"] },
+    "affectedEntryIds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
     "findings": {
       "type": "array",
       "items": { "$ref": "#/$defs/finding" }
+    },
+    "reviewQueue": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/finding" },
+          {
+            "type": "object",
+            "properties": { "severity": { "const": "warning" } }
+          }
+        ]
+      }
     },
     "cacheEvidence": {
       "type": "array",

@@ -35,7 +35,9 @@ student-workspaces/         learner-editable files
 data/                       events, projections, snapshots, logs
 ```
 
-Only `apps/server` is the composition root. Modules accept dependencies and do not instantiate production Adapters internally.
+Production executable entry points are composition roots: `apps/server` wires
+HTTP behavior and `apps/cli` wires local commands. Modules accept dependencies
+and do not instantiate production Adapters internally.
 
 ### Reference Authoring Module seam
 
@@ -49,11 +51,14 @@ a conflict without replacing the first reservation.
 
 The in-memory draft repository Adapter defensively copies on reads and atomic
 reservations. The filesystem Adapter implements the same Interface with
-temporary-directory reservation, confined file discovery, and revision-aware
-check commits. Phase A1 adds `check({ draftId })` behind the same Module seam;
-the CLI supplies filesystem, catalog, canonical quality, and native compiler
-Adapters but owns no validation decisions. The later Web Author Console must
-reuse this Interface.
+temporary-directory reservation, confined file discovery, protected canonical
+roots, and revision-plus-file-snapshot compare-and-swap for check commits.
+Phase A1 adds `check({ draftId })` behind the same Module seam. Catalog-backed
+prepare emits a reviewable proposal and related context; check returns hard
+failures separately from a risk-ranked warning queue and rejects source-policy,
+active/historical slug, and stale-snapshot conflicts. The CLI supplies
+filesystem, catalog, canonical quality, and native compiler Adapters but owns no
+validation decisions. The later Web Author Console must reuse this Interface.
 
 ## 2. Learning Platform Module
 

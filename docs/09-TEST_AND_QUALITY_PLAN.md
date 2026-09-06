@@ -134,9 +134,11 @@ Reference content CI additionally validates:
   storage, and absence of canonical publication behavior.
 - Authoring Phase A1 checks the same Module Interface through in-memory and
   filesystem Adapters. Coverage includes blocked/ready reports, exact revisions,
-  corrupt artifacts, catalog relationships, canonical structural quality,
-  fact/source evidence, bounded real C++ compilation, CLI exit codes, and
-  confirmation that canonical Reference files remain read-only.
+  full-snapshot concurrency rejection, corrupt artifacts, catalog proposals,
+  active and historical slug relationships, risk-ranked warning queues,
+  normative/secondary source policy, canonical structural quality, bounded real
+  C++ compilation, CLI result/exit semantics, protected-root/symlink rejection,
+  and confirmation that canonical Reference files remain read-only.
 
 ## 5. Security tests
 

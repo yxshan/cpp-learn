@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -146,6 +153,60 @@ describe("[T-AUTH-A1-FS-001] filesystem draft Adapter", () => {
     );
   });
 
+  it("rejects direct and symbolic-link draft roots that overlap protected content", async () => {
+    const root = await temporaryRoot();
+    const protectedRoot = join(root, "reference");
+    const linkedRoot = join(root, "authoring-link");
+    await mkdir(protectedRoot);
+    await symlink(protectedRoot, linkedRoot);
+
+    expect(() =>
+      createFilesystemReferenceDraftRepository({
+        root: protectedRoot,
+        forbiddenRoots: [protectedRoot],
+      }),
+    ).toThrow("Draft root must be separate from protected content");
+    expect(() =>
+      createFilesystemReferenceDraftRepository({
+        root: linkedRoot,
+        forbiddenRoots: [protectedRoot],
+      }),
+    ).toThrow("Draft root must be separate from protected content");
+  });
+
+  it("rejects a check commit when editable files changed after validation", async () => {
+    const root = await temporaryRoot();
+    const persisted = createFilesystemReferenceDraftRepository({ root });
+    const authoring = createReferenceAuthoring({
+      drafts: {
+        get: (draftId) => persisted.get(draftId),
+        reserve: (workspace) => persisted.reserve(workspace),
+        async commitCheck(input) {
+          await writeFile(
+            join(root, target.entryId, "content.md"),
+            "# changed during check\n",
+            "utf8",
+          );
+          return persisted.commitCheck(input);
+        },
+      },
+    });
+    await authoring.prepare({ target });
+
+    await expect(authoring.check({ draftId: target.entryId })).resolves.toEqual(
+      {
+        ok: false,
+        code: "revision_conflict",
+        issues: [],
+      },
+    );
+    expect(
+      JSON.parse(
+        await readFile(join(root, target.entryId, "draft.json"), "utf8"),
+      ),
+    ).toMatchObject({ revision: 1, state: "draft" });
+  });
+
   it("keeps the in-memory Adapter compatible with the same repository Interface", async () => {
     const drafts = createInMemoryReferenceDraftRepository();
     const authoring = createReferenceAuthoring({ drafts });
@@ -211,11 +272,22 @@ describe("[T-AUTH-A1-CATALOG-001] filesystem catalog-context Adapter", () => {
         catalogPath: join(root, "catalog.json"),
       }).load(),
     ).resolves.toEqual({
+      entries: [
+        {
+          id: "std-vector",
+          slug: "standard-library/containers/vector",
+          kind: "type",
+          title: "std::vector",
+          categories: ["containers"],
+          relatedEntryIds: [],
+        },
+      ],
       entryIds: ["std-vector"],
       categoryIds: ["containers"],
       slugsByEntryId: {
         "std-vector": "standard-library/containers/vector",
       },
+      redirects: [],
     });
   });
 });

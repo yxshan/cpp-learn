@@ -48,7 +48,44 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     );
   });
 
-  it("prints the machine-readable check report and exits non-zero when blocked", async () => {
+  it("emits the unmodified prepare result as JSON", async () => {
+    const result = {
+      ok: true as const,
+      created: false,
+      workspace: {
+        draft: { draftId: "std-vector-insert", revision: 3 },
+        files: { "content.md": "# draft\n" },
+      },
+    };
+    const stdout = vi.fn();
+    const authoring = {
+      prepare: vi.fn().mockResolvedValue(result),
+      check: vi.fn(),
+    } as unknown as ReferenceAuthoring;
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: [
+        "prepare",
+        "--id",
+        "std-vector-insert",
+        "--kind",
+        "member",
+        "--slug",
+        "standard-library/containers/vector/insert",
+        "--title",
+        "std::vector::insert",
+        "--json",
+      ],
+      authoring,
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
+  it("emits the unmodified blocked check result with command-success exit", async () => {
     const result = {
       ok: true as const,
       report: {
@@ -56,7 +93,9 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
         draftId: "std-vector-insert",
         draftRevision: 2,
         status: "blocked" as const,
+        affectedEntryIds: ["std-vector-insert"],
         findings: [],
+        reviewQueue: [],
         cacheEvidence: [],
       },
       workspace: {},
@@ -74,11 +113,11 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
       stderr: vi.fn(),
     });
 
-    expect(exitCode).toBe(1);
+    expect(exitCode).toBe(0);
     expect(authoring.check).toHaveBeenCalledWith({
       draftId: "std-vector-insert",
     });
-    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result.report)}\n`);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
   });
 
   it("rejects incomplete prepare flags without calling the Module", async () => {

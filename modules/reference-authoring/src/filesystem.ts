@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { existsSync, realpathSync } from "node:fs";
 import {
   mkdir,
   readdir,
@@ -7,10 +8,19 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 
 import type {
   AuthoringDraftManifest,
+  AuthoringCatalogProposal,
   AuthoringFactSheet,
   AuthoringReport,
   AuthoringSourceLedger,
@@ -20,6 +30,7 @@ import type {
 
 export interface FilesystemReferenceDraftRepositoryOptions {
   readonly root: string;
+  readonly forbiddenRoots?: readonly string[];
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
@@ -51,6 +62,42 @@ function resolveInside(root: string, path: string): string {
     throw new Error(`Draft workspace path escaped its root: ${path}`);
   }
   return target;
+}
+
+function physicalPath(path: string): string {
+  let existing = resolve(path);
+  const missingSegments: string[] = [];
+  while (!existsSync(existing)) {
+    const parent = dirname(existing);
+    if (parent === existing) break;
+    missingSegments.unshift(basename(existing));
+    existing = parent;
+  }
+  return resolve(realpathSync(existing), ...missingSegments);
+}
+
+function isAtOrInside(path: string, root: string): boolean {
+  const fromRoot = relative(root, path);
+  return (
+    fromRoot === "" || (!fromRoot.startsWith(`..${sep}`) && fromRoot !== "..")
+  );
+}
+
+function assertRepositoryRootAllowed(
+  repositoryRoot: string,
+  forbiddenRoots: readonly string[],
+): void {
+  const physicalRepositoryRoot = physicalPath(repositoryRoot);
+  for (const forbiddenRoot of forbiddenRoots.map(physicalPath)) {
+    if (
+      isAtOrInside(physicalRepositoryRoot, forbiddenRoot) ||
+      isAtOrInside(forbiddenRoot, physicalRepositoryRoot)
+    ) {
+      throw new Error(
+        `Draft root must be separate from protected content: ${repositoryRoot}`,
+      );
+    }
+  }
 }
 
 async function writeWorkspaceFiles(
@@ -124,6 +171,10 @@ async function readWorkspace(
   }
   return {
     draft: parseJson<AuthoringDraftManifest>(files, "draft.json"),
+    proposal: parseJson<AuthoringCatalogProposal>(
+      files,
+      "catalog-proposal.json",
+    ),
     facts: parseJson<AuthoringFactSheet>(files, "facts.json"),
     sources: parseJson<AuthoringSourceLedger>(files, "sources.json"),
     report: parseJson<AuthoringReport>(files, "report.json"),
@@ -144,10 +195,29 @@ async function writeAtomic(path: string, content: string): Promise<void> {
   }
 }
 
+function sameFileSnapshot(
+  current: Readonly<Record<string, string>>,
+  expected: Readonly<Record<string, string>>,
+  ignoredPaths: ReadonlySet<string> = new Set(),
+): boolean {
+  const currentPaths = Object.keys(current).filter(
+    (path) => !ignoredPaths.has(path),
+  );
+  const expectedPaths = Object.keys(expected).filter(
+    (path) => !ignoredPaths.has(path),
+  );
+  return (
+    currentPaths.length === expectedPaths.length &&
+    currentPaths.every((path) => current[path] === expected[path])
+  );
+}
+
 export function createFilesystemReferenceDraftRepository({
   root,
+  forbiddenRoots = [],
 }: FilesystemReferenceDraftRepositoryOptions): ReferenceDraftRepository {
   const repositoryRoot = resolve(root);
+  assertRepositoryRootAllowed(repositoryRoot, forbiddenRoots);
   return {
     get: (draftId) => readWorkspace(repositoryRoot, draftId),
     async reserve(workspace) {
@@ -182,7 +252,7 @@ export function createFilesystemReferenceDraftRepository({
       }
       return { created: false, workspace: existing };
     },
-    async commitCheck({ draftId, expectedRevision, workspace }) {
+    async commitCheck({ draftId, expectedRevision, expectedFiles, workspace }) {
       assertDraftId(draftId);
       const draftRoot = join(repositoryRoot, draftId);
       const lockPath = join(draftRoot, ".check-lock");
@@ -196,7 +266,8 @@ export function createFilesystemReferenceDraftRepository({
         const existing = await readWorkspace(repositoryRoot, draftId);
         if (
           existing === undefined ||
-          existing.draft.revision !== expectedRevision
+          existing.draft.revision !== expectedRevision ||
+          !sameFileSnapshot(existing.files, expectedFiles)
         ) {
           return false;
         }
@@ -204,6 +275,21 @@ export function createFilesystemReferenceDraftRepository({
           join(draftRoot, "report.json"),
           workspace.files["report.json"]!,
         );
+        const afterReport = await readWorkspace(repositoryRoot, draftId);
+        if (
+          afterReport === undefined ||
+          !sameFileSnapshot(
+            afterReport.files,
+            expectedFiles,
+            new Set(["report.json"]),
+          )
+        ) {
+          await writeAtomic(
+            join(draftRoot, "report.json"),
+            expectedFiles["report.json"]!,
+          );
+          return false;
+        }
         await writeAtomic(
           join(draftRoot, "draft.json"),
           workspace.files["draft.json"]!,

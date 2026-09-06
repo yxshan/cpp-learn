@@ -261,9 +261,12 @@ Exit: an ordinary Entry can move from backlog ID to a fully checked draft withou
 manual directory/catalog construction.
 
 Exit met: the standalone CLI prepares or resumes confined filesystem drafts and
-emits revisioned human/JSON reports after artifact, fact/source, catalog,
-canonical quality, and bounded native example validation. It has no publication
-capability.
+emits catalog-backed proposals plus revisioned human/JSON reports after
+artifact, normative/secondary source policy, active/historical slug, canonical
+quality, and shared bounded native example validation. Successful checks commit
+only when both revision and the complete input-file snapshot still match, and
+reports separate blocking findings from a risk-ranked warning queue. It has no
+publication capability.
 
 ### Phase A2: cache, preview, and atomic publish
 

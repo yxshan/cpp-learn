@@ -9,6 +9,7 @@ import {
   authoringDraftSchema,
   createInMemoryReferenceDraftRepository,
   createReferenceAuthoring,
+  validateAuthoringCatalogProposal,
   validateAuthoringDraft,
   validateAuthoringFactSheet,
   validateAuthoringPublicationPlan,
@@ -234,6 +235,9 @@ describe("[T-AUTH-SCHEMA-001] Reference authoring artifact schemas", () => {
     if (!result.ok) return;
 
     expect(validateAuthoringDraft(result.workspace.draft)).toEqual([]);
+    expect(validateAuthoringCatalogProposal(result.workspace.proposal)).toEqual(
+      [],
+    );
     expect(validateAuthoringFactSheet(result.workspace.facts)).toEqual([]);
     expect(validateAuthoringSourceLedger(result.workspace.sources)).toEqual([]);
     expect(validateAuthoringReport(result.workspace.report)).toEqual([]);
@@ -356,6 +360,35 @@ describe("[T-AUTH-SCHEMA-001] Reference authoring artifact schemas", () => {
 
 describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
   const catalog: AuthoringCatalogContext = {
+    entries: [
+      {
+        id: "std-vector",
+        slug: "standard-library/containers/vector",
+        kind: "type",
+        title: "std::vector",
+        symbol: "std::vector",
+        header: "<vector>",
+        categories: ["containers"],
+        relatedEntryIds: ["header-vector"],
+      },
+      {
+        id: "header-vector",
+        slug: "standard-library/headers/vector",
+        kind: "header",
+        title: "<vector>",
+        symbol: "<vector>",
+        categories: ["containers"],
+        relatedEntryIds: ["std-vector"],
+      },
+      {
+        id: "containers",
+        slug: "standard-library/containers",
+        kind: "landing",
+        title: "容器库",
+        categories: ["containers"],
+        relatedEntryIds: [],
+      },
+    ],
     entryIds: ["std-vector", "header-vector", "containers"],
     categoryIds: ["containers"],
     slugsByEntryId: {
@@ -363,6 +396,7 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
       "header-vector": "standard-library/headers/vector",
       containers: "standard-library/containers",
     },
+    redirects: [],
   };
 
   it("blocks an untouched prepared draft with actionable findings", async () => {
@@ -391,17 +425,61 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     );
   });
 
+  it("prepares catalog-backed related context and a reviewable catalog proposal", async () => {
+    const result = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository(),
+      catalog: { load: async () => catalog },
+      clock: () => fixedNow,
+    }).prepare({ target: fixtures[0]!.target });
+
+    expect(result).toMatchObject({
+      ok: true,
+      workspace: {
+        draft: {
+          affectedEntryIds: [
+            "std-vector-insert",
+            "std-vector",
+            "header-vector",
+          ],
+        },
+      },
+    });
+    if (!result.ok) return;
+    expect(JSON.parse(result.workspace.files["entry.json"]!)).toMatchObject({
+      categories: ["containers"],
+      relatedEntryIds: ["std-vector", "header-vector"],
+    });
+    expect(
+      JSON.parse(result.workspace.files["catalog-proposal.json"]!),
+    ).toMatchObject({
+      schemaVersion: 1,
+      draftId: "std-vector-insert",
+      entryPath: "entries/std-vector-insert/entry.json",
+      categories: ["containers"],
+      relatedEntryIds: ["std-vector", "header-vector"],
+    });
+  });
+
   it("checks and persists a complete draft through the Module Interface", async () => {
     const prepared = await createReferenceAuthoring({
       drafts: createInMemoryReferenceDraftRepository(),
+      catalog: { load: async () => catalog },
       clock: () => fixedNow,
     }).prepare({ target: fixtures[0]!.target });
     expect(prepared.ok).toBe(true);
     if (!prepared.ok) return;
 
     const source = {
-      id: "cppreference-vector-insert",
+      id: "working-draft-vector-modifiers",
       kind: "primary" as const,
+      title: "C++ Working Draft [vector.modifiers]",
+      url: "https://eel.is/c++draft/vector.modifiers",
+      verifiedAt: "2026-09-06",
+      standardSection: "[vector.modifiers]",
+    };
+    const secondarySource = {
+      id: "cppreference-vector-insert",
+      kind: "secondary" as const,
       title: "std::vector::insert",
       url: "https://en.cppreference.com/w/cpp/container/vector/insert",
       verifiedAt: "2026-09-06",
@@ -448,6 +526,12 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
           kind: "primary",
           title: source.title,
           url: source.url,
+          standardSection: source.standardSection,
+        },
+        {
+          kind: "secondary",
+          title: secondarySource.title,
+          url: secondarySource.url,
         },
       ],
       verifiedAt: "2026-09-06",
@@ -465,7 +549,7 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
       },
       sources: {
         ...prepared.workspace.sources,
-        sources: [source],
+        sources: [source, secondarySource],
       },
       files: {
         ...prepared.workspace.files,
@@ -483,7 +567,10 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
           2,
         )}\n`,
         "sources.json": `${JSON.stringify(
-          { ...prepared.workspace.sources, sources: [source] },
+          {
+            ...prepared.workspace.sources,
+            sources: [source, secondarySource],
+          },
           null,
           2,
         )}\n`,
@@ -522,6 +609,152 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     expect((await drafts.get("std-vector-insert"))?.report.status).toBe(
       "ready",
     );
+
+    const warningAuthoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([complete]),
+      catalog: { load: async () => catalog },
+      examples: { validate: async () => [] },
+      quality: {
+        validate: async () => [
+          {
+            path: "/quick-info",
+            message: "Tighten the quick information summary",
+            keyword: "quality",
+          },
+          {
+            path: "/javascript",
+            message: "Explain where the JavaScript analogy stops",
+            keyword: "quality",
+          },
+          {
+            path: "/complexity",
+            message: "Clarify the complexity explanation",
+            keyword: "quality",
+          },
+        ],
+      },
+      clock: () => new Date("2026-09-06T10:00:00.000Z"),
+    });
+    const warningCheck = await warningAuthoring.check({
+      draftId: "std-vector-insert",
+    });
+    expect(warningCheck).toMatchObject({
+      ok: true,
+      report: {
+        status: "ready",
+        reviewQueue: [
+          {
+            severity: "warning",
+            risk: "high",
+            code: "content-quality",
+          },
+          {
+            severity: "warning",
+            risk: "medium",
+            code: "content-quality",
+          },
+          {
+            severity: "warning",
+            risk: "low",
+            code: "content-quality",
+          },
+        ],
+      },
+    });
+
+    const duplicateFacts: DraftWorkspace = {
+      ...complete,
+      facts: {
+        ...complete.facts,
+        groups: [
+          ...complete.facts.groups,
+          { ...complete.facts.groups[0]!, id: "selection-duplicate" },
+        ],
+      },
+    };
+    const duplicateCheck = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([duplicateFacts]),
+      catalog: { load: async () => catalog },
+      examples: { validate: async () => [] },
+      quality: { validate: async () => [] },
+      clock: () => new Date("2026-09-06T10:00:00.000Z"),
+    }).check({ draftId: "std-vector-insert" });
+    expect(duplicateCheck).toMatchObject({
+      ok: true,
+      report: {
+        status: "blocked",
+        findings: expect.arrayContaining([
+          expect.objectContaining({ code: "fact-kind-duplicate" }),
+        ]),
+      },
+    });
+
+    const redirectCheck = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([complete]),
+      catalog: {
+        load: async () => ({
+          ...catalog,
+          redirects: [
+            {
+              fromSlug: "standard-library/containers/vector/insert",
+              toEntryId: "std-vector",
+            },
+          ],
+        }),
+      },
+      examples: { validate: async () => [] },
+      quality: { validate: async () => [] },
+      clock: () => new Date("2026-09-06T10:00:00.000Z"),
+    }).check({ draftId: "std-vector-insert" });
+    expect(redirectCheck).toMatchObject({
+      ok: true,
+      report: {
+        status: "blocked",
+        findings: expect.arrayContaining([
+          expect.objectContaining({ code: "redirect-slug-conflict" }),
+        ]),
+      },
+    });
+
+    const misclassifiedSecondary = {
+      ...secondarySource,
+      kind: "primary" as const,
+    };
+    const misclassifiedEntry = {
+      ...entry,
+      sources: entry.sources.map((candidate) =>
+        candidate.url === secondarySource.url
+          ? { ...candidate, kind: "primary" as const }
+          : candidate,
+      ),
+    };
+    const sourcePolicyDraft: DraftWorkspace = {
+      ...complete,
+      sources: {
+        ...complete.sources,
+        sources: [source, misclassifiedSecondary],
+      },
+      files: {
+        ...complete.files,
+        "entry.json": `${JSON.stringify(misclassifiedEntry, null, 2)}\n`,
+      },
+    };
+    const sourcePolicyCheck = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([sourcePolicyDraft]),
+      catalog: { load: async () => catalog },
+      examples: { validate: async () => [] },
+      quality: { validate: async () => [] },
+      clock: () => new Date("2026-09-06T10:00:00.000Z"),
+    }).check({ draftId: "std-vector-insert" });
+    expect(sourcePolicyCheck).toMatchObject({
+      ok: true,
+      report: {
+        status: "blocked",
+        findings: expect.arrayContaining([
+          expect.objectContaining({ code: "source-classification" }),
+        ]),
+      },
+    });
   });
 
   it("returns not found without creating a draft", async () => {

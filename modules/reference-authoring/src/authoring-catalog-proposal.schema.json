@@ -1,0 +1,54 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-catalog-proposal.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "draftId",
+    "entryPath",
+    "categories",
+    "relatedEntryIds",
+    "affectedRedirects"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "entryPath": {
+      "type": "string",
+      "pattern": "^entries/[a-z0-9]+(?:-[a-z0-9]+)*/entry\\.json$"
+    },
+    "categories": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "relatedEntryIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "affectedRedirects": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fromSlug", "toEntryId"],
+        "properties": {
+          "fromSlug": { "$ref": "#/$defs/slug" },
+          "toEntryId": { "$ref": "#/$defs/id" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[/-][a-z0-9]+)*$"
+    }
+  }
+}

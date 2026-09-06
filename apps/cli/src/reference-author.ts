@@ -20,7 +20,10 @@ const catalogPath = resolve(
     join("reference", "catalog.json"),
 );
 const authoring = createReferenceAuthoring({
-  drafts: createFilesystemReferenceDraftRepository({ root: authoringRoot }),
+  drafts: createFilesystemReferenceDraftRepository({
+    root: authoringRoot,
+    forbiddenRoots: [resolve("reference")],
+  }),
   catalog: createFilesystemAuthoringCatalogContext({ catalogPath }),
   examples: createNativeAuthoringExampleValidator(),
   quality: {

@@ -11,6 +11,7 @@ import type {
 } from "@cpp-learn/reference";
 import { validateReferenceEntryManifest } from "@cpp-learn/reference-schema";
 
+import authoringCatalogProposalSchema from "./authoring-catalog-proposal.schema.json" with { type: "json" };
 import authoringDraftSchema from "./authoring-draft.schema.json" with { type: "json" };
 import authoringFactsSchema from "./authoring-facts.schema.json" with { type: "json" };
 import authoringPublicationPlanSchema from "./authoring-publication-plan.schema.json" with { type: "json" };
@@ -110,8 +111,16 @@ export interface AuthoringReport {
   readonly draftId: string;
   readonly draftRevision: number;
   readonly status: "not_checked" | "blocked" | "ready";
+  readonly affectedEntryIds: readonly string[];
   readonly findings: readonly {
     readonly severity: "hard" | "warning";
+    readonly risk: "high" | "medium" | "low";
+    readonly code: string;
+    readonly path: string;
+    readonly message: string;
+  }[];
+  readonly reviewQueue: readonly {
+    readonly severity: "warning";
     readonly risk: "high" | "medium" | "low";
     readonly code: string;
     readonly path: string;
@@ -136,6 +145,7 @@ export interface AuthoringPublicationPlan {
 
 export interface DraftWorkspace {
   readonly draft: AuthoringDraftManifest;
+  readonly proposal: AuthoringCatalogProposal;
   readonly facts: AuthoringFactSheet;
   readonly sources: AuthoringSourceLedger;
   readonly report: AuthoringReport;
@@ -175,9 +185,23 @@ export type CheckDraftResult =
     };
 
 export interface AuthoringCatalogContext {
+  readonly entries: readonly {
+    readonly id: string;
+    readonly slug: string;
+    readonly kind: ReferenceEntryKind;
+    readonly title: string;
+    readonly symbol?: string;
+    readonly header?: string;
+    readonly categories: readonly string[];
+    readonly relatedEntryIds: readonly string[];
+  }[];
   readonly entryIds: readonly string[];
   readonly categoryIds: readonly string[];
   readonly slugsByEntryId: Readonly<Record<string, string>>;
+  readonly redirects: readonly {
+    readonly fromSlug: string;
+    readonly toEntryId: string;
+  }[];
 }
 
 export interface AuthoringCatalogContextAdapter {
@@ -221,6 +245,7 @@ export interface ReferenceDraftRepository {
   commitCheck(input: {
     readonly draftId: string;
     readonly expectedRevision: number;
+    readonly expectedFiles: Readonly<Record<string, string>>;
     readonly workspace: DraftWorkspace;
   }): Promise<boolean>;
 }
@@ -236,6 +261,7 @@ export interface ReferenceAuthoringDependencies {
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
 const validateDraft = ajv.compile(authoringDraftSchema);
+const validateCatalogProposal = ajv.compile(authoringCatalogProposalSchema);
 const validateFacts = ajv.compile(authoringFactsSchema);
 const validateSources = ajv.compile(authoringSourcesSchema);
 const validateReport = ajv.compile(authoringReportSchema);
@@ -264,6 +290,12 @@ export function validateAuthoringDraft(
   value: unknown,
 ): readonly AuthoringValidationIssue[] {
   return validationIssues(validateDraft, value);
+}
+
+export function validateAuthoringCatalogProposal(
+  value: unknown,
+): readonly AuthoringValidationIssue[] {
+  return validationIssues(validateCatalogProposal, value);
 }
 
 export function validateAuthoringFactSheet(
@@ -306,6 +338,18 @@ interface AuthoringProfileDefinition {
   readonly factKinds: readonly AuthoringFactKind[];
   readonly headings: readonly string[];
   readonly examples: readonly ("minimal" | "realistic")[];
+}
+
+export interface AuthoringCatalogProposal {
+  readonly schemaVersion: 1;
+  readonly draftId: string;
+  readonly entryPath: string;
+  readonly categories: readonly string[];
+  readonly relatedEntryIds: readonly string[];
+  readonly affectedRedirects: readonly {
+    readonly fromSlug: string;
+    readonly toEntryId: string;
+  }[];
 }
 
 const PROFILE_DEFINITIONS: Readonly<
@@ -447,6 +491,7 @@ function createDraftManifest(
   target: PrepareDraftTarget,
   profile: AuthoringProfile,
   now: string,
+  affectedEntryIds: readonly string[] = [target.entryId],
 ): AuthoringDraftManifest {
   return {
     schemaVersion: 1,
@@ -456,13 +501,16 @@ function createDraftManifest(
     profile,
     target,
     targetPaths: targetPaths(target),
-    affectedEntryIds: [target.entryId],
+    affectedEntryIds,
     createdAt: now,
     updatedAt: now,
   };
 }
 
-function candidateEntry(target: PrepareDraftTarget) {
+function candidateEntry(
+  target: PrepareDraftTarget,
+  proposal: AuthoringCatalogProposal,
+) {
   return {
     schemaVersion: 2,
     id: target.entryId,
@@ -472,8 +520,8 @@ function candidateEntry(target: PrepareDraftTarget) {
     title: target.title,
     summary: "TODO",
     aliases: [],
-    categories: [],
-    relatedEntryIds: [],
+    categories: proposal.categories,
+    relatedEntryIds: proposal.relatedEntryIds,
     content: { format: "markdown", path: targetPaths(target).content },
     examples: [],
     sources: [],
@@ -481,7 +529,10 @@ function candidateEntry(target: PrepareDraftTarget) {
   };
 }
 
-function createDraftWorkspace(draft: AuthoringDraftManifest): DraftWorkspace {
+function createDraftWorkspace(
+  draft: AuthoringDraftManifest,
+  proposal: AuthoringCatalogProposal,
+): DraftWorkspace {
   const { profile, target } = draft;
   const facts: AuthoringFactSheet = {
     schemaVersion: 1,
@@ -504,7 +555,9 @@ function createDraftWorkspace(draft: AuthoringDraftManifest): DraftWorkspace {
     draftId: target.entryId,
     draftRevision: 1,
     status: "not_checked",
+    affectedEntryIds: draft.affectedEntryIds,
     findings: [],
+    reviewQueue: [],
     cacheEvidence: [],
   };
   const files: Record<string, string> = {
@@ -512,17 +565,91 @@ function createDraftWorkspace(draft: AuthoringDraftManifest): DraftWorkspace {
     "facts.json": jsonFile(facts),
     "sources.json": jsonFile(sources),
     "report.json": jsonFile(report),
-    "entry.json": jsonFile(candidateEntry(target)),
+    "catalog-proposal.json": jsonFile(proposal),
+    "entry.json": jsonFile(candidateEntry(target, proposal)),
     "content.md": contentTemplate(target.title, profile),
   };
   for (const label of PROFILE_DEFINITIONS[profile].examples) {
     files[`examples/${label}.cpp`] = exampleTemplate(label);
   }
-  return { draft, facts, sources, report, files };
+  return { draft, proposal, facts, sources, report, files };
+}
+
+function emptyCatalogProposal(
+  target: PrepareDraftTarget,
+): AuthoringCatalogProposal {
+  return {
+    schemaVersion: 1,
+    draftId: target.entryId,
+    entryPath: targetPaths(target).entry,
+    categories: [],
+    relatedEntryIds: [],
+    affectedRedirects: [],
+  };
+}
+
+function catalogProposal(
+  target: PrepareDraftTarget,
+  catalog: AuthoringCatalogContext,
+): AuthoringCatalogProposal {
+  const ownerSymbol = target.title.includes("::")
+    ? target.title.slice(0, target.title.lastIndexOf("::"))
+    : undefined;
+  const parentSlug = target.slug.includes("/")
+    ? target.slug.slice(0, target.slug.lastIndexOf("/"))
+    : undefined;
+  const directlyRelated = catalog.entries.filter(
+    (entry) =>
+      entry.slug === parentSlug ||
+      entry.symbol === ownerSymbol ||
+      entry.title === ownerSymbol,
+  );
+  const owningHeaders = new Set(
+    directlyRelated
+      .map(({ header }) => header)
+      .filter((header): header is string => header !== undefined),
+  );
+  const headerEntries = catalog.entries.filter(
+    (entry) =>
+      entry.kind === "header" &&
+      (owningHeaders.has(entry.title) ||
+        (entry.symbol !== undefined && owningHeaders.has(entry.symbol))),
+  );
+  const relatedEntries = [...directlyRelated, ...headerEntries].filter(
+    (entry, index, entries) =>
+      entry.id !== target.entryId &&
+      entries.findIndex(({ id }) => id === entry.id) === index,
+  );
+  return {
+    schemaVersion: 1,
+    draftId: target.entryId,
+    entryPath: targetPaths(target).entry,
+    categories: [
+      ...new Set(relatedEntries.flatMap(({ categories }) => [...categories])),
+    ],
+    relatedEntryIds: relatedEntries.map(({ id }) => id),
+    affectedRedirects: catalog.redirects.filter(
+      ({ toEntryId }) =>
+        toEntryId === target.entryId ||
+        relatedEntries.some(({ id }) => id === toEntryId),
+    ),
+  };
 }
 
 function cloneWorkspace(workspace: DraftWorkspace): DraftWorkspace {
   return structuredClone(workspace);
+}
+
+function sameFiles(
+  left: Readonly<Record<string, string>>,
+  right: Readonly<Record<string, string>>,
+): boolean {
+  const leftPaths = Object.keys(left);
+  const rightPaths = Object.keys(right);
+  return (
+    leftPaths.length === rightPaths.length &&
+    leftPaths.every((path) => left[path] === right[path])
+  );
 }
 
 export function createInMemoryReferenceDraftRepository(
@@ -549,11 +676,12 @@ export function createInMemoryReferenceDraftRepository(
       drafts.set(draftId, reserved);
       return { created: true, workspace: cloneWorkspace(reserved) };
     },
-    async commitCheck({ draftId, expectedRevision, workspace }) {
+    async commitCheck({ draftId, expectedRevision, expectedFiles, workspace }) {
       const existing = drafts.get(draftId);
       if (
         existing === undefined ||
-        existing.draft.revision !== expectedRevision
+        existing.draft.revision !== expectedRevision ||
+        !sameFiles(existing.files, expectedFiles)
       ) {
         return false;
       }
@@ -581,6 +709,37 @@ function hardFinding(
   risk: AuthoringFinding["risk"] = "high",
 ): AuthoringFinding {
   return { severity: "hard", risk, code, path, message };
+}
+
+function warningFinding(
+  code: string,
+  path: string,
+  message: string,
+  risk: AuthoringFinding["risk"],
+): AuthoringFinding {
+  return { severity: "warning", risk, code, path, message };
+}
+
+function qualityRisk(path: string): AuthoringFinding["risk"] {
+  if (/complexity|errors|lifetime|interface|parameters|returns/u.test(path)) {
+    return "high";
+  }
+  if (/selection|examples|mistakes|javascript/u.test(path)) return "medium";
+  return "low";
+}
+
+function qualityFindings(
+  artifactPath: string,
+  issues: readonly AuthoringValidationIssue[],
+): AuthoringFinding[] {
+  return issues.map((issue) =>
+    warningFinding(
+      "content-quality",
+      `${artifactPath}${issue.path === "/" ? "" : issue.path}`,
+      issue.message,
+      qualityRisk(issue.path),
+    ),
+  );
 }
 
 function schemaFindings(
@@ -647,6 +806,19 @@ function validateFactCoverage(workspace: DraftWorkspace): AuthoringFinding[] {
       ),
     );
   }
+  const groupKinds = new Set<AuthoringFactKind>();
+  for (const group of workspace.facts.groups) {
+    if (groupKinds.has(group.kind)) {
+      findings.push(
+        hardFinding(
+          "fact-kind-duplicate",
+          `facts.json/groups/${group.id}/kind`,
+          `Fact kind ${group.kind} must appear at most once`,
+        ),
+      );
+    }
+    groupKinds.add(group.kind);
+  }
 
   for (const kind of requiredKinds) {
     const group = groupsByKind.get(kind);
@@ -690,11 +862,17 @@ function validateSourceAlignment(
   today: string,
 ): AuthoringFinding[] {
   const findings: AuthoringFinding[] = [];
+  const sourcesById = new Map(
+    workspace.sources.sources.map((source) => [source.id, source]),
+  );
   const usedSourceIds = new Set(
     workspace.facts.groups.flatMap((group) => [...group.sourceIds]),
   );
   const publishedSourceUrls = new Set(
     entry.sources.map((source) => source.url),
+  );
+  const publishedSourcesByUrl = new Map(
+    entry.sources.map((source) => [source.url, source]),
   );
   if (entry.verifiedAt > today) {
     findings.push(
@@ -706,6 +884,25 @@ function validateSourceAlignment(
     );
   }
   for (const source of workspace.sources.sources) {
+    let hostname = "";
+    try {
+      hostname = new URL(source.url).hostname;
+    } catch {
+      // URL shape is handled by the source Schema before this validator runs.
+    }
+    if (
+      (hostname === "cppreference.com" ||
+        hostname.endsWith(".cppreference.com")) &&
+      source.kind !== "secondary"
+    ) {
+      findings.push(
+        hardFinding(
+          "source-classification",
+          `sources.json/sources/${source.id}/kind`,
+          "cppreference must be classified as a secondary source",
+        ),
+      );
+    }
     if (!usedSourceIds.has(source.id)) continue;
     if (!publishedSourceUrls.has(source.url)) {
       findings.push(
@@ -715,6 +912,17 @@ function validateSourceAlignment(
           `Used source ${source.id} is missing from entry.json sources`,
         ),
       );
+    } else {
+      const published = publishedSourcesByUrl.get(source.url);
+      if (published?.kind !== source.kind) {
+        findings.push(
+          hardFinding(
+            "source-kind-mismatch",
+            `entry.json/sources/${source.id}`,
+            `Published source kind must remain ${source.kind}`,
+          ),
+        );
+      }
     }
     if (source.verifiedAt > today) {
       findings.push(
@@ -731,6 +939,47 @@ function validateSourceAlignment(
           "source-verification-stale",
           `sources.json/sources/${source.id}/verifiedAt`,
           `Source evidence predates Entry verification ${entry.verifiedAt}`,
+        ),
+      );
+    }
+  }
+  const normativeKinds = new Set<AuthoringFactKind>([
+    "signature",
+    "availability",
+    "parameters",
+    "return",
+    "ownership",
+    "errors",
+    "complexity",
+    "lifetime_invalidation",
+    "thread_safety",
+    "direct_include",
+    "facility_map",
+  ]);
+  for (const group of workspace.facts.groups) {
+    if (group.status !== "verified" || !normativeKinds.has(group.kind)) {
+      continue;
+    }
+    const hasWorkingDraftClause = group.sourceIds.some((sourceId) => {
+      const source = sourcesById.get(sourceId);
+      if (source?.kind !== "primary" || source.standardSection === undefined) {
+        return false;
+      }
+      try {
+        const url = new URL(source.url);
+        return (
+          url.hostname === "eel.is" && url.pathname.startsWith("/c++draft")
+        );
+      } catch {
+        return false;
+      }
+    });
+    if (!hasWorkingDraftClause) {
+      findings.push(
+        hardFinding(
+          "fact-normative-source-missing",
+          `facts.json/groups/${group.id}/sourceIds`,
+          `Normative fact ${group.kind} requires a cited Working Draft clause`,
         ),
       );
     }
@@ -852,6 +1101,18 @@ function validateCatalogLinks(
       );
     }
   }
+  const redirect = catalog.redirects.find(
+    ({ fromSlug }) => fromSlug === entry.slug,
+  );
+  if (redirect !== undefined) {
+    findings.push(
+      hardFinding(
+        "redirect-slug-conflict",
+        "entry.json/slug",
+        `Slug is preserved as a historical redirect to ${redirect.toEntryId}`,
+      ),
+    );
+  }
   return findings;
 }
 
@@ -925,13 +1186,62 @@ export function createReferenceAuthoring(
     async prepare(request) {
       const profile = PROFILE_BY_KIND[request.target.kind];
       const now = clock().toISOString();
-      const draft = createDraftManifest(request.target, profile, now);
+      let proposal = emptyCatalogProposal(request.target);
+      if (dependencies.catalog !== undefined) {
+        let catalog: AuthoringCatalogContext;
+        try {
+          catalog = await dependencies.catalog.load();
+        } catch (error) {
+          return {
+            ok: false,
+            code: "invalid_request",
+            issues: [
+              {
+                path: "/catalog",
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Active Reference catalog is unreadable",
+                keyword: "read",
+              },
+            ],
+          };
+        }
+        const activeOwner = Object.entries(catalog.slugsByEntryId).find(
+          ([entryId, slug]) =>
+            entryId !== request.target.entryId && slug === request.target.slug,
+        );
+        const redirectOwner = catalog.redirects.find(
+          ({ fromSlug }) => fromSlug === request.target.slug,
+        );
+        if (activeOwner !== undefined || redirectOwner !== undefined) {
+          return {
+            ok: false,
+            code: "invalid_request",
+            issues: [
+              {
+                path: "/target/slug",
+                message:
+                  activeOwner === undefined
+                    ? `Slug is preserved as a historical redirect to ${redirectOwner!.toEntryId}`
+                    : `Slug is already owned by ${activeOwner[0]}`,
+                keyword: "conflict",
+              },
+            ],
+          };
+        }
+        proposal = catalogProposal(request.target, catalog);
+      }
+      const draft = createDraftManifest(request.target, profile, now, [
+        request.target.entryId,
+        ...proposal.relatedEntryIds,
+      ]);
       const issues = validateAuthoringDraft(draft);
       if (issues.length > 0) {
         return { ok: false, code: "invalid_request", issues };
       }
 
-      const workspace = createDraftWorkspace(draft);
+      const workspace = createDraftWorkspace(draft, proposal);
       const reservation = await dependencies.drafts.reserve(workspace);
       if (!reservation.created) {
         if (!sameTarget(reservation.workspace.draft.target, request.target)) {
@@ -1001,21 +1311,43 @@ export function createReferenceAuthoring(
       }
       const factIssues = validateAuthoringFactSheet(workspace.facts);
       const sourceIssues = validateAuthoringSourceLedger(workspace.sources);
+      const reportIssues = validateAuthoringReport(workspace.report);
+      const proposalIssues = validateAuthoringCatalogProposal(
+        workspace.proposal,
+      );
 
       const findings: AuthoringFinding[] = [
+        ...schemaFindings(
+          "catalog-proposal-schema",
+          "catalog-proposal.json",
+          proposalIssues,
+        ),
         ...schemaFindings("facts-schema", "facts.json", factIssues),
         ...schemaFindings("sources-schema", "sources.json", sourceIssues),
+        ...schemaFindings("report-schema", "report.json", reportIssues),
         ...(factIssues.length === 0 && sourceIssues.length === 0
           ? validateFactCoverage(workspace)
           : []),
         ...validateContentProfile(workspace),
       ];
 
-      for (const [artifact, draftId] of [
-        ["facts.json", workspace.facts.draftId],
-        ["sources.json", workspace.sources.draftId],
-        ["report.json", workspace.report.draftId],
-      ] as const) {
+      const artifactDraftIds: [string, string][] = [];
+      if (proposalIssues.length === 0) {
+        artifactDraftIds.push([
+          "catalog-proposal.json",
+          workspace.proposal.draftId,
+        ]);
+      }
+      if (factIssues.length === 0) {
+        artifactDraftIds.push(["facts.json", workspace.facts.draftId]);
+      }
+      if (sourceIssues.length === 0) {
+        artifactDraftIds.push(["sources.json", workspace.sources.draftId]);
+      }
+      if (reportIssues.length === 0) {
+        artifactDraftIds.push(["report.json", workspace.report.draftId]);
+      }
+      for (const [artifact, draftId] of artifactDraftIds) {
         if (draftId !== workspace.draft.draftId) {
           findings.push(
             hardFinding(
@@ -1039,6 +1371,23 @@ export function createReferenceAuthoring(
         if (entryIssues.length === 0) {
           checkedEntry = candidate.entry;
           findings.push(...validateEntryIdentity(workspace, candidate.entry));
+          if (
+            proposalIssues.length === 0 &&
+            (workspace.proposal.entryPath !==
+              workspace.draft.targetPaths.entry ||
+              JSON.stringify(workspace.proposal.categories) !==
+                JSON.stringify(candidate.entry.categories) ||
+              JSON.stringify(workspace.proposal.relatedEntryIds) !==
+                JSON.stringify(candidate.entry.relatedEntryIds))
+          ) {
+            findings.push(
+              hardFinding(
+                "catalog-proposal-mismatch",
+                "catalog-proposal.json",
+                "Catalog proposal must match the candidate Entry path, categories, and related Entries",
+              ),
+            );
+          }
           if (factIssues.length === 0 && sourceIssues.length === 0) {
             findings.push(
               ...validateSourceAlignment(
@@ -1089,8 +1438,7 @@ export function createReferenceAuthoring(
               );
             } else {
               findings.push(
-                ...schemaFindings(
-                  "content-quality",
+                ...qualityFindings(
                   "content.md",
                   await dependencies.quality.validate({
                     entry: candidate.entry,
@@ -1110,33 +1458,45 @@ export function createReferenceAuthoring(
         }
       }
 
+      const riskOrder = { high: 0, medium: 1, low: 2 } as const;
       findings.sort(
         (left, right) =>
+          (left.severity === "hard" ? 0 : 1) -
+            (right.severity === "hard" ? 0 : 1) ||
+          riskOrder[left.risk] - riskOrder[right.risk] ||
           left.path.localeCompare(right.path) ||
           left.code.localeCompare(right.code),
       );
+      const reviewQueue = findings.filter(
+        (finding): finding is AuthoringReport["reviewQueue"][number] =>
+          finding.severity === "warning",
+      );
+      const blocked = findings.some(({ severity }) => severity === "hard");
       const nextRevision = workspace.draft.revision + 1;
+      const affectedEntryIds =
+        checkedEntry === undefined
+          ? workspace.draft.affectedEntryIds
+          : [
+              ...new Set([
+                workspace.draft.target.entryId,
+                ...checkedEntry.relatedEntryIds,
+              ]),
+            ];
       const report: AuthoringReport = {
         schemaVersion: 1,
         draftId: workspace.draft.draftId,
         draftRevision: nextRevision,
-        status: findings.length === 0 ? "ready" : "blocked",
+        status: blocked ? "blocked" : "ready",
+        affectedEntryIds,
         findings,
+        reviewQueue,
         cacheEvidence: [],
       };
       const draft: AuthoringDraftManifest = {
         ...workspace.draft,
         revision: nextRevision,
-        state: findings.length === 0 ? "checked" : "draft",
-        affectedEntryIds:
-          checkedEntry === undefined
-            ? workspace.draft.affectedEntryIds
-            : [
-                ...new Set([
-                  workspace.draft.target.entryId,
-                  ...checkedEntry.relatedEntryIds,
-                ]),
-              ],
+        state: blocked ? "draft" : "checked",
+        affectedEntryIds,
         updatedAt: checkedAt,
       };
       const checkedWorkspace: DraftWorkspace = {
@@ -1152,6 +1512,7 @@ export function createReferenceAuthoring(
       const committed = await dependencies.drafts.commitCheck({
         draftId: workspace.draft.draftId,
         expectedRevision: workspace.draft.revision,
+        expectedFiles: workspace.files,
         workspace: checkedWorkspace,
       });
       if (!committed) {

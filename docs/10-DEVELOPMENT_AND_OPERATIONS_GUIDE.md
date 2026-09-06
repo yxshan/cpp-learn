@@ -170,6 +170,13 @@ Drafts default to `.cpp-learn/authoring/`. A ready result remains non-canonical;
 Phase A2 must provide a reviewable, revision-aware publish operation before any
 tool writes below `reference/`.
 
+`prepare` seeds `entry.json` and `catalog-proposal.json` from validated active
+catalog context. `check` returns exit code `0` whenever it successfully produces
+a report, including `blocked`; automation must inspect `report.status`.
+`--json` emits the unmodified Module result. The configured draft root must not
+equal, contain, or resolve through a symbolic link into the canonical
+`reference/` root.
+
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.
 3. Run Reference schema, path, relationship, link, attribution, and search

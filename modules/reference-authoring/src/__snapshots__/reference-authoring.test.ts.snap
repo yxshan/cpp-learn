@@ -2,6 +2,15 @@
 
 exports[`[T-AUTH-001] Reference authoring golden profiles > prepares the 'header' profile without touching canonical Reference files 1`] = `
 {
+  "catalog-proposal.json": "{
+  "schemaVersion": 1,
+  "draftId": "header-vector",
+  "entryPath": "entries/header-vector/entry.json",
+  "categories": [],
+  "relatedEntryIds": [],
+  "affectedRedirects": []
+}
+",
   "content.md": "# <vector>
 
 TODO：用一句话说明它解决的问题和不适用的场景。
@@ -144,7 +153,11 @@ int main() {
   "draftId": "header-vector",
   "draftRevision": 1,
   "status": "not_checked",
+  "affectedEntryIds": [
+    "header-vector"
+  ],
   "findings": [],
+  "reviewQueue": [],
   "cacheEvidence": []
 }
 ",
@@ -159,6 +172,15 @@ int main() {
 
 exports[`[T-AUTH-001] Reference authoring golden profiles > prepares the 'member' profile without touching canonical Reference files 1`] = `
 {
+  "catalog-proposal.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector-insert",
+  "entryPath": "entries/std-vector-insert/entry.json",
+  "categories": [],
+  "relatedEntryIds": [],
+  "affectedRedirects": []
+}
+",
   "content.md": "# std::vector::insert
 
 TODO：用一句话说明它解决的问题和不适用的场景。
@@ -374,7 +396,11 @@ int main() {
   "draftId": "std-vector-insert",
   "draftRevision": 1,
   "status": "not_checked",
+  "affectedEntryIds": [
+    "std-vector-insert"
+  ],
   "findings": [],
+  "reviewQueue": [],
   "cacheEvidence": []
 }
 ",
@@ -389,6 +415,15 @@ int main() {
 
 exports[`[T-AUTH-001] Reference authoring golden profiles > prepares the 'type' profile without touching canonical Reference files 1`] = `
 {
+  "catalog-proposal.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector",
+  "entryPath": "entries/std-vector/entry.json",
+  "categories": [],
+  "relatedEntryIds": [],
+  "affectedRedirects": []
+}
+",
   "content.md": "# std::vector
 
 TODO：用一句话说明它解决的问题和不适用的场景。
@@ -589,7 +624,11 @@ int main() {
   "draftId": "std-vector",
   "draftRevision": 1,
   "status": "not_checked",
+  "affectedEntryIds": [
+    "std-vector"
+  ],
   "findings": [],
+  "reviewQueue": [],
   "cacheEvidence": []
 }
 ",

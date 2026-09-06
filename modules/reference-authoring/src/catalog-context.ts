@@ -45,12 +45,47 @@ export function createFilesystemAuthoringCatalogContext({
         assertValid(entryPath, validateReferenceEntryManifest(rawEntry));
         entries.push(rawEntry as ReferenceEntryManifest);
       }
+      const entryIds = new Set(entries.map(({ id }) => id));
+      if (entryIds.size !== entries.length) {
+        throw new Error("Active Reference Entry IDs must be unique");
+      }
+      const activeSlugs = new Set<string>();
+      for (const entry of entries) {
+        if (activeSlugs.has(entry.slug)) {
+          throw new Error(`Active Reference slug is duplicated: ${entry.slug}`);
+        }
+        activeSlugs.add(entry.slug);
+      }
+      const redirectSlugs = new Set<string>();
+      for (const redirect of catalog.redirects) {
+        if (
+          activeSlugs.has(redirect.fromSlug) ||
+          redirectSlugs.has(redirect.fromSlug) ||
+          !entryIds.has(redirect.toEntryId)
+        ) {
+          throw new Error(
+            `Historical Reference redirect is invalid: ${redirect.fromSlug}`,
+          );
+        }
+        redirectSlugs.add(redirect.fromSlug);
+      }
       return {
-        entryIds: entries.map((entry) => entry.id),
+        entries: entries.map((entry) => ({
+          id: entry.id,
+          slug: entry.slug,
+          kind: entry.kind,
+          title: entry.title,
+          ...(entry.symbol === undefined ? {} : { symbol: entry.symbol }),
+          ...(entry.header === undefined ? {} : { header: entry.header }),
+          categories: entry.categories,
+          relatedEntryIds: entry.relatedEntryIds,
+        })),
+        entryIds: [...entryIds],
         categoryIds: catalog.categories.map((category) => category.id),
         slugsByEntryId: Object.fromEntries(
           entries.map((entry) => [entry.id, entry.slug]),
         ),
+        redirects: catalog.redirects,
       };
     },
   };
