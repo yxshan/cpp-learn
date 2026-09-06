@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | SRS-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-09-06 |
 
 ## 1. System context
 
@@ -89,7 +89,7 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 - **FR-083** The system shall maintain valid links among Reference Entries and between Activities and Reference Entries using stable identifiers.
 - **FR-084** Browsing, searching, and copying Reference content shall not initialize or modify an Activity Workspace, Attempt, Evidence, Concept state, Review, or Project state.
 - **FR-085** Ordinary Reference examples shall be compiled by content quality gates using their declared standard and the supported warning profile.
-- **FR-086** A later Reference Playground shall run selected examples through a temporary non-Activity identity without private tests or learning Evidence.
+- **FR-086** The Reference Playground shall run selected examples through a temporary non-Activity identity without private tests or learning Evidence, expose bounded terminal outcomes, and allow an active run to be cancelled through its client-visible identity.
 - **FR-087** Every Reference Entry shall identify factual sources and any reused material shall carry compatible license, attribution, and modification metadata.
 
 ## 4. Non-functional requirements

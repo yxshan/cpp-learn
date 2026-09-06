@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-DES-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-28 |
+| Last updated | 2026-09-06 |
 
 ## 1. Purpose
 
@@ -80,7 +80,7 @@ slugs change. Symbols retain exact C++ spelling and case.
                                 └────────────────────────┘
 
 Curriculum Activity ──referenceIds──▶ Reference Entry
-Reference Example ──later──▶ temporary Playground ──▶ Judge execution seam
+Reference Example ─────────▶ temporary Playground ──▶ Judge execution seam
 ```
 
 `apps/server` remains the only composition root. The Reference Module receives
@@ -516,17 +516,20 @@ stdout, or misses its expected diagnostic category. This preserves the last
 complete result while its catalog/toolchain binding prevents stale evidence
 from being presented as current.
 
-### Later interactive release
+### Interactive release
 
-Opening an example creates a temporary Playground identity separate from every
-Activity Workspace. Playground Run:
+Opening a supported Run example creates browser-local source state separate from
+every Activity Workspace. Starting it creates a stable, client-visible temporary
+Playground run identity. Playground Run:
 
 - uses an immutable Source Snapshot and the existing Judge execution seam;
 - never executes private tests or produces Evidence;
 - never changes Concept state, Review state, or Project progress;
 - uses a closed build profile and bounded stdin/runtime settings;
 - labels native execution limitations consistently with Activity Run;
-- can be discarded without affecting learner backups.
+- supports cancellation through its active run identity;
+- has bounded compile, runtime, output, and cleanup outcomes; and
+- can be reset or explicitly discarded without affecting learner backups.
 
 Reference content cannot provide shell commands, arbitrary compiler paths,
 environment variables, or custom Judge stages.

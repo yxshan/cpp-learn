@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-AUTH-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-05 |
@@ -18,6 +18,12 @@ Design](22-API-REFERENCE-MODULE-DESIGN.md); the implemented JSON Schema and
 The Reference serves a learner who knows JavaScript and is learning modern C++
 for software, Web, backend, and infrastructure development. It must remain
 precise enough for engineering use without reading like copied standardese.
+
+The planned automation, incremental checks, fact/source ledger, compiler cache,
+and Web Author Console are defined in the [Content Authoring Tools Design and
+Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md).
+Until those phases are accepted, this guide and the existing full gates remain
+the release authority.
 
 ## 2. Authoring principles
 

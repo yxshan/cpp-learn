@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -349,13 +349,22 @@ or Review effect. The first tracer bullet accepts edited source only; standard
 and stdin come from the published Example, while compiler flags, environment,
 working paths, time, output, and global concurrency remain Adapter-owned.
 
-The HTTP Adapter admits one native Playground execution by default and returns
-`429 playground_busy` with `Retry-After` when occupied. The Runner tries a
-documented draft-standard alias only when the compiler explicitly rejects the
-canonical flag, and returns infrastructure and cleanup failures as structured
-`system_error` outcomes. Browser state is keyed by Entry plus Example so
-same-named examples cannot share source or results across navigation. HTTP
-cancellation and the complete failure-path browser matrix remain deferred.
+The browser creates a UUIDv4-derived `ref_run_*` identity before it starts the
+synchronous execution request. The HTTP Adapter registers that identity with an
+`AbortController`, rejects an active duplicate with
+`409 playground_run_id_conflict`, admits one native Playground execution by
+default, and returns `429 playground_busy` with `Retry-After` when occupied. A
+separate cancellation request aborts the matching Runner signal while the
+original request completes with the terminal `cancelled` result.
+
+The Runner tries a documented draft-standard alias only when the compiler
+explicitly rejects the canonical flag, and returns infrastructure and cleanup
+failures as structured `system_error` outcomes. Browser state is keyed by Entry
+plus Example so same-named examples cannot share source or results across
+navigation. Reset restores published source while explicit discard also closes
+the editor; dirty discard requires confirmation. Compile errors, runtime errors,
+timeout, output-limit, cancellation, reset/discard, and narrow-screen behavior
+are covered through the real browser boundary.
 
 The complete model, rollout, and rollback are defined in [C++ API Reference
 Module Design](22-API-REFERENCE-MODULE-DESIGN.md).

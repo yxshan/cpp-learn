@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 4.7 |
+| Version | 4.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## Purpose
 
@@ -67,7 +67,9 @@ Read in this order:
 49. [Stage 6.2 Phase 3 Breadth Expansion Batch 18 Implementation Report](49-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-18-IMPLEMENTATION-REPORT.md)
 50. [Stage 6.2 Phase 3 Breadth Expansion Batch 19 Implementation Report](50-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-19-IMPLEMENTATION-REPORT.md)
 51. [Stage 6.2 Phase 4 Playground Tracer Bullet Implementation Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
-52. [Domain Context](CONTEXT.md)
+52. [Stage 6.2 Phase 4 Playground Completion Implementation Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md)
+53. [C++ API Reference Content Authoring Tools Design and Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
+54. [Domain Context](CONTEXT.md)
 
 Core learner references:
 
@@ -110,6 +112,7 @@ API Reference research and editorial baselines:
 - [ADR-0004: Native judge first, container adapter later](adr/0004-native-judge-first.md)
 - [ADR-0005: Declarative curriculum content](adr/0005-declarative-curriculum-content.md)
 - [ADR-0006: Separate declarative C++ API Reference Module](adr/0006-separate-declarative-api-reference.md)
+- [ADR-0007 (proposed): Local Reference authoring Module with CLI-first Adapter](adr/0007-local-reference-authoring-pipeline.md)
 
 ## Archive
 

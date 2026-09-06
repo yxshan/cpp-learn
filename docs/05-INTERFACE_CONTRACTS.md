@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -109,6 +109,7 @@ The Playground POST accepts the shared
 ```json
 {
   "schemaVersion": 1,
+  "runId": "ref_run_550e8400-e29b-41d4-a716-446655440000",
   "source": "#include <iostream>\nint main() {}\n"
 }
 ```
@@ -122,15 +123,35 @@ the run/Entry/Example IDs, explicit verdict, stdout, stderr, compile/run stages,
 diagnostics, and selected toolchain profile. Actual output is not compared with
 the published expected output and does not create a Grade.
 
-Validation, origin, lookup, source-size, admission, and capability failures use
+The client creates `runId` before starting the request. It must be a lowercase
+or uppercase UUIDv4 prefixed with `ref_run_`; an active duplicate is rejected so
+the identifier always selects at most one execution.
+
+Validation, origin, lookup, source-size, identity, admission, and capability failures use
 `400 validation_error`, `403 origin_rejected`,
 `404 reference_example_not_found`, `413 source_too_large`,
+`409 playground_run_id_conflict`,
 `429 playground_busy` (with `Retry-After`), and
 `503 playground_unavailable` or `reference_unavailable`. The local Adapter
-admits one native Playground execution by default. HTTP request cancellation is
-not yet part of this tracer-bullet contract. The native Adapter currently gives
-each compile and run process a five-second wall-clock limit and a 64 KiB
-combined stdout/stderr limit.
+admits one native Playground execution by default. The native Adapter gives each
+compile and run process a five-second wall-clock limit and a 64 KiB combined
+stdout/stderr limit.
+
+Cancellation is a separate state-changing request so it can be sent while the
+original synchronous run request remains in flight:
+
+```text
+POST /api/v1/reference/runs/:runId/cancellations
+```
+
+```json
+{ "schemaVersion": 1 }
+```
+
+A `200` response returns `schemaVersion`, `runId`, and `cancelled`. `cancelled`
+is `true` only when an active matching run was signalled; unknown and already
+terminal identities return `false` without revealing other state. The request
+uses the same loopback-origin enforcement and exact-body validation as execution.
 
 ### Workspace
 

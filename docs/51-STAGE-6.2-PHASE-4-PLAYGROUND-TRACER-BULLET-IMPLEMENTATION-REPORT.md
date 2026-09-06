@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-035 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -15,9 +15,9 @@ and run a published `run` example from its Reference Entry without creating an
 Activity Workspace, Attempt, Evidence, Concept transition, Review, or Project
 mutation.
 
-This report does not accept all of Phase 4. Cancellation over HTTP, explicit
-discard semantics, and the complete failure-path browser matrix remain follow-up
-work.
+This report preserves the first tracer-bullet acceptance snapshot. The listed
+follow-up work was subsequently completed and accepted by the [Phase 4
+Completion Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md).
 
 ## 2. Scope delivered
 
@@ -90,21 +90,24 @@ The Playwright integration harness uses one worker because both browser files
 share a single fixture store and bounded native compiler service. This keeps the
 gate deterministic without changing product-side admission behavior.
 
-The final standards/spec remediation review closed findings for native
+The tracer-bullet standards/spec remediation review closed findings for native
 admission, lifecycle error handling, cross-Entry state reuse, stale source/output
 pairing, shared transport DTOs, baseline documentation, and compiler-standard
-aliases. Full Phase 4 remains open only for the items below.
+aliases. The items below record the remaining scope at that historical fixed
+point; required Phase 4 items are now closed by the completion report.
 
-## 6. Remaining Phase 4 work
+## 6. Tracer-bullet follow-up disposition
 
-- Give running requests a durable client-visible ID before completion and add a
-  cancellation endpoint wired to the Runner's `AbortSignal`.
-- Add browser coverage for compiler diagnostics, runtime failure, timeout,
-  output limit, reset, close/discard, and 390-pixel layout.
-- Add per-client quotas if the local single-user HTTP boundary is expanded.
-- Decide whether a later editor enhancement should lazy-load Monaco or retain
-  the lightweight textarea.
-- Add container/Linux execution before any public or multi-user deployment.
+- **Closed:** durable client-visible run identity and HTTP cancellation wired to
+  the Runner's `AbortSignal`.
+- **Closed:** browser coverage for compiler diagnostics, runtime failure,
+  timeout, output limit, cancellation, reset, discard, and 390-pixel layout.
+- **Deferred outside Phase 4:** per-client quotas if the local single-user HTTP
+  boundary is expanded.
+- **Deferred outside Phase 4:** optional Monaco evaluation; the lightweight
+  textarea remains the accepted editor.
+- **Required before public/multi-user deployment, not local Phase 4:** a
+  container/Linux execution Adapter.
 
 ## 7. Migration and rollback
 

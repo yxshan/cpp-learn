@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-09-06 |
 
 ## 1. Purpose
 
@@ -40,7 +40,7 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | FR-081, FR-082 | REF-DES §8–10 | T-REF-003 deterministic search/filters; T-REF-005 query contracts; T-REF-006 Reference browser flow | Stage 6.2 |
 | FR-084 | REF-DES §11 | T-REF-007 no Workspace, record, or Evidence mutation | Stage 6.2 |
 | FR-085 | REF-DES §12; REF-AUTH §7 | T-REF-004 declared-standard example compilation | Stage 6.2 |
-| FR-086 | REF-DES §12; REF-PLAN §7 | T-REF-009 Playground identity, execution isolation, and cleanup | Stage 6.2 later phase |
+| FR-086 | REF-DES §12; REF-PLAN §7 | T-REF-009 Playground identity, bounded execution, cancellation, isolation, and cleanup | Stage 6.2 Phase 4 |
 | FR-087 | REF-DES §14; REF-AUTH §9 | T-REF-010 source, attribution, and reused-material policy | Stage 6.2 |
 
 ## 3. Non-functional traceability
@@ -72,7 +72,7 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | BR-005, BR-006 | DATA §6; CJS §9 | T-LEARN-008 retained/delayed Evidence; review failure policy | Stage 3 |
 | BR-007 | SEC §4; CJS §8 | T-SEC-002 private-test concealment wording and redaction | Stage 2 |
 | BR-008 | REF-DES §11; SRS §5 | T-REF-007 read/search/copy learning-state isolation | Stage 6.2 |
-| BR-009 | REF-DES §12; SRS §5 | T-REF-009 Reference Example Run evidence isolation | Stage 6.2 later phase |
+| BR-009 | REF-DES §12; SRS §5 | T-REF-009 Reference Example Run evidence isolation | Stage 6.2 Phase 4 |
 
 ## 5. Maintenance rule
 
@@ -188,5 +188,5 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-REF-006 | `e2e/reference-browser.spec.ts` covers symbol/header/Chinese search, URL-backed category filters, canonical and historical slugs, replacement history, unobscured mobile anchors, keyboard navigation, bidirectional Activity links, status semantics, and 390-pixel layout | Passed |
 | T-REF-007 | `e2e/reference-browser.spec.ts` snapshots an Activity Workspace and Dashboard before/after browsing and copying, while also asserting that the browser emits no non-GET request | Passed |
 | T-REF-008 | `npm run test:e2e:production` serves the real Vite `dist` through Fastify, opens a deep Reference URL, and aborts every non-loopback browser request; the build emits a lazy Reference chunk | Passed |
-| T-REF-009 | Runner, HTTP, Web API, and browser tests cover fixed-profile temporary execution, compatible standard flags, lifecycle errors and cleanup, strict input, single-run admission, Entry-isolated editor state, and unchanged Dashboard state; HTTP cancellation and the full browser failure matrix remain open | Partially passed; Phase 4 in progress |
+| T-REF-009 | Runner, HTTP, Web API, and browser tests cover fixed-profile temporary execution, compatible standard flags, lifecycle errors and cleanup, strict input, active-ID conflict, single-run admission, HTTP cancellation, compile/runtime/timeout/output-limit outcomes, reset/discard, 390-pixel layout, Entry-isolated editor state, and unchanged Dashboard state | Passed |
 | T-REF-010 | `packages/reference-schema/src/reference-schema.test.ts` and release activation require a primary source and complete attribution for reused material | Passed |

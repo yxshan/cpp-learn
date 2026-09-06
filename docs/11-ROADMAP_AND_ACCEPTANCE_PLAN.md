@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-09-06 |
 
 ## 1. Delivery policy
 
@@ -184,10 +184,10 @@ Acceptance:
 
 ## 11. Stage 6.2: C++ API Reference
 
-**Status:** Phases 1–3 accepted; the controlled catalog contains 120 Entries
-and 226 locally verified examples. Phase 4 is in progress: its first
-edit-and-run tracer bullet is recorded in the [Playground Tracer Bullet
-Implementation Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md).
+**Status:** Phases 1–4 accepted; the controlled catalog contains 120 Entries
+and 226 locally verified examples. The Playground tracer bullet and completed
+bounded execution flow are recorded in the [Tracer Bullet Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
+and [Phase 4 Completion Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md).
 Design and remaining acceptance sources are the [Reference Module
 Design](22-API-REFERENCE-MODULE-DESIGN.md) and [Implementation
 Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md).
@@ -205,8 +205,8 @@ Deliver the read-only vertical release:
 - Reference-to-Activity navigation without learner-state mutation.
 
 Then expand through 80–120 core standard-library Entries and bidirectional
-Activity links. A temporary non-Activity Playground and grounded AI assistance
-remain separately gated later phases.
+Activity links. The temporary non-Activity Playground is accepted; grounded AI
+assistance remains a separately gated later phase.
 
 Acceptance:
 
@@ -222,8 +222,30 @@ Acceptance:
 - Invalid Reference content cannot activate, while Reference degradation does
   not disable existing learning flows.
 - Sources and any reused-material attribution pass content validation.
+- Playground runs have stable client-visible identities, bounded outcomes,
+  active cancellation, explicit reset/discard behavior, and no learning-state
+  mutation.
 
-## 12. Global definition of done
+## 12. Stage 6.3: Reference content authoring tools
+
+**Status:** Planned. Design and phased acceptance are controlled by the [Content
+Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
+and proposed [ADR-0007](adr/0007-local-reference-authoring-pipeline.md).
+
+Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
+
+- draft workspaces and deterministic Entry-kind scaffolding;
+- structured fact/source ledgers and risk-ranked human review;
+- affected-graph validation and content-addressed example compilation cache;
+- production-renderer preview, exact publish diff, and atomic publication;
+- constrained AI context packs that cannot promote unverified facts; and
+- batch metrics proving throughput gains without a quality regression.
+
+Acceptance begins with golden fixtures and a non-publishing `prepare`/`check`
+tracer bullet. Canonical writes, AI assistance, and the Web Author Console remain
+separately gated later slices.
+
+## 13. Global definition of done
 
 - Requirement implemented and traced.
 - Module/contract/integration/E2E tests pass as applicable.
@@ -233,7 +255,7 @@ Acceptance:
 - No known S1/S2 defects in the released scope.
 - Acceptance evidence is reproducible and archived with the release.
 
-## 13. Deferred decisions
+## 14. Deferred decisions
 
 - Desktop packaging.
 - Specific SQLite Node Adapter.

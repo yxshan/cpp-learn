@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | SEC-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -130,8 +130,9 @@ Controls:
 - The local Playground uses a temporary non-Activity root, a closed compiler
   profile, source/output limits, timeout, process cleanup, and default global
   concurrency of one. Busy requests receive bounded back-pressure rather than
-  starting another compiler. HTTP cancellation remains required before full
-  Playground acceptance.
+  starting another compiler. Client-created UUIDv4 run identities are registered
+  only while active; duplicate active identities fail closed, and cancellation
+  crosses the same origin-validated local HTTP boundary.
 
 ### Local HTTP exposure
 

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-PLAN-001 |
-| Version | 1.19 |
+| Version | 1.20 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## 1. Objective
 
@@ -275,12 +275,12 @@ under its declared profile.
 
 ## 7. Phase 4: Reference Playground
 
-Current state: the first vertical tracer bullet is delivered. A published Run
-example can be edited and executed through a fixed native compiler profile,
-with temporary-root cleanup, global single-run admission, Entry-isolated browser
-state, and no Learning Platform command or state mutation. Phase 4 remains open
-until HTTP cancellation, the complete bounded failure-path browser matrix, and
-explicit discard behavior are accepted.
+Current state: accepted. A published Run example can be edited and executed
+through a fixed native compiler profile, with temporary-root cleanup, global
+single-run admission, a stable client-created run identity, HTTP cancellation,
+Entry-isolated browser state, reset and confirmed discard, and no Learning
+Platform command or state mutation. The bounded outcome matrix is covered in a
+real browser and recorded in the [Phase 4 Completion Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md).
 
 ### Work packages
 
