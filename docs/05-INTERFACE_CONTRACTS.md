@@ -6,7 +6,7 @@
 | Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## 1. Contract policy
 
@@ -128,7 +128,9 @@ Validation, origin, lookup, source-size, admission, and capability failures use
 `429 playground_busy` (with `Retry-After`), and
 `503 playground_unavailable` or `reference_unavailable`. The local Adapter
 admits one native Playground execution by default. HTTP request cancellation is
-not yet part of this tracer-bullet contract.
+not yet part of this tracer-bullet contract. The native Adapter currently gives
+each compile and run process a five-second wall-clock limit and a 64 KiB
+combined stdout/stderr limit.
 
 ### Workspace
 

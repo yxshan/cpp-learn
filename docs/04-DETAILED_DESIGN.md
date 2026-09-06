@@ -6,7 +6,7 @@
 | Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## 1. Package layout
 

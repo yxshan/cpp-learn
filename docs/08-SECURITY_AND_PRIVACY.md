@@ -6,7 +6,7 @@
 | Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## 1. Security posture
 

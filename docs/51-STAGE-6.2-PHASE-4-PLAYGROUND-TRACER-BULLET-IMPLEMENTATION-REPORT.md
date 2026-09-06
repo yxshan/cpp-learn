@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-035 |
-| Version | 1.1 |
-| Status | In Review |
+| Version | 1.2 |
+| Status | Accepted |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## 1. Objective
 
@@ -64,10 +64,11 @@ expose the Run control in this slice.
 
 The implementation reuses the bounded native-process seam and fixed argument
 arrays. It does not use a shell and does not accept build arguments from the
-browser. Each run receives a fresh temporary working directory, bounded time,
-bounded aggregate output, a closed environment, and cleanup whose failure is
-reported. The HTTP Adapter admits one native run at a time by default and
-returns bounded back-pressure for overlapping requests.
+browser. Each compile and run process receives a five-second wall-clock bound,
+a 64 KiB combined stdout/stderr bound, a closed environment, and a fresh
+temporary working directory whose cleanup failure is reported. The HTTP Adapter
+admits one native run at a time by default and returns bounded back-pressure for
+overlapping requests.
 
 The application remains a trusted local single-user product. Native execution
 is not an adversarial sandbox: C++ code can invoke operating-system APIs outside
@@ -88,6 +89,11 @@ process, network, memory, and CPU boundary.
 The Playwright integration harness uses one worker because both browser files
 share a single fixture store and bounded native compiler service. This keeps the
 gate deterministic without changing product-side admission behavior.
+
+The final standards/spec remediation review closed findings for native
+admission, lifecycle error handling, cross-Entry state reuse, stale source/output
+pairing, shared transport DTOs, baseline documentation, and compiler-standard
+aliases. Full Phase 4 remains open only for the items below.
 
 ## 6. Remaining Phase 4 work
 
