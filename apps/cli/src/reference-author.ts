@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 import {
   createFilesystemAuthoringCatalogContext,
@@ -22,7 +22,7 @@ const catalogPath = resolve(
 const authoring = createReferenceAuthoring({
   drafts: createFilesystemReferenceDraftRepository({
     root: authoringRoot,
-    forbiddenRoots: [resolve("reference")],
+    forbiddenRoots: [dirname(catalogPath)],
   }),
   catalog: createFilesystemAuthoringCatalogContext({ catalogPath }),
   examples: createNativeAuthoringExampleValidator(),
