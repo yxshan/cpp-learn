@@ -9,6 +9,7 @@
     "state",
     "profile",
     "target",
+    "targetPaths",
     "affectedEntryIds",
     "createdAt",
     "updatedAt"
@@ -28,6 +29,26 @@
         "kind": { "$ref": "#/$defs/entryKind" },
         "slug": { "$ref": "#/$defs/slug" },
         "title": { "type": "string", "minLength": 1 }
+      }
+    },
+    "targetPaths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry", "content", "examples", "catalog"],
+      "properties": {
+        "entry": {
+          "type": "string",
+          "pattern": "^entries/[a-z0-9]+(?:-[a-z0-9]+)*/entry\\.json$"
+        },
+        "content": {
+          "type": "string",
+          "pattern": "^entries/[a-z0-9]+(?:-[a-z0-9]+)*/content\\.md$"
+        },
+        "examples": {
+          "type": "string",
+          "pattern": "^entries/[a-z0-9]+(?:-[a-z0-9]+)*/examples$"
+        },
+        "catalog": { "const": "catalog.json" }
       }
     },
     "affectedEntryIds": {

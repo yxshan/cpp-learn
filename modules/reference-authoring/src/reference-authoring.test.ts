@@ -55,6 +55,12 @@ describe("[T-AUTH-001] Reference authoring golden profiles", () => {
         state: "draft",
         profile: fixture.profile,
         target: fixture.target,
+        targetPaths: {
+          entry: `entries/${fixture.target.entryId}/entry.json`,
+          content: `entries/${fixture.target.entryId}/content.md`,
+          examples: `entries/${fixture.target.entryId}/examples`,
+          catalog: "catalog.json",
+        },
         affectedEntryIds: [fixture.target.entryId],
         createdAt: fixedNow.toISOString(),
         updatedAt: fixedNow.toISOString(),
@@ -76,6 +82,7 @@ describe("[T-AUTH-001] Reference authoring golden profiles", () => {
       expect(await drafts.get(fixture.target.entryId)).toEqual(
         result.workspace,
       );
+      expect(result.workspace.files).toMatchSnapshot();
     },
   );
 
@@ -121,6 +128,29 @@ describe("[T-AUTH-001] Reference authoring golden profiles", () => {
     );
   });
 
+  it("atomically reserves an Entry ID across concurrent prepare calls", async () => {
+    const drafts = createInMemoryReferenceDraftRepository();
+    const authoring = createReferenceAuthoring({
+      drafts,
+      clock: () => fixedNow,
+    });
+    const target = fixtures[0]!.target;
+
+    const [first, second] = await Promise.all([
+      authoring.prepare({ target }),
+      authoring.prepare({
+        target: {
+          ...target,
+          slug: "standard-library/containers/vector/append",
+        },
+      }),
+    ]);
+
+    expect(first).toMatchObject({ ok: true, created: true });
+    expect(second).toMatchObject({ ok: false, code: "draft_conflict" });
+    expect((await drafts.get(target.entryId))?.draft.target).toEqual(target);
+  });
+
   it("keeps stored drafts isolated from mutable caller copies", async () => {
     const drafts = createInMemoryReferenceDraftRepository();
     const authoring = createReferenceAuthoring({
@@ -160,6 +190,29 @@ describe("[T-AUTH-001] Reference authoring golden profiles", () => {
       ]),
     });
     expect(await drafts.get("../std-vector")).toBeUndefined();
+  });
+
+  it("returns a validation issue for an unknown runtime Entry kind", async () => {
+    const drafts = createInMemoryReferenceDraftRepository();
+    const authoring = createReferenceAuthoring({ drafts });
+    const request = {
+      target: {
+        entryId: "std-vector",
+        kind: "class",
+        slug: "standard-library/containers/vector",
+        title: "std::vector",
+      },
+    } as unknown as PrepareDraftRequest;
+
+    const result = await authoring.prepare(request);
+    expect(result).toMatchObject({ ok: false, code: "invalid_request" });
+    if (result.ok) return;
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: "/target/kind" }),
+      ]),
+    );
+    expect(await drafts.get("std-vector")).toBeUndefined();
   });
 });
 

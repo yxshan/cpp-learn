@@ -58,9 +58,17 @@ export interface AuthoringDraftManifest {
   readonly state: "draft" | "ready_for_review" | "checked";
   readonly profile: AuthoringProfile;
   readonly target: PrepareDraftTarget;
+  readonly targetPaths: AuthoringTargetPaths;
   readonly affectedEntryIds: readonly string[];
   readonly createdAt: string;
   readonly updatedAt: string;
+}
+
+export interface AuthoringTargetPaths {
+  readonly entry: string;
+  readonly content: string;
+  readonly examples: string;
+  readonly catalog: "catalog.json";
 }
 
 export interface AuthoringFactGroup {
@@ -147,7 +155,10 @@ export interface ReferenceAuthoring {
 
 export interface ReferenceDraftRepository {
   get(draftId: string): Promise<DraftWorkspace | undefined>;
-  save(workspace: DraftWorkspace): Promise<void>;
+  reserve(workspace: DraftWorkspace): Promise<{
+    readonly created: boolean;
+    readonly workspace: DraftWorkspace;
+  }>;
 }
 
 export interface ReferenceAuthoringDependencies {
@@ -224,91 +235,104 @@ const PROFILE_BY_KIND: Readonly<Record<ReferenceEntryKind, AuthoringProfile>> =
     guide: "navigation",
   };
 
-const FACT_KINDS_BY_PROFILE: Readonly<
-  Record<AuthoringProfile, readonly AuthoringFactKind[]>
-> = {
-  callable: [
-    "selection",
-    "signature",
-    "availability",
-    "parameters",
-    "return",
-    "errors",
-    "complexity",
-    "lifetime_invalidation",
-    "thread_safety",
-    "examples",
-    "pitfalls",
-    "js_comparison",
-  ],
-  entity: [
-    "selection",
-    "signature",
-    "availability",
-    "ownership",
-    "errors",
-    "complexity",
-    "lifetime_invalidation",
-    "thread_safety",
-    "examples",
-    "pitfalls",
-    "js_comparison",
-  ],
-  header: [
-    "scope",
-    "availability",
-    "direct_include",
-    "facility_map",
-    "examples",
-    "pitfalls",
-  ],
-  navigation: ["scope", "selection", "availability", "pitfalls"],
-};
+interface AuthoringProfileDefinition {
+  readonly factKinds: readonly AuthoringFactKind[];
+  readonly headings: readonly string[];
+  readonly examples: readonly ("minimal" | "realistic")[];
+}
 
-const HEADINGS_BY_PROFILE: Readonly<
-  Record<AuthoringProfile, readonly string[]>
+const PROFILE_DEFINITIONS: Readonly<
+  Record<AuthoringProfile, AuthoringProfileDefinition>
 > = {
-  callable: [
-    "快速信息",
-    "什么时候使用",
-    "声明与重载",
-    "参数与前置条件",
-    "返回值",
-    "复杂度",
-    "异常与错误",
-    "生命周期与失效",
-    "线程安全",
-    "示例",
-    "常见误区",
-    "与 JavaScript 对照",
-    "相关条目",
-    "来源",
-  ],
-  entity: [
-    "快速信息",
-    "什么时候使用",
-    "类型与所有权",
-    "复杂度",
-    "异常与错误",
-    "生命周期与失效",
-    "线程安全",
-    "示例",
-    "常见误区",
-    "与 JavaScript 对照",
-    "相关条目",
-    "来源",
-  ],
-  header: [
-    "快速信息",
-    "何时直接包含",
-    "设施地图",
-    "标准版本边界",
-    "示例",
-    "常见误区",
-    "相关条目",
-    "来源",
-  ],
-  navigation: ["适用范围", "如何选择", "核心条目", "常见误区", "来源"],
+  callable: {
+    factKinds: [
+      "selection",
+      "signature",
+      "availability",
+      "parameters",
+      "return",
+      "errors",
+      "complexity",
+      "lifetime_invalidation",
+      "thread_safety",
+      "examples",
+      "pitfalls",
+      "js_comparison",
+    ],
+    headings: [
+      "快速信息",
+      "什么时候使用",
+      "声明与重载",
+      "参数与前置条件",
+      "返回值",
+      "复杂度",
+      "异常与错误",
+      "生命周期与失效",
+      "线程安全",
+      "示例",
+      "常见误区",
+      "与 JavaScript 对照",
+      "相关条目",
+      "来源",
+    ],
+    examples: ["minimal", "realistic"],
+  },
+  entity: {
+    factKinds: [
+      "selection",
+      "signature",
+      "availability",
+      "ownership",
+      "errors",
+      "complexity",
+      "lifetime_invalidation",
+      "thread_safety",
+      "examples",
+      "pitfalls",
+      "js_comparison",
+    ],
+    headings: [
+      "快速信息",
+      "什么时候使用",
+      "类型与所有权",
+      "复杂度",
+      "异常与错误",
+      "生命周期与失效",
+      "线程安全",
+      "示例",
+      "常见误区",
+      "与 JavaScript 对照",
+      "相关条目",
+      "来源",
+    ],
+    examples: ["minimal", "realistic"],
+  },
+  header: {
+    factKinds: [
+      "scope",
+      "availability",
+      "direct_include",
+      "facility_map",
+      "examples",
+      "pitfalls",
+    ],
+    headings: [
+      "快速信息",
+      "何时直接包含",
+      "设施地图",
+      "标准版本边界",
+      "示例",
+      "常见误区",
+      "相关条目",
+      "来源",
+    ],
+    examples: ["minimal"],
+  },
+  navigation: {
+    factKinds: ["scope", "selection", "availability", "pitfalls"],
+    headings: ["适用范围", "如何选择", "核心条目", "常见误区", "来源"],
+    examples: ["minimal"],
+  },
 };
 
 function jsonFile(value: unknown): string {
@@ -320,7 +344,7 @@ function contentTemplate(title: string, profile: AuthoringProfile): string {
     `# ${title}`,
     "",
     "TODO：用一句话说明它解决的问题和不适用的场景。",
-    ...HEADINGS_BY_PROFILE[profile].flatMap((heading) => [
+    ...PROFILE_DEFINITIONS[profile].headings.flatMap((heading) => [
       "",
       `## ${heading}`,
       "",
@@ -342,6 +366,35 @@ function exampleTemplate(label: "minimal" | "realistic"): string {
   ].join("\n");
 }
 
+function targetPaths(target: PrepareDraftTarget): AuthoringTargetPaths {
+  const root = `entries/${target.entryId}`;
+  return {
+    entry: `${root}/entry.json`,
+    content: `${root}/content.md`,
+    examples: `${root}/examples`,
+    catalog: "catalog.json",
+  };
+}
+
+function createDraftManifest(
+  target: PrepareDraftTarget,
+  profile: AuthoringProfile,
+  now: string,
+): AuthoringDraftManifest {
+  return {
+    schemaVersion: 1,
+    draftId: target.entryId,
+    revision: 1,
+    state: "draft",
+    profile,
+    target,
+    targetPaths: targetPaths(target),
+    affectedEntryIds: [target.entryId],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 function candidateEntry(target: PrepareDraftTarget) {
   return {
     schemaVersion: 2,
@@ -354,36 +407,19 @@ function candidateEntry(target: PrepareDraftTarget) {
     aliases: [],
     categories: [],
     relatedEntryIds: [],
-    content: {
-      format: "markdown",
-      path: `entries/${target.entryId}/content.md`,
-    },
+    content: { format: "markdown", path: targetPaths(target).content },
     examples: [],
     sources: [],
     verifiedAt: null,
   };
 }
 
-function createDraftWorkspace(
-  target: PrepareDraftTarget,
-  profile: AuthoringProfile,
-  now: string,
-): DraftWorkspace {
-  const draft: AuthoringDraftManifest = {
-    schemaVersion: 1,
-    draftId: target.entryId,
-    revision: 1,
-    state: "draft",
-    profile,
-    target,
-    affectedEntryIds: [target.entryId],
-    createdAt: now,
-    updatedAt: now,
-  };
+function createDraftWorkspace(draft: AuthoringDraftManifest): DraftWorkspace {
+  const { profile, target } = draft;
   const facts: AuthoringFactSheet = {
     schemaVersion: 1,
     draftId: target.entryId,
-    groups: FACT_KINDS_BY_PROFILE[profile].map((kind) => ({
+    groups: PROFILE_DEFINITIONS[profile].factKinds.map((kind) => ({
       id: kind.replaceAll("_", "-"),
       kind,
       status: "unverified",
@@ -411,10 +447,9 @@ function createDraftWorkspace(
     "report.json": jsonFile(report),
     "entry.json": jsonFile(candidateEntry(target)),
     "content.md": contentTemplate(target.title, profile),
-    "examples/minimal.cpp": exampleTemplate("minimal"),
   };
-  if (profile === "callable" || profile === "entity") {
-    files["examples/realistic.cpp"] = exampleTemplate("realistic");
+  for (const label of PROFILE_DEFINITIONS[profile].examples) {
+    files[`examples/${label}.cpp`] = exampleTemplate(label);
   }
   return { draft, facts, sources, report, files };
 }
@@ -437,8 +472,15 @@ export function createInMemoryReferenceDraftRepository(
       const workspace = drafts.get(draftId);
       return workspace ? cloneWorkspace(workspace) : undefined;
     },
-    async save(workspace) {
-      drafts.set(workspace.draft.draftId, cloneWorkspace(workspace));
+    async reserve(workspace) {
+      const draftId = workspace.draft.draftId;
+      const existing = drafts.get(draftId);
+      if (existing) {
+        return { created: false, workspace: cloneWorkspace(existing) };
+      }
+      const reserved = cloneWorkspace(workspace);
+      drafts.set(draftId, reserved);
+      return { created: true, workspace: cloneWorkspace(reserved) };
     },
   };
 }
@@ -460,25 +502,16 @@ export function createReferenceAuthoring(
     async prepare(request) {
       const profile = PROFILE_BY_KIND[request.target.kind];
       const now = clock().toISOString();
-      const draftCandidate = {
-        schemaVersion: 1,
-        draftId: request.target.entryId,
-        revision: 1,
-        state: "draft",
-        profile,
-        target: request.target,
-        affectedEntryIds: [request.target.entryId],
-        createdAt: now,
-        updatedAt: now,
-      };
-      const issues = validateAuthoringDraft(draftCandidate);
+      const draft = createDraftManifest(request.target, profile, now);
+      const issues = validateAuthoringDraft(draft);
       if (issues.length > 0) {
         return { ok: false, code: "invalid_request", issues };
       }
 
-      const existing = await dependencies.drafts.get(request.target.entryId);
-      if (existing) {
-        if (!sameTarget(existing.draft.target, request.target)) {
+      const workspace = createDraftWorkspace(draft);
+      const reservation = await dependencies.drafts.reserve(workspace);
+      if (!reservation.created) {
+        if (!sameTarget(reservation.workspace.draft.target, request.target)) {
           return {
             ok: false,
             code: "draft_conflict",
@@ -492,12 +525,9 @@ export function createReferenceAuthoring(
             ],
           };
         }
-        return { ok: true, created: false, workspace: existing };
+        return { ok: true, created: false, workspace: reservation.workspace };
       }
-
-      const workspace = createDraftWorkspace(request.target, profile, now);
-      await dependencies.drafts.save(workspace);
-      return { ok: true, created: true, workspace: cloneWorkspace(workspace) };
+      return { ok: true, created: true, workspace: reservation.workspace };
     },
   };
 }

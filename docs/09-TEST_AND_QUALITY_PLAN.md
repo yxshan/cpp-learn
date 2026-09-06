@@ -128,7 +128,8 @@ Reference content CI additionally validates:
   output limit, cancellation, reset/discard, Entry-isolated source, unchanged
   Dashboard state, and the 390-pixel layout.
 - Authoring Phase A0 uses golden member/type/header profiles through the Module
-  Interface and strict artifact-schema fixtures. It proves idempotent resume,
+  Interface, complete generated-file snapshots, and strict artifact-schema
+  fixtures. It proves idempotent resume, atomic concurrent reservation,
   fail-closed identity conflict, unsafe-path rejection, defensive in-memory
   storage, and absence of canonical publication behavior.
 

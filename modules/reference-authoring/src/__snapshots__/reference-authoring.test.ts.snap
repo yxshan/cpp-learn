@@ -1,0 +1,603 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`[T-AUTH-001] Reference authoring golden profiles > prepares the 'header' profile without touching canonical Reference files 1`] = `
+{
+  "content.md": "# <vector>
+
+TODO：用一句话说明它解决的问题和不适用的场景。
+
+## 快速信息
+
+TODO
+
+## 何时直接包含
+
+TODO
+
+## 设施地图
+
+TODO
+
+## 标准版本边界
+
+TODO
+
+## 示例
+
+TODO
+
+## 常见误区
+
+TODO
+
+## 相关条目
+
+TODO
+
+## 来源
+
+TODO
+",
+  "draft.json": "{
+  "schemaVersion": 1,
+  "draftId": "header-vector",
+  "revision": 1,
+  "state": "draft",
+  "profile": "header",
+  "target": {
+    "entryId": "header-vector",
+    "kind": "header",
+    "slug": "standard-library/headers/vector",
+    "title": "<vector>"
+  },
+  "targetPaths": {
+    "entry": "entries/header-vector/entry.json",
+    "content": "entries/header-vector/content.md",
+    "examples": "entries/header-vector/examples",
+    "catalog": "catalog.json"
+  },
+  "affectedEntryIds": [
+    "header-vector"
+  ],
+  "createdAt": "2026-09-06T09:30:00.000Z",
+  "updatedAt": "2026-09-06T09:30:00.000Z"
+}
+",
+  "entry.json": "{
+  "schemaVersion": 2,
+  "id": "header-vector",
+  "version": 1,
+  "slug": "standard-library/headers/vector",
+  "kind": "header",
+  "title": "<vector>",
+  "summary": "TODO",
+  "aliases": [],
+  "categories": [],
+  "relatedEntryIds": [],
+  "content": {
+    "format": "markdown",
+    "path": "entries/header-vector/content.md"
+  },
+  "examples": [],
+  "sources": [],
+  "verifiedAt": null
+}
+",
+  "examples/minimal.cpp": "#include <iostream>
+
+int main() {
+  // TODO: minimal deterministic example
+  return 0;
+}
+",
+  "facts.json": "{
+  "schemaVersion": 1,
+  "draftId": "header-vector",
+  "groups": [
+    {
+      "id": "scope",
+      "kind": "scope",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "availability",
+      "kind": "availability",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "direct-include",
+      "kind": "direct_include",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "facility-map",
+      "kind": "facility_map",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "examples",
+      "kind": "examples",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "pitfalls",
+      "kind": "pitfalls",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    }
+  ]
+}
+",
+  "report.json": "{
+  "schemaVersion": 1,
+  "draftId": "header-vector",
+  "draftRevision": 1,
+  "status": "not_checked",
+  "findings": [],
+  "cacheEvidence": []
+}
+",
+  "sources.json": "{
+  "schemaVersion": 1,
+  "draftId": "header-vector",
+  "sources": []
+}
+",
+}
+`;
+
+exports[`[T-AUTH-001] Reference authoring golden profiles > prepares the 'member' profile without touching canonical Reference files 1`] = `
+{
+  "content.md": "# std::vector::insert
+
+TODO：用一句话说明它解决的问题和不适用的场景。
+
+## 快速信息
+
+TODO
+
+## 什么时候使用
+
+TODO
+
+## 声明与重载
+
+TODO
+
+## 参数与前置条件
+
+TODO
+
+## 返回值
+
+TODO
+
+## 复杂度
+
+TODO
+
+## 异常与错误
+
+TODO
+
+## 生命周期与失效
+
+TODO
+
+## 线程安全
+
+TODO
+
+## 示例
+
+TODO
+
+## 常见误区
+
+TODO
+
+## 与 JavaScript 对照
+
+TODO
+
+## 相关条目
+
+TODO
+
+## 来源
+
+TODO
+",
+  "draft.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector-insert",
+  "revision": 1,
+  "state": "draft",
+  "profile": "callable",
+  "target": {
+    "entryId": "std-vector-insert",
+    "kind": "member",
+    "slug": "standard-library/containers/vector/insert",
+    "title": "std::vector::insert"
+  },
+  "targetPaths": {
+    "entry": "entries/std-vector-insert/entry.json",
+    "content": "entries/std-vector-insert/content.md",
+    "examples": "entries/std-vector-insert/examples",
+    "catalog": "catalog.json"
+  },
+  "affectedEntryIds": [
+    "std-vector-insert"
+  ],
+  "createdAt": "2026-09-06T09:30:00.000Z",
+  "updatedAt": "2026-09-06T09:30:00.000Z"
+}
+",
+  "entry.json": "{
+  "schemaVersion": 2,
+  "id": "std-vector-insert",
+  "version": 1,
+  "slug": "standard-library/containers/vector/insert",
+  "kind": "member",
+  "title": "std::vector::insert",
+  "summary": "TODO",
+  "aliases": [],
+  "categories": [],
+  "relatedEntryIds": [],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-vector-insert/content.md"
+  },
+  "examples": [],
+  "sources": [],
+  "verifiedAt": null
+}
+",
+  "examples/minimal.cpp": "#include <iostream>
+
+int main() {
+  // TODO: minimal deterministic example
+  return 0;
+}
+",
+  "examples/realistic.cpp": "#include <iostream>
+
+int main() {
+  // TODO: realistic deterministic example
+  return 0;
+}
+",
+  "facts.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector-insert",
+  "groups": [
+    {
+      "id": "selection",
+      "kind": "selection",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "signature",
+      "kind": "signature",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "availability",
+      "kind": "availability",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "parameters",
+      "kind": "parameters",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "return",
+      "kind": "return",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "errors",
+      "kind": "errors",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "complexity",
+      "kind": "complexity",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "lifetime-invalidation",
+      "kind": "lifetime_invalidation",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "thread-safety",
+      "kind": "thread_safety",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "examples",
+      "kind": "examples",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "pitfalls",
+      "kind": "pitfalls",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "js-comparison",
+      "kind": "js_comparison",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    }
+  ]
+}
+",
+  "report.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector-insert",
+  "draftRevision": 1,
+  "status": "not_checked",
+  "findings": [],
+  "cacheEvidence": []
+}
+",
+  "sources.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector-insert",
+  "sources": []
+}
+",
+}
+`;
+
+exports[`[T-AUTH-001] Reference authoring golden profiles > prepares the 'type' profile without touching canonical Reference files 1`] = `
+{
+  "content.md": "# std::vector
+
+TODO：用一句话说明它解决的问题和不适用的场景。
+
+## 快速信息
+
+TODO
+
+## 什么时候使用
+
+TODO
+
+## 类型与所有权
+
+TODO
+
+## 复杂度
+
+TODO
+
+## 异常与错误
+
+TODO
+
+## 生命周期与失效
+
+TODO
+
+## 线程安全
+
+TODO
+
+## 示例
+
+TODO
+
+## 常见误区
+
+TODO
+
+## 与 JavaScript 对照
+
+TODO
+
+## 相关条目
+
+TODO
+
+## 来源
+
+TODO
+",
+  "draft.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector",
+  "revision": 1,
+  "state": "draft",
+  "profile": "entity",
+  "target": {
+    "entryId": "std-vector",
+    "kind": "type",
+    "slug": "standard-library/containers/vector",
+    "title": "std::vector"
+  },
+  "targetPaths": {
+    "entry": "entries/std-vector/entry.json",
+    "content": "entries/std-vector/content.md",
+    "examples": "entries/std-vector/examples",
+    "catalog": "catalog.json"
+  },
+  "affectedEntryIds": [
+    "std-vector"
+  ],
+  "createdAt": "2026-09-06T09:30:00.000Z",
+  "updatedAt": "2026-09-06T09:30:00.000Z"
+}
+",
+  "entry.json": "{
+  "schemaVersion": 2,
+  "id": "std-vector",
+  "version": 1,
+  "slug": "standard-library/containers/vector",
+  "kind": "type",
+  "title": "std::vector",
+  "summary": "TODO",
+  "aliases": [],
+  "categories": [],
+  "relatedEntryIds": [],
+  "content": {
+    "format": "markdown",
+    "path": "entries/std-vector/content.md"
+  },
+  "examples": [],
+  "sources": [],
+  "verifiedAt": null
+}
+",
+  "examples/minimal.cpp": "#include <iostream>
+
+int main() {
+  // TODO: minimal deterministic example
+  return 0;
+}
+",
+  "examples/realistic.cpp": "#include <iostream>
+
+int main() {
+  // TODO: realistic deterministic example
+  return 0;
+}
+",
+  "facts.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector",
+  "groups": [
+    {
+      "id": "selection",
+      "kind": "selection",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "signature",
+      "kind": "signature",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "availability",
+      "kind": "availability",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "ownership",
+      "kind": "ownership",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "errors",
+      "kind": "errors",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "complexity",
+      "kind": "complexity",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "lifetime-invalidation",
+      "kind": "lifetime_invalidation",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "thread-safety",
+      "kind": "thread_safety",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "examples",
+      "kind": "examples",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "pitfalls",
+      "kind": "pitfalls",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    },
+    {
+      "id": "js-comparison",
+      "kind": "js_comparison",
+      "status": "unverified",
+      "summary": "",
+      "sourceIds": []
+    }
+  ]
+}
+",
+  "report.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector",
+  "draftRevision": 1,
+  "status": "not_checked",
+  "findings": [],
+  "cacheEvidence": []
+}
+",
+  "sources.json": "{
+  "schemaVersion": 1,
+  "draftId": "std-vector",
+  "sources": []
+}
+",
+}
+`;

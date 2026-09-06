@@ -43,9 +43,12 @@ Phase A0 exposes `prepare({ target })` through the `ReferenceAuthoring`
 Interface. It validates a stable Entry target, selects a controlled authoring
 profile, scaffolds versioned draft/fact/source/report artifacts plus Markdown
 and example files, resumes an identical draft, and rejects identity conflicts.
-It cannot publish canonical Reference content.
+It cannot publish canonical Reference content. Draft repositories atomically
+reserve an Entry ID: concurrent prepares either resume the same target or return
+a conflict without replacing the first reservation.
 
-The in-memory draft repository Adapter defensively copies on reads and writes.
+The in-memory draft repository Adapter defensively copies on reads and atomic
+reservations.
 A filesystem Adapter becomes the second implementation of that internal seam in
 Phase A1; the CLI and later Web Author Console remain outside the Module and
 must not reproduce profile or validation rules.

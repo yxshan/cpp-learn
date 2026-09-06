@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -88,7 +88,8 @@ Phase A0 exposes only `prepare`; an Interface does not advertise `check` or
 versioned artifact Schemas.
 
 - `prepare` creates or resumes a draft and materializes the selected Entry-kind
-  profile, related-Entry context, and reusable fact sheet.
+  profile and reusable fact sheet. Phase A0 creates controlled related-Entry
+  slots; Phase A1 resolves catalog-backed related-Entry context.
 - `check` performs deterministic validation and returns hard failures, review
   warnings, affected graph, cache evidence, and a risk-ranked human review queue.
 - `publish` rechecks the expected draft revision, creates an exact publish plan,
@@ -234,9 +235,9 @@ No correctness rule may exist only in React.
 
 - Define draft, fact, source, report, and publication schemas.
 - Capture golden fixtures for one `member`, one `type`, and one `header` Entry.
-- Extract reusable validation functions from the existing scripts without
-  changing their current command behavior.
-- Establish full-vs-incremental equivalence tests.
+- Implement non-publishing `prepare` through an in-memory Adapter with atomic
+  Entry-ID reservation, deterministic full-file golden snapshots, and no
+  canonical writes.
 
 Exit met: strict draft/fact/source/report/publication Schemas, deterministic
 member/type/header golden profiles, non-publishing `prepare`, safe resume and
@@ -248,6 +249,8 @@ its missing facts and sources; no canonical files are written.
 
 - Implement filesystem and in-memory Adapters.
 - Scaffold a draft by Entry kind and resume by revision.
+- Extract reusable validation functions from the existing scripts without
+  changing their current command behavior.
 - Validate schema, quality profile, facts, sources, affected links, and changed
   examples.
 - Emit human-readable and JSON reports.
@@ -258,6 +261,7 @@ manual directory/catalog construction.
 ### Phase A2: cache, preview, and atomic publish
 
 - Add content-addressed compiler results and invalidation tests.
+- Establish full-vs-incremental equivalence tests for affected-graph fixtures.
 - Render the draft through the production safe Markdown renderer.
 - Generate exact catalog/file diffs and atomically publish a checked revision.
 - Keep Git commit and release acceptance explicit maintainer actions.

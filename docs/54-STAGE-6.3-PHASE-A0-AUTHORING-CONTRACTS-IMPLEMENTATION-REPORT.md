@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-037 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Accepted |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -23,13 +23,17 @@ callers will use.
   ledgers, check reports, and publication plans.
 - Added a `ReferenceAuthoring` Interface exposing only `prepare` in Phase A0.
   `check` and `publish` remain absent until they have real implementations.
-- Added an in-memory draft repository Adapter that clones on read and write so
-  caller mutation cannot alter stored drafts.
+- Added an in-memory draft repository Adapter that clones on read and atomic
+  reservation so caller mutation cannot alter stored drafts and concurrent
+  targets cannot overwrite one another.
 - Added deterministic `callable`, `entity`, `header`, and `navigation` profiles
   selected from the existing Reference Entry kind vocabulary.
 - Added controlled Markdown headings, fact groups, candidate metadata, and one
   or two compiling C++ skeleton paths according to the selected profile.
-- Added member, type, and header golden-profile fixtures.
+- Added member, type, and header golden-profile fixtures with complete generated
+  file snapshots.
+- Added derived canonical target paths to `draft.json`; they remain a proposal
+  until a future checked publication operation applies them.
 
 ## 3. Safety behavior
 
@@ -37,6 +41,8 @@ callers will use.
 cannot contain absolute or parent paths. Repeating the same target resumes the
 existing revision without replacing its files; attempting to reuse an Entry ID
 for a different target returns `draft_conflict` and preserves the stored draft.
+This reservation is atomic for concurrent callers, not a separate read/write
+check.
 
 All prepared artifacts exist only in the injected draft repository. Phase A0
 has no filesystem Adapter and no operation capable of writing
@@ -54,20 +60,21 @@ The caller supplies one target and learns one operation. Profile selection,
 fact coverage, headings, example count, artifact naming, validation, resume,
 conflict handling, and defensive copying remain inside the Module.
 
-The draft repository is an internal seam injected into the Module. Phase A0
-ships its in-memory Adapter for deterministic tests; Phase A1 adds the second,
-filesystem Adapter before the CLI is connected.
+The draft repository is an internal seam injected into the Module. Its
+`reserve` operation owns the compare-and-set behavior. Phase A0 ships the
+in-memory Adapter for deterministic tests; Phase A1 adds the second, filesystem
+Adapter before the CLI is connected.
 
 ## 5. Acceptance evidence
 
 | Test | Evidence | Result |
 |---|---|---|
-| Golden profiles | T-AUTH-001 compares member, type, and header profile, fact, heading, and example-path output | Passed |
-| Resume/conflict | T-AUTH-001 proves idempotent resume and fail-closed target conflict | Passed |
+| Golden profiles | T-AUTH-001 compares complete generated files for member, type, and header profiles | Passed |
+| Resume/conflict | T-AUTH-001 proves idempotent resume, atomic concurrent reservation, and fail-closed target conflict | Passed |
 | Storage isolation | T-AUTH-001 proves caller mutation cannot alter the stored draft | Passed |
-| Request confinement | T-AUTH-001 rejects unsafe Entry IDs and slugs before storage | Passed |
+| Request confinement | T-AUTH-001 rejects unsafe Entry IDs, slugs, and unknown runtime Entry kinds before storage | Passed |
 | Artifact contracts | T-AUTH-SCHEMA-001 validates prepared artifacts and rejects stale revisions, unknown fact kinds, invalid source records, and unsafe publication paths | Passed |
-| Repository gates | 93 Markdown files, 70-Activity curriculum gate, 120-Entry/226-example Reference gate, 116/120 applicable Entry quality audit, formatting, lint, typecheck, 227 Vitest tests, and production build | Passed |
+| Repository gates | 93 Markdown files, 70-Activity curriculum gate, 120-Entry/226-example Reference gate, 116/120 applicable Entry quality audit, formatting, lint, typecheck, 229 Vitest tests, and production build | Passed |
 
 ## 6. Deferred work
 
