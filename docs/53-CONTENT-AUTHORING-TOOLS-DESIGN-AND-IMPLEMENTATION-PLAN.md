@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -247,6 +247,8 @@ its missing facts and sources; no canonical files are written.
 
 ### Phase A1: CLI prepare/check tracer bullet
 
+**Status: Accepted.** See the [Phase A1 Implementation Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
+
 - Implement filesystem and in-memory Adapters.
 - Scaffold a draft by Entry kind and resume by revision.
 - Extract reusable validation functions from the existing scripts without
@@ -257,6 +259,11 @@ its missing facts and sources; no canonical files are written.
 
 Exit: an ordinary Entry can move from backlog ID to a fully checked draft without
 manual directory/catalog construction.
+
+Exit met: the standalone CLI prepares or resumes confined filesystem drafts and
+emits revisioned human/JSON reports after artifact, fact/source, catalog,
+canonical quality, and bounded native example validation. It has no publication
+capability.
 
 ### Phase A2: cache, preview, and atomic publish
 
@@ -325,9 +332,7 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Start Phase A1 with a confined filesystem draft Adapter and a CLI `prepare`
-command calling the accepted Module Interface. Then add the smallest real
-`check` slice: validate the prepared artifacts, require fact/source mappings,
-and emit human-readable plus JSON findings without compiling or publishing.
-Keep existing Reference commands as the release oracle and do not add canonical
-writes, UI, or AI behavior in this slice.
+Start Phase A2 with content-addressed example results and exact cache-key
+invalidation tests. Then prove incremental affected-graph checks agree with the
+full release oracle before adding production-renderer preview or canonical
+publication. Do not add UI or AI behavior in this slice.

@@ -23,6 +23,7 @@
     "check:reference": "node --experimental-strip-types scripts/check-reference.ts",
     "check:reference-quality": "node --experimental-strip-types scripts/check-reference-quality.ts",
     "report:reference": "node --experimental-strip-types scripts/report-reference.ts",
+    "reference:author": "tsx apps/cli/src/reference-author.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run check:docs && npm run check:content && npm run check:reference && npm run check:reference-quality && npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",

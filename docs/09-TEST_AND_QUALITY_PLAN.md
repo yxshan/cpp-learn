@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -132,6 +132,11 @@ Reference content CI additionally validates:
   fixtures. It proves idempotent resume, atomic concurrent reservation,
   fail-closed identity conflict, unsafe-path rejection, defensive in-memory
   storage, and absence of canonical publication behavior.
+- Authoring Phase A1 checks the same Module Interface through in-memory and
+  filesystem Adapters. Coverage includes blocked/ready reports, exact revisions,
+  corrupt artifacts, catalog relationships, canonical structural quality,
+  fact/source evidence, bounded real C++ compilation, CLI exit codes, and
+  confirmation that canonical Reference files remain read-only.
 
 ## 5. Security tests
 

@@ -108,6 +108,12 @@ The versioned source records used to verify Fact Sheet claim groups. A ledger
 records provenance but does not authorize copying source prose.
 _Avoid_: bibliography only, mirrored source page
 
+**Authoring Report**:
+A revision-bound, machine-readable result for one Authoring Draft. `blocked`
+contains actionable findings; `ready` authorizes later human review but is not
+itself canonical publication.
+_Avoid_: Judge Report, build log, published Entry
+
 ## Platform operations
 
 **Workspace**:

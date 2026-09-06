@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -48,10 +48,12 @@ reserve an Entry ID: concurrent prepares either resume the same target or return
 a conflict without replacing the first reservation.
 
 The in-memory draft repository Adapter defensively copies on reads and atomic
-reservations.
-A filesystem Adapter becomes the second implementation of that internal seam in
-Phase A1; the CLI and later Web Author Console remain outside the Module and
-must not reproduce profile or validation rules.
+reservations. The filesystem Adapter implements the same Interface with
+temporary-directory reservation, confined file discovery, and revision-aware
+check commits. Phase A1 adds `check({ draftId })` behind the same Module seam;
+the CLI supplies filesystem, catalog, canonical quality, and native compiler
+Adapters but owns no validation decisions. The later Web Author Console must
+reuse this Interface.
 
 ## 2. Learning Platform Module
 

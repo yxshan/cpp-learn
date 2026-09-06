@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 4.9 |
+| Version | 5.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -70,7 +70,8 @@ Read in this order:
 52. [Stage 6.2 Phase 4 Playground Completion Implementation Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md)
 53. [C++ API Reference Content Authoring Tools Design and Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 54. [Stage 6.3 Phase A0 Reference Authoring Contracts Implementation Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md)
-55. [Domain Context](CONTEXT.md)
+55. [Stage 6.3 Phase A1 Reference Authoring CLI Prepare/Check Implementation Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md)
+56. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

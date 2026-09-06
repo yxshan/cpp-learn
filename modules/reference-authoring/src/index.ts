@@ -5,6 +5,11 @@ import Ajv2020, {
 import addFormats from "ajv-formats";
 
 import type { ReferenceEntryKind } from "@cpp-learn/contracts";
+import type {
+  ReferenceEntryManifest,
+  ReferenceExampleManifest,
+} from "@cpp-learn/reference";
+import { validateReferenceEntryManifest } from "@cpp-learn/reference-schema";
 
 import authoringDraftSchema from "./authoring-draft.schema.json" with { type: "json" };
 import authoringFactsSchema from "./authoring-facts.schema.json" with { type: "json" };
@@ -149,8 +154,62 @@ export type PrepareDraftResult =
       readonly issues: readonly AuthoringValidationIssue[];
     };
 
+export interface CheckDraftRequest {
+  readonly draftId: string;
+}
+
+export type CheckDraftResult =
+  | {
+      readonly ok: true;
+      readonly report: AuthoringReport;
+      readonly workspace: DraftWorkspace;
+    }
+  | {
+      readonly ok: false;
+      readonly code:
+        | "invalid_request"
+        | "draft_not_found"
+        | "draft_unreadable"
+        | "revision_conflict";
+      readonly issues: readonly AuthoringValidationIssue[];
+    };
+
+export interface AuthoringCatalogContext {
+  readonly entryIds: readonly string[];
+  readonly categoryIds: readonly string[];
+  readonly slugsByEntryId: Readonly<Record<string, string>>;
+}
+
+export interface AuthoringCatalogContextAdapter {
+  load(): Promise<AuthoringCatalogContext>;
+}
+
+export interface AuthoringExampleValidationRequest {
+  readonly entryId: string;
+  readonly example: ReferenceExampleManifest;
+  readonly source: string;
+}
+
+export interface AuthoringExampleValidator {
+  validate(
+    request: AuthoringExampleValidationRequest,
+  ): Promise<readonly AuthoringValidationIssue[]>;
+}
+
+export interface AuthoringContentQualityRequest {
+  readonly entry: ReferenceEntryManifest;
+  readonly content: string;
+}
+
+export interface AuthoringContentQualityValidator {
+  validate(
+    request: AuthoringContentQualityRequest,
+  ): Promise<readonly AuthoringValidationIssue[]>;
+}
+
 export interface ReferenceAuthoring {
   prepare(request: PrepareDraftRequest): Promise<PrepareDraftResult>;
+  check(request: CheckDraftRequest): Promise<CheckDraftResult>;
 }
 
 export interface ReferenceDraftRepository {
@@ -159,10 +218,18 @@ export interface ReferenceDraftRepository {
     readonly created: boolean;
     readonly workspace: DraftWorkspace;
   }>;
+  commitCheck(input: {
+    readonly draftId: string;
+    readonly expectedRevision: number;
+    readonly workspace: DraftWorkspace;
+  }): Promise<boolean>;
 }
 
 export interface ReferenceAuthoringDependencies {
   readonly drafts: ReferenceDraftRepository;
+  readonly catalog?: AuthoringCatalogContextAdapter;
+  readonly examples?: AuthoringExampleValidator;
+  readonly quality?: AuthoringContentQualityValidator;
   readonly clock?: () => Date;
 }
 
@@ -482,6 +549,17 @@ export function createInMemoryReferenceDraftRepository(
       drafts.set(draftId, reserved);
       return { created: true, workspace: cloneWorkspace(reserved) };
     },
+    async commitCheck({ draftId, expectedRevision, workspace }) {
+      const existing = drafts.get(draftId);
+      if (
+        existing === undefined ||
+        existing.draft.revision !== expectedRevision
+      ) {
+        return false;
+      }
+      drafts.set(draftId, cloneWorkspace(workspace));
+      return true;
+    },
   };
 }
 
@@ -492,6 +570,351 @@ function sameTarget(left: PrepareDraftTarget, right: PrepareDraftTarget) {
     left.slug === right.slug &&
     left.title === right.title
   );
+}
+
+type AuthoringFinding = AuthoringReport["findings"][number];
+
+function hardFinding(
+  code: string,
+  path: string,
+  message: string,
+  risk: AuthoringFinding["risk"] = "high",
+): AuthoringFinding {
+  return { severity: "hard", risk, code, path, message };
+}
+
+function schemaFindings(
+  code: string,
+  artifactPath: string,
+  issues: readonly AuthoringValidationIssue[],
+): AuthoringFinding[] {
+  return issues.map((issue) =>
+    hardFinding(
+      code,
+      `${artifactPath}${issue.path === "/" ? "" : issue.path}`,
+      issue.message,
+    ),
+  );
+}
+
+function parseCandidateEntry(
+  source: string | undefined,
+):
+  | { readonly ok: true; readonly entry: ReferenceEntryManifest }
+  | { readonly ok: false; readonly finding: AuthoringFinding } {
+  if (source === undefined) {
+    return {
+      ok: false,
+      finding: hardFinding(
+        "entry-missing",
+        "entry.json",
+        "Candidate Entry manifest is missing",
+      ),
+    };
+  }
+  try {
+    return {
+      ok: true,
+      entry: JSON.parse(source) as ReferenceEntryManifest,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      finding: hardFinding(
+        "entry-json",
+        "entry.json",
+        error instanceof Error ? error.message : "Entry JSON is invalid",
+      ),
+    };
+  }
+}
+
+function validateFactCoverage(workspace: DraftWorkspace): AuthoringFinding[] {
+  const findings: AuthoringFinding[] = [];
+  const requiredKinds = PROFILE_DEFINITIONS[workspace.draft.profile].factKinds;
+  const groupsByKind = new Map(
+    workspace.facts.groups.map((group) => [group.kind, group]),
+  );
+  const sourceIds = new Set(
+    workspace.sources.sources.map((source) => source.id),
+  );
+  if (sourceIds.size !== workspace.sources.sources.length) {
+    findings.push(
+      hardFinding(
+        "source-id-duplicate",
+        "sources.json/sources",
+        "Source IDs must be unique",
+      ),
+    );
+  }
+
+  for (const kind of requiredKinds) {
+    const group = groupsByKind.get(kind);
+    if (group === undefined) {
+      findings.push(
+        hardFinding(
+          "fact-missing",
+          "facts.json/groups",
+          `Required fact group ${kind} is missing`,
+        ),
+      );
+      continue;
+    }
+    if (group.status === "unverified") {
+      findings.push(
+        hardFinding(
+          "fact-unverified",
+          `facts.json/groups/${group.id}`,
+          `Fact group ${kind} has not been reviewed`,
+        ),
+      );
+    }
+    for (const sourceId of group.sourceIds) {
+      if (!sourceIds.has(sourceId)) {
+        findings.push(
+          hardFinding(
+            "fact-source-missing",
+            `facts.json/groups/${group.id}/sourceIds`,
+            `Fact group ${kind} references missing source ${sourceId}`,
+          ),
+        );
+      }
+    }
+  }
+  return findings;
+}
+
+function validateSourceAlignment(
+  workspace: DraftWorkspace,
+  entry: ReferenceEntryManifest,
+  today: string,
+): AuthoringFinding[] {
+  const findings: AuthoringFinding[] = [];
+  const usedSourceIds = new Set(
+    workspace.facts.groups.flatMap((group) => [...group.sourceIds]),
+  );
+  const publishedSourceUrls = new Set(
+    entry.sources.map((source) => source.url),
+  );
+  if (entry.verifiedAt > today) {
+    findings.push(
+      hardFinding(
+        "entry-verification-future",
+        "entry.json/verifiedAt",
+        `Verification date cannot be later than ${today}`,
+      ),
+    );
+  }
+  for (const source of workspace.sources.sources) {
+    if (!usedSourceIds.has(source.id)) continue;
+    if (!publishedSourceUrls.has(source.url)) {
+      findings.push(
+        hardFinding(
+          "source-not-published",
+          `sources.json/sources/${source.id}`,
+          `Used source ${source.id} is missing from entry.json sources`,
+        ),
+      );
+    }
+    if (source.verifiedAt > today) {
+      findings.push(
+        hardFinding(
+          "source-verification-future",
+          `sources.json/sources/${source.id}/verifiedAt`,
+          `Verification date cannot be later than ${today}`,
+        ),
+      );
+    }
+    if (source.verifiedAt < entry.verifiedAt) {
+      findings.push(
+        hardFinding(
+          "source-verification-stale",
+          `sources.json/sources/${source.id}/verifiedAt`,
+          `Source evidence predates Entry verification ${entry.verifiedAt}`,
+        ),
+      );
+    }
+  }
+  return findings;
+}
+
+function validateContentProfile(workspace: DraftWorkspace): AuthoringFinding[] {
+  const content = workspace.files["content.md"];
+  if (content === undefined) {
+    return [
+      hardFinding(
+        "content-missing",
+        "content.md",
+        "Candidate Markdown content is missing",
+      ),
+    ];
+  }
+  const findings: AuthoringFinding[] = [];
+  if (/\bTODO\b/u.test(content)) {
+    findings.push(
+      hardFinding(
+        "content-placeholder",
+        "content.md",
+        "Candidate Markdown still contains TODO placeholders",
+        "medium",
+      ),
+    );
+  }
+  for (const heading of PROFILE_DEFINITIONS[workspace.draft.profile].headings) {
+    if (!content.includes(`## ${heading}`)) {
+      findings.push(
+        hardFinding(
+          "content-section-missing",
+          "content.md",
+          `Required section ${heading} is missing`,
+          "medium",
+        ),
+      );
+    }
+  }
+  return findings;
+}
+
+function validateEntryIdentity(
+  workspace: DraftWorkspace,
+  entry: ReferenceEntryManifest,
+): AuthoringFinding[] {
+  const findings: AuthoringFinding[] = [];
+  const target = workspace.draft.target;
+  for (const [field, actual, expected] of [
+    ["id", entry.id, target.entryId],
+    ["kind", entry.kind, target.kind],
+    ["slug", entry.slug, target.slug],
+    ["title", entry.title, target.title],
+  ] as const) {
+    if (actual !== expected) {
+      findings.push(
+        hardFinding(
+          "entry-target-mismatch",
+          `entry.json/${field}`,
+          `Expected ${expected}, received ${actual}`,
+        ),
+      );
+    }
+  }
+  if (entry.content.path !== workspace.draft.targetPaths.content) {
+    findings.push(
+      hardFinding(
+        "entry-path-mismatch",
+        "entry.json/content/path",
+        `Expected ${workspace.draft.targetPaths.content}`,
+      ),
+    );
+  }
+  return findings;
+}
+
+function validateCatalogLinks(
+  workspace: DraftWorkspace,
+  entry: ReferenceEntryManifest,
+  catalog: AuthoringCatalogContext,
+): AuthoringFinding[] {
+  const findings: AuthoringFinding[] = [];
+  const entryIds = new Set(catalog.entryIds);
+  const categoryIds = new Set(catalog.categoryIds);
+  for (const relatedId of entry.relatedEntryIds) {
+    if (!entryIds.has(relatedId)) {
+      findings.push(
+        hardFinding(
+          "related-entry-missing",
+          "entry.json/relatedEntryIds",
+          `Related Entry ${relatedId} is not in the active catalog`,
+          "medium",
+        ),
+      );
+    }
+  }
+  for (const categoryId of entry.categories) {
+    if (!categoryIds.has(categoryId)) {
+      findings.push(
+        hardFinding(
+          "category-missing",
+          "entry.json/categories",
+          `Category ${categoryId} is not in the active catalog`,
+          "medium",
+        ),
+      );
+    }
+  }
+  for (const [entryId, slug] of Object.entries(catalog.slugsByEntryId)) {
+    if (entryId !== workspace.draft.target.entryId && slug === entry.slug) {
+      findings.push(
+        hardFinding(
+          "slug-conflict",
+          "entry.json/slug",
+          `Slug is already owned by ${entryId}`,
+        ),
+      );
+    }
+  }
+  return findings;
+}
+
+async function validateExamples(
+  workspace: DraftWorkspace,
+  entry: ReferenceEntryManifest,
+  validator: AuthoringExampleValidator | undefined,
+): Promise<AuthoringFinding[]> {
+  const findings: AuthoringFinding[] = [];
+  const expectedCount =
+    PROFILE_DEFINITIONS[workspace.draft.profile].examples.length;
+  if (entry.examples.length < expectedCount) {
+    findings.push(
+      hardFinding(
+        "examples-missing",
+        "entry.json/examples",
+        `Profile requires at least ${expectedCount} example(s)`,
+        "medium",
+      ),
+    );
+  }
+  for (const example of entry.examples) {
+    const prefix = `${workspace.draft.targetPaths.examples}/`;
+    if (!example.path.startsWith(prefix)) {
+      findings.push(
+        hardFinding(
+          "example-path-mismatch",
+          `entry.json/examples/${example.id}/path`,
+          `Example path must be under ${workspace.draft.targetPaths.examples}`,
+        ),
+      );
+      continue;
+    }
+    const localPath = `examples/${example.path.slice(prefix.length)}`;
+    const source = workspace.files[localPath];
+    if (source === undefined) {
+      findings.push(
+        hardFinding(
+          "example-source-missing",
+          localPath,
+          `Example source ${localPath} is missing`,
+        ),
+      );
+      continue;
+    }
+    if (validator === undefined) {
+      findings.push(
+        hardFinding(
+          "example-validator-unavailable",
+          localPath,
+          "No example validator is configured",
+        ),
+      );
+      continue;
+    }
+    const issues = await validator.validate({
+      entryId: entry.id,
+      example,
+      source,
+    });
+    findings.push(...schemaFindings("example-invalid", localPath, issues));
+  }
+  return findings;
 }
 
 export function createReferenceAuthoring(
@@ -529,6 +952,213 @@ export function createReferenceAuthoring(
       }
       return { ok: true, created: true, workspace: reservation.workspace };
     },
+    async check(request) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(request.draftId)) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/draftId",
+              message: "must be a stable lowercase Entry ID",
+              keyword: "pattern",
+            },
+          ],
+        };
+      }
+
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(request.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/draft",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      const checkedAt = clock().toISOString();
+      const draftIssues = validateAuthoringDraft(workspace.draft);
+      if (draftIssues.length > 0) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: draftIssues.map((issue) => ({
+            ...issue,
+            path: `/draft${issue.path}`,
+          })),
+        };
+      }
+      const factIssues = validateAuthoringFactSheet(workspace.facts);
+      const sourceIssues = validateAuthoringSourceLedger(workspace.sources);
+
+      const findings: AuthoringFinding[] = [
+        ...schemaFindings("facts-schema", "facts.json", factIssues),
+        ...schemaFindings("sources-schema", "sources.json", sourceIssues),
+        ...(factIssues.length === 0 && sourceIssues.length === 0
+          ? validateFactCoverage(workspace)
+          : []),
+        ...validateContentProfile(workspace),
+      ];
+
+      for (const [artifact, draftId] of [
+        ["facts.json", workspace.facts.draftId],
+        ["sources.json", workspace.sources.draftId],
+        ["report.json", workspace.report.draftId],
+      ] as const) {
+        if (draftId !== workspace.draft.draftId) {
+          findings.push(
+            hardFinding(
+              "draft-id-mismatch",
+              `${artifact}/draftId`,
+              `Expected ${workspace.draft.draftId}, received ${draftId}`,
+            ),
+          );
+        }
+      }
+
+      let checkedEntry: ReferenceEntryManifest | undefined;
+      const candidate = parseCandidateEntry(workspace.files["entry.json"]);
+      if (!candidate.ok) {
+        findings.push(candidate.finding);
+      } else {
+        const entryIssues = validateReferenceEntryManifest(candidate.entry);
+        findings.push(
+          ...schemaFindings("entry-schema", "entry.json", entryIssues),
+        );
+        if (entryIssues.length === 0) {
+          checkedEntry = candidate.entry;
+          findings.push(...validateEntryIdentity(workspace, candidate.entry));
+          if (factIssues.length === 0 && sourceIssues.length === 0) {
+            findings.push(
+              ...validateSourceAlignment(
+                workspace,
+                candidate.entry,
+                checkedAt.slice(0, 10),
+              ),
+            );
+          }
+          if (dependencies.catalog === undefined) {
+            findings.push(
+              hardFinding(
+                "catalog-unavailable",
+                "entry.json",
+                "No active Reference catalog context is configured",
+              ),
+            );
+          } else {
+            try {
+              findings.push(
+                ...validateCatalogLinks(
+                  workspace,
+                  candidate.entry,
+                  await dependencies.catalog.load(),
+                ),
+              );
+            } catch (error) {
+              findings.push(
+                hardFinding(
+                  "catalog-unreadable",
+                  "entry.json",
+                  error instanceof Error
+                    ? error.message
+                    : "Active Reference catalog is unreadable",
+                ),
+              );
+            }
+          }
+          const content = workspace.files["content.md"];
+          if (content !== undefined) {
+            if (dependencies.quality === undefined) {
+              findings.push(
+                hardFinding(
+                  "quality-validator-unavailable",
+                  "content.md",
+                  "No canonical Reference quality validator is configured",
+                ),
+              );
+            } else {
+              findings.push(
+                ...schemaFindings(
+                  "content-quality",
+                  "content.md",
+                  await dependencies.quality.validate({
+                    entry: candidate.entry,
+                    content,
+                  }),
+                ),
+              );
+            }
+          }
+          findings.push(
+            ...(await validateExamples(
+              workspace,
+              candidate.entry,
+              dependencies.examples,
+            )),
+          );
+        }
+      }
+
+      findings.sort(
+        (left, right) =>
+          left.path.localeCompare(right.path) ||
+          left.code.localeCompare(right.code),
+      );
+      const nextRevision = workspace.draft.revision + 1;
+      const report: AuthoringReport = {
+        schemaVersion: 1,
+        draftId: workspace.draft.draftId,
+        draftRevision: nextRevision,
+        status: findings.length === 0 ? "ready" : "blocked",
+        findings,
+        cacheEvidence: [],
+      };
+      const draft: AuthoringDraftManifest = {
+        ...workspace.draft,
+        revision: nextRevision,
+        state: findings.length === 0 ? "checked" : "draft",
+        affectedEntryIds:
+          checkedEntry === undefined
+            ? workspace.draft.affectedEntryIds
+            : [
+                ...new Set([
+                  workspace.draft.target.entryId,
+                  ...checkedEntry.relatedEntryIds,
+                ]),
+              ],
+        updatedAt: checkedAt,
+      };
+      const checkedWorkspace: DraftWorkspace = {
+        ...workspace,
+        draft,
+        report,
+        files: {
+          ...workspace.files,
+          "draft.json": jsonFile(draft),
+          "report.json": jsonFile(report),
+        },
+      };
+      const committed = await dependencies.drafts.commitCheck({
+        draftId: workspace.draft.draftId,
+        expectedRevision: workspace.draft.revision,
+        workspace: checkedWorkspace,
+      });
+      if (!committed) {
+        return { ok: false, code: "revision_conflict", issues: [] };
+      }
+      return { ok: true, report, workspace: checkedWorkspace };
+    },
   };
 }
 
@@ -539,3 +1169,16 @@ export {
   authoringReportSchema,
   authoringSourcesSchema,
 };
+
+export {
+  createFilesystemReferenceDraftRepository,
+  type FilesystemReferenceDraftRepositoryOptions,
+} from "./filesystem.js";
+export {
+  createFilesystemAuthoringCatalogContext,
+  type FilesystemAuthoringCatalogContextOptions,
+} from "./catalog-context.js";
+export {
+  createNativeAuthoringExampleValidator,
+  type NativeAuthoringExampleValidatorOptions,
+} from "./native-example-validator.js";

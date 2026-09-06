@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-06 |
 
 ## 1. Supported baseline
 
@@ -153,11 +153,22 @@ The Learning Record exposes rebuild through its maintenance Interface and automa
 
 ### C++ Reference Entries
 
-Phase A0 of the local Authoring Module is accepted for contracts and in-memory
-draft preparation. It is not yet an operator command and cannot publish. Until
-Phase A1 connects the CLI and filesystem draft Adapter, authors continue using
-the controlled manual steps below. See the [Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
-and [Phase A0 Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md).
+Phase A1 of the local Authoring Module provides the `reference:author` CLI for
+filesystem draft preparation and checking. It cannot publish. See the
+[Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
+and [Phase A1 Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
+
+Create an explicit draft, edit its generated files, and check it:
+
+```text
+npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE
+npm run reference:author -- check --draft ID
+npm run reference:author -- check --draft ID --json
+```
+
+Drafts default to `.cpp-learn/authoring/`. A ready result remains non-canonical;
+Phase A2 must provide a reviewable, revision-aware publish operation before any
+tool writes below `reference/`.
 
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.

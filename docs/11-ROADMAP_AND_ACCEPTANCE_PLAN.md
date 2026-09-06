@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -228,10 +228,11 @@ Acceptance:
 
 ## 12. Stage 6.3: Reference content authoring tools
 
-**Status:** Phase A0 accepted; Phase A1 planned. Design and phased acceptance are controlled by the [Content
+**Status:** Phases A0 and A1 accepted; Phase A2 planned. Design and phased acceptance are controlled by the [Content
 Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
-A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md).
+A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md),
+and A1 evidence in the [CLI Prepare/Check Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
 
 Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
 
@@ -242,10 +243,10 @@ Deliver a local Reference Authoring Module with CLI-first and later Web Adapters
 - constrained AI context packs that cannot promote unverified facts; and
 - batch metrics proving throughput gains without a quality regression.
 
-The accepted Phase A0 contains strict authoring artifact Schemas, member/type/
-header golden profiles, the non-publishing `prepare` Interface, and an in-memory
-draft Adapter. Filesystem drafts, `check`, canonical writes, AI assistance, and
-the Web Author Console remain separately gated later slices.
+The accepted Phase A1 adds confined filesystem drafts, catalog-backed context,
+canonical structural quality reuse, bounded native example checks, revisioned
+reports, and the `reference:author` CLI. Canonical writes, caching, preview, AI
+assistance, and the Web Author Console remain separately gated later slices.
 
 ## 13. Global definition of done
 

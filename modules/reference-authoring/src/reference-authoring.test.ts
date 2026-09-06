@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { REFERENCE_ENTRY_KINDS } from "@cpp-learn/contracts";
 
@@ -14,6 +14,8 @@ import {
   validateAuthoringPublicationPlan,
   validateAuthoringReport,
   validateAuthoringSourceLedger,
+  type AuthoringCatalogContext,
+  type DraftWorkspace,
   type PrepareDraftRequest,
 } from "./index.js";
 
@@ -349,5 +351,211 @@ describe("[T-AUTH-SCHEMA-001] Reference authoring artifact schemas", () => {
         expect.objectContaining({ path: "/groups/0/decision" }),
       ]),
     );
+  });
+});
+
+describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
+  const catalog: AuthoringCatalogContext = {
+    entryIds: ["std-vector", "header-vector", "containers"],
+    categoryIds: ["containers"],
+    slugsByEntryId: {
+      "std-vector": "standard-library/containers/vector",
+      "header-vector": "standard-library/headers/vector",
+      containers: "standard-library/containers",
+    },
+  };
+
+  it("blocks an untouched prepared draft with actionable findings", async () => {
+    const drafts = createInMemoryReferenceDraftRepository();
+    const authoring = createReferenceAuthoring({
+      drafts,
+      catalog: { load: async () => catalog },
+      examples: { validate: async () => [] },
+      quality: { validate: async () => [] },
+      clock: () => fixedNow,
+    });
+    const prepared = await authoring.prepare({ target: fixtures[0]!.target });
+    expect(prepared.ok).toBe(true);
+
+    const checked = await authoring.check({ draftId: "std-vector-insert" });
+
+    expect(checked).toMatchObject({ ok: true });
+    if (!checked.ok) return;
+    expect(checked.report.status).toBe("blocked");
+    expect(checked.report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "entry-schema" }),
+        expect.objectContaining({ code: "fact-unverified" }),
+        expect.objectContaining({ code: "content-placeholder" }),
+      ]),
+    );
+  });
+
+  it("checks and persists a complete draft through the Module Interface", async () => {
+    const prepared = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository(),
+      clock: () => fixedNow,
+    }).prepare({ target: fixtures[0]!.target });
+    expect(prepared.ok).toBe(true);
+    if (!prepared.ok) return;
+
+    const source = {
+      id: "cppreference-vector-insert",
+      kind: "primary" as const,
+      title: "std::vector::insert",
+      url: "https://en.cppreference.com/w/cpp/container/vector/insert",
+      verifiedAt: "2026-09-06",
+    };
+    const content = prepared.workspace.files["content.md"]!.replaceAll(
+      "TODO",
+      "已由作者依据来源完成。",
+    );
+    const entry = {
+      schemaVersion: 2,
+      id: "std-vector-insert",
+      version: 1,
+      slug: "standard-library/containers/vector/insert",
+      kind: "member",
+      title: "std::vector::insert",
+      summary: "在指定位置插入元素。",
+      symbol: "std::vector::insert",
+      header: "<vector>",
+      namespace: "std",
+      since: "c++98",
+      aliases: [],
+      categories: ["containers"],
+      relatedEntryIds: ["std-vector", "header-vector"],
+      content: {
+        format: "markdown",
+        path: "entries/std-vector-insert/content.md",
+      },
+      examples: [
+        {
+          id: "minimal",
+          path: "entries/std-vector-insert/examples/minimal.cpp",
+          kind: "compile",
+          standard: "c++20",
+        },
+        {
+          id: "realistic",
+          path: "entries/std-vector-insert/examples/realistic.cpp",
+          kind: "compile",
+          standard: "c++20",
+        },
+      ],
+      sources: [
+        {
+          kind: "primary",
+          title: source.title,
+          url: source.url,
+        },
+      ],
+      verifiedAt: "2026-09-06",
+    };
+    const complete: DraftWorkspace = {
+      ...prepared.workspace,
+      facts: {
+        ...prepared.workspace.facts,
+        groups: prepared.workspace.facts.groups.map((group) => ({
+          ...group,
+          status: "verified" as const,
+          summary: `${group.kind} verified`,
+          sourceIds: [source.id],
+        })),
+      },
+      sources: {
+        ...prepared.workspace.sources,
+        sources: [source],
+      },
+      files: {
+        ...prepared.workspace.files,
+        "facts.json": `${JSON.stringify(
+          {
+            ...prepared.workspace.facts,
+            groups: prepared.workspace.facts.groups.map((group) => ({
+              ...group,
+              status: "verified",
+              summary: `${group.kind} verified`,
+              sourceIds: [source.id],
+            })),
+          },
+          null,
+          2,
+        )}\n`,
+        "sources.json": `${JSON.stringify(
+          { ...prepared.workspace.sources, sources: [source] },
+          null,
+          2,
+        )}\n`,
+        "entry.json": `${JSON.stringify(entry, null, 2)}\n`,
+        "content.md": content,
+      },
+    };
+    const drafts = createInMemoryReferenceDraftRepository([complete]);
+    const validateExample = vi.fn().mockResolvedValue([]);
+    const authoring = createReferenceAuthoring({
+      drafts,
+      catalog: { load: async () => catalog },
+      examples: { validate: validateExample },
+      quality: { validate: async () => [] },
+      clock: () => new Date("2026-09-06T10:00:00.000Z"),
+    });
+
+    const checked = await authoring.check({ draftId: "std-vector-insert" });
+
+    expect(checked).toMatchObject({
+      ok: true,
+      report: { status: "ready", findings: [] },
+      workspace: {
+        draft: {
+          state: "checked",
+          revision: 2,
+          affectedEntryIds: [
+            "std-vector-insert",
+            "std-vector",
+            "header-vector",
+          ],
+        },
+      },
+    });
+    expect(validateExample).toHaveBeenCalledTimes(2);
+    expect((await drafts.get("std-vector-insert"))?.report.status).toBe(
+      "ready",
+    );
+  });
+
+  it("returns not found without creating a draft", async () => {
+    const authoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository(),
+    });
+
+    await expect(
+      authoring.check({ draftId: "missing-entry" }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "draft_not_found",
+      issues: [],
+    });
+  });
+
+  it("does not report success when the draft revision changes during check", async () => {
+    const stored = createInMemoryReferenceDraftRepository();
+    const authoring = createReferenceAuthoring({
+      drafts: {
+        get: (draftId) => stored.get(draftId),
+        reserve: (workspace) => stored.reserve(workspace),
+        commitCheck: async () => false,
+      },
+    });
+    await authoring.prepare({ target: fixtures[0]!.target });
+
+    await expect(
+      authoring.check({ draftId: "std-vector-insert" }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "revision_conflict",
+      issues: [],
+    });
+    expect((await stored.get("std-vector-insert"))?.draft.revision).toBe(1);
   });
 });

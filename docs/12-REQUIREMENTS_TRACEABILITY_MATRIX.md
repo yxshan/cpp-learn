@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RTM-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -61,7 +61,7 @@ This matrix links every SRS requirement group to design ownership, planned verif
 | NFR-012 | CJS §10 | T-CONTENT-005 required-field and Review coverage | Stage 1–4 |
 | NFR-013 | REF-DES §9, §16; TQP §6 | T-REF-PERF-001 1,000-Entry warm search and lookup benchmark | Stage 6.2 |
 | NFR-014 | REF-DES §10, §15; TQP §6 | T-REF-008 offline production serving and outbound-request block | Stage 6.2 |
-| NFR-015 | REF-AUTH §2–10; AUTHOR-TOOLS §4–10; TQP §4 | T-REF-001 schema/version checks; T-REF-010 source/attribution checks; T-AUTH-001 deterministic authoring profiles; T-AUTH-SCHEMA-001 authoring artifact contracts | Stage 6.2–6.3 |
+| NFR-015 | REF-AUTH §2–10; AUTHOR-TOOLS §4–10; TQP §4 | T-REF-001 schema/version checks; T-REF-010 source/attribution checks; T-AUTH-001 deterministic authoring profiles; T-AUTH-SCHEMA-001 authoring artifact contracts; T-AUTH-A1-CHECK-001 draft checks; T-AUTH-A1-FS-001 confined persistence; T-AUTH-A1-NATIVE-001 example execution; T-AUTH-A1-CLI-001 operator flow | Stage 6.2–6.3 |
 
 ## 4. Business-rule traceability
 

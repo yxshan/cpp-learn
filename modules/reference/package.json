@@ -6,6 +6,7 @@
   "exports": "./src/index.ts",
   "dependencies": {
     "@cpp-learn/contracts": "*",
+    "@cpp-learn/judge": "*",
     "@cpp-learn/reference-schema": "*"
   }
 }
