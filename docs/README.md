@@ -125,7 +125,8 @@ If an archived statement conflicts with a current baseline document or accepted 
 
 ## Document control
 
-- Status values: `Draft`, `In Review`, `Baseline`, `Superseded`, `Archived`.
+- Status values: `Draft`, `In Review`, `Baseline`, `Accepted`, `Superseded`,
+  `Archived`.
 - Changes affecting scope or acceptance require an update to the SRS and traceability matrix.
 - Hard-to-reverse architecture changes require an ADR.
 - Interface changes require versioning and corresponding contract-test updates.

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -143,6 +144,15 @@ function isSaveWorkspaceBody(value: unknown): value is SaveWorkspaceBody {
       );
     })
   );
+}
+
+function createReferencePlaygroundSnapshot(source: string) {
+  const digest = createHash("sha256").update(source).digest("hex");
+  return Object.freeze({
+    id: `ref_snapshot_${digest.slice(0, 24)}`,
+    digest,
+    source,
+  });
 }
 
 export function createServer(
@@ -367,18 +377,6 @@ export function createServer(
           error: { code: "source_too_large" },
         });
       }
-      const reference = await readyReference(reply);
-      if (!reference) return;
-      const entry = await reference.getEntry(request.params.entryId);
-      const example = entry?.examples.find(
-        (candidate) => candidate.id === request.params.exampleId,
-      );
-      if (!entry || !example || example.kind !== "run") {
-        return reply.code(404).send({
-          schemaVersion: 1,
-          error: { code: "reference_example_not_found" },
-        });
-      }
       if (!dependencies.referencePlayground) {
         return reply.code(503).send({
           schemaVersion: 1,
@@ -401,15 +399,28 @@ export function createServer(
           });
       }
       const controller = new AbortController();
+      const snapshot = createReferencePlaygroundSnapshot(request.body.source);
       referencePlaygroundInFlight += 1;
       activeReferencePlaygroundRuns.set(request.body.runId, controller);
       try {
+        const reference = await readyReference(reply);
+        if (!reference) return;
+        const entry = await reference.getEntry(request.params.entryId);
+        const example = entry?.examples.find(
+          (candidate) => candidate.id === request.params.exampleId,
+        );
+        if (!entry || !example || example.kind !== "run") {
+          return reply.code(404).send({
+            schemaVersion: 1,
+            error: { code: "reference_example_not_found" },
+          });
+        }
         return await dependencies.referencePlayground.run({
           runId: request.body.runId,
           entryId: entry.id,
           exampleId: example.id,
           standard: example.standard,
-          source: request.body.source,
+          snapshot,
           stdin: example.stdin ?? "",
           signal: controller.signal,
         });

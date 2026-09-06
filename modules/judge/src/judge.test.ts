@@ -117,13 +117,14 @@ describe("[T-REF-009] Reference Playground execution", () => {
         timedOut: false,
         outputLimitExceeded: false,
       });
+    const writeSource = vi.fn().mockResolvedValue(undefined);
     const playground = createNativeReferencePlayground({
       run,
       compiler: "/usr/bin/clang++",
       compilerFingerprint: "Apple Clang 15",
       createExecutionRoot: async () => "/tmp/reference-playground-test",
       removeExecutionRoot: async () => undefined,
-      writeSource: async () => undefined,
+      writeSource,
     });
 
     await expect(
@@ -132,7 +133,11 @@ describe("[T-REF-009] Reference Playground execution", () => {
         entryId: "std-vector",
         exampleId: "basic",
         standard: "c++20",
-        source: "int main() {}\n",
+        snapshot: {
+          id: "ref_snapshot_success",
+          digest: "success-digest",
+          source: "int main() {}\n",
+        },
         stdin: "",
       }),
     ).resolves.toMatchObject({
@@ -159,6 +164,10 @@ describe("[T-REF-009] Reference Playground execution", () => {
         cwd: "/tmp/reference-playground-test",
         timeoutMs: 5_000,
       }),
+    );
+    expect(writeSource).toHaveBeenCalledWith(
+      "/tmp/reference-playground-test/main.cpp",
+      "int main() {}\n",
     );
     expect(run).toHaveBeenNthCalledWith(
       2,
@@ -207,7 +216,11 @@ describe("[T-REF-009] Reference Playground execution", () => {
       entryId: "std-vector",
       exampleId: "basic",
       standard: "c++23",
-      source: "int main() {}\n",
+      snapshot: {
+        id: "ref_snapshot_alias",
+        digest: "alias-digest",
+        source: "int main() {}\n",
+      },
       stdin: "",
     });
 
@@ -244,7 +257,11 @@ describe("[T-REF-009] Reference Playground execution", () => {
       entryId: "std-vector",
       exampleId: "basic",
       standard: "c++23",
-      source: "int main() { invalid }\n",
+      snapshot: {
+        id: "ref_snapshot_source_error",
+        digest: "source-error-digest",
+        source: "int main() { invalid }\n",
+      },
       stdin: "",
     });
 
@@ -281,7 +298,11 @@ describe("[T-REF-009] Reference Playground execution", () => {
         entryId: "std-vector",
         exampleId: "basic",
         standard: "c++20",
-        source: "int main() {}\n",
+        snapshot: {
+          id: `ref_snapshot_${verdict}`,
+          digest: `${verdict}-digest`,
+          source: "int main() {}\n",
+        },
         stdin: "",
       });
 
@@ -307,7 +328,11 @@ describe("[T-REF-009] Reference Playground execution", () => {
         entryId: "std-vector",
         exampleId: "basic",
         standard: "c++20",
-        source: "int main() {}\n",
+        snapshot: {
+          id: "ref_snapshot_system_error",
+          digest: "system-error-digest",
+          source: "int main() {}\n",
+        },
         stdin: "",
       }),
     ).resolves.toMatchObject({
@@ -334,7 +359,11 @@ describe("[T-REF-009] Reference Playground execution", () => {
         entryId: "std-vector",
         exampleId: "basic",
         standard: "c++20",
-        source: "int main() {}\n",
+        snapshot: {
+          id: "ref_snapshot_root_error",
+          digest: "root-error-digest",
+          source: "int main() {}\n",
+        },
         stdin: "",
       }),
     ).resolves.toMatchObject({

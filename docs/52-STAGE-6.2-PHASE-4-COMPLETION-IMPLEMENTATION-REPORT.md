@@ -18,7 +18,10 @@ real-browser coverage for every bounded terminal outcome and the narrow layout.
 
 - The browser creates a UUIDv4-derived `ref_run_*` identity before execution and
   sends it with the exact versioned run request.
-- The HTTP Adapter registers the active identity with an `AbortController`,
+- Before asynchronous Reference lookup, the HTTP Adapter creates a frozen,
+  content-addressed `ref_snapshot_*` source value and registers the active run
+  identity with an `AbortController`. This removes the early-cancellation race.
+- The Adapter
   rejects a duplicate active identity with `409 playground_run_id_conflict`, and
   forwards the signal through the existing Reference Runner Interface.
 - `POST /api/v1/reference/runs/:runId/cancellations` cancels a matching active
@@ -32,7 +35,8 @@ real-browser coverage for every bounded terminal outcome and the narrow layout.
 
 ## 3. State and isolation model
 
-The run identity is operational and ephemeral. It is not an Activity, Attempt,
+The run identity and its immutable content-addressed Source Snapshot are
+operational and ephemeral. They are not an Activity, Attempt, learner-owned
 Source Snapshot, Evidence item, Review, or persisted learning event. The active
 registry exists only inside the local HTTP Adapter and is removed in `finally`
 after the Runner reaches a terminal result. A server restart therefore does not
@@ -60,12 +64,12 @@ and are not prerequisites for the accepted local single-user product.
 
 | Test | Evidence | Result |
 |---|---|---|
-| HTTP cancellation | `apps/server/src/server.test.ts` covers active-ID conflict, signal delivery, terminal cancellation, and repeated cancellation | Passed |
+| Snapshot and HTTP cancellation | `apps/server/src/server.test.ts` covers frozen content-addressed source, pre-lookup identity reservation, active-ID conflict, signal delivery, terminal/repeated cancellation, strict cancellation validation, origin rejection, and restart non-resumption | Passed |
 | Web transport | `apps/web/src/api.test.ts` covers exact run and cancellation requests | Passed |
 | Browser outcomes | `e2e/reference-browser.spec.ts` exercises compile/runtime failure, timeout, output limit, and active cancellation through real Clang | Passed |
 | Reset and discard | `e2e/reference-browser.spec.ts` verifies published-source reset, confirmed dirty discard, reopen behavior, and 390-pixel containment | Passed |
-| Learning isolation | Existing T-REF-009 browser evidence proves Dashboard state remains byte-for-byte unchanged | Passed |
-| Repository gates | 92 Markdown files, 70-Activity content gate, 120-Entry/226-example Reference gate, 116/120 applicable Entry quality audit, formatting, lint, typecheck, 213 Vitest tests, production build, and 18 Playwright tests | Passed |
+| Learning isolation | The HTTP contract proves zero Learning Platform dispatch/query calls—the sole state boundary for Workspace, Attempt, Evidence, Concept, Review, and Project—and browser evidence proves Dashboard state remains byte-for-byte unchanged | Passed |
+| Repository gates | 92 Markdown files, 70-Activity content gate, 120-Entry/226-example Reference gate, 116/120 applicable Entry quality audit, formatting, lint, typecheck, 215 Vitest tests, production build, and 18 Playwright tests | Passed |
 
 ## 6. Acceptance decision
 

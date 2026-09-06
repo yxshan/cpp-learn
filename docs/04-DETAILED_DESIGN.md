@@ -350,8 +350,10 @@ and stdin come from the published Example, while compiler flags, environment,
 working paths, time, output, and global concurrency remain Adapter-owned.
 
 The browser creates a UUIDv4-derived `ref_run_*` identity before it starts the
-synchronous execution request. The HTTP Adapter registers that identity with an
-`AbortController`, rejects an active duplicate with
+synchronous execution request. Before its first asynchronous Reference lookup,
+the HTTP Adapter derives an immutable content-addressed non-Activity Source
+Snapshot from the accepted source and registers the run identity with an
+`AbortController`. It rejects an active duplicate with
 `409 playground_run_id_conflict`, admits one native Playground execution by
 default, and returns `429 playground_busy` with `Retry-After` when occupied. A
 separate cancellation request aborts the matching Runner signal while the

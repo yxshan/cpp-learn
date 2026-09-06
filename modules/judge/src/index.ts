@@ -400,7 +400,11 @@ export interface ReferencePlaygroundRunRequest {
   readonly entryId: string;
   readonly exampleId: string;
   readonly standard: CppStandard;
-  readonly source: string;
+  readonly snapshot: {
+    readonly id: string;
+    readonly digest: string;
+    readonly source: string;
+  };
   readonly stdin: string;
   readonly signal?: AbortSignal;
 }
@@ -535,7 +539,7 @@ export function createNativeReferencePlayground(
           HOME: root,
           TMPDIR: root,
         };
-        await writeSource(sourcePath, request.source);
+        await writeSource(sourcePath, request.snapshot.source);
         const compileStarted = monotonicClock();
         let compiled: BoundedProcessResult | undefined;
         for (const [index, standardFlag] of standardFlagCandidates.entries()) {

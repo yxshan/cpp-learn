@@ -520,9 +520,11 @@ from being presented as current.
 
 Opening a supported Run example creates browser-local source state separate from
 every Activity Workspace. Starting it creates a stable, client-visible temporary
-Playground run identity. Playground Run:
+Playground run identity and an immutable, content-addressed, non-Activity Source
+Snapshot. Playground Run:
 
-- uses an immutable Source Snapshot and the existing Judge execution seam;
+- uses that snapshot and the existing Judge execution seam without persisting it
+  as learner-owned Workspace state;
 - never executes private tests or produces Evidence;
 - never changes Concept state, Review state, or Project progress;
 - uses a closed build profile and bounded stdin/runtime settings;

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-30 |
+| Last updated | 2026-09-06 |
 
 ## 1. Quality objectives
 
@@ -119,11 +119,21 @@ Reference content CI additionally validates:
   relationship, source, and header-navigation coverage as applicable.
 - The reviewed-debt baseline is an exact ratchet: new findings, stale resolved
   findings, and catalog-version drift all fail CI.
-- Reference browsing and a future Playground cannot produce Activity Evidence.
+- Reference browsing and Playground execution cannot produce Activity Evidence.
+- Playground contracts cover stable client-visible run identity, immutable
+  content-addressed non-Activity snapshots, duplicate identity rejection,
+  cancellation before/during execution, bounded outcomes, temporary-root
+  cleanup, restart non-resumption, and zero Learning Platform calls.
+- Real-browser coverage includes compile failure, runtime failure, timeout,
+  output limit, cancellation, reset/discard, Entry-isolated source, unchanged
+  Dashboard state, and the 390-pixel layout.
 
 ## 5. Security tests
 
-Follow [Security and Privacy](08-SECURITY_AND_PRIVACY.md), including command injection, traversal, symlink escape, output flood, fork/child cleanup, loopback binding, redaction, and event integrity tests.
+Follow [Security and Privacy](08-SECURITY_AND_PRIVACY.md), including command
+injection, traversal, symlink escape, output flood, fork/child cleanup, loopback
+binding, state-changing request origin validation, cancellation ID/body
+validation, redaction, and event integrity tests.
 
 ## 6. Non-functional tests
 

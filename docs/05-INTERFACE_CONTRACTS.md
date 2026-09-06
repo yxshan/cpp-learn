@@ -125,7 +125,11 @@ the published expected output and does not create a Grade.
 
 The client creates `runId` before starting the request. It must be a lowercase
 or uppercase UUIDv4 prefixed with `ref_run_`; an active duplicate is rejected so
-the identifier always selects at most one execution.
+the identifier always selects at most one execution. After syntactic and size
+validation, the Adapter reserves the identity before asynchronous Reference
+lookup and derives an immutable `ref_snapshot_*` identity plus SHA-256 digest
+from `source`. Only that internal non-Activity snapshot crosses the Runner
+Interface; it is not persisted as a learner Source Snapshot.
 
 Validation, origin, lookup, source-size, identity, admission, and capability failures use
 `400 validation_error`, `403 origin_rejected`,

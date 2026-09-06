@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -328,13 +329,14 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       referencePlayground: { run },
     });
 
+    const source = '#include <iostream>\nint main() { std::cout << "4\\n"; }\n';
     const response = await server.inject({
       method: "POST",
       url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
       payload: {
         schemaVersion: 1,
         runId,
-        source: '#include <iostream>\nint main() { std::cout << "4\\n"; }\n',
+        source,
       },
     });
 
@@ -349,10 +351,17 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       entryId: "std-vector",
       exampleId: "basic",
       standard: "c++20",
-      source: expect.stringContaining('std::cout << "4\\n"'),
+      snapshot: {
+        id: `ref_snapshot_${createHash("sha256").update(source).digest("hex").slice(0, 24)}`,
+        digest: createHash("sha256").update(source).digest("hex"),
+        source,
+      },
       stdin: "",
       signal: expect.any(AbortSignal),
     });
+    const runnerRequest = run.mock.calls[0]?.[0] as
+      ReferencePlaygroundRunRequest | undefined;
+    expect(Object.isFrozen(runnerRequest?.snapshot)).toBe(true);
     expect(dispatch).not.toHaveBeenCalled();
     expect(platform.query).not.toHaveBeenCalled();
     await server.close();
@@ -524,6 +533,108 @@ describe("[T-REF-009] HTTP Reference Playground Adapter", () => {
       payload: { schemaVersion: 1 },
     });
     expect(completedCancellation.json()).toMatchObject({ cancelled: false });
+    await server.close();
+
+    const restartedServer = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+      referencePlayground: { run: vi.fn() },
+    });
+    const afterRestart = await restartedServer.inject({
+      method: "POST",
+      url: `/api/v1/reference/runs/${runId}/cancellations`,
+      payload: { schemaVersion: 1 },
+    });
+    expect(afterRestart.json()).toMatchObject({ cancelled: false });
+    await restartedServer.close();
+  });
+
+  it("reserves the run identity before asynchronous Reference lookup", async () => {
+    const baseReference = createReferenceFixture();
+    let releaseReadiness: (() => void) | undefined;
+    const readiness = vi.fn(
+      () =>
+        new Promise<Awaited<ReturnType<typeof baseReference.readiness>>>(
+          (resolve) => {
+            releaseReadiness = () =>
+              void baseReference.readiness().then(resolve);
+          },
+        ),
+    );
+    const run = vi.fn(
+      ({ signal, ...request }: ReferencePlaygroundRunRequest) =>
+        new Promise<ReferencePlaygroundRunResult>((resolve) => {
+          const finish = () =>
+            resolve({
+              schemaVersion: 1,
+              runId: request.runId,
+              entryId: request.entryId,
+              exampleId: request.exampleId,
+              verdict: "cancelled",
+              stdout: "",
+              stderr: "",
+              stages: [],
+              toolchain: {
+                compiler: "clang",
+                standard: request.standard,
+                flags: ["-std=c++20"],
+              },
+            });
+          if (signal?.aborted) finish();
+          else signal?.addEventListener("abort", finish, { once: true });
+        }),
+    );
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: { ...baseReference, readiness },
+      referencePlayground: { run },
+    });
+    const activeRun = server.inject({
+      method: "POST",
+      url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+      payload: { schemaVersion: 1, runId, source: "int main() {}\n" },
+    });
+    await vi.waitFor(() => expect(readiness).toHaveBeenCalledTimes(1));
+
+    const cancellation = await server.inject({
+      method: "POST",
+      url: `/api/v1/reference/runs/${runId}/cancellations`,
+      payload: { schemaVersion: 1 },
+    });
+    expect(cancellation.json()).toMatchObject({ cancelled: true });
+    releaseReadiness?.();
+    await expect(activeRun).resolves.toMatchObject({ statusCode: 200 });
+    expect((await activeRun).json()).toMatchObject({ verdict: "cancelled" });
+    await server.close();
+  });
+
+  it("rejects invalid and cross-origin cancellation requests", async () => {
+    const server = createServer({
+      platform: createUnusedPlatform(),
+      reference: createReferenceFixture(),
+      referencePlayground: { run: vi.fn() },
+    });
+    const responses = await Promise.all([
+      server.inject({
+        method: "POST",
+        url: "/api/v1/reference/runs/not-a-run/cancellations",
+        payload: { schemaVersion: 1 },
+      }),
+      server.inject({
+        method: "POST",
+        url: `/api/v1/reference/runs/${runId}/cancellations`,
+        payload: { schemaVersion: 1, unexpected: true },
+      }),
+      server.inject({
+        method: "POST",
+        url: `/api/v1/reference/runs/${runId}/cancellations`,
+        headers: { origin: "https://attacker.example" },
+        payload: { schemaVersion: 1 },
+      }),
+    ]);
+    expect(responses.map((response) => response.statusCode)).toEqual([
+      400, 400, 403,
+    ]);
     await server.close();
   });
 });
