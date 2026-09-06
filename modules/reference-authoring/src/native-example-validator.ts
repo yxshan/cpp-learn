@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
+
 import type { CppStandard } from "@cpp-learn/contracts";
-import type { BoundedProcessRunner } from "@cpp-learn/judge";
+import { runBoundedProcess, type BoundedProcessRunner } from "@cpp-learn/judge";
 import {
+  createReferenceCompilerStandardFlagResolver,
   createReferenceExampleVerifier,
   ReferenceExampleVerificationError,
   resolveReferenceCppCompiler,
@@ -28,15 +31,75 @@ export function createNativeAuthoringExampleValidator(
   options: NativeAuthoringExampleValidatorOptions = {},
 ): AuthoringExampleValidator {
   const compiler = options.compiler ?? resolveReferenceCppCompiler();
-  const verify = createReferenceExampleVerifier({
+  const run = options.run ?? runBoundedProcess;
+  const standardFlag = createReferenceCompilerStandardFlagResolver({
     compiler,
-    ...(options.run === undefined ? {} : { run: options.run }),
+    run,
     ...(options.standardFlag === undefined
       ? {}
       : { standardFlag: options.standardFlag }),
   });
+  const verify = createReferenceExampleVerifier({
+    compiler,
+    run,
+    standardFlag,
+  });
+  let compilerFingerprint: Promise<string> | undefined;
+
+  const fingerprintCompiler = (): Promise<string> => {
+    compilerFingerprint ??= run({
+      executable: compiler,
+      args: ["--version"],
+      cwd: process.cwd(),
+      timeoutMs: 10_000,
+      maxOutputBytes: 64 * 1024,
+      environment: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" },
+    }).then((result) => {
+      if (
+        result.exitCode !== 0 ||
+        result.timedOut ||
+        result.outputLimitExceeded
+      ) {
+        throw new Error("Compiler fingerprint probe failed");
+      }
+      return createHash("sha256")
+        .update(
+          JSON.stringify({
+            compiler,
+            exitCode: result.exitCode,
+            stdout: result.stdout,
+            stderr: result.stderr,
+            timedOut: result.timedOut,
+            outputLimitExceeded: result.outputLimitExceeded,
+          }),
+        )
+        .digest("hex");
+    });
+    return compilerFingerprint;
+  };
 
   return {
+    async cacheKey(request) {
+      const selectedStandardFlag = await standardFlag(request.example.standard);
+      return createHash("sha256")
+        .update(
+          JSON.stringify({
+            compilerFingerprint: await fingerprintCompiler(),
+            selectedStandardFlag,
+            warningProfileVersion: "reference-werror-v1",
+            runnerVersion: "bounded-process-v1",
+            sourceDigest: createHash("sha256")
+              .update(request.source)
+              .digest("hex"),
+            kind: request.example.kind,
+            stdin: request.example.stdin ?? null,
+            expectedStdout: request.example.expectedStdout ?? null,
+            expectedDiagnosticCategory:
+              request.example.expectedDiagnosticCategory ?? null,
+          }),
+        )
+        .digest("hex");
+    },
     async validate(request) {
       try {
         await verify({

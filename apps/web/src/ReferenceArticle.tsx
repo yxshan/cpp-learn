@@ -373,11 +373,16 @@ const sourceKindLabels = {
 export function ReferenceArticle({
   entry,
   relatedEntries,
+  currentUrl: currentUrlInput,
 }: {
   readonly entry: ReferenceEntryDetail;
   readonly relatedEntries: Readonly<Record<string, ReferenceLinkTarget>>;
+  readonly currentUrl?: URL | string;
 }) {
-  const currentUrl = new URL(window.location.href);
+  const currentUrl =
+    currentUrlInput === undefined
+      ? new URL(window.location.href)
+      : new URL(currentUrlInput);
 
   return (
     <article className="reference-article">

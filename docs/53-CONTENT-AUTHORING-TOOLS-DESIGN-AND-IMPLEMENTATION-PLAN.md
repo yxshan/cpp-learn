@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -279,6 +279,13 @@ publication capability.
 Exit: a checked batch publishes without partial writes and passes the existing
 full gate.
 
+Exit met: exact cache-key tests cover compiler, selected standard, profiles,
+source, input, and expected outcome; affected-graph fixtures include reverse
+links, category navigation, redirects, and Activity references; preview uses
+the production React/GFM renderer and CSS; and checked input/revision binding
+feeds exact dry-run plans plus validated whole-tree publication with rollback.
+Git commit and release acceptance remain manual.
+
 ### Phase A3: batch and AI context packs
 
 - Share verified fact groups across related drafts through explicit references.
@@ -335,7 +342,7 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Start Phase A2 with content-addressed example results and exact cache-key
-invalidation tests. Then prove incremental affected-graph checks agree with the
-full release oracle before adding production-renderer preview or canonical
-publication. Do not add UI or AI behavior in this slice.
+Start Phase A3 with a five-Entry batch fixture, explicit verified-fact reuse,
+constrained AI context-pack contracts, and measurement of author minutes,
+machine minutes, cache hit rate, findings, and escaped corrections. Do not add
+the Web Author Console until batch safety and throughput evidence are accepted.

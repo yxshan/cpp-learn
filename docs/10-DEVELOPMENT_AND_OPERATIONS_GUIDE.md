@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -153,10 +153,12 @@ The Learning Record exposes rebuild through its maintenance Interface and automa
 
 ### C++ Reference Entries
 
-Phase A1 of the local Authoring Module provides the `reference:author` CLI for
-filesystem draft preparation and checking. It cannot publish. See the
-[Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
-and [Phase A1 Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
+Phases A1–A2 of the local Authoring Module provide the `reference:author` CLI for
+filesystem draft preparation, checking, production-renderer preview, and
+revision-bound publication. See the
+[Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md),
+the [Phase A1 Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md),
+and the [Phase A2 Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md).
 
 Create an explicit draft, edit its generated files, and check it:
 
@@ -164,11 +166,16 @@ Create an explicit draft, edit its generated files, and check it:
 npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
+npm run reference:author -- preview --draft ID
+npm run reference:author -- publish --draft ID --revision REVISION
+npm run reference:author -- publish --draft ID --revision REVISION --apply
 ```
 
-Drafts default to `.cpp-learn/authoring/`. A ready result remains non-canonical;
-Phase A2 must provide a reviewable, revision-aware publish operation before any
-tool writes below `reference/`.
+Drafts default to `.cpp-learn/authoring/`, while disposable compiler results
+default to `.cpp-learn/authoring-cache/`. `preview` rechecks the draft and writes
+`preview.html` beside it using the production Reference renderer. `publish`
+defaults to dry-run and lists exact create/update digests; only `--apply` may
+replace canonical content. The printed revision must be supplied explicitly.
 
 `prepare` seeds `entry.json` and `catalog-proposal.json` from validated active
 catalog context. `check` returns exit code `0` whenever it successfully produces
@@ -176,6 +183,13 @@ a report, including `blocked`; automation must inspect `report.status`.
 `--json` emits the unmodified Module result. The configured draft root must not
 equal, contain, or resolve through a symbolic link into the canonical
 `reference/` root.
+
+Environment overrides are `CPP_LEARN_AUTHORING_ROOT`,
+`CPP_LEARN_AUTHORING_CACHE_ROOT`, and `CPP_LEARN_REFERENCE_CATALOG`. Publication
+does not create a Git commit. After `--apply`, inspect the diff and run
+`npm run check` before committing. If publication reports a rollback failure,
+do not delete the reported `.backup` directory; it contains the preserved
+canonical tree for manual recovery.
 
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.

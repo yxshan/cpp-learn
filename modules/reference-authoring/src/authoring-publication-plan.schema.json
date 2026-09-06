@@ -10,7 +10,7 @@
     "mode": { "enum": ["dry_run", "apply"] },
     "files": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 0,
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/file" }
     }
@@ -31,11 +31,27 @@
     "file": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "digest"],
+      "required": ["path", "digest", "operation"],
       "properties": {
         "path": { "$ref": "#/$defs/safePath" },
-        "digest": { "$ref": "#/$defs/digest" }
-      }
+        "digest": { "$ref": "#/$defs/digest" },
+        "operation": { "enum": ["create", "update"] },
+        "previousDigest": { "$ref": "#/$defs/digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "operation": { "const": "update" } },
+            "required": ["operation"]
+          },
+          "then": {
+            "properties": {
+              "previousDigest": { "$ref": "#/$defs/digest" }
+            },
+            "required": ["previousDigest"]
+          }
+        }
+      ]
     }
   }
 }

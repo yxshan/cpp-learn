@@ -17,6 +17,14 @@ import authoringFactsSchema from "./authoring-facts.schema.json" with { type: "j
 import authoringPublicationPlanSchema from "./authoring-publication-plan.schema.json" with { type: "json" };
 import authoringReportSchema from "./authoring-report.schema.json" with { type: "json" };
 import authoringSourcesSchema from "./authoring-sources.schema.json" with { type: "json" };
+import type {
+  AuthoringValidationCache,
+  AuthoringValidationCacheValue,
+} from "./cache.js";
+import type {
+  AuthoringPublicationCandidate,
+  AuthoringPublisher,
+} from "./publisher.js";
 
 export const AUTHORING_FACT_KINDS = [
   "selection",
@@ -110,8 +118,10 @@ export interface AuthoringReport {
   readonly schemaVersion: 1;
   readonly draftId: string;
   readonly draftRevision: number;
+  readonly inputDigest: string;
   readonly status: "not_checked" | "blocked" | "ready";
   readonly affectedEntryIds: readonly string[];
+  readonly affectedActivityIds: readonly string[];
   readonly findings: readonly {
     readonly severity: "hard" | "warning";
     readonly risk: "high" | "medium" | "low";
@@ -140,6 +150,8 @@ export interface AuthoringPublicationPlan {
   readonly files: readonly {
     readonly path: string;
     readonly digest: string;
+    readonly operation: "create" | "update";
+    readonly previousDigest?: string;
   }[];
 }
 
@@ -167,6 +179,31 @@ export type PrepareDraftResult =
 export interface CheckDraftRequest {
   readonly draftId: string;
 }
+
+export interface PublishDraftRequest {
+  readonly draftId: string;
+  readonly expectedRevision: number;
+  readonly mode: "dry_run" | "apply";
+}
+
+export type PublishDraftResult =
+  | {
+      readonly ok: true;
+      readonly applied: boolean;
+      readonly plan: AuthoringPublicationPlan;
+    }
+  | {
+      readonly ok: false;
+      readonly code:
+        | "invalid_request"
+        | "draft_not_found"
+        | "draft_unreadable"
+        | "draft_not_ready"
+        | "revision_conflict"
+        | "draft_changed"
+        | "publication_failed";
+      readonly issues: readonly AuthoringValidationIssue[];
+    };
 
 export type CheckDraftResult =
   | {
@@ -202,6 +239,7 @@ export interface AuthoringCatalogContext {
     readonly fromSlug: string;
     readonly toEntryId: string;
   }[];
+  readonly activityIdsByEntryId?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface AuthoringCatalogContextAdapter {
@@ -215,6 +253,7 @@ export interface AuthoringExampleValidationRequest {
 }
 
 export interface AuthoringExampleValidator {
+  cacheKey?(request: AuthoringExampleValidationRequest): Promise<string>;
   validate(
     request: AuthoringExampleValidationRequest,
   ): Promise<readonly AuthoringValidationIssue[]>;
@@ -234,6 +273,7 @@ export interface AuthoringContentQualityValidator {
 export interface ReferenceAuthoring {
   prepare(request: PrepareDraftRequest): Promise<PrepareDraftResult>;
   check(request: CheckDraftRequest): Promise<CheckDraftResult>;
+  publish(request: PublishDraftRequest): Promise<PublishDraftResult>;
 }
 
 export interface ReferenceDraftRepository {
@@ -255,6 +295,8 @@ export interface ReferenceAuthoringDependencies {
   readonly catalog?: AuthoringCatalogContextAdapter;
   readonly examples?: AuthoringExampleValidator;
   readonly quality?: AuthoringContentQualityValidator;
+  readonly cache?: AuthoringValidationCache;
+  readonly publisher?: AuthoringPublisher;
   readonly clock?: () => Date;
 }
 
@@ -450,6 +492,27 @@ function jsonFile(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
+const GENERATED_DRAFT_FILES = new Set([
+  "draft.json",
+  "report.json",
+  "preview.html",
+  "publication-plan.json",
+]);
+
+export function authoringInputDigest(
+  files: Readonly<Record<string, string>>,
+): string {
+  const hash = createHash("sha256");
+  for (const path of Object.keys(files)
+    .filter((candidate) => !GENERATED_DRAFT_FILES.has(candidate))
+    .sort()) {
+    const content = files[path]!;
+    hash.update(`${path.length}:${path}${Buffer.byteLength(content)}:`);
+    hash.update(content);
+  }
+  return hash.digest("hex");
+}
+
 function contentTemplate(title: string, profile: AuthoringProfile): string {
   return [
     `# ${title}`,
@@ -550,21 +613,10 @@ function createDraftWorkspace(
     draftId: target.entryId,
     sources: [],
   };
-  const report: AuthoringReport = {
-    schemaVersion: 1,
-    draftId: target.entryId,
-    draftRevision: 1,
-    status: "not_checked",
-    affectedEntryIds: draft.affectedEntryIds,
-    findings: [],
-    reviewQueue: [],
-    cacheEvidence: [],
-  };
   const files: Record<string, string> = {
     "draft.json": jsonFile(draft),
     "facts.json": jsonFile(facts),
     "sources.json": jsonFile(sources),
-    "report.json": jsonFile(report),
     "catalog-proposal.json": jsonFile(proposal),
     "entry.json": jsonFile(candidateEntry(target, proposal)),
     "content.md": contentTemplate(target.title, profile),
@@ -572,6 +624,19 @@ function createDraftWorkspace(
   for (const label of PROFILE_DEFINITIONS[profile].examples) {
     files[`examples/${label}.cpp`] = exampleTemplate(label);
   }
+  const report: AuthoringReport = {
+    schemaVersion: 1,
+    draftId: target.entryId,
+    draftRevision: 1,
+    inputDigest: authoringInputDigest(files),
+    status: "not_checked",
+    affectedEntryIds: draft.affectedEntryIds,
+    affectedActivityIds: [],
+    findings: [],
+    reviewQueue: [],
+    cacheEvidence: [],
+  };
+  files["report.json"] = jsonFile(report);
   return { draft, proposal, facts, sources, report, files };
 }
 
@@ -1116,12 +1181,54 @@ function validateCatalogLinks(
   return findings;
 }
 
+export function analyzeAuthoringImpact(
+  targetEntryId: string,
+  entry: ReferenceEntryManifest,
+  catalog: AuthoringCatalogContext,
+): {
+  readonly entryIds: readonly string[];
+  readonly activityIds: readonly string[];
+} {
+  const entryIds = new Set<string>([targetEntryId, ...entry.relatedEntryIds]);
+  for (const candidate of catalog.entries) {
+    if (
+      candidate.relatedEntryIds.includes(targetEntryId) ||
+      candidate.relatedEntryIds.some((id) => entry.relatedEntryIds.includes(id))
+    ) {
+      entryIds.add(candidate.id);
+    }
+  }
+  for (const categoryId of entry.categories) {
+    if (catalog.entryIds.includes(categoryId)) entryIds.add(categoryId);
+  }
+  for (const redirect of catalog.redirects) {
+    if (
+      redirect.toEntryId === targetEntryId ||
+      entryIds.has(redirect.toEntryId)
+    ) {
+      entryIds.add(redirect.toEntryId);
+    }
+  }
+  const activityIds = new Set<string>();
+  for (const entryId of entryIds) {
+    for (const activityId of catalog.activityIdsByEntryId?.[entryId] ?? []) {
+      activityIds.add(activityId);
+    }
+  }
+  return { entryIds: [...entryIds], activityIds: [...activityIds].sort() };
+}
+
 async function validateExamples(
   workspace: DraftWorkspace,
   entry: ReferenceEntryManifest,
   validator: AuthoringExampleValidator | undefined,
-): Promise<AuthoringFinding[]> {
+  cache: AuthoringValidationCache | undefined,
+): Promise<{
+  readonly findings: AuthoringFinding[];
+  readonly cacheEvidence: AuthoringReport["cacheEvidence"];
+}> {
   const findings: AuthoringFinding[] = [];
+  const cacheEvidence: AuthoringReport["cacheEvidence"][number][] = [];
   const expectedCount =
     PROFILE_DEFINITIONS[workspace.draft.profile].examples.length;
   if (entry.examples.length < expectedCount) {
@@ -1168,14 +1275,49 @@ async function validateExamples(
       );
       continue;
     }
-    const issues = await validator.validate({
+    const request = {
       entryId: entry.id,
       example,
       source,
-    });
+    };
+    let cacheKey: string | undefined;
+    let cached: AuthoringValidationCacheValue | undefined;
+    try {
+      cacheKey =
+        cache === undefined || validator.cacheKey === undefined
+          ? undefined
+          : await validator.cacheKey(request);
+      cached =
+        cacheKey === undefined || cache === undefined
+          ? undefined
+          : await cache.get(cacheKey);
+    } catch {
+      cacheKey = undefined;
+      cached = undefined;
+    }
+    let issues: readonly AuthoringValidationIssue[];
+    if (cached !== undefined) {
+      issues = cached.issues;
+      cacheEvidence.push({ key: cacheKey!, status: "hit" });
+    } else {
+      issues = await validator.validate(request);
+      if (cacheKey !== undefined && cache !== undefined) {
+        try {
+          await cache.put(cacheKey, { schemaVersion: 1, issues });
+        } catch {
+          // The cache is disposable; a successful validation remains authoritative.
+        }
+        cacheEvidence.push({ key: cacheKey, status: "miss" });
+      } else {
+        cacheEvidence.push({
+          key: `${entry.id}/${example.id}`,
+          status: "not_checked",
+        });
+      }
+    }
     findings.push(...schemaFindings("example-invalid", localPath, issues));
   }
-  return findings;
+  return { findings, cacheEvidence };
 }
 
 export function createReferenceAuthoring(
@@ -1360,6 +1502,8 @@ export function createReferenceAuthoring(
       }
 
       let checkedEntry: ReferenceEntryManifest | undefined;
+      let checkedCatalog: AuthoringCatalogContext | undefined;
+      const cacheEvidence: AuthoringReport["cacheEvidence"][number][] = [];
       const candidate = parseCandidateEntry(workspace.files["entry.json"]);
       if (!candidate.ok) {
         findings.push(candidate.finding);
@@ -1407,11 +1551,12 @@ export function createReferenceAuthoring(
             );
           } else {
             try {
+              checkedCatalog = await dependencies.catalog.load();
               findings.push(
                 ...validateCatalogLinks(
                   workspace,
                   candidate.entry,
-                  await dependencies.catalog.load(),
+                  checkedCatalog,
                 ),
               );
             } catch (error) {
@@ -1448,13 +1593,14 @@ export function createReferenceAuthoring(
               );
             }
           }
-          findings.push(
-            ...(await validateExamples(
-              workspace,
-              candidate.entry,
-              dependencies.examples,
-            )),
+          const exampleValidation = await validateExamples(
+            workspace,
+            candidate.entry,
+            dependencies.examples,
+            dependencies.cache,
           );
+          findings.push(...exampleValidation.findings);
+          cacheEvidence.push(...exampleValidation.cacheEvidence);
         }
       }
 
@@ -1473,24 +1619,29 @@ export function createReferenceAuthoring(
       );
       const blocked = findings.some(({ severity }) => severity === "hard");
       const nextRevision = workspace.draft.revision + 1;
-      const affectedEntryIds =
-        checkedEntry === undefined
-          ? workspace.draft.affectedEntryIds
-          : [
-              ...new Set([
-                workspace.draft.target.entryId,
-                ...checkedEntry.relatedEntryIds,
-              ]),
-            ];
+      const impact =
+        checkedEntry === undefined || checkedCatalog === undefined
+          ? {
+              entryIds: workspace.draft.affectedEntryIds,
+              activityIds: [] as readonly string[],
+            }
+          : analyzeAuthoringImpact(
+              workspace.draft.target.entryId,
+              checkedEntry,
+              checkedCatalog,
+            );
+      const affectedEntryIds = impact.entryIds;
       const report: AuthoringReport = {
         schemaVersion: 1,
         draftId: workspace.draft.draftId,
         draftRevision: nextRevision,
+        inputDigest: authoringInputDigest(workspace.files),
         status: blocked ? "blocked" : "ready",
         affectedEntryIds,
+        affectedActivityIds: impact.activityIds,
         findings,
         reviewQueue,
-        cacheEvidence: [],
+        cacheEvidence,
       };
       const draft: AuthoringDraftManifest = {
         ...workspace.draft,
@@ -1520,6 +1671,160 @@ export function createReferenceAuthoring(
       }
       return { ok: true, report, workspace: checkedWorkspace };
     },
+    async publish(request) {
+      if (
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(request.draftId) ||
+        !Number.isInteger(request.expectedRevision) ||
+        request.expectedRevision < 1
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/",
+              message: "draftId and expectedRevision are invalid",
+              keyword: "request",
+            },
+          ],
+        };
+      }
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(request.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/draft",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      if (workspace.draft.revision !== request.expectedRevision) {
+        return { ok: false, code: "revision_conflict", issues: [] };
+      }
+      if (
+        workspace.draft.state !== "checked" ||
+        workspace.report.status !== "ready" ||
+        workspace.report.draftRevision !== workspace.draft.revision
+      ) {
+        return { ok: false, code: "draft_not_ready", issues: [] };
+      }
+      if (
+        workspace.report.inputDigest !== authoringInputDigest(workspace.files)
+      ) {
+        return { ok: false, code: "draft_changed", issues: [] };
+      }
+      if (dependencies.publisher === undefined) {
+        return {
+          ok: false,
+          code: "publication_failed",
+          issues: [
+            {
+              path: "/publisher",
+              message: "No Reference publication Adapter is configured",
+              keyword: "configuration",
+            },
+          ],
+        };
+      }
+      const candidate = parseCandidateEntry(workspace.files["entry.json"]);
+      if (!candidate.ok) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: candidate.finding.path,
+              message: candidate.finding.message,
+              keyword: candidate.finding.code,
+            },
+          ],
+        };
+      }
+      const files: AuthoringPublicationCandidate[] = [];
+      for (const [localPath, canonicalPath] of [
+        ["entry.json", workspace.draft.targetPaths.entry],
+        ["content.md", workspace.draft.targetPaths.content],
+      ] as const) {
+        const content = workspace.files[localPath];
+        if (content === undefined) {
+          return {
+            ok: false,
+            code: "draft_unreadable",
+            issues: [
+              {
+                path: localPath,
+                message: "Publication source is missing",
+                keyword: "required",
+              },
+            ],
+          };
+        }
+        files.push({ path: canonicalPath, content });
+      }
+      const examplePrefix = `${workspace.draft.targetPaths.examples}/`;
+      for (const example of candidate.entry.examples) {
+        const localPath = example.path.startsWith(examplePrefix)
+          ? `examples/${example.path.slice(examplePrefix.length)}`
+          : "";
+        const content = workspace.files[localPath];
+        if (localPath === "" || content === undefined) {
+          return {
+            ok: false,
+            code: "draft_unreadable",
+            issues: [
+              {
+                path: example.path,
+                message: "Example publication source is missing or unsafe",
+                keyword: "required",
+              },
+            ],
+          };
+        }
+        files.push({ path: example.path, content });
+      }
+      try {
+        const plan = await dependencies.publisher.publish({
+          draftId: request.draftId,
+          expectedRevision: request.expectedRevision,
+          mode: request.mode,
+          entryPath: workspace.draft.targetPaths.entry,
+          files,
+        });
+        const planIssues = validateAuthoringPublicationPlan(plan);
+        if (planIssues.length > 0) {
+          return {
+            ok: false,
+            code: "publication_failed",
+            issues: planIssues,
+          };
+        }
+        return { ok: true, applied: request.mode === "apply", plan };
+      } catch (error) {
+        return {
+          ok: false,
+          code: "publication_failed",
+          issues: [
+            {
+              path: "/publisher",
+              message:
+                error instanceof Error ? error.message : "Publication failed",
+              keyword: "publish",
+            },
+          ],
+        };
+      }
+    },
   };
 }
 
@@ -1536,6 +1841,20 @@ export {
   type FilesystemReferenceDraftRepositoryOptions,
 } from "./filesystem.js";
 export {
+  createFilesystemAuthoringValidationCache,
+  createInMemoryAuthoringValidationCache,
+  type AuthoringValidationCache,
+  type AuthoringValidationCacheValue,
+  type FilesystemAuthoringValidationCacheOptions,
+} from "./cache.js";
+export {
+  createFilesystemAuthoringPublisher,
+  type AuthoringPublicationCandidate,
+  type AuthoringPublishAdapterRequest,
+  type AuthoringPublisher,
+  type FilesystemAuthoringPublisherOptions,
+} from "./publisher.js";
+export {
   createFilesystemAuthoringCatalogContext,
   type FilesystemAuthoringCatalogContextOptions,
 } from "./catalog-context.js";
@@ -1543,3 +1862,4 @@ export {
   createNativeAuthoringExampleValidator,
   type NativeAuthoringExampleValidatorOptions,
 } from "./native-example-validator.js";
+import { createHash } from "node:crypto";

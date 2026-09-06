@@ -15,6 +15,59 @@ const request = {
 };
 
 describe("[T-AUTH-A1-NATIVE-001] native example validation Adapter", () => {
+  it("[T-AUTH-004] keys cached results by every execution input", async () => {
+    const compilerVersion = {
+      exitCode: 0,
+      stdout: "clang version 20.1.0\n",
+      stderr: "",
+      timedOut: false,
+      outputLimitExceeded: false,
+    };
+    const run = vi.fn().mockResolvedValue(compilerVersion);
+    const validator = createNativeAuthoringExampleValidator({
+      compiler: "/compiler",
+      run,
+      standardFlag: async (standard) => standard,
+    });
+
+    const baseline = await validator.cacheKey!(request);
+
+    await expect(validator.cacheKey!(request)).resolves.toBe(baseline);
+    await expect(
+      validator.cacheKey!({ ...request, source: `${request.source}// edit\n` }),
+    ).resolves.not.toBe(baseline);
+    await expect(
+      validator.cacheKey!({
+        ...request,
+        example: { ...request.example, standard: "c++23" },
+      }),
+    ).resolves.not.toBe(baseline);
+    await expect(
+      validator.cacheKey!({
+        ...request,
+        example: { ...request.example, expectedStdout: "changed\n" },
+      }),
+    ).resolves.not.toBe(baseline);
+    await expect(
+      validator.cacheKey!({
+        ...request,
+        example: { ...request.example, stdin: "input\n" },
+      }),
+    ).resolves.not.toBe(baseline);
+    expect(baseline).toMatch(/^[a-f0-9]{64}$/u);
+    expect(run).toHaveBeenCalledTimes(1);
+
+    const otherCompiler = createNativeAuthoringExampleValidator({
+      compiler: "/compiler",
+      run: vi.fn().mockResolvedValue({
+        ...compilerVersion,
+        stdout: "clang version 21.0.0\n",
+      }),
+      standardFlag: async (standard) => standard,
+    });
+    await expect(otherCompiler.cacheKey!(request)).resolves.not.toBe(baseline);
+  });
+
   it("validates a real deterministic C++20 program", async () => {
     const validator = createNativeAuthoringExampleValidator();
 

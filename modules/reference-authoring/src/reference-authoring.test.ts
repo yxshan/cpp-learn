@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 import { REFERENCE_ENTRY_KINDS } from "@cpp-learn/contracts";
+import type { ReferenceEntryManifest } from "@cpp-learn/reference";
 
 import {
   authoringDraftSchema,
+  analyzeAuthoringImpact,
   createInMemoryReferenceDraftRepository,
   createReferenceAuthoring,
   validateAuthoringCatalogProposal,
@@ -319,6 +321,7 @@ describe("[T-AUTH-SCHEMA-001] Reference authoring artifact schemas", () => {
           {
             path: "entries/std-vector/content.md",
             digest: "a".repeat(64),
+            operation: "create",
           },
         ],
       }),
@@ -399,6 +402,60 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     redirects: [],
   };
 
+  it("[T-AUTH-005] incremental impact closure agrees with a full graph scan fixture", () => {
+    const entry = {
+      schemaVersion: 2,
+      id: "std-vector-insert",
+      version: 1,
+      slug: "standard-library/containers/vector/insert",
+      kind: "member",
+      title: "std::vector::insert",
+      summary: "插入元素。",
+      aliases: [],
+      categories: ["containers"],
+      relatedEntryIds: ["std-vector", "header-vector"],
+      content: {
+        format: "markdown",
+        path: "entries/std-vector-insert/content.md",
+      },
+      examples: [],
+      sources: [],
+      verifiedAt: "2026-09-06",
+    } satisfies ReferenceEntryManifest;
+    const fixtureCatalog: AuthoringCatalogContext = {
+      ...catalog,
+      activityIdsByEntryId: {
+        "std-vector-insert": ["vector-modifiers-lab"],
+        "std-vector": ["vector-basics"],
+      },
+    };
+
+    const incremental = analyzeAuthoringImpact(entry.id, entry, fixtureCatalog);
+    const direct = new Set([entry.id, ...entry.relatedEntryIds]);
+    const fullScan = new Set(direct);
+    for (const candidate of fixtureCatalog.entries) {
+      if (
+        candidate.relatedEntryIds.some(
+          (relatedId) => relatedId === entry.id || direct.has(relatedId),
+        )
+      ) {
+        fullScan.add(candidate.id);
+      }
+    }
+    for (const categoryId of entry.categories) {
+      if (fixtureCatalog.entryIds.includes(categoryId))
+        fullScan.add(categoryId);
+    }
+    const fullActivities = [...fullScan].flatMap(
+      (entryId) => fixtureCatalog.activityIdsByEntryId?.[entryId] ?? [],
+    );
+
+    expect(new Set(incremental.entryIds)).toEqual(fullScan);
+    expect(incremental.activityIds).toEqual(
+      [...new Set(fullActivities)].sort(),
+    );
+  });
+
   it("blocks an untouched prepared draft with actionable findings", async () => {
     const drafts = createInMemoryReferenceDraftRepository();
     const authoring = createReferenceAuthoring({
@@ -460,7 +517,7 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     });
   });
 
-  it("checks and persists a complete draft through the Module Interface", async () => {
+  it("[T-AUTH-004/007] checks, caches, and publishes an exact checked revision through the Module Interface", async () => {
     const prepared = await createReferenceAuthoring({
       drafts: createInMemoryReferenceDraftRepository(),
       catalog: { load: async () => catalog },
@@ -580,10 +637,45 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     };
     const drafts = createInMemoryReferenceDraftRepository([complete]);
     const validateExample = vi.fn().mockResolvedValue([]);
+    const cacheValues = new Map<
+      string,
+      { schemaVersion: 1; issues: readonly [] }
+    >();
+    const cache = {
+      get: async (key: string) => cacheValues.get(key),
+      put: async (
+        key: string,
+        value: { schemaVersion: 1; issues: readonly [] },
+      ) => {
+        cacheValues.set(key, value);
+      },
+    };
+    const cacheKey = vi.fn(
+      async ({
+        example,
+        source,
+      }: {
+        example: { id: string };
+        source: string;
+      }) => `${example.id}:${source}`,
+    );
+    const publish = vi.fn().mockImplementation(async (request) => ({
+      schemaVersion: 1,
+      draftId: request.draftId,
+      expectedRevision: request.expectedRevision,
+      mode: request.mode,
+      files: request.files.map((file: { path: string }) => ({
+        path: file.path,
+        digest: "a".repeat(64),
+        operation: "create",
+      })),
+    }));
     const authoring = createReferenceAuthoring({
       drafts,
       catalog: { load: async () => catalog },
-      examples: { validate: validateExample },
+      examples: { cacheKey, validate: validateExample },
+      cache,
+      publisher: { publish },
       quality: { validate: async () => [] },
       clock: () => new Date("2026-09-06T10:00:00.000Z"),
     });
@@ -601,14 +693,71 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
             "std-vector-insert",
             "std-vector",
             "header-vector",
+            "containers",
           ],
         },
       },
     });
     expect(validateExample).toHaveBeenCalledTimes(2);
+    expect(checked.ok && checked.report.cacheEvidence).toEqual([
+      expect.objectContaining({ status: "miss" }),
+      expect.objectContaining({ status: "miss" }),
+    ]);
     expect((await drafts.get("std-vector-insert"))?.report.status).toBe(
       "ready",
     );
+
+    const secondCheck = await authoring.check({
+      draftId: "std-vector-insert",
+    });
+    expect(secondCheck).toMatchObject({
+      ok: true,
+      report: {
+        status: "ready",
+        cacheEvidence: [{ status: "hit" }, { status: "hit" }],
+      },
+    });
+    expect(validateExample).toHaveBeenCalledTimes(2);
+    if (!secondCheck.ok) return;
+
+    const publication = await authoring.publish({
+      draftId: "std-vector-insert",
+      expectedRevision: 3,
+      mode: "dry_run",
+    });
+    expect(publication).toMatchObject({
+      ok: true,
+      applied: false,
+      plan: { expectedRevision: 3, mode: "dry_run" },
+    });
+    expect(publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        draftId: "std-vector-insert",
+        expectedRevision: 3,
+        entryPath: "entries/std-vector-insert/entry.json",
+      }),
+    );
+
+    const changedWorkspace: DraftWorkspace = {
+      ...secondCheck.workspace,
+      files: {
+        ...secondCheck.workspace.files,
+        "content.md": `${secondCheck.workspace.files["content.md"]}\nchanged after check\n`,
+      },
+    };
+    const changedPublisher = vi.fn();
+    const changedAuthoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([changedWorkspace]),
+      publisher: { publish: changedPublisher },
+    });
+    await expect(
+      changedAuthoring.publish({
+        draftId: "std-vector-insert",
+        expectedRevision: 3,
+        mode: "apply",
+      }),
+    ).resolves.toEqual({ ok: false, code: "draft_changed", issues: [] });
+    expect(changedPublisher).not.toHaveBeenCalled();
 
     const warningAuthoring = createReferenceAuthoring({
       drafts: createInMemoryReferenceDraftRepository([complete]),

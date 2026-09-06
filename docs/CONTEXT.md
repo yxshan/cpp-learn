@@ -114,6 +114,16 @@ contains actionable findings; `ready` authorizes later human review but is not
 itself canonical publication.
 _Avoid_: Judge Report, build log, published Entry
 
+**Publication Plan**:
+The exact create/update digest set for promoting one checked Authoring Draft at
+one revision. A dry-run plan is review evidence, not a Git commit or release.
+_Avoid_: patch guess, deployment, automatic publication
+
+**Authoring Cache Record**:
+A disposable compiler-result record addressed by every execution-relevant
+input. It may shorten an inner loop but cannot replace the full release gate.
+_Avoid_: build artifact, source of truth, readiness approval
+
 ## Platform operations
 
 **Workspace**:

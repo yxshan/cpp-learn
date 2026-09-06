@@ -5,6 +5,94 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-A2-PREVIEW-001] checks then renders a draft with the configured preview Adapter", async () => {
+    const workspace = {
+      draft: { draftId: "std-vector-insert", revision: 2 },
+    };
+    const authoring = {
+      prepare: vi.fn(),
+      check: vi.fn().mockResolvedValue({
+        ok: true,
+        report: { status: "ready" },
+        workspace,
+      }),
+    } as unknown as ReferenceAuthoring;
+    const render = vi
+      .fn()
+      .mockResolvedValue(".cpp-learn/authoring/std-vector-insert/preview.html");
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["preview", "--draft", "std-vector-insert"],
+      authoring,
+      preview: { render },
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(authoring.check).toHaveBeenCalledWith({
+      draftId: "std-vector-insert",
+    });
+    expect(render).toHaveBeenCalledWith(workspace);
+    expect(stdout).toHaveBeenCalledWith(
+      "Preview written to .cpp-learn/authoring/std-vector-insert/preview.html\n",
+    );
+  });
+
+  it("[T-AUTH-A2-PUBLISH-001] defaults publication to dry-run and requires an explicit apply flag", async () => {
+    const publish = vi.fn().mockImplementation(async (request) => ({
+      ok: true,
+      applied: request.mode === "apply",
+      plan: {
+        schemaVersion: 1,
+        draftId: request.draftId,
+        expectedRevision: request.expectedRevision,
+        mode: request.mode,
+        files: [],
+      },
+    }));
+    const authoring = {
+      prepare: vi.fn(),
+      check: vi.fn(),
+      publish,
+    } as unknown as ReferenceAuthoring;
+    const stdout = vi.fn();
+
+    await expect(
+      runReferenceAuthorCli({
+        argv: ["publish", "--draft", "std-vector-insert", "--revision", "3"],
+        authoring,
+        stdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+    expect(publish).toHaveBeenLastCalledWith({
+      draftId: "std-vector-insert",
+      expectedRevision: 3,
+      mode: "dry_run",
+    });
+
+    await runReferenceAuthorCli({
+      argv: [
+        "publish",
+        "--draft",
+        "std-vector-insert",
+        "--revision",
+        "3",
+        "--apply",
+      ],
+      authoring,
+      stdout,
+      stderr: vi.fn(),
+    });
+    expect(publish).toHaveBeenLastCalledWith({
+      draftId: "std-vector-insert",
+      expectedRevision: 3,
+      mode: "apply",
+    });
+  });
+
   it("prepares a draft with explicit stable identity", async () => {
     const prepare = vi.fn().mockResolvedValue({
       ok: true,

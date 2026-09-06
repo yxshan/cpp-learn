@@ -2,11 +2,19 @@ import {
   REFERENCE_ENTRY_KINDS,
   type ReferenceEntryKind,
 } from "@cpp-learn/contracts";
-import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
+import type {
+  DraftWorkspace,
+  ReferenceAuthoring,
+} from "@cpp-learn/reference-authoring";
+
+export interface ReferenceAuthorPreviewAdapter {
+  render(workspace: DraftWorkspace): Promise<string>;
+}
 
 export interface ReferenceAuthorCliDependencies {
   readonly argv: readonly string[];
   readonly authoring: ReferenceAuthoring;
+  readonly preview?: ReferenceAuthorPreviewAdapter;
   readonly stdout: (text: string) => void;
   readonly stderr: (text: string) => void;
 }
@@ -15,6 +23,10 @@ const prepareUsage =
   "Usage: npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE [--json]\n";
 const checkUsage =
   "Usage: npm run reference:author -- check --draft ID [--json]\n";
+const previewUsage =
+  "Usage: npm run reference:author -- preview --draft ID [--json]\n";
+const publishUsage =
+  "Usage: npm run reference:author -- publish --draft ID --revision NUMBER [--apply] [--json]\n";
 
 function flagValue(flags: readonly string[], name: string): string | undefined {
   const index = flags.indexOf(name);
@@ -89,6 +101,75 @@ export async function runReferenceAuthorCli(
     return result.ok ? 0 : 1;
   }
 
-  dependencies.stderr(`${prepareUsage}${checkUsage}`);
+  if (command === "preview") {
+    const draftId = flagValue(flags, "--draft");
+    if (draftId === undefined || dependencies.preview === undefined) {
+      dependencies.stderr(previewUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.check({ draftId });
+    if (!result.ok) {
+      if (json) dependencies.stdout(`${JSON.stringify(result)}\n`);
+      else dependencies.stderr(`${result.code}\n`);
+      return 1;
+    }
+    try {
+      const path = await dependencies.preview.render(result.workspace);
+      if (json) {
+        dependencies.stdout(
+          `${JSON.stringify({ ok: true, draftId, path, report: result.report })}\n`,
+        );
+      } else {
+        dependencies.stdout(`Preview written to ${path}\n`);
+      }
+      return 0;
+    } catch (error) {
+      dependencies.stderr(
+        `preview_failed: ${error instanceof Error ? error.message : "unknown error"}\n`,
+      );
+      return 1;
+    }
+  }
+
+  if (command === "publish") {
+    const draftId = flagValue(flags, "--draft");
+    const revisionText = flagValue(flags, "--revision");
+    const expectedRevision = Number(revisionText);
+    if (
+      draftId === undefined ||
+      revisionText === undefined ||
+      !Number.isInteger(expectedRevision) ||
+      expectedRevision < 1
+    ) {
+      dependencies.stderr(publishUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.publish({
+      draftId,
+      expectedRevision,
+      mode: flags.includes("--apply") ? "apply" : "dry_run",
+    });
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else {
+      dependencies.stdout(
+        `${result.applied ? "PUBLISHED" : "DRY RUN"} ${result.plan.draftId} at revision ${result.plan.expectedRevision} (${result.plan.files.length} file changes)\n`,
+      );
+      for (const file of result.plan.files) {
+        dependencies.stdout(
+          `${file.operation.toUpperCase()} ${file.path} ${file.digest}${file.previousDigest === undefined ? "" : ` (was ${file.previousDigest})`}\n`,
+        );
+      }
+    }
+    return result.ok ? 0 : 1;
+  }
+
+  dependencies.stderr(
+    `${prepareUsage}${checkUsage}${previewUsage}${publishUsage}`,
+  );
   return 2;
 }

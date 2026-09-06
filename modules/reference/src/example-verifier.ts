@@ -78,12 +78,12 @@ export interface ReferenceExampleVerifierOptions {
 
 const environment = { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" };
 
-export function createReferenceExampleVerifier(
+export function createReferenceCompilerStandardFlagResolver(
   options: ReferenceExampleVerifierOptions,
-): (request: ReferenceExampleVerificationRequest) => Promise<void> {
+): (standard: CppStandard) => Promise<string> {
   const run = options.run ?? runBoundedProcess;
   const standardFlags = new Map<CppStandard, string>();
-  const standardFlagFor = async (standard: CppStandard): Promise<string> => {
+  return async (standard) => {
     const cached = standardFlags.get(standard);
     if (cached !== undefined) return cached;
     const selected =
@@ -123,6 +123,13 @@ export function createReferenceExampleVerifier(
     standardFlags.set(standard, selected);
     return selected;
   };
+}
+
+export function createReferenceExampleVerifier(
+  options: ReferenceExampleVerifierOptions,
+): (request: ReferenceExampleVerificationRequest) => Promise<void> {
+  const run = options.run ?? runBoundedProcess;
+  const standardFlagFor = createReferenceCompilerStandardFlagResolver(options);
 
   return async ({ identity, example, source }) => {
     const root = await mkdtemp(join(tmpdir(), "cpp-learn-reference-example-"));

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -228,11 +228,12 @@ Acceptance:
 
 ## 12. Stage 6.3: Reference content authoring tools
 
-**Status:** Phases A0 and A1 accepted; Phase A2 planned. Design and phased acceptance are controlled by the [Content
+**Status:** Phases A0, A1, and A2 accepted; Phase A3 planned. Design and phased acceptance are controlled by the [Content
 Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
 A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md),
 and A1 evidence in the [CLI Prepare/Check Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
+Phase A2 evidence is in the [Cache, Preview, and Atomic Publish Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md).
 
 Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
 
@@ -246,7 +247,11 @@ Deliver a local Reference Authoring Module with CLI-first and later Web Adapters
 The accepted Phase A1 adds confined filesystem drafts, catalog-backed context,
 canonical structural quality reuse, bounded native example checks, revisioned
 reports, and the `reference:author` CLI. Canonical writes, caching, preview, AI
-assistance, and the Web Author Console remain separately gated later slices.
+assistance, and the Web Author Console were separately gated at that point.
+The accepted Phase A2 adds exact compiler-result caching, impact closure,
+production-renderer preview, revision/input-bound dry-run publication plans, and
+validated whole-tree publication with rollback. AI context packs, batch metrics,
+and the Web Author Console remain later slices.
 
 ## 13. Global definition of done
 

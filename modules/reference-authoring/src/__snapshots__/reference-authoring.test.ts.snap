@@ -152,10 +152,12 @@ int main() {
   "schemaVersion": 1,
   "draftId": "header-vector",
   "draftRevision": 1,
+  "inputDigest": "9575cef50476714f69ace8bfe6314dc283c0933d7405e1f9ec9298e21d0c2c1c",
   "status": "not_checked",
   "affectedEntryIds": [
     "header-vector"
   ],
+  "affectedActivityIds": [],
   "findings": [],
   "reviewQueue": [],
   "cacheEvidence": []
@@ -395,10 +397,12 @@ int main() {
   "schemaVersion": 1,
   "draftId": "std-vector-insert",
   "draftRevision": 1,
+  "inputDigest": "7afabadf74952eaefc2542423b1ccc2c3024c4574bff12f77e30e3c4e96431fe",
   "status": "not_checked",
   "affectedEntryIds": [
     "std-vector-insert"
   ],
+  "affectedActivityIds": [],
   "findings": [],
   "reviewQueue": [],
   "cacheEvidence": []
@@ -623,10 +627,12 @@ int main() {
   "schemaVersion": 1,
   "draftId": "std-vector",
   "draftRevision": 1,
+  "inputDigest": "45f060a8ea296ddcca74640aa742df1ef8fa4e11ceab2117fa9f2c7f90cdc6ff",
   "status": "not_checked",
   "affectedEntryIds": [
     "std-vector"
   ],
+  "affectedActivityIds": [],
   "findings": [],
   "reviewQueue": [],
   "cacheEvidence": []

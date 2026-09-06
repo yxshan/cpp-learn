@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 5.0 |
+| Version | 5.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -71,7 +71,8 @@ Read in this order:
 53. [C++ API Reference Content Authoring Tools Design and Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 54. [Stage 6.3 Phase A0 Reference Authoring Contracts Implementation Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md)
 55. [Stage 6.3 Phase A1 Reference Authoring CLI Prepare/Check Implementation Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md)
-56. [Domain Context](CONTEXT.md)
+56. [Stage 6.3 Phase A2 Reference Authoring Cache/Preview/Atomic Publish Implementation Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md)
+57. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

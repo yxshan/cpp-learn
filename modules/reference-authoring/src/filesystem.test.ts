@@ -225,7 +225,9 @@ describe("[T-AUTH-A1-CATALOG-001] filesystem catalog-context Adapter", () => {
   it("loads validated Entry, category, and slug context", async () => {
     const root = await temporaryRoot();
     const entryRoot = join(root, "entries", "std-vector");
+    const activityRoot = join(root, "activities", "vector-basics");
     await mkdir(entryRoot, { recursive: true });
+    await mkdir(activityRoot, { recursive: true });
     await writeFile(
       join(root, "catalog.json"),
       `${JSON.stringify({
@@ -266,10 +268,16 @@ describe("[T-AUTH-A1-CATALOG-001] filesystem catalog-context Adapter", () => {
       })}\n`,
       "utf8",
     );
+    await writeFile(
+      join(activityRoot, "activity.json"),
+      `${JSON.stringify({ id: "vector-basics", referenceIds: ["std-vector"] })}\n`,
+      "utf8",
+    );
 
     await expect(
       createFilesystemAuthoringCatalogContext({
         catalogPath: join(root, "catalog.json"),
+        activityRoot: join(root, "activities"),
       }).load(),
     ).resolves.toEqual({
       entries: [
@@ -288,6 +296,7 @@ describe("[T-AUTH-A1-CATALOG-001] filesystem catalog-context Adapter", () => {
         "std-vector": "standard-library/containers/vector",
       },
       redirects: [],
+      activityIdsByEntryId: { "std-vector": ["vector-basics"] },
     });
   });
 });

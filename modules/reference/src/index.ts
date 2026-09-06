@@ -32,6 +32,7 @@ export {
 } from "./coverage.ts";
 export {
   assertReferenceCompilationAccepted,
+  createReferenceCompilerStandardFlagResolver,
   createReferenceExampleVerifier,
   ReferenceExampleVerificationError,
   type ReferenceCompilationCheck,

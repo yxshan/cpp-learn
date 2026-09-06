@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -19,7 +19,7 @@ modules/
   learning-platform/        teaching rules and orchestration
   curriculum/               content loading and validation
   reference/                C++ Reference lookup, navigation, and search
-  reference-authoring/      local Reference draft preparation and checks
+  reference-authoring/      local Reference drafts, checks, cache, and publication
   workspace/                learner files and snapshots
   judge/                    jobs, workers, stages, reports
   learning-record/          events and projections
@@ -59,6 +59,16 @@ failures separately from a risk-ranked warning queue and rejects source-policy,
 active/historical slug, and stale-snapshot conflicts. The CLI supplies
 filesystem, catalog, canonical quality, and native compiler Adapters but owns no
 validation decisions. The later Web Author Console must reuse this Interface.
+
+Phase A2 adds `publish({ draftId, expectedRevision, mode })` to the same
+Interface. A ready report records a digest of every author-controlled input;
+publication rejects a changed digest, stale revision, or non-ready report.
+Example results use a disposable content-addressed cache keyed by the compiler,
+resolved standard flag, rule versions, source, input, and expected outcome.
+Preview is CLI Adapter sugar over `check` and the production React/GFM renderer.
+The filesystem publication Adapter validates a complete sibling Reference tree,
+compares planned canonical digests again, then swaps the tree with rollback. Git
+commit and release remain outside the Module.
 
 ## 2. Learning Platform Module
 

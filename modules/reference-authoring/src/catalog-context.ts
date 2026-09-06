@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { readFile, readdir } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 
 import type {
   ReferenceCatalogManifest,
@@ -14,6 +14,7 @@ import type { AuthoringCatalogContextAdapter } from "./index.js";
 
 export interface FilesystemAuthoringCatalogContextOptions {
   readonly catalogPath: string;
+  readonly activityRoot?: string;
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -31,6 +32,7 @@ function assertValid(
 
 export function createFilesystemAuthoringCatalogContext({
   catalogPath,
+  activityRoot,
 }: FilesystemAuthoringCatalogContextOptions): AuthoringCatalogContextAdapter {
   const absoluteCatalogPath = resolve(catalogPath);
   const referenceRoot = dirname(absoluteCatalogPath);
@@ -69,6 +71,43 @@ export function createFilesystemAuthoringCatalogContext({
         }
         redirectSlugs.add(redirect.fromSlug);
       }
+      const activityIdsByEntryId: Record<string, string[]> = {};
+      if (activityRoot !== undefined) {
+        for (const directory of await readdir(resolve(activityRoot), {
+          withFileTypes: true,
+        })) {
+          if (directory.isSymbolicLink()) {
+            throw new Error(
+              `Curriculum Activity root contains a symbolic link: ${directory.name}`,
+            );
+          }
+          if (!directory.isDirectory()) continue;
+          const rawActivity = await readJson(
+            join(resolve(activityRoot), directory.name, "activity.json"),
+          );
+          if (
+            typeof rawActivity !== "object" ||
+            rawActivity === null ||
+            !("id" in rawActivity) ||
+            typeof rawActivity.id !== "string"
+          ) {
+            throw new Error(`Invalid Activity identity: ${directory.name}`);
+          }
+          const referenceIds =
+            "referenceIds" in rawActivity &&
+            Array.isArray(rawActivity.referenceIds)
+              ? rawActivity.referenceIds
+              : [];
+          if (!referenceIds.every((id) => typeof id === "string")) {
+            throw new Error(
+              `Invalid Activity Reference links: ${rawActivity.id}`,
+            );
+          }
+          for (const entryId of referenceIds) {
+            (activityIdsByEntryId[entryId] ??= []).push(rawActivity.id);
+          }
+        }
+      }
       return {
         entries: entries.map((entry) => ({
           id: entry.id,
@@ -86,6 +125,7 @@ export function createFilesystemAuthoringCatalogContext({
           entries.map((entry) => [entry.id, entry.slug]),
         ),
         redirects: catalog.redirects,
+        ...(activityRoot === undefined ? {} : { activityIdsByEntryId }),
       };
     },
   };

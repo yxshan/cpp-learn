@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
@@ -139,6 +139,11 @@ Reference content CI additionally validates:
   normative/secondary source policy, canonical structural quality, bounded real
   C++ compilation, CLI result/exit semantics, protected-root/symlink rejection,
   and confirmation that canonical Reference files remain read-only.
+- Authoring Phase A2 verifies exact compiler-cache invalidation, corrupt-cache
+  fallback, incremental/full affected-graph agreement, production GFM preview,
+  dry-run file/catalog diffs, checked-input and revision binding, successful
+  whole-tree publication, and byte-for-byte canonical preservation when staging
+  validation is interrupted.
 
 ## 5. Security tests
 
