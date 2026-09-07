@@ -152,7 +152,7 @@ int main() {
   "schemaVersion": 1,
   "draftId": "header-vector",
   "draftRevision": 1,
-  "inputDigest": "9575cef50476714f69ace8bfe6314dc283c0933d7405e1f9ec9298e21d0c2c1c",
+  "inputDigest": "d59c5902cf150020c1d2a2b8209d4d4dce9fe4ab45ccc12f15a53bd9c6ac0445",
   "status": "not_checked",
   "affectedEntryIds": [
     "header-vector"
@@ -397,7 +397,7 @@ int main() {
   "schemaVersion": 1,
   "draftId": "std-vector-insert",
   "draftRevision": 1,
-  "inputDigest": "7afabadf74952eaefc2542423b1ccc2c3024c4574bff12f77e30e3c4e96431fe",
+  "inputDigest": "e04d16a75525a06a76771c33907008247d51e3c7984347fe62bb3db81159a608",
   "status": "not_checked",
   "affectedEntryIds": [
     "std-vector-insert"
@@ -627,7 +627,7 @@ int main() {
   "schemaVersion": 1,
   "draftId": "std-vector",
   "draftRevision": 1,
-  "inputDigest": "45f060a8ea296ddcca74640aa742df1ef8fa4e11ceab2117fa9f2c7f90cdc6ff",
+  "inputDigest": "95b0cc9a9b7132e7c6ab6d26f9d6eb5cfac7c5ea91d96540ab96f929bd476c17",
   "status": "not_checked",
   "affectedEntryIds": [
     "std-vector"

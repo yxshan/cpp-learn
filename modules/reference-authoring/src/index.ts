@@ -149,8 +149,8 @@ export interface AuthoringPublicationPlan {
   readonly mode: "dry_run" | "apply";
   readonly files: readonly {
     readonly path: string;
-    readonly digest: string;
-    readonly operation: "create" | "update";
+    readonly digest?: string;
+    readonly operation: "create" | "update" | "delete";
     readonly previousDigest?: string;
   }[];
 }
@@ -493,11 +493,27 @@ function jsonFile(value: unknown): string {
 }
 
 const GENERATED_DRAFT_FILES = new Set([
-  "draft.json",
   "report.json",
   "preview.html",
   "publication-plan.json",
 ]);
+
+function digestibleAuthoringContent(path: string, content: string): string {
+  if (path !== "draft.json") return content;
+  try {
+    const draft = JSON.parse(content) as AuthoringDraftManifest;
+    return JSON.stringify({
+      schemaVersion: draft.schemaVersion,
+      draftId: draft.draftId,
+      profile: draft.profile,
+      target: draft.target,
+      targetPaths: draft.targetPaths,
+      createdAt: draft.createdAt,
+    });
+  } catch {
+    return content;
+  }
+}
 
 export function authoringInputDigest(
   files: Readonly<Record<string, string>>,
@@ -506,7 +522,7 @@ export function authoringInputDigest(
   for (const path of Object.keys(files)
     .filter((candidate) => !GENERATED_DRAFT_FILES.has(candidate))
     .sort()) {
-    const content = files[path]!;
+    const content = digestibleAuthoringContent(path, files[path]!);
     hash.update(`${path.length}:${path}${Buffer.byteLength(content)}:`);
     hash.update(content);
   }
@@ -765,7 +781,7 @@ function sameTarget(left: PrepareDraftTarget, right: PrepareDraftTarget) {
   );
 }
 
-type AuthoringFinding = AuthoringReport["findings"][number];
+export type AuthoringFinding = AuthoringReport["findings"][number];
 
 function hardFinding(
   code: string,
@@ -1123,62 +1139,83 @@ function validateEntryIdentity(
   return findings;
 }
 
-function validateCatalogLinks(
-  workspace: DraftWorkspace,
+export function evaluateAuthoringGraphGate(
+  targetEntryId: string,
   entry: ReferenceEntryManifest,
   catalog: AuthoringCatalogContext,
+  scope: "incremental" | "full",
 ): AuthoringFinding[] {
   const findings: AuthoringFinding[] = [];
-  const entryIds = new Set(catalog.entryIds);
+  const effectiveEntries = [
+    ...catalog.entries.filter(({ id }) => id !== targetEntryId),
+    entry,
+  ];
+  const entryIds = new Set(effectiveEntries.map(({ id }) => id));
   const categoryIds = new Set(catalog.categoryIds);
-  for (const relatedId of entry.relatedEntryIds) {
-    if (!entryIds.has(relatedId)) {
+  const affected = new Set(
+    analyzeAuthoringImpact(targetEntryId, entry, catalog).entryIds,
+  );
+  const selectedEntries =
+    scope === "full"
+      ? effectiveEntries
+      : effectiveEntries.filter(({ id }) => affected.has(id));
+  const pathFor = (entryId: string, field: string): string =>
+    entryId === targetEntryId
+      ? `entry.json/${field}`
+      : `catalog/entries/${entryId}/${field}`;
+  for (const candidate of selectedEntries) {
+    for (const relatedId of candidate.relatedEntryIds) {
+      if (entryIds.has(relatedId)) continue;
       findings.push(
         hardFinding(
           "related-entry-missing",
-          "entry.json/relatedEntryIds",
-          `Related Entry ${relatedId} is not in the active catalog`,
+          pathFor(candidate.id, "relatedEntryIds"),
+          `Related Entry ${relatedId} referenced by ${candidate.id} is not in the active catalog`,
           "medium",
         ),
       );
     }
-  }
-  for (const categoryId of entry.categories) {
-    if (!categoryIds.has(categoryId)) {
+    for (const categoryId of candidate.categories) {
+      if (categoryIds.has(categoryId)) continue;
       findings.push(
         hardFinding(
           "category-missing",
-          "entry.json/categories",
-          `Category ${categoryId} is not in the active catalog`,
+          pathFor(candidate.id, "categories"),
+          `Category ${categoryId} referenced by ${candidate.id} is not in the active catalog`,
           "medium",
         ),
       );
     }
-  }
-  for (const [entryId, slug] of Object.entries(catalog.slugsByEntryId)) {
-    if (entryId !== workspace.draft.target.entryId && slug === entry.slug) {
+    const owner = effectiveEntries.find(
+      ({ id, slug }) => id !== candidate.id && slug === candidate.slug,
+    );
+    if (owner !== undefined) {
       findings.push(
         hardFinding(
           "slug-conflict",
-          "entry.json/slug",
-          `Slug is already owned by ${entryId}`,
+          pathFor(candidate.id, "slug"),
+          `Slug is already owned by ${owner.id}`,
+        ),
+      );
+    }
+    const redirect = catalog.redirects.find(
+      ({ fromSlug }) => fromSlug === candidate.slug,
+    );
+    if (redirect !== undefined) {
+      findings.push(
+        hardFinding(
+          "redirect-slug-conflict",
+          pathFor(candidate.id, "slug"),
+          `Slug is preserved as a historical redirect to ${redirect.toEntryId}`,
         ),
       );
     }
   }
-  const redirect = catalog.redirects.find(
-    ({ fromSlug }) => fromSlug === entry.slug,
+  return findings.sort(
+    (left, right) =>
+      left.path.localeCompare(right.path) ||
+      left.code.localeCompare(right.code),
   );
-  if (redirect !== undefined) {
-    findings.push(
-      hardFinding(
-        "redirect-slug-conflict",
-        "entry.json/slug",
-        `Slug is preserved as a historical redirect to ${redirect.toEntryId}`,
-      ),
-    );
-  }
-  return findings;
 }
 
 export function analyzeAuthoringImpact(
@@ -1553,10 +1590,11 @@ export function createReferenceAuthoring(
             try {
               checkedCatalog = await dependencies.catalog.load();
               findings.push(
-                ...validateCatalogLinks(
-                  workspace,
+                ...evaluateAuthoringGraphGate(
+                  workspace.draft.target.entryId,
                   candidate.entry,
                   checkedCatalog,
+                  "incremental",
                 ),
               );
             } catch (error) {
@@ -1709,6 +1747,42 @@ export function createReferenceAuthoring(
       if (workspace === undefined) {
         return { ok: false, code: "draft_not_found", issues: [] };
       }
+      let persistedDraft: unknown;
+      let persistedReport: unknown;
+      try {
+        persistedDraft = JSON.parse(workspace.files["draft.json"] ?? "null");
+        persistedReport = JSON.parse(workspace.files["report.json"] ?? "null");
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/draft",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Draft metadata is unreadable",
+              keyword: "parse",
+            },
+          ],
+        };
+      }
+      const publicationArtifactIssues = [
+        ...validateAuthoringDraft(persistedDraft),
+        ...validateAuthoringReport(persistedReport),
+      ];
+      if (
+        publicationArtifactIssues.length > 0 ||
+        JSON.stringify(persistedDraft) !== JSON.stringify(workspace.draft) ||
+        JSON.stringify(persistedReport) !== JSON.stringify(workspace.report)
+      ) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: publicationArtifactIssues,
+        };
+      }
       if (workspace.draft.revision !== request.expectedRevision) {
         return { ok: false, code: "revision_conflict", issues: [] };
       }
@@ -1800,6 +1874,22 @@ export function createReferenceAuthoring(
           mode: request.mode,
           entryPath: workspace.draft.targetPaths.entry,
           files,
+          confirmDraft: async () => {
+            try {
+              const current = await dependencies.drafts.get(request.draftId);
+              return (
+                current !== undefined &&
+                current.draft.revision === request.expectedRevision &&
+                current.draft.state === "checked" &&
+                current.report.status === "ready" &&
+                current.report.draftRevision === request.expectedRevision &&
+                current.report.inputDigest ===
+                  authoringInputDigest(current.files)
+              );
+            } catch {
+              return false;
+            }
+          },
         });
         const planIssues = validateAuthoringPublicationPlan(plan);
         if (planIssues.length > 0) {

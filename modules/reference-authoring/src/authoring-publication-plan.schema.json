@@ -31,17 +31,40 @@
     "file": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "digest", "operation"],
+      "required": ["path", "operation"],
       "properties": {
         "path": { "$ref": "#/$defs/safePath" },
         "digest": { "$ref": "#/$defs/digest" },
-        "operation": { "enum": ["create", "update"] },
+        "operation": { "enum": ["create", "update", "delete"] },
         "previousDigest": { "$ref": "#/$defs/digest" }
       },
       "allOf": [
         {
           "if": {
+            "properties": { "operation": { "const": "create" } },
+            "required": ["operation"]
+          },
+          "then": {
+            "properties": { "digest": { "$ref": "#/$defs/digest" } },
+            "required": ["digest"]
+          }
+        },
+        {
+          "if": {
             "properties": { "operation": { "const": "update" } },
+            "required": ["operation"]
+          },
+          "then": {
+            "properties": {
+              "digest": { "$ref": "#/$defs/digest" },
+              "previousDigest": { "$ref": "#/$defs/digest" }
+            },
+            "required": ["digest", "previousDigest"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "operation": { "const": "delete" } },
             "required": ["operation"]
           },
           "then": {

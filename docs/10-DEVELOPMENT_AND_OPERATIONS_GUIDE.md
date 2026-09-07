@@ -167,6 +167,7 @@ npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITL
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
 npm run reference:author -- preview --draft ID
+npm run reference:author -- publish --draft ID --dry-run
 npm run reference:author -- publish --draft ID --revision REVISION
 npm run reference:author -- publish --draft ID --revision REVISION --apply
 ```
@@ -174,8 +175,10 @@ npm run reference:author -- publish --draft ID --revision REVISION --apply
 Drafts default to `.cpp-learn/authoring/`, while disposable compiler results
 default to `.cpp-learn/authoring-cache/`. `preview` rechecks the draft and writes
 `preview.html` beside it using the production Reference renderer. `publish`
-defaults to dry-run and lists exact create/update digests; only `--apply` may
-replace canonical content. The printed revision must be supplied explicitly.
+defaults to dry-run and lists exact create/update/delete changes. A dry-run may
+omit `--revision`; the CLI then performs a fresh check and uses its ready
+revision. Only `--apply` may replace canonical content, and apply requires the
+printed revision explicitly.
 
 `prepare` seeds `entry.json` and `catalog-proposal.json` from validated active
 catalog context. `check` returns exit code `0` whenever it successfully produces
@@ -189,7 +192,9 @@ Environment overrides are `CPP_LEARN_AUTHORING_ROOT`,
 does not create a Git commit. After `--apply`, inspect the diff and run
 `npm run check` before committing. If publication reports a rollback failure,
 do not delete the reported `.backup` directory; it contains the preserved
-canonical tree for manual recovery.
+canonical tree for manual recovery. If a process stops between the two
+directory renames, the next publication restores the single unambiguous backup
+before planning; multiple backups fail closed for manual inspection.
 
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.

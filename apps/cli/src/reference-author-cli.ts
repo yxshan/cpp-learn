@@ -26,7 +26,7 @@ const checkUsage =
 const previewUsage =
   "Usage: npm run reference:author -- preview --draft ID [--json]\n";
 const publishUsage =
-  "Usage: npm run reference:author -- publish --draft ID --revision NUMBER [--apply] [--json]\n";
+  "Usage: npm run reference:author -- publish --draft ID [--revision NUMBER] [--dry-run | --apply] [--json]\n";
 
 function flagValue(flags: readonly string[], name: string): string | undefined {
   const index = flags.indexOf(name);
@@ -134,20 +134,35 @@ export async function runReferenceAuthorCli(
   if (command === "publish") {
     const draftId = flagValue(flags, "--draft");
     const revisionText = flagValue(flags, "--revision");
-    const expectedRevision = Number(revisionText);
+    const apply = flags.includes("--apply");
+    const explicitDryRun = flags.includes("--dry-run");
+    let expectedRevision = Number(revisionText);
     if (
       draftId === undefined ||
-      revisionText === undefined ||
-      !Number.isInteger(expectedRevision) ||
-      expectedRevision < 1
+      (apply && explicitDryRun) ||
+      (revisionText !== undefined &&
+        (!Number.isInteger(expectedRevision) || expectedRevision < 1)) ||
+      (apply && revisionText === undefined)
     ) {
       dependencies.stderr(publishUsage);
       return 2;
     }
+    if (revisionText === undefined) {
+      const checked = await dependencies.authoring.check({ draftId });
+      if (!checked.ok || checked.report.status !== "ready") {
+        if (json) dependencies.stdout(`${JSON.stringify(checked)}\n`);
+        else
+          dependencies.stderr(
+            `${checked.ok ? "draft_not_ready" : checked.code}\n`,
+          );
+        return 1;
+      }
+      expectedRevision = checked.report.draftRevision;
+    }
     const result = await dependencies.authoring.publish({
       draftId,
       expectedRevision,
-      mode: flags.includes("--apply") ? "apply" : "dry_run",
+      mode: apply ? "apply" : "dry_run",
     });
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
@@ -161,7 +176,7 @@ export async function runReferenceAuthorCli(
       );
       for (const file of result.plan.files) {
         dependencies.stdout(
-          `${file.operation.toUpperCase()} ${file.path} ${file.digest}${file.previousDigest === undefined ? "" : ` (was ${file.previousDigest})`}\n`,
+          `${file.operation.toUpperCase()} ${file.path} ${file.digest ?? "<deleted>"}${file.previousDigest === undefined ? "" : ` (was ${file.previousDigest})`}\n`,
         );
       }
     }

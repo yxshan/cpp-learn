@@ -182,10 +182,12 @@ The report groups attention instead of asking the reviewer to reread everything:
 
 ### Step 7: publish a batch, then run the release gate
 
-`publish` shows the exact files and catalog edits, requires the checked draft
-revision, and writes atomically. The existing full Reference, quality, docs,
-unit, browser, and build gates run once for the accepted batch. This two-speed
-model keeps the author loop fast without weakening release acceptance.
+`publish` shows exact create/update/delete and catalog edits. Dry-run may obtain
+a fresh checked revision automatically; apply requires that revision and
+revalidates the draft immediately before installation. The existing full
+Reference, quality, docs, unit, browser, and build gates run once for the
+accepted batch. This two-speed model keeps the author loop fast without
+weakening release acceptance.
 
 ## 7. Cache and incremental validation
 
@@ -280,11 +282,12 @@ Exit: a checked batch publishes without partial writes and passes the existing
 full gate.
 
 Exit met: exact cache-key tests cover compiler, selected standard, profiles,
-source, input, and expected outcome; affected-graph fixtures include reverse
-links, category navigation, redirects, and Activity references; preview uses
-the production React/GFM renderer and CSS; and checked input/revision binding
-feeds exact dry-run plans plus validated whole-tree publication with rollback.
-Git commit and release acceptance remain manual.
+source, input, and expected outcome; actual incremental/full graph gates agree
+for affected fixtures; preview uses the production React/GFM renderer and
+confines draft paths; checked input/target/revision binding feeds exact
+create/update/delete plans, historical redirects, staging validation,
+pre-install revalidation, rollback, and interrupted-swap recovery. Git commit
+and release acceptance remain manual.
 
 ### Phase A3: batch and AI context packs
 

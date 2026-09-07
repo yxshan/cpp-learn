@@ -54,19 +54,25 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     }));
     const authoring = {
       prepare: vi.fn(),
-      check: vi.fn(),
+      check: vi.fn().mockResolvedValue({
+        ok: true,
+        report: { status: "ready", draftRevision: 3 },
+      }),
       publish,
     } as unknown as ReferenceAuthoring;
     const stdout = vi.fn();
 
     await expect(
       runReferenceAuthorCli({
-        argv: ["publish", "--draft", "std-vector-insert", "--revision", "3"],
+        argv: ["publish", "--draft", "std-vector-insert", "--dry-run"],
         authoring,
         stdout,
         stderr: vi.fn(),
       }),
     ).resolves.toBe(0);
+    expect(authoring.check).toHaveBeenCalledWith({
+      draftId: "std-vector-insert",
+    });
     expect(publish).toHaveBeenLastCalledWith({
       draftId: "std-vector-insert",
       expectedRevision: 3,

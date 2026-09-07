@@ -379,8 +379,9 @@ publish({ draftId, expectedRevision, mode }): Promise<PublishDraftResult>;
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
 and its checked author-input digest still matches. A successful result carries a
-versioned Publication Plan with exact create/update paths and digests. Adapter
-errors are returned as `publication_failed`; no operation creates a Git commit.
+versioned Publication Plan with exact create/update/delete paths, new digests
+for writes, and previous digests for updates/deletes. Adapter errors are
+returned as `publication_failed`; no operation creates a Git commit.
 
 The CLI maps `prepare`, `check`, `preview`, and `publish` to this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication

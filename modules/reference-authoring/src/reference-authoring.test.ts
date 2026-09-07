@@ -8,7 +8,7 @@ import type { ReferenceEntryManifest } from "@cpp-learn/reference";
 
 import {
   authoringDraftSchema,
-  analyzeAuthoringImpact,
+  evaluateAuthoringGraphGate,
   createInMemoryReferenceDraftRepository,
   createReferenceAuthoring,
   validateAuthoringCatalogProposal,
@@ -326,6 +326,21 @@ describe("[T-AUTH-SCHEMA-001] Reference authoring artifact schemas", () => {
         ],
       }),
     ).toEqual([]);
+    expect(
+      validateAuthoringPublicationPlan({
+        schemaVersion: 1,
+        draftId: "std-vector",
+        expectedRevision: 1,
+        mode: "dry_run",
+        files: [
+          {
+            path: "entries/std-vector/examples/obsolete.cpp",
+            operation: "delete",
+            previousDigest: "b".repeat(64),
+          },
+        ],
+      }),
+    ).toEqual([]);
   });
 
   it("does not treat unsourced facts or unexplained omissions as reviewed", () => {
@@ -402,7 +417,7 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     redirects: [],
   };
 
-  it("[T-AUTH-005] incremental impact closure agrees with a full graph scan fixture", () => {
+  it("[T-AUTH-005] incremental graph gates agree with a full graph gate fixture", () => {
     const entry = {
       schemaVersion: 2,
       id: "std-vector-insert",
@@ -424,35 +439,39 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
     } satisfies ReferenceEntryManifest;
     const fixtureCatalog: AuthoringCatalogContext = {
       ...catalog,
+      entries: catalog.entries.map((candidate) =>
+        candidate.id === "header-vector"
+          ? {
+              ...candidate,
+              relatedEntryIds: ["std-vector", "missing-entry"],
+            }
+          : candidate,
+      ),
       activityIdsByEntryId: {
         "std-vector-insert": ["vector-modifiers-lab"],
         "std-vector": ["vector-basics"],
       },
     };
 
-    const incremental = analyzeAuthoringImpact(entry.id, entry, fixtureCatalog);
-    const direct = new Set([entry.id, ...entry.relatedEntryIds]);
-    const fullScan = new Set(direct);
-    for (const candidate of fixtureCatalog.entries) {
-      if (
-        candidate.relatedEntryIds.some(
-          (relatedId) => relatedId === entry.id || direct.has(relatedId),
-        )
-      ) {
-        fullScan.add(candidate.id);
-      }
-    }
-    for (const categoryId of entry.categories) {
-      if (fixtureCatalog.entryIds.includes(categoryId))
-        fullScan.add(categoryId);
-    }
-    const fullActivities = [...fullScan].flatMap(
-      (entryId) => fixtureCatalog.activityIdsByEntryId?.[entryId] ?? [],
+    const incremental = evaluateAuthoringGraphGate(
+      entry.id,
+      entry,
+      fixtureCatalog,
+      "incremental",
+    );
+    const full = evaluateAuthoringGraphGate(
+      entry.id,
+      entry,
+      fixtureCatalog,
+      "full",
     );
 
-    expect(new Set(incremental.entryIds)).toEqual(fullScan);
-    expect(incremental.activityIds).toEqual(
-      [...new Set(fullActivities)].sort(),
+    expect(incremental).toEqual(full);
+    expect(incremental).toContainEqual(
+      expect.objectContaining({
+        code: "related-entry-missing",
+        path: "catalog/entries/header-vector/relatedEntryIds",
+      }),
     );
   });
 
@@ -758,6 +777,35 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
       }),
     ).resolves.toEqual({ ok: false, code: "draft_changed", issues: [] });
     expect(changedPublisher).not.toHaveBeenCalled();
+
+    const changedDraft = {
+      ...secondCheck.workspace.draft,
+      targetPaths: {
+        ...secondCheck.workspace.draft.targetPaths,
+        content: "entries/std-vector-insert-alt/content.md",
+      },
+    };
+    const targetChangedWorkspace: DraftWorkspace = {
+      ...secondCheck.workspace,
+      draft: changedDraft,
+      files: {
+        ...secondCheck.workspace.files,
+        "draft.json": `${JSON.stringify(changedDraft, null, 2)}\n`,
+      },
+    };
+    const targetChangedPublisher = vi.fn();
+    const targetChangedAuthoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([targetChangedWorkspace]),
+      publisher: { publish: targetChangedPublisher },
+    });
+    await expect(
+      targetChangedAuthoring.publish({
+        draftId: "std-vector-insert",
+        expectedRevision: 3,
+        mode: "apply",
+      }),
+    ).resolves.toEqual({ ok: false, code: "draft_changed", issues: [] });
+    expect(targetChangedPublisher).not.toHaveBeenCalled();
 
     const warningAuthoring = createReferenceAuthoring({
       drafts: createInMemoryReferenceDraftRepository([complete]),

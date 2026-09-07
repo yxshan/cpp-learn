@@ -140,10 +140,11 @@ Reference content CI additionally validates:
   C++ compilation, CLI result/exit semantics, protected-root/symlink rejection,
   and confirmation that canonical Reference files remain read-only.
 - Authoring Phase A2 verifies exact compiler-cache invalidation, corrupt-cache
-  fallback, incremental/full affected-graph agreement, production GFM preview,
-  dry-run file/catalog diffs, checked-input and revision binding, successful
-  whole-tree publication, and byte-for-byte canonical preservation when staging
-  validation is interrupted.
+  fallback, actual incremental/full graph-gate agreement, production GFM
+  preview with draft-path confinement, create/update/delete file and catalog
+  diffs, checked-input/target/revision binding, historical redirects, successful
+  whole-tree publication, interrupted-swap recovery, and byte-for-byte canonical
+  preservation when staging validation is interrupted.
 
 ## 5. Security tests
 
