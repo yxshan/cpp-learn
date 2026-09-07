@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -229,16 +229,27 @@ source IDs, and exact referenced Source Ledger records. A reused target group
 stores only this reference; source prose and ledger rows are resolved from the
 source draft during context building and checking rather than copied.
 
-`AuthoringContextPack` is a transient, deterministic artifact containing an
+`AuthoringContextPack` v2 is a transient, deterministic artifact containing an
 explicit subset of verified Fact Sheet groups and only their referenced Source
 Ledger records. Its digest also binds the draft revision, live author-input
-digest, and constraint policy. Context packs are safe to regenerate and are not
-canonical content or learner data.
+digest, target identity, Entry-kind profile, required headings, and constraint
+policy. Context packs are safe to regenerate and are not canonical content or
+learner data.
 
 `AuthoringGeneratedReview` binds an AI-generated claim review to the exact
 context-pack digest. Claims mapped only to allowed fact-group IDs may proceed;
 unmapped claims and claims naming IDs outside the pack remain `unverified` in a
 review queue. This is a provenance boundary, not semantic equivalence checking.
+
+`AuthoringSectionGeneration` carries one profile heading, generated Markdown,
+claim-to-fact mappings, and the exact context digest. Successful application
+creates `generation/revision-N.json`, which retains the generation, review,
+context digest, applied revision, and timestamp. The complete draft file map is
+committed by compare-and-swap; content, receipt, draft metadata, and reset report
+therefore cannot be installed as separate partial updates.
+Generation Receipts are schema-validated before commit and during every draft
+check. `report.json.generatedSections` separately labels their headings,
+receipt paths, revisions, context digests, and pending human-review status.
 
 `AuthoringBatchReport` aggregates one to five current Draft reports plus
 explicitly supplied timing and correction observations. Each member records its

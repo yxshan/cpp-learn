@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -166,6 +166,7 @@ Create an explicit draft, edit its generated files, and check it:
 npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE
 npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE --reuse-from RELATED_ID --reuse-facts FACT_ID[,FACT_ID...]
 npm run reference:author -- context --draft ID --facts FACT_ID[,FACT_ID...] --json
+npm run reference:author -- apply-generation --input GENERATION_BUNDLE.json --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
 npm run reference:author -- preview --draft ID
@@ -209,6 +210,27 @@ generated claim and its cited `allowedFactGroupIds` to
 `reviewGeneratedClaims`; unmapped or out-of-pack claims return to an
 `unverified` queue. This operation cannot prove that prose semantically matches
 a cited fact, so human review and `check` remain mandatory.
+
+The machine-oriented generation flow is:
+
+1. Run `context` with only the verified fact groups needed for one section.
+2. Produce a JSON bundle containing `context`, `expectedRevision`, and
+   `generation`.
+3. Set `generation.contextDigest` to the exact context digest; select one
+   `requiredHeadings` value and map every generated claim to one or more
+   `allowedFactGroupIds`.
+4. Run `apply-generation --input FILE --json` and inspect the structured result.
+5. Continue from the returned revision, then run `check` before preview or
+   publication.
+
+The command never contacts a model provider. It is intentionally suitable for
+Codex or another agent that can produce the bundle as a local file. Accepted
+content is written by full-snapshot compare-and-swap and records
+`generation/revision-N.json`; a context change, unsupported claim, invalid
+heading, concurrent edit, or failed write leaves the draft unchanged. Generated
+sections remain listed in `report.json.generatedSections` as
+`human-review-required`; the current tracer deliberately keeps `check` blocked
+and cannot publish them until a later review workflow explicitly resolves them.
 
 Run `measure` after a real batch and retain its JSON result with the batch
 review. Timing values are observations supplied by the author; cache and finding

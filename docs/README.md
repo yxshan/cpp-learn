@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 5.1 |
+| Version | 5.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-07 |
 
 ## Purpose
 
@@ -73,7 +73,8 @@ Read in this order:
 55. [Stage 6.3 Phase A1 Reference Authoring CLI Prepare/Check Implementation Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md)
 56. [Stage 6.3 Phase A2 Reference Authoring Cache/Preview/Atomic Publish Implementation Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md)
 57. [Stage 6.3 Phase A3 Fact Reuse/Context Packs/Batch Metrics Implementation Report](57-STAGE-6.3-PHASE-A3-FACT-REUSE-CONTEXT-PACKS-AND-BATCH-METRICS-IMPLEMENTATION-REPORT.md)
-58. [Domain Context](CONTEXT.md)
+58. [Stage 6.3 Phase A4 AI Authoring Adapter Tracer Bullet Implementation Report](58-STAGE-6.3-PHASE-A4-AI-AUTHORING-ADAPTER-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
+59. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

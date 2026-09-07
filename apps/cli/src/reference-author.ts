@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
 import {
@@ -79,6 +80,7 @@ process.exitCode = await runReferenceAuthorCli({
   argv: process.argv.slice(2),
   authoring,
   preview: createFilesystemReferenceAuthorPreview({ root: authoringRoot }),
+  readTextFile: (path) => readFile(resolve(path), "utf8"),
   stdout: (text) => process.stdout.write(text),
   stderr: (text) => process.stderr.write(text),
 });

@@ -1,5 +1,5 @@
 {
-  "$id": "https://cpp-learn.local/schemas/reference-authoring-context-pack.v1.json",
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-context-pack.v2.json",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -7,16 +7,48 @@
     "draftId",
     "draftRevision",
     "inputDigest",
+    "target",
+    "profile",
+    "requiredHeadings",
     "factGroups",
     "sources",
     "policy",
     "digest"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "draftId": { "$ref": "#/$defs/id" },
     "draftRevision": { "type": "integer", "minimum": 1 },
     "inputDigest": { "$ref": "#/$defs/digest" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entryId", "kind", "slug", "title"],
+      "properties": {
+        "entryId": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "landing",
+            "header",
+            "type",
+            "object",
+            "function",
+            "member",
+            "concept",
+            "guide"
+          ]
+        },
+        "slug": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 }
+      }
+    },
+    "profile": { "enum": ["callable", "entity", "header", "navigation"] },
+    "requiredHeadings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
     "factGroups": {
       "type": "array",
       "minItems": 1,

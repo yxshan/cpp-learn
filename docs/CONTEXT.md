@@ -130,6 +130,18 @@ Sheet groups and their Source Ledger evidence for a later AI Adapter. It does
 not contain unverified facts and does not make generated prose authoritative.
 _Avoid_: prompt dump, scraped corpus, AI truth source
 
+**Authoring Generation**:
+A schema-validated AI proposal for one controlled part of an Authoring Draft.
+It names the exact context-pack digest and maps each generated claim to allowed
+Fact Sheet groups; it is input to review, not accepted Reference content.
+_Avoid_: AI answer, generated page, publication candidate
+
+**Generation Receipt**:
+A revision-bound draft artifact recording the accepted Authoring Generation,
+its claim review, context digest, and application time. It supports audit and
+reproduction but does not prove semantic correctness.
+_Avoid_: approval, source evidence, release record
+
 **Authoring Batch Report**:
 A digest-bound measurement of one to five Authoring Drafts, including readiness,
 examples, cache behavior, findings, time observations, and escaped corrections.

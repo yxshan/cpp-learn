@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -55,7 +55,8 @@ promises.
 - Changed-entry schema, relationship, editorial, and example checks.
 - Content-addressed example compilation and execution cache.
 - Draft preview, diff, review queue, and atomic publish plan.
-- CLI Adapter first, followed by a Web Author Console using the same Module.
+- CLI and machine-oriented AI Adapters first; an optional lightweight Web
+  review surface may follow using the same Module.
 - Optional AI draft and revision assistance constrained by the fact sheet.
 
 ### Excluded from the first release
@@ -205,20 +206,27 @@ fixture whose affected graph is within scope.
 Cache storage lives under `.cpp-learn/authoring-cache/`; it is disposable and
 must never become required product state.
 
-## 8. CLI and Web Adapter plan
+## 8. Adapter plan
 
 The CLI is the first Adapter because it is cheap to automate and suitable for
 golden tests:
 
 ```text
 npm run reference:author -- prepare --id std-vector-insert --kind member
+npm run reference:author -- context --draft std-vector-insert --facts selection --json
+npm run reference:author -- apply-generation --input generated-section.json --json
 npm run reference:author -- check --draft std-vector-insert --changed
 npm run reference:author -- preview --draft std-vector-insert
 npm run reference:author -- publish --draft std-vector-insert --dry-run
 ```
 
-`preview` is Adapter sugar over `check` and the generated preview artifact; it
-is not a fourth Module operation. The later Web Author Console provides:
+`preview` is Adapter sugar over `check` and the generated preview artifact. The
+machine-oriented AI Adapter consumes a JSON Authoring Generation rather than
+embedding model credentials or provider rules in the platform. The Module
+rebuilds and verifies its context, reviews every declared claim, writes one
+profile-owned section, and records a Generation Receipt.
+
+If later needed, a lightweight Web review surface may provide:
 
 - backlog and batch selection;
 - a form-based fact/source ledger;
@@ -226,8 +234,8 @@ is not a fourth Module operation. The later Web Author Console provides:
 - cached compiler evidence and rendered preview;
 - a risk-ranked review queue and publish diff.
 
-The Web UI calls the same local Module through versioned loopback HTTP contracts.
-No correctness rule may exist only in React.
+Any Web UI calls the same local Module through versioned loopback HTTP
+contracts. No correctness rule may exist only in React.
 
 ## 9. Delivery phases
 
@@ -307,14 +315,59 @@ real observed five-Entry batch is still required before the Phase A3 exit can be
 accepted; deterministic fixture results prove calculation and rejection
 behavior, not author throughput.
 
-### Phase A4: Web Author Console
+### Phase A4: AI Authoring Adapter
 
-- Add loopback-only authoring contracts and a lazy Web route.
-- Implement fact/source forms, editors, preview, findings, and publish diff.
-- Preserve keyboard access, recovery after refresh, and narrow-screen use.
+- Expose profile/target/required-heading guidance in constrained context packs.
+- Accept schema-validated generated sections through a provider-neutral JSON
+  bundle and CLI Adapter.
+- Review every declared claim against an authoritative rebuilt context.
+- Apply accepted sections through revision-bound full-snapshot commits and keep
+  Generation Receipts.
 
-Exit: the Web Adapter reaches feature parity with the supported CLI flow while
-all authoring rules remain in the Module.
+Current status: the single-section tracer bullet is implemented. Remaining A4
+work adds summary and example proposals, structured template generation, and a
+complete provider-neutral authoring run command.
+
+Exit: an AI agent can fill a complete draft through controlled operations while
+unsupported claims remain unverified and no failed operation partially changes
+the draft.
+
+### Phase A5: coherent batch runner
+
+- Plan and execute dependency-aware groups of related Entries.
+- Reuse verified fact references and cache results across the batch.
+- Resume idempotently from per-Entry receipts and emit one batch report.
+
+Exit: one command advances a five-Entry batch without hiding blocked Entries.
+
+### Phase A6: source and fact-sheet assistant
+
+- Prepare source-record and fact-group proposals from explicitly supplied URLs
+  and primary-source excerpts without mirroring external pages.
+- Require human verification for normative facts and preserve source class.
+- Deduplicate source records and suggest reusable related facts.
+
+Exit: source research becomes structured input while verification authority
+remains outside generated prose.
+
+### Phase A7: quality repair loop
+
+- Translate deterministic findings into bounded repair requests.
+- Retry only affected sections/examples with fixed attempt limits.
+- Compare each retry with the same revision-bound facts and quality profile.
+
+Exit: common completeness and compilation failures can be repaired quickly
+without weakening gates or looping indefinitely.
+
+### Phase A8: optional lightweight Web review
+
+- Add only preview, risk confirmation, and publication diff if manual review
+  demand justifies it.
+- Preserve loopback-only access, keyboard operation, refresh recovery, and
+  narrow-screen use.
+
+Exit: a human can review and confirm generated drafts without duplicating
+authoring rules or building a general-purpose CMS.
 
 ## 10. Test and acceptance plan
 
@@ -333,6 +386,13 @@ all authoring rules remain in the Module.
   operable, and recoverable after refresh.
 - `T-AUTH-010`: measured batch throughput improves while escaped factual and
   example defects do not regress.
+- `T-AUTH-011`: generated sections are context/revision-bound, claim-reviewed,
+  receipt-backed, and atomically applied through in-memory and filesystem
+  Adapters.
+- `T-AUTH-012`: batch execution is resumable and reports every blocked Entry.
+- `T-AUTH-013`: source/fact proposals cannot verify themselves or change source
+  classification.
+- `T-AUTH-014`: repair attempts are bounded and cannot bypass the full gate.
 
 ## 11. Metrics and operating policy
 
@@ -353,8 +413,8 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Run and retain a real coherent five-Entry Phase A3 batch, then compare its
-per-Entry active minutes and escaped factual/example defects with the recorded
-manual baseline. In parallel, the next implementation slice may begin Phase A4
-with loopback-only Web Author Console contracts, while A3 remains empirically
-pending and cannot be described as accepted.
+Complete Phase A4 by adding summary/example generation and a provider-neutral
+run orchestration command on top of the delivered single-section tracer bullet.
+Then implement the resumable Phase A5 batch runner. A real coherent five-Entry
+run must still be retained to close empirical Phase A3 acceptance; later tooling
+must not manufacture that evidence.

@@ -19,6 +19,7 @@ import authoringContextPackSchema from "./authoring-context-pack.schema.json" wi
 import authoringDraftSchema from "./authoring-draft.schema.json" with { type: "json" };
 import authoringFactsSchema from "./authoring-facts.schema.json" with { type: "json" };
 import authoringGeneratedReviewSchema from "./authoring-generated-review.schema.json" with { type: "json" };
+import authoringGenerationReceiptSchema from "./authoring-generation-receipt.schema.json" with { type: "json" };
 import authoringPublicationPlanSchema from "./authoring-publication-plan.schema.json" with { type: "json" };
 import authoringReportSchema from "./authoring-report.schema.json" with { type: "json" };
 import authoringSourcesSchema from "./authoring-sources.schema.json" with { type: "json" };
@@ -30,6 +31,12 @@ import type {
   AuthoringPublicationCandidate,
   AuthoringPublisher,
 } from "./publisher.js";
+import {
+  authoringGenerationSchema,
+  replaceMarkdownSection,
+  validateAuthoringSectionGeneration,
+  type AuthoringSectionGeneration,
+} from "./generation.js";
 
 export const AUTHORING_FACT_KINDS = [
   "selection",
@@ -139,10 +146,13 @@ export interface BuildAuthoringContextRequest {
 }
 
 export interface AuthoringContextPack {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly draftId: string;
   readonly draftRevision: number;
   readonly inputDigest: string;
+  readonly target: PrepareDraftTarget;
+  readonly profile: AuthoringProfile;
+  readonly requiredHeadings: readonly string[];
   readonly factGroups: readonly {
     readonly id: string;
     readonly kind: AuthoringFactKind;
@@ -211,6 +221,34 @@ export type ReviewGeneratedClaimsResult =
         | "draft_not_found"
         | "context_changed";
       readonly issues: readonly AuthoringValidationIssue[];
+    };
+
+export interface ApplyGeneratedSectionRequest {
+  readonly context: AuthoringContextPack;
+  readonly expectedRevision: number;
+  readonly generation: AuthoringSectionGeneration;
+}
+
+export type ApplyGeneratedSectionResult =
+  | {
+      readonly ok: true;
+      readonly workspace: DraftWorkspace;
+      readonly review: AuthoringGeneratedReview;
+      readonly receiptPath: string;
+    }
+  | {
+      readonly ok: false;
+      readonly code:
+        | "invalid_request"
+        | "draft_not_found"
+        | "draft_unreadable"
+        | "revision_conflict"
+        | "context_changed"
+        | "generation_blocked"
+        | "write_conflict"
+        | "write_failed";
+      readonly issues: readonly AuthoringValidationIssue[];
+      readonly review?: AuthoringGeneratedReview;
     };
 
 export interface AuthoringCorrectionCounts {
@@ -333,6 +371,23 @@ export interface AuthoringReport {
     readonly key: string;
     readonly status: "hit" | "miss" | "not_checked";
   }[];
+  readonly generatedSections?: readonly {
+    readonly heading: string;
+    readonly receiptPath: string;
+    readonly contextDigest: string;
+    readonly appliedRevision: number;
+    readonly reviewStatus: "human-review-required";
+  }[];
+}
+
+export interface AuthoringGenerationReceipt {
+  readonly schemaVersion: 1;
+  readonly draftId: string;
+  readonly appliedRevision: number;
+  readonly contextDigest: string;
+  readonly generation: AuthoringSectionGeneration;
+  readonly review: AuthoringGeneratedReview;
+  readonly appliedAt: string;
 }
 
 export interface AuthoringPublicationPlan {
@@ -464,6 +519,9 @@ export interface AuthoringContentQualityValidator {
 }
 
 export interface ReferenceAuthoring {
+  applyGeneratedSection(
+    request: ApplyGeneratedSectionRequest,
+  ): Promise<ApplyGeneratedSectionResult>;
   buildContext(
     request: BuildAuthoringContextRequest,
   ): Promise<BuildAuthoringContextResult>;
@@ -484,7 +542,7 @@ export interface ReferenceDraftRepository {
     readonly created: boolean;
     readonly workspace: DraftWorkspace;
   }>;
-  commitCheck(input: {
+  commitWorkspace(input: {
     readonly draftId: string;
     readonly expectedRevision: number;
     readonly expectedFiles: Readonly<Record<string, string>>;
@@ -510,6 +568,8 @@ const validateCatalogProposal = ajv.compile(authoringCatalogProposalSchema);
 const validateContextPack = ajv.compile(authoringContextPackSchema);
 const validateFacts = ajv.compile(authoringFactsSchema);
 const validateGeneratedReview = ajv.compile(authoringGeneratedReviewSchema);
+ajv.addSchema(authoringGenerationSchema);
+const validateGenerationReceipt = ajv.compile(authoringGenerationReceiptSchema);
 const validateSources = ajv.compile(authoringSourcesSchema);
 const validateReport = ajv.compile(authoringReportSchema);
 const validatePublicationPlan = ajv.compile(authoringPublicationPlanSchema);
@@ -561,6 +621,42 @@ export function validateAuthoringGeneratedReview(
   value: unknown,
 ): readonly AuthoringValidationIssue[] {
   return validationIssues(validateGeneratedReview, value);
+}
+
+export function validateAuthoringGenerationReceipt(
+  value: unknown,
+): readonly AuthoringValidationIssue[] {
+  const issues = [...validationIssues(validateGenerationReceipt, value)];
+  if (issues.length > 0) return issues;
+  const receipt = value as AuthoringGenerationReceipt;
+  if (
+    receipt.generation.draftId !== receipt.draftId ||
+    receipt.review.draftId !== receipt.draftId
+  ) {
+    issues.push({
+      path: "/draftId",
+      message: "Receipt, generation, and review draft identities must match",
+      keyword: "identity",
+    });
+  }
+  if (
+    receipt.generation.contextDigest !== receipt.contextDigest ||
+    receipt.review.contextDigest !== receipt.contextDigest
+  ) {
+    issues.push({
+      path: "/contextDigest",
+      message: "Receipt, generation, and review context digests must match",
+      keyword: "digest",
+    });
+  }
+  if (receipt.review.status !== "accepted") {
+    issues.push({
+      path: "/review/status",
+      message: "An applied generation receipt must contain an accepted review",
+      keyword: "const",
+    });
+  }
+  return issues;
 }
 
 export function validateAuthoringFactSheet(
@@ -980,7 +1076,12 @@ export function createInMemoryReferenceDraftRepository(
       drafts.set(draftId, reserved);
       return { created: true, workspace: cloneWorkspace(reserved) };
     },
-    async commitCheck({ draftId, expectedRevision, expectedFiles, workspace }) {
+    async commitWorkspace({
+      draftId,
+      expectedRevision,
+      expectedFiles,
+      workspace,
+    }) {
       const existing = drafts.get(draftId);
       if (
         existing === undefined ||
@@ -1056,6 +1157,65 @@ function schemaFindings(
       code,
       `${artifactPath}${issue.path === "/" ? "" : issue.path}`,
       issue.message,
+    ),
+  );
+}
+
+function validateGenerationArtifacts(
+  workspace: DraftWorkspace,
+): AuthoringFinding[] {
+  const findings: AuthoringFinding[] = [];
+  for (const path of Object.keys(workspace.files)
+    .filter((candidate) =>
+      /^generation\/revision-[1-9][0-9]*\.json$/u.test(candidate),
+    )
+    .sort()) {
+    let receipt: unknown;
+    try {
+      receipt = JSON.parse(workspace.files[path]!);
+    } catch (error) {
+      findings.push(
+        hardFinding(
+          "generation-receipt-schema",
+          path,
+          error instanceof Error ? error.message : "Receipt is not valid JSON",
+        ),
+      );
+      continue;
+    }
+    const receiptIssues = validateAuthoringGenerationReceipt(receipt);
+    findings.push(
+      ...schemaFindings("generation-receipt-schema", path, receiptIssues),
+    );
+    if (receiptIssues.length > 0) continue;
+    const validated = receipt as AuthoringGenerationReceipt;
+    const pathRevision = Number(
+      path.match(/revision-([1-9][0-9]*)\.json$/u)?.[1],
+    );
+    if (
+      validated.draftId !== workspace.draft.draftId ||
+      validated.appliedRevision !== pathRevision
+    ) {
+      findings.push(
+        hardFinding(
+          "generation-receipt-identity",
+          path,
+          "Receipt path, applied revision, and draft identity must agree",
+        ),
+      );
+    }
+  }
+  return findings;
+}
+
+function validateGeneratedSectionReview(
+  report: AuthoringReport,
+): AuthoringFinding[] {
+  return (report.generatedSections ?? []).map((section, index) =>
+    hardFinding(
+      "generated-content-review-required",
+      `report.json/generatedSections/${index}/reviewStatus`,
+      `Generated section ${section.heading} requires explicit human review before publication`,
     ),
   );
 }
@@ -1909,6 +2069,253 @@ export function createReferenceAuthoring(
 ): ReferenceAuthoring {
   const clock = dependencies.clock ?? (() => new Date());
   const authoring: ReferenceAuthoring = {
+    async applyGeneratedSection(request) {
+      const contextIssues = validateAuthoringContextPack(request.context);
+      const generationIssues = validateAuthoringSectionGeneration(
+        request.generation,
+      );
+      if (
+        contextIssues.length > 0 ||
+        generationIssues.length > 0 ||
+        !Number.isInteger(request.expectedRevision) ||
+        request.expectedRevision < 1 ||
+        request.generation.draftId !== request.context.draftId ||
+        request.generation.contextDigest !== request.context.digest
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues:
+            contextIssues.length > 0
+              ? contextIssues.map((issue) => ({
+                  ...issue,
+                  path: `/context${issue.path === "/" ? "" : issue.path}`,
+                }))
+              : generationIssues.length > 0
+                ? generationIssues.map((issue) => ({
+                    ...issue,
+                    path: `/generation${issue.path === "/" ? "" : issue.path}`,
+                  }))
+                : [
+                    {
+                      path: "/generation",
+                      message:
+                        "Generation identity, context digest, and positive expected revision must match the supplied context",
+                      keyword: "request",
+                    },
+                  ],
+        };
+      }
+      const reviewed = await authoring.reviewGeneratedClaims({
+        context: request.context,
+        claims: request.generation.section.claims,
+      });
+      if (!reviewed.ok) {
+        return {
+          ok: false,
+          code:
+            reviewed.code === "draft_not_found"
+              ? "draft_not_found"
+              : "context_changed",
+          issues: reviewed.issues,
+        };
+      }
+      if (reviewed.review.status === "requires-review") {
+        return {
+          ok: false,
+          code: "generation_blocked",
+          issues: reviewed.review.reviewQueue.map((item, index) => ({
+            path: `/generation/section/claims/${index}`,
+            message: `Generated claim ${item.claimId} requires review: ${item.reason}`,
+            keyword: item.reason,
+          })),
+          review: reviewed.review,
+        };
+      }
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(request.context.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/context/draftId",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      if (
+        workspace.draft.revision !== request.expectedRevision ||
+        request.context.draftRevision !== request.expectedRevision
+      ) {
+        return { ok: false, code: "revision_conflict", issues: [] };
+      }
+      if (
+        authoringInputDigest(workspace.files) !== request.context.inputDigest
+      ) {
+        return {
+          ok: false,
+          code: "context_changed",
+          issues: [
+            {
+              path: "/context/inputDigest",
+              message:
+                "The draft authoring input changed after the context pack was reviewed",
+              keyword: "digest",
+            },
+          ],
+        };
+      }
+      if (
+        !PROFILE_DEFINITIONS[workspace.draft.profile].headings.includes(
+          request.generation.section.heading,
+        )
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/generation/section/heading",
+              message: `Heading is not part of the ${workspace.draft.profile} authoring profile`,
+              keyword: "enum",
+            },
+          ],
+        };
+      }
+      const currentContent = workspace.files["content.md"];
+      if (currentContent === undefined) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/content.md",
+              message: "Draft content is missing",
+              keyword: "required",
+            },
+          ],
+        };
+      }
+      const replacement = replaceMarkdownSection(
+        currentContent,
+        request.generation.section.heading,
+        request.generation.section.markdown,
+      );
+      if (!replacement.ok) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/generation/section/markdown",
+              message: replacement.message,
+              keyword: "markdown-section",
+            },
+          ],
+        };
+      }
+      const nextRevision = workspace.draft.revision + 1;
+      const draft: AuthoringDraftManifest = {
+        ...workspace.draft,
+        revision: nextRevision,
+        state: "draft",
+        updatedAt: clock().toISOString(),
+      };
+      const receiptPath = `generation/revision-${nextRevision}.json`;
+      const receipt: AuthoringGenerationReceipt = {
+        schemaVersion: 1,
+        draftId: draft.draftId,
+        appliedRevision: nextRevision,
+        contextDigest: request.context.digest,
+        generation: request.generation,
+        review: reviewed.review,
+        appliedAt: draft.updatedAt,
+      };
+      const receiptIssues = validateAuthoringGenerationReceipt(receipt);
+      if (receiptIssues.length > 0) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: receiptIssues.map((issue) => ({
+            ...issue,
+            path: `/receipt${issue.path === "/" ? "" : issue.path}`,
+          })),
+        };
+      }
+      const files = {
+        ...workspace.files,
+        "content.md": replacement.content,
+        "draft.json": jsonFile(draft),
+        [receiptPath]: jsonFile(receipt),
+      };
+      const report: AuthoringReport = {
+        ...workspace.report,
+        draftRevision: nextRevision,
+        inputDigest: authoringInputDigest(files),
+        status: "not_checked",
+        findings: [],
+        reviewQueue: [],
+        cacheEvidence: [],
+        generatedSections: [
+          ...(workspace.report.generatedSections ?? []),
+          {
+            heading: request.generation.section.heading,
+            receiptPath,
+            contextDigest: request.context.digest,
+            appliedRevision: nextRevision,
+            reviewStatus: "human-review-required",
+          },
+        ],
+      };
+      const nextWorkspace: DraftWorkspace = {
+        ...workspace,
+        draft,
+        report,
+        files: { ...files, "report.json": jsonFile(report) },
+      };
+      let committed: boolean;
+      try {
+        committed = await dependencies.drafts.commitWorkspace({
+          draftId: draft.draftId,
+          expectedRevision: request.expectedRevision,
+          expectedFiles: workspace.files,
+          workspace: nextWorkspace,
+        });
+      } catch (error) {
+        return {
+          ok: false,
+          code: "write_failed",
+          issues: [
+            {
+              path: "/draft",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Generated section could not be committed",
+              keyword: "write",
+            },
+          ],
+        };
+      }
+      if (!committed) {
+        return { ok: false, code: "write_conflict", issues: [] };
+      }
+      return {
+        ok: true,
+        workspace: nextWorkspace,
+        review: reviewed.review,
+        receiptPath,
+      };
+    },
     async measureBatch(request) {
       const stableId = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
       const durationValues = [
@@ -2515,10 +2922,13 @@ export function createReferenceAuthoring(
         sourceIds.has(id),
       );
       const packWithoutDigest: Omit<AuthoringContextPack, "digest"> = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         draftId: workspace.draft.draftId,
         draftRevision: workspace.draft.revision,
         inputDigest: authoringInputDigest(workspace.files),
+        target: workspace.draft.target,
+        profile: workspace.draft.profile,
+        requiredHeadings: PROFILE_DEFINITIONS[workspace.draft.profile].headings,
         factGroups: selectedGroups.map((group) => ({
           id: group.id,
           kind: group.kind,
@@ -2795,6 +3205,8 @@ export function createReferenceAuthoring(
           ? validateFactCoverage(evidenceWorkspace)
           : []),
         ...validateContentProfile(workspace),
+        ...validateGenerationArtifacts(workspace),
+        ...validateGeneratedSectionReview(workspace.report),
         ...reuseFindings,
       ];
 
@@ -2968,6 +3380,9 @@ export function createReferenceAuthoring(
         findings,
         reviewQueue,
         cacheEvidence,
+        ...(workspace.report.generatedSections === undefined
+          ? {}
+          : { generatedSections: workspace.report.generatedSections }),
       };
       const draft: AuthoringDraftManifest = {
         ...workspace.draft,
@@ -2986,7 +3401,7 @@ export function createReferenceAuthoring(
           "report.json": jsonFile(report),
         },
       };
-      const committed = await dependencies.drafts.commitCheck({
+      const committed = await dependencies.drafts.commitWorkspace({
         draftId: workspace.draft.draftId,
         expectedRevision: workspace.draft.revision,
         expectedFiles: workspace.files,
@@ -3209,6 +3624,8 @@ export function createReferenceAuthoring(
 
 export {
   authoringBatchReportSchema,
+  authoringGenerationSchema,
+  authoringGenerationReceiptSchema,
   authoringDraftSchema,
   authoringContextPackSchema,
   authoringFactsSchema,
@@ -3217,6 +3634,11 @@ export {
   authoringReportSchema,
   authoringSourcesSchema,
 };
+
+export type {
+  AuthoringGenerationClaim,
+  AuthoringSectionGeneration,
+} from "./generation.js";
 
 export {
   createFilesystemReferenceDraftRepository,

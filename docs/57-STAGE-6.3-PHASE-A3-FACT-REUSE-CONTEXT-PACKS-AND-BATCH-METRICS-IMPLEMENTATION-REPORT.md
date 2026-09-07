@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-040 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Implemented; empirical acceptance pending |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -115,5 +115,6 @@ The implementation is complete, but the Phase A3 exit is not yet accepted. Run
 one real coherent five-Entry authoring batch, retain its report, compare active
 minutes and escaped factual/example corrections with the manual baseline, and
 only then update the phase status.
-Phase A4 Web Author Console work may begin as an implementation task, but it
-must not be used to claim the missing A3 throughput result.
+Phase A4 machine-oriented AI Authoring Adapter work may proceed, but it must not
+be used to claim the missing A3 throughput result. A Web review surface is now
+optional and sequenced after the automation and quality-repair phases.

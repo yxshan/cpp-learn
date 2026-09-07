@@ -50,6 +50,9 @@
     "cacheEvidence": {
       "type": "array",
       "items": { "$ref": "#/$defs/cacheRecord" }
+    },
+    "generatedSections": {
+      "$ref": "#/$defs/generatedSections"
     }
   },
   "$defs": {
@@ -80,6 +83,30 @@
       "properties": {
         "key": { "type": "string", "minLength": 1 },
         "status": { "enum": ["hit", "miss", "not_checked"] }
+      }
+    },
+    "generatedSections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "heading",
+          "receiptPath",
+          "contextDigest",
+          "appliedRevision",
+          "reviewStatus"
+        ],
+        "properties": {
+          "heading": { "type": "string", "minLength": 1 },
+          "receiptPath": {
+            "type": "string",
+            "pattern": "^generation/revision-[1-9][0-9]*\\.json$"
+          },
+          "contextDigest": { "$ref": "#/$defs/digest" },
+          "appliedRevision": { "type": "integer", "minimum": 2 },
+          "reviewStatus": { "const": "human-review-required" }
+        }
       }
     }
   }

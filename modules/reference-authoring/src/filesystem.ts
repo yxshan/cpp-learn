@@ -17,6 +17,7 @@ import {
   resolve,
   sep,
 } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
 import type {
   AuthoringDraftManifest,
@@ -182,19 +183,6 @@ async function readWorkspace(
   };
 }
 
-async function writeAtomic(path: string, content: string): Promise<void> {
-  const temporaryPath = join(
-    dirname(path),
-    `.${path.slice(path.lastIndexOf(sep) + 1)}.${process.pid}.${randomUUID()}.tmp`,
-  );
-  try {
-    await writeFile(temporaryPath, content, { encoding: "utf8", flag: "wx" });
-    await rename(temporaryPath, path);
-  } finally {
-    await rm(temporaryPath, { force: true });
-  }
-}
-
 function sameFileSnapshot(
   current: Readonly<Record<string, string>>,
   expected: Readonly<Record<string, string>>,
@@ -212,6 +200,150 @@ function sameFileSnapshot(
   );
 }
 
+interface DraftLockOwner {
+  readonly schemaVersion: 1;
+  readonly pid: number;
+  readonly token: string;
+}
+
+async function lockOwnerIsActive(lockPath: string): Promise<boolean> {
+  let owner: DraftLockOwner;
+  try {
+    owner = JSON.parse(await readFile(lockPath, "utf8")) as DraftLockOwner;
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return false;
+    return false;
+  }
+  if (!Number.isInteger(owner.pid) || owner.pid < 1) return false;
+  try {
+    process.kill(owner.pid, 0);
+    return true;
+  } catch (error) {
+    return isNodeError(error) && error.code === "EPERM";
+  }
+}
+
+async function acquireDraftLock(
+  repositoryRoot: string,
+  draftId: string,
+  wait: boolean,
+): Promise<(() => Promise<void>) | undefined> {
+  await mkdir(repositoryRoot, { recursive: true });
+  const lockPath = join(repositoryRoot, `.${draftId}.write-lock`);
+  const owner: DraftLockOwner = {
+    schemaVersion: 1,
+    pid: process.pid,
+    token: randomUUID(),
+  };
+  for (let attempt = 0; attempt < 500; attempt += 1) {
+    try {
+      await writeFile(lockPath, `${JSON.stringify(owner)}\n`, {
+        encoding: "utf8",
+        flag: "wx",
+      });
+      return async () => {
+        try {
+          const current = JSON.parse(
+            await readFile(lockPath, "utf8"),
+          ) as DraftLockOwner;
+          if (current.token === owner.token)
+            await rm(lockPath, { force: true });
+        } catch {
+          // The committed snapshot remains authoritative; a later operation can
+          // diagnose or recover an abandoned lock without reversing the commit.
+        }
+      };
+    } catch (error) {
+      if (!isNodeError(error) || error.code !== "EEXIST") throw error;
+      if (await clearStaleDraftLock(repositoryRoot, draftId, lockPath)) {
+        continue;
+      }
+      if (!wait) return undefined;
+      await delay(10);
+    }
+  }
+  throw new Error(`Timed out waiting for draft lock: ${draftId}`);
+}
+
+async function clearStaleDraftLock(
+  repositoryRoot: string,
+  draftId: string,
+  lockPath: string,
+): Promise<boolean> {
+  const recoveryLock = join(repositoryRoot, `.${draftId}.lock-recovery`);
+  const owner: DraftLockOwner = {
+    schemaVersion: 1,
+    pid: process.pid,
+    token: randomUUID(),
+  };
+  try {
+    await writeFile(recoveryLock, `${JSON.stringify(owner)}\n`, {
+      encoding: "utf8",
+      flag: "wx",
+    });
+  } catch (error) {
+    if (!isNodeError(error) || error.code !== "EEXIST") throw error;
+    if (!(await lockOwnerIsActive(recoveryLock))) {
+      await rm(recoveryLock, { force: true });
+    }
+    return false;
+  }
+  try {
+    if (await lockOwnerIsActive(lockPath)) return false;
+    await rm(lockPath, { force: true });
+    return true;
+  } finally {
+    try {
+      const current = JSON.parse(
+        await readFile(recoveryLock, "utf8"),
+      ) as DraftLockOwner;
+      if (current.token === owner.token) {
+        await rm(recoveryLock, { force: true });
+      }
+    } catch {
+      // A later call can recover an abandoned recovery lock by owner liveness.
+    }
+  }
+}
+
+async function recoverDraftSwap(
+  repositoryRoot: string,
+  draftId: string,
+): Promise<void> {
+  let names: string[];
+  try {
+    names = await readdir(repositoryRoot);
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT") return;
+    throw error;
+  }
+  const artifactPrefix = `.${draftId}.`;
+  const backups = names
+    .filter(
+      (name) => name.startsWith(artifactPrefix) && name.endsWith(".backup"),
+    )
+    .map((name) => join(repositoryRoot, name));
+  const stages = names
+    .filter(
+      (name) => name.startsWith(artifactPrefix) && name.endsWith(".stage"),
+    )
+    .map((name) => join(repositoryRoot, name));
+  const draftRoot = join(repositoryRoot, draftId);
+  if (!existsSync(draftRoot)) {
+    if (backups.length > 1) {
+      throw new Error(
+        `Multiple interrupted backups exist for draft: ${draftId}`,
+      );
+    }
+    if (backups.length === 1) await rename(backups[0]!, draftRoot);
+  }
+  await Promise.all(
+    [...backups, ...stages]
+      .filter((path) => path !== draftRoot && existsSync(path))
+      .map((path) => rm(path, { recursive: true, force: true })),
+  );
+}
+
 export function createFilesystemReferenceDraftRepository({
   root,
   forbiddenRoots = [],
@@ -219,50 +351,56 @@ export function createFilesystemReferenceDraftRepository({
   const repositoryRoot = resolve(root);
   assertRepositoryRootAllowed(repositoryRoot, forbiddenRoots);
   return {
-    get: (draftId) => readWorkspace(repositoryRoot, draftId),
+    async get(draftId) {
+      assertDraftId(draftId);
+      const release = await acquireDraftLock(repositoryRoot, draftId, true);
+      if (release === undefined) throw new Error(`Draft is locked: ${draftId}`);
+      try {
+        await recoverDraftSwap(repositoryRoot, draftId);
+        return await readWorkspace(repositoryRoot, draftId);
+      } finally {
+        await release();
+      }
+    },
     async reserve(workspace) {
       const draftId = workspace.draft.draftId;
       assertDraftId(draftId);
-      await mkdir(repositoryRoot, { recursive: true });
-      const finalRoot = join(repositoryRoot, draftId);
-      const temporaryRoot = join(
-        repositoryRoot,
-        `.${draftId}.${process.pid}.${randomUUID()}.tmp`,
-      );
+      const release = await acquireDraftLock(repositoryRoot, draftId, true);
+      if (release === undefined) throw new Error(`Draft is locked: ${draftId}`);
       try {
-        await mkdir(temporaryRoot);
-        await writeWorkspaceFiles(temporaryRoot, workspace.files);
+        await recoverDraftSwap(repositoryRoot, draftId);
+        const existing = await readWorkspace(repositoryRoot, draftId);
+        if (existing !== undefined)
+          return { created: false, workspace: existing };
+        const finalRoot = join(repositoryRoot, draftId);
+        const temporaryRoot = join(
+          repositoryRoot,
+          `.${draftId}.${process.pid}.${randomUUID()}.tmp`,
+        );
         try {
+          await mkdir(temporaryRoot);
+          await writeWorkspaceFiles(temporaryRoot, workspace.files);
           await rename(temporaryRoot, finalRoot);
           return { created: true, workspace };
-        } catch (error) {
-          if (
-            !isNodeError(error) ||
-            (error.code !== "EEXIST" && error.code !== "ENOTEMPTY")
-          ) {
-            throw error;
-          }
+        } finally {
+          await rm(temporaryRoot, { recursive: true, force: true });
         }
       } finally {
-        await rm(temporaryRoot, { recursive: true, force: true });
+        await release();
       }
-      const existing = await readWorkspace(repositoryRoot, draftId);
-      if (existing === undefined) {
-        throw new Error(`Draft reservation disappeared: ${draftId}`);
-      }
-      return { created: false, workspace: existing };
     },
-    async commitCheck({ draftId, expectedRevision, expectedFiles, workspace }) {
+    async commitWorkspace({
+      draftId,
+      expectedRevision,
+      expectedFiles,
+      workspace,
+    }) {
       assertDraftId(draftId);
-      const draftRoot = join(repositoryRoot, draftId);
-      const lockPath = join(draftRoot, ".check-lock");
+      const release = await acquireDraftLock(repositoryRoot, draftId, false);
+      if (release === undefined) return false;
       try {
-        await mkdir(lockPath);
-      } catch (error) {
-        if (isNodeError(error) && error.code === "EEXIST") return false;
-        throw error;
-      }
-      try {
+        await recoverDraftSwap(repositoryRoot, draftId);
+        const draftRoot = join(repositoryRoot, draftId);
         const existing = await readWorkspace(repositoryRoot, draftId);
         if (
           existing === undefined ||
@@ -271,32 +409,51 @@ export function createFilesystemReferenceDraftRepository({
         ) {
           return false;
         }
-        await writeAtomic(
-          join(draftRoot, "report.json"),
-          workspace.files["report.json"]!,
+        if (workspace.draft.draftId !== draftId) return false;
+        const operationId = `${process.pid}.${randomUUID()}`;
+        const stageRoot = join(
+          repositoryRoot,
+          `.${draftId}.${operationId}.stage`,
         );
-        const afterReport = await readWorkspace(repositoryRoot, draftId);
-        if (
-          afterReport === undefined ||
-          !sameFileSnapshot(
-            afterReport.files,
-            expectedFiles,
-            new Set(["report.json"]),
-          )
-        ) {
-          await writeAtomic(
-            join(draftRoot, "report.json"),
-            expectedFiles["report.json"]!,
-          );
-          return false;
+        const backupRoot = join(
+          repositoryRoot,
+          `.${draftId}.${operationId}.backup`,
+        );
+        let originalMoved = false;
+        let installed = false;
+        try {
+          await mkdir(stageRoot);
+          await writeWorkspaceFiles(stageRoot, workspace.files);
+          const stagedFiles = await readWorkspaceFiles(stageRoot);
+          if (!sameFileSnapshot(stagedFiles, workspace.files)) {
+            throw new Error(
+              "Staged draft snapshot differs from the requested commit",
+            );
+          }
+          await rename(draftRoot, backupRoot);
+          originalMoved = true;
+          await rename(stageRoot, draftRoot);
+          installed = true;
+          return true;
+        } finally {
+          if (installed) {
+            await Promise.allSettled([
+              rm(stageRoot, { recursive: true, force: true }),
+              rm(backupRoot, { recursive: true, force: true }),
+            ]);
+          } else {
+            if (
+              originalMoved &&
+              !existsSync(draftRoot) &&
+              existsSync(backupRoot)
+            ) {
+              await rename(backupRoot, draftRoot);
+            }
+            await rm(stageRoot, { recursive: true, force: true });
+          }
         }
-        await writeAtomic(
-          join(draftRoot, "draft.json"),
-          workspace.files["draft.json"]!,
-        );
-        return true;
       } finally {
-        await rm(lockPath, { recursive: true, force: true });
+        await release();
       }
     },
   };

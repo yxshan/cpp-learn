@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -368,12 +368,13 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns six operations:
+The non-HTTP `ReferenceAuthoring` Interface owns seven operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
+applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
 check({ draftId }): Promise<CheckDraftResult>;
 publish({ draftId, expectedRevision, mode }): Promise<PublishDraftResult>;
 measureBatch({ batchId, draftIds, timing, quality }): Promise<MeasureAuthoringBatchResult>;
@@ -391,6 +392,19 @@ use this operation and may not treat the pack or generated prose as a primary
 source. A cited allowed ID is provenance evidence, not semantic truth; human
 review remains required.
 
+`applyGeneratedSection` accepts one schema-validated Authoring Generation bound
+to an exact context digest and expected draft revision. It invokes generated-
+claim review, permits only a heading owned by the draft profile, rejects
+level-one/two heading injection, replaces exactly one Markdown section, resets
+the draft to unchecked state, and commits the complete draft snapshot with a
+Generation Receipt. A blocked review or write conflict leaves the draft
+unchanged.
+Repository failures return `write_failed`; compare-and-swap races return
+`write_conflict`. Neither result mutates the accepted draft snapshot.
+The current tracer marks every applied section `human-review-required`; `check`
+keeps that draft blocked, so `publish` cannot promote AI prose before the later
+explicit review operation exists.
+
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
 and its checked author-input digest still matches. A successful result carries a
@@ -398,11 +412,13 @@ versioned Publication Plan with exact create/update/delete paths, new digests
 for writes, and previous digests for updates/deletes. Adapter errors are
 returned as `publication_failed`; no operation creates a Git commit.
 
-The CLI maps `prepare`, `check`, `preview`, and `publish` to this Interface.
+The CLI maps `prepare`, `apply-generation`, `check`, `preview`, and `publish` to
+this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
-`measure`. Generated-claim review is currently a Module operation for the future
-AI Adapter, not a free-form CLI text protocol. Batch reports bind every member
+`measure`. `apply-generation --input FILE` is the machine-oriented AI Adapter:
+the JSON file contains the exact context, expected revision, and generated
+section. Batch reports bind every member
 revision/input digest and evaluate the 60–90 minute five-Entry target, per-Entry
 throughput improvement, separately observed factual/example defect regression,
 high-risk review coverage, and flaky reruns. They do not replace release

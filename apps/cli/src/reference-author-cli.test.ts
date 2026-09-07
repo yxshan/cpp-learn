@@ -5,11 +5,74 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-A4-GENERATION-002] applies a generated-section bundle from a JSON file", async () => {
+    const input = {
+      context: {
+        schemaVersion: 2,
+        draftId: "vector-insert",
+        draftRevision: 1,
+        inputDigest: "a".repeat(64),
+        factGroups: [],
+        sources: [],
+        policy: {
+          mode: "verified-facts-only",
+          allowedFactGroupIds: ["selection"],
+          requirements: [],
+        },
+        digest: "b".repeat(64),
+      },
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: "b".repeat(64),
+        section: {
+          heading: "什么时候使用",
+          markdown: "当插入位置已知时使用 `insert`。",
+          claims: [
+            {
+              id: "known-position",
+              text: "Use insert when the position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    };
+    const result = {
+      ok: true as const,
+      workspace: { draft: { draftId: "vector-insert", revision: 2 } },
+      review: { status: "accepted" },
+      receiptPath: "generation/revision-2.json",
+    };
+    const applyGeneratedSection = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: [
+        "apply-generation",
+        "--input",
+        ".cpp-learn/generated/vector-insert-usage.json",
+        "--json",
+      ],
+      authoring: {
+        applyGeneratedSection,
+      } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(applyGeneratedSection).toHaveBeenCalledWith(input);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it("[T-AUTH-A3-CONTEXT-002] returns a constrained context pack as JSON", async () => {
     const result = {
       ok: true as const,
       pack: {
-        schemaVersion: 1 as const,
+        schemaVersion: 2 as const,
         draftId: "std-vector-insert",
         draftRevision: 2,
         inputDigest: "a".repeat(64),

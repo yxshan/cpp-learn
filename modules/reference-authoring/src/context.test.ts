@@ -202,7 +202,7 @@ describe("[T-AUTH-A3-CONTEXT-001] constrained AI context packs", () => {
     expect(result).toMatchObject({
       ok: true,
       pack: {
-        schemaVersion: 1,
+        schemaVersion: 2,
         draftId: "vector-insert",
         factGroups: [
           {

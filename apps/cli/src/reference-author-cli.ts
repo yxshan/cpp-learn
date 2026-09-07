@@ -3,6 +3,7 @@ import {
   type ReferenceEntryKind,
 } from "@cpp-learn/contracts";
 import type {
+  ApplyGeneratedSectionRequest,
   DraftWorkspace,
   ReferenceAuthoring,
 } from "@cpp-learn/reference-authoring";
@@ -15,6 +16,7 @@ export interface ReferenceAuthorCliDependencies {
   readonly argv: readonly string[];
   readonly authoring: ReferenceAuthoring;
   readonly preview?: ReferenceAuthorPreviewAdapter;
+  readonly readTextFile?: (path: string) => Promise<string>;
   readonly stdout: (text: string) => void;
   readonly stderr: (text: string) => void;
 }
@@ -23,6 +25,8 @@ const prepareUsage =
   "Usage: npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE [--reuse-from ID --reuse-facts ID[,ID...]] [--json]\n";
 const contextUsage =
   "Usage: npm run reference:author -- context --draft ID --facts ID[,ID...] [--json]\n";
+const applyGenerationUsage =
+  "Usage: npm run reference:author -- apply-generation --input FILE [--json]\n";
 const measureUsage =
   "Usage: npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --baseline-active-minutes N --baseline-entries N --pre-factual-corrections N --pre-example-corrections N --post-factual-corrections N --post-example-corrections N --baseline-factual-corrections N --baseline-example-corrections N --high-risk-reviewed N [--flaky-reruns N] [--json]\n";
 const checkUsage =
@@ -46,6 +50,52 @@ export async function runReferenceAuthorCli(
 ): Promise<number> {
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
+
+  if (command === "apply-generation") {
+    const inputPath = flagValue(flags, "--input");
+    if (inputPath === undefined) {
+      dependencies.stderr(applyGenerationUsage);
+      return 2;
+    }
+    if (dependencies.readTextFile === undefined) {
+      dependencies.stderr("Generated-section file reader is unavailable\n");
+      return 3;
+    }
+    let input: unknown;
+    try {
+      input = JSON.parse(await dependencies.readTextFile(inputPath));
+    } catch (error) {
+      dependencies.stderr(
+        `Unable to read generated-section input: ${error instanceof Error ? error.message : "invalid JSON"}\n`,
+      );
+      return 2;
+    }
+    if (
+      input === null ||
+      typeof input !== "object" ||
+      !("context" in input) ||
+      !("expectedRevision" in input) ||
+      !("generation" in input)
+    ) {
+      dependencies.stderr(applyGenerationUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.applyGeneratedSection(
+      input as ApplyGeneratedSectionRequest,
+    );
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else {
+      dependencies.stdout(
+        `Applied generated section to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
+      );
+    }
+    return result.ok ? 0 : 1;
+  }
 
   if (command === "context") {
     const draftId = flagValue(flags, "--draft");

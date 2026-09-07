@@ -974,7 +974,7 @@ describe("[T-AUTH-A1-CHECK-001] Reference authoring draft checks", () => {
       drafts: {
         get: (draftId) => stored.get(draftId),
         reserve: (workspace) => stored.reserve(workspace),
-        commitCheck: async () => false,
+        commitWorkspace: async () => false,
       },
     });
     await authoring.prepare({ target: fixtures[0]!.target });
