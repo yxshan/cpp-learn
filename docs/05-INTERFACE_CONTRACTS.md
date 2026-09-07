@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -368,13 +368,14 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns seven operations:
+The non-HTTP `ReferenceAuthoring` Interface owns eight operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
+applyGeneratedSummary({ context, expectedRevision, generation }): Promise<ApplyGeneratedSummaryResult>;
 check({ draftId }): Promise<CheckDraftResult>;
 publish({ draftId, expectedRevision, mode }): Promise<PublishDraftResult>;
 measureBatch({ batchId, draftIds, timing, quality }): Promise<MeasureAuthoringBatchResult>;
@@ -401,9 +402,15 @@ Generation Receipt. A blocked review or write conflict leaves the draft
 unchanged.
 Repository failures return `write_failed`; compare-and-swap races return
 `write_conflict`. Neither result mutates the accepted draft snapshot.
-The current tracer marks every applied section `human-review-required`; `check`
-keeps that draft blocked, so `publish` cannot promote AI prose before the later
-explicit review operation exists.
+The current phase treats every valid Generation Receipt as an unresolved human
+review obligation; `check` keeps that draft blocked, so `publish` cannot promote
+AI prose before the later explicit review operation exists. Report display
+metadata is not the authority for this gate and cannot be removed to bypass it.
+
+`applyGeneratedSummary` applies the same context, provenance, revision, receipt,
+and human-review rules to the plain-text `entry.json.summary` field. Summary
+text must be a trimmed single line of 4–160 characters. It never changes
+`content.md`; invalid or unsupported input leaves the complete draft unchanged.
 
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
@@ -417,8 +424,9 @@ this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
 `measure`. `apply-generation --input FILE` is the machine-oriented AI Adapter:
-the JSON file contains the exact context, expected revision, and generated
-section. Batch reports bind every member
+the JSON file contains the exact context, expected revision, and either a
+generated section or generated summary. The Adapter dispatches by the typed
+generation member rather than exposing a second command. Batch reports bind every member
 revision/input digest and evaluate the 60–90 minute five-Entry target, per-Entry
 throughput improvement, separately observed factual/example defect regression,
 high-risk review coverage, and flaky reruns. They do not replace release

@@ -403,3 +403,259 @@ describe("[T-AUTH-A4-GENERATION-001] generated section ingestion", () => {
     });
   });
 });
+
+describe("[T-AUTH-A4-SUMMARY-001] generated summary ingestion", () => {
+  it("applies an allowlisted summary without changing article content", async () => {
+    const { authoring, repository } = await generationFixture();
+    const context = await authoring.buildContext({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+    });
+    if (!context.ok) throw new Error("context build failed");
+    const before = await repository.get("vector-insert");
+
+    const result = await authoring.applyGeneratedSummary({
+      context: context.pack,
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: context.pack.digest,
+        summary: {
+          text: "在已知位置向 std::vector 插入元素。",
+          claims: [
+            {
+              id: "known-position-summary",
+              text: "Use insert when the insertion position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      workspace: {
+        draft: { revision: 2, state: "draft" },
+        report: {
+          status: "not_checked",
+        },
+      },
+      review: { status: "accepted" },
+      receiptPath: "generation/revision-2.json",
+    });
+    expect(
+      JSON.parse(result.ok ? result.workspace.files["entry.json"]! : "null"),
+    ).toMatchObject({ summary: "在已知位置向 std::vector 插入元素。" });
+    expect(result.ok && result.workspace.files["content.md"]).toBe(
+      before?.files["content.md"],
+    );
+    await expect(repository.get("vector-insert")).resolves.toMatchObject({
+      draft: { revision: 2 },
+    });
+    const checked = await authoring.check({ draftId: "vector-insert" });
+    expect(checked).toMatchObject({
+      ok: true,
+      report: {
+        status: "blocked",
+        findings: expect.arrayContaining([
+          expect.objectContaining({
+            code: "generated-content-review-required",
+            path: "generation/revision-2.json/review/status",
+          }),
+        ]),
+      },
+    });
+    expect(
+      checked.ok &&
+        checked.report.findings.some(
+          ({ code }) => code === "generation-receipt-schema",
+        ),
+    ).toBe(false);
+  });
+
+  it("rejects multiline or unsupported summaries without changing the draft", async () => {
+    const { authoring, repository } = await generationFixture();
+    const context = await authoring.buildContext({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+    });
+    if (!context.ok) throw new Error("context build failed");
+    const before = await repository.get("vector-insert");
+    const generation = {
+      schemaVersion: 1 as const,
+      draftId: "vector-insert",
+      contextDigest: context.pack.digest,
+      summary: {
+        text: "第一行\n第二行",
+        claims: [
+          {
+            id: "known-position-summary",
+            text: "Use insert when the insertion position is known.",
+            factGroupIds: ["selection"],
+          },
+        ],
+      },
+    };
+
+    await expect(
+      authoring.applyGeneratedSummary({
+        context: context.pack,
+        expectedRevision: 1,
+        generation,
+      }),
+    ).resolves.toMatchObject({ ok: false, code: "invalid_request" });
+    for (const separator of [
+      "\u000b",
+      "\u000c",
+      "\u0085",
+      "\u2028",
+      "\u2029",
+    ]) {
+      await expect(
+        authoring.applyGeneratedSummary({
+          context: context.pack,
+          expectedRevision: 1,
+          generation: {
+            ...generation,
+            summary: {
+              ...generation.summary,
+              text: `第一行${separator}第二行`,
+            },
+          },
+        }),
+      ).resolves.toMatchObject({ ok: false, code: "invalid_request" });
+    }
+    await expect(
+      authoring.applyGeneratedSummary({
+        context: context.pack,
+        expectedRevision: 1,
+        generation: {
+          ...generation,
+          summary: {
+            text: "该操作始终是常数复杂度。",
+            claims: [
+              {
+                id: "unsupported-summary",
+                text: "The operation is always constant complexity.",
+                factGroupIds: ["complexity"],
+              },
+            ],
+          },
+        },
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      code: "generation_blocked",
+    });
+    await expect(repository.get("vector-insert")).resolves.toEqual(before);
+  });
+
+  it("rejects stale revisions and repository write conflicts without mutation", async () => {
+    const { authoring, repository } = await generationFixture();
+    const context = await authoring.buildContext({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+    });
+    if (!context.ok) throw new Error("context build failed");
+    const request = {
+      context: context.pack,
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1 as const,
+        draftId: "vector-insert",
+        contextDigest: context.pack.digest,
+        summary: {
+          text: "在已知位置插入元素。",
+          claims: [
+            {
+              id: "known-position-summary",
+              text: "Use insert when the insertion position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    };
+
+    await expect(
+      authoring.applyGeneratedSummary({ ...request, expectedRevision: 2 }),
+    ).resolves.toMatchObject({ ok: false, code: "revision_conflict" });
+    const conflicting = createReferenceAuthoring({
+      drafts: {
+        get: (draftId) => repository.get(draftId),
+        reserve: (workspace) => repository.reserve(workspace),
+        commitWorkspace: async () => false,
+      },
+    });
+    await expect(
+      conflicting.applyGeneratedSummary(request),
+    ).resolves.toMatchObject({ ok: false, code: "write_conflict" });
+    const failing = createReferenceAuthoring({
+      drafts: {
+        get: (draftId) => repository.get(draftId),
+        reserve: (workspace) => repository.reserve(workspace),
+        commitWorkspace: async () => {
+          throw new Error("disk unavailable");
+        },
+      },
+    });
+    await expect(failing.applyGeneratedSummary(request)).resolves.toMatchObject(
+      {
+        ok: false,
+        code: "write_failed",
+        issues: [expect.objectContaining({ message: "disk unavailable" })],
+      },
+    );
+    await expect(repository.get("vector-insert")).resolves.toMatchObject({
+      draft: { revision: 1 },
+    });
+  });
+
+  it("keeps the review gate when report presentation metadata is absent", async () => {
+    const { authoring, repository } = await generationFixture();
+    const context = await authoring.buildContext({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+    });
+    if (!context.ok) throw new Error("context build failed");
+    const applied = await authoring.applyGeneratedSummary({
+      context: context.pack,
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: context.pack.digest,
+        summary: {
+          text: "在已知位置插入元素。",
+          claims: [
+            {
+              id: "known-position-summary",
+              text: "Use insert when the insertion position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    });
+    if (!applied.ok) throw new Error("summary apply failed");
+    expect(applied.workspace.report).not.toHaveProperty("generatedSummaries");
+
+    const resumed = createReferenceAuthoring({ drafts: repository });
+    await expect(
+      resumed.check({ draftId: "vector-insert" }),
+    ).resolves.toMatchObject({
+      ok: true,
+      report: {
+        status: "blocked",
+        findings: expect.arrayContaining([
+          expect.objectContaining({
+            code: "generated-content-review-required",
+            path: "generation/revision-2.json/review/status",
+          }),
+        ]),
+      },
+    });
+  });
+});

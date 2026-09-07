@@ -68,6 +68,73 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
   });
 
+  it("[T-AUTH-A4-SUMMARY-002] dispatches a generated-summary bundle through the same command", async () => {
+    const input = {
+      context: {
+        schemaVersion: 2,
+        draftId: "vector-insert",
+        draftRevision: 1,
+        inputDigest: "a".repeat(64),
+        target: {
+          entryId: "vector-insert",
+          kind: "member",
+          slug: "standard-library/containers/vector/insert",
+          title: "std::vector::insert",
+        },
+        profile: "callable",
+        requiredHeadings: ["什么时候使用"],
+        factGroups: [],
+        sources: [],
+        policy: {
+          mode: "verified-facts-only",
+          allowedFactGroupIds: ["selection"],
+          requirements: [],
+        },
+        digest: "b".repeat(64),
+      },
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: "b".repeat(64),
+        summary: {
+          text: "在已知位置向 std::vector 插入元素。",
+          claims: [
+            {
+              id: "known-position-summary",
+              text: "Use insert when the position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    };
+    const result = {
+      ok: true as const,
+      workspace: { draft: { draftId: "vector-insert", revision: 2 } },
+      review: { status: "accepted" },
+      receiptPath: "generation/revision-2.json",
+    };
+    const applyGeneratedSummary = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["apply-generation", "--input", "summary.json"],
+      authoring: {
+        applyGeneratedSummary,
+      } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(applyGeneratedSummary).toHaveBeenCalledWith(input);
+    expect(stdout).toHaveBeenCalledWith(
+      "Applied generated summary to vector-insert at revision 2 (generation/revision-2.json)\n",
+    );
+  });
+
   it("[T-AUTH-A3-CONTEXT-002] returns a constrained context pack as JSON", async () => {
     const result = {
       ok: true as const,

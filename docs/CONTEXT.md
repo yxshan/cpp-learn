@@ -136,6 +136,12 @@ It names the exact context-pack digest and maps each generated claim to allowed
 Fact Sheet groups; it is input to review, not accepted Reference content.
 _Avoid_: AI answer, generated page, publication candidate
 
+**Generated Summary**:
+A bounded single-line Authoring Generation for the candidate Reference Entry
+summary. It shares section-generation provenance and review rules but never
+changes article Markdown.
+_Avoid_: page introduction, generated section, search keyword list
+
 **Generation Receipt**:
 A revision-bound draft artifact recording the accepted Authoring Generation,
 its claim review, context digest, and application time. It supports audit and

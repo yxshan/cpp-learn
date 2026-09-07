@@ -197,6 +197,42 @@ describe("[T-AUTH-A1-FS-001] filesystem draft Adapter", () => {
       ),
     ).resolves.toContain('"contextDigest"');
 
+    const summaryContext = await authoring.buildContext({
+      draftId: target.entryId,
+      factGroupIds: ["selection"],
+    });
+    if (!summaryContext.ok) throw new Error("summary context build failed");
+    const summaryApplied = await authoring.applyGeneratedSummary({
+      context: summaryContext.pack,
+      expectedRevision: 2,
+      generation: {
+        schemaVersion: 1,
+        draftId: target.entryId,
+        contextDigest: summaryContext.pack.digest,
+        summary: {
+          text: "在已知位置向 std::vector 插入元素。",
+          claims: [
+            {
+              id: "known-position-summary",
+              text: "Use insert when the insertion position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(summaryApplied).toMatchObject({ ok: true });
+    await expect(
+      readFile(join(root, target.entryId, "entry.json"), "utf8"),
+    ).resolves.toContain("在已知位置向 std::vector 插入元素。");
+    await expect(
+      readFile(
+        join(root, target.entryId, "generation/revision-3.json"),
+        "utf8",
+      ),
+    ).resolves.toContain('"summary"');
+
     await expect(
       authoring.check({ draftId: target.entryId }),
     ).resolves.toMatchObject({

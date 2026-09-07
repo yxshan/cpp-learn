@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.3 |
+| Version | 2.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -213,12 +213,14 @@ a cited fact, so human review and `check` remain mandatory.
 
 The machine-oriented generation flow is:
 
-1. Run `context` with only the verified fact groups needed for one section.
+1. Run `context` with only the verified fact groups needed for one section or
+   summary.
 2. Produce a JSON bundle containing `context`, `expectedRevision`, and
    `generation`.
-3. Set `generation.contextDigest` to the exact context digest; select one
-   `requiredHeadings` value and map every generated claim to one or more
-   `allowedFactGroupIds`.
+3. Set `generation.contextDigest` to the exact context digest. For a section,
+   select one `requiredHeadings` value; for a summary, provide one trimmed
+   4–160 character line. Map every generated claim to one or more
+   `allowedFactGroupIds` in both cases.
 4. Run `apply-generation --input FILE --json` and inspect the structured result.
 5. Continue from the returned revision, then run `check` before preview or
    publication.
@@ -228,9 +230,11 @@ Codex or another agent that can produce the bundle as a local file. Accepted
 content is written by full-snapshot compare-and-swap and records
 `generation/revision-N.json`; a context change, unsupported claim, invalid
 heading, concurrent edit, or failed write leaves the draft unchanged. Generated
-sections remain listed in `report.json.generatedSections` as
-`human-review-required`; the current tracer deliberately keeps `check` blocked
-and cannot publish them until a later review workflow explicitly resolves them.
+sections retain legacy report presentation metadata, while both section and
+summary review obligations are derived from their validated Generation
+Receipts. The current tracer deliberately keeps `check` blocked and cannot
+publish generated content until a later review workflow explicitly resolves
+those receipts. Deleting optional report metadata cannot clear this gate.
 
 Run `measure` after a real batch and retain its JSON result with the batch
 review. Timing values are observations supplied by the author; cache and finding

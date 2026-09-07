@@ -23,6 +23,8 @@ import authoringGenerationReceiptSchema from "./authoring-generation-receipt.sch
 import authoringPublicationPlanSchema from "./authoring-publication-plan.schema.json" with { type: "json" };
 import authoringReportSchema from "./authoring-report.schema.json" with { type: "json" };
 import authoringSourcesSchema from "./authoring-sources.schema.json" with { type: "json" };
+import authoringSummaryGenerationSchema from "./authoring-summary-generation.schema.json" with { type: "json" };
+import authoringSummaryGenerationReceiptSchema from "./authoring-summary-generation-receipt.schema.json" with { type: "json" };
 import type {
   AuthoringValidationCache,
   AuthoringValidationCacheValue,
@@ -35,7 +37,9 @@ import {
   authoringGenerationSchema,
   replaceMarkdownSection,
   validateAuthoringSectionGeneration,
+  validateAuthoringSummaryGeneration,
   type AuthoringSectionGeneration,
+  type AuthoringSummaryGeneration,
 } from "./generation.js";
 
 export const AUTHORING_FACT_KINDS = [
@@ -251,6 +255,14 @@ export type ApplyGeneratedSectionResult =
       readonly review?: AuthoringGeneratedReview;
     };
 
+export interface ApplyGeneratedSummaryRequest {
+  readonly context: AuthoringContextPack;
+  readonly expectedRevision: number;
+  readonly generation: AuthoringSummaryGeneration;
+}
+
+export type ApplyGeneratedSummaryResult = ApplyGeneratedSectionResult;
+
 export interface AuthoringCorrectionCounts {
   readonly factual: number;
   readonly example: number;
@@ -380,15 +392,25 @@ export interface AuthoringReport {
   }[];
 }
 
-export interface AuthoringGenerationReceipt {
+interface AuthoringGenerationReceiptBase {
   readonly schemaVersion: 1;
   readonly draftId: string;
   readonly appliedRevision: number;
   readonly contextDigest: string;
-  readonly generation: AuthoringSectionGeneration;
   readonly review: AuthoringGeneratedReview;
   readonly appliedAt: string;
 }
+
+export interface AuthoringSectionGenerationReceipt extends AuthoringGenerationReceiptBase {
+  readonly generation: AuthoringSectionGeneration;
+}
+
+export interface AuthoringSummaryGenerationReceipt extends AuthoringGenerationReceiptBase {
+  readonly generation: AuthoringSummaryGeneration;
+}
+
+export type AuthoringGenerationReceipt =
+  AuthoringSectionGenerationReceipt | AuthoringSummaryGenerationReceipt;
 
 export interface AuthoringPublicationPlan {
   readonly schemaVersion: 1;
@@ -519,6 +541,9 @@ export interface AuthoringContentQualityValidator {
 }
 
 export interface ReferenceAuthoring {
+  applyGeneratedSummary(
+    request: ApplyGeneratedSummaryRequest,
+  ): Promise<ApplyGeneratedSummaryResult>;
   applyGeneratedSection(
     request: ApplyGeneratedSectionRequest,
   ): Promise<ApplyGeneratedSectionResult>;
@@ -569,7 +594,13 @@ const validateContextPack = ajv.compile(authoringContextPackSchema);
 const validateFacts = ajv.compile(authoringFactsSchema);
 const validateGeneratedReview = ajv.compile(authoringGeneratedReviewSchema);
 ajv.addSchema(authoringGenerationSchema);
-const validateGenerationReceipt = ajv.compile(authoringGenerationReceiptSchema);
+ajv.addSchema(authoringSummaryGenerationSchema);
+const validateSectionGenerationReceipt = ajv.compile(
+  authoringGenerationReceiptSchema,
+);
+const validateSummaryGenerationReceipt = ajv.compile(
+  authoringSummaryGenerationReceiptSchema,
+);
 const validateSources = ajv.compile(authoringSourcesSchema);
 const validateReport = ajv.compile(authoringReportSchema);
 const validatePublicationPlan = ajv.compile(authoringPublicationPlanSchema);
@@ -626,7 +657,22 @@ export function validateAuthoringGeneratedReview(
 export function validateAuthoringGenerationReceipt(
   value: unknown,
 ): readonly AuthoringValidationIssue[] {
-  const issues = [...validationIssues(validateGenerationReceipt, value)];
+  const generation =
+    value !== null && typeof value === "object" && "generation" in value
+      ? (value as { readonly generation?: unknown }).generation
+      : undefined;
+  const summaryReceipt =
+    generation !== null &&
+    typeof generation === "object" &&
+    "summary" in generation;
+  const issues = [
+    ...validationIssues(
+      summaryReceipt
+        ? validateSummaryGenerationReceipt
+        : validateSectionGenerationReceipt,
+      value,
+    ),
+  ];
   if (issues.length > 0) return issues;
   const receipt = value as AuthoringGenerationReceipt;
   if (
@@ -1203,21 +1249,33 @@ function validateGenerationArtifacts(
           "Receipt path, applied revision, and draft identity must agree",
         ),
       );
+      continue;
     }
+    const generatedKind =
+      "summary" in validated.generation ? "summary" : "section";
+    findings.push(
+      hardFinding(
+        "generated-content-review-required",
+        `${path}/review/status`,
+        `Generated ${generatedKind} requires explicit human review before publication`,
+      ),
+    );
   }
   return findings;
 }
 
-function validateGeneratedSectionReview(
+function validateGeneratedContentReview(
   report: AuthoringReport,
 ): AuthoringFinding[] {
-  return (report.generatedSections ?? []).map((section, index) =>
-    hardFinding(
-      "generated-content-review-required",
-      `report.json/generatedSections/${index}/reviewStatus`,
-      `Generated section ${section.heading} requires explicit human review before publication`,
+  return [
+    ...(report.generatedSections ?? []).map((section, index) =>
+      hardFinding(
+        "generated-content-review-required",
+        `report.json/generatedSections/${index}/reviewStatus`,
+        `Generated section ${section.heading} requires explicit human review before publication`,
+      ),
     ),
-  );
+  ];
 }
 
 function parseCandidateEntry(
@@ -2069,6 +2127,242 @@ export function createReferenceAuthoring(
 ): ReferenceAuthoring {
   const clock = dependencies.clock ?? (() => new Date());
   const authoring: ReferenceAuthoring = {
+    async applyGeneratedSummary(request) {
+      const contextIssues = validateAuthoringContextPack(request.context);
+      const generationIssues = validateAuthoringSummaryGeneration(
+        request.generation,
+      );
+      if (
+        contextIssues.length > 0 ||
+        generationIssues.length > 0 ||
+        !Number.isInteger(request.expectedRevision) ||
+        request.expectedRevision < 1 ||
+        request.generation.draftId !== request.context.draftId ||
+        request.generation.contextDigest !== request.context.digest
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues:
+            contextIssues.length > 0
+              ? contextIssues.map((issue) => ({
+                  ...issue,
+                  path: `/context${issue.path === "/" ? "" : issue.path}`,
+                }))
+              : generationIssues.length > 0
+                ? generationIssues.map((issue) => ({
+                    ...issue,
+                    path: `/generation${issue.path === "/" ? "" : issue.path}`,
+                  }))
+                : [
+                    {
+                      path: "/generation",
+                      message:
+                        "Generation identity, context digest, and positive expected revision must match the supplied context",
+                      keyword: "request",
+                    },
+                  ],
+        };
+      }
+      const reviewed = await authoring.reviewGeneratedClaims({
+        context: request.context,
+        claims: request.generation.summary.claims,
+      });
+      if (!reviewed.ok) {
+        return {
+          ok: false,
+          code:
+            reviewed.code === "draft_not_found"
+              ? "draft_not_found"
+              : "context_changed",
+          issues: reviewed.issues,
+        };
+      }
+      if (reviewed.review.status === "requires-review") {
+        return {
+          ok: false,
+          code: "generation_blocked",
+          issues: reviewed.review.reviewQueue.map((item, index) => ({
+            path: `/generation/summary/claims/${index}`,
+            message: `Generated claim ${item.claimId} requires review: ${item.reason}`,
+            keyword: item.reason,
+          })),
+          review: reviewed.review,
+        };
+      }
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(request.context.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/context/draftId",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      if (
+        workspace.draft.revision !== request.expectedRevision ||
+        request.context.draftRevision !== request.expectedRevision
+      ) {
+        return { ok: false, code: "revision_conflict", issues: [] };
+      }
+      if (
+        authoringInputDigest(workspace.files) !== request.context.inputDigest
+      ) {
+        return {
+          ok: false,
+          code: "context_changed",
+          issues: [
+            {
+              path: "/context/inputDigest",
+              message:
+                "The draft authoring input changed after the context pack was reviewed",
+              keyword: "digest",
+            },
+          ],
+        };
+      }
+      const entrySource = workspace.files["entry.json"];
+      let entry: Record<string, unknown>;
+      try {
+        const parsed = JSON.parse(entrySource ?? "null") as unknown;
+        if (
+          parsed === null ||
+          typeof parsed !== "object" ||
+          Array.isArray(parsed)
+        ) {
+          throw new Error("Candidate Entry must be a JSON object");
+        }
+        entry = parsed as Record<string, unknown>;
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/entry.json",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Candidate Entry is unreadable",
+              keyword: "parse",
+            },
+          ],
+        };
+      }
+      if (
+        entry["schemaVersion"] !== 2 ||
+        entry["id"] !== workspace.draft.target.entryId
+      ) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/entry.json/id",
+              message:
+                "Candidate Entry schema and identity must match the Authoring Draft",
+              keyword: "identity",
+            },
+          ],
+        };
+      }
+      const nextRevision = workspace.draft.revision + 1;
+      const draft: AuthoringDraftManifest = {
+        ...workspace.draft,
+        revision: nextRevision,
+        state: "draft",
+        updatedAt: clock().toISOString(),
+      };
+      const receiptPath = `generation/revision-${nextRevision}.json`;
+      const receipt: AuthoringSummaryGenerationReceipt = {
+        schemaVersion: 1,
+        draftId: draft.draftId,
+        appliedRevision: nextRevision,
+        contextDigest: request.context.digest,
+        generation: request.generation,
+        review: reviewed.review,
+        appliedAt: draft.updatedAt,
+      };
+      const receiptIssues = validateAuthoringGenerationReceipt(receipt);
+      if (receiptIssues.length > 0) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: receiptIssues.map((issue) => ({
+            ...issue,
+            path: `/receipt${issue.path === "/" ? "" : issue.path}`,
+          })),
+        };
+      }
+      const files = {
+        ...workspace.files,
+        "entry.json": jsonFile({
+          ...entry,
+          summary: request.generation.summary.text,
+        }),
+        "draft.json": jsonFile(draft),
+        [receiptPath]: jsonFile(receipt),
+      };
+      const report: AuthoringReport = {
+        ...workspace.report,
+        draftRevision: nextRevision,
+        inputDigest: authoringInputDigest(files),
+        status: "not_checked",
+        findings: [],
+        reviewQueue: [],
+        cacheEvidence: [],
+      };
+      const nextWorkspace: DraftWorkspace = {
+        ...workspace,
+        draft,
+        report,
+        files: { ...files, "report.json": jsonFile(report) },
+      };
+      let committed: boolean;
+      try {
+        committed = await dependencies.drafts.commitWorkspace({
+          draftId: draft.draftId,
+          expectedRevision: request.expectedRevision,
+          expectedFiles: workspace.files,
+          workspace: nextWorkspace,
+        });
+      } catch (error) {
+        return {
+          ok: false,
+          code: "write_failed",
+          issues: [
+            {
+              path: "/draft",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Generated summary could not be committed",
+              keyword: "write",
+            },
+          ],
+        };
+      }
+      if (!committed) {
+        return { ok: false, code: "write_conflict", issues: [] };
+      }
+      return {
+        ok: true,
+        workspace: nextWorkspace,
+        review: reviewed.review,
+        receiptPath,
+      };
+    },
     async applyGeneratedSection(request) {
       const contextIssues = validateAuthoringContextPack(request.context);
       const generationIssues = validateAuthoringSectionGeneration(
@@ -2231,7 +2525,7 @@ export function createReferenceAuthoring(
         updatedAt: clock().toISOString(),
       };
       const receiptPath = `generation/revision-${nextRevision}.json`;
-      const receipt: AuthoringGenerationReceipt = {
+      const receipt: AuthoringSectionGenerationReceipt = {
         schemaVersion: 1,
         draftId: draft.draftId,
         appliedRevision: nextRevision,
@@ -3206,7 +3500,7 @@ export function createReferenceAuthoring(
           : []),
         ...validateContentProfile(workspace),
         ...validateGenerationArtifacts(workspace),
-        ...validateGeneratedSectionReview(workspace.report),
+        ...validateGeneratedContentReview(workspace.report),
         ...reuseFindings,
       ];
 
@@ -3633,11 +3927,13 @@ export {
   authoringPublicationPlanSchema,
   authoringReportSchema,
   authoringSourcesSchema,
+  authoringSummaryGenerationSchema,
 };
 
 export type {
   AuthoringGenerationClaim,
   AuthoringSectionGeneration,
+  AuthoringSummaryGeneration,
 } from "./generation.js";
 
 export {

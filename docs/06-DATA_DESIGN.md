@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -250,6 +250,14 @@ therefore cannot be installed as separate partial updates.
 Generation Receipts are schema-validated before commit and during every draft
 check. `report.json.generatedSections` separately labels their headings,
 receipt paths, revisions, context digests, and pending human-review status.
+
+`AuthoringSummaryGeneration` carries a bounded single-line plain-text summary,
+claim-to-fact mappings, and the same context digest. It updates only the
+candidate Entry summary. Its dedicated v1 Summary Generation Receipt uses the
+shared `generation/revision-N.json` sequence without changing the existing v1
+Section Generation Receipt or Authoring Report schemas. During every check, a
+valid receipt itself creates the pending human-review finding; optional report
+presentation metadata is never trusted as the publication gate.
 
 `AuthoringBatchReport` aggregates one to five current Draft reports plus
 explicitly supplied timing and correction observations. Each member records its

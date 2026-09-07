@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -318,15 +318,15 @@ behavior, not author throughput.
 ### Phase A4: AI Authoring Adapter
 
 - Expose profile/target/required-heading guidance in constrained context packs.
-- Accept schema-validated generated sections through a provider-neutral JSON
-  bundle and CLI Adapter.
+- Accept schema-validated generated sections and summaries through a
+  provider-neutral JSON bundle and CLI Adapter.
 - Review every declared claim against an authoritative rebuilt context.
-- Apply accepted sections through revision-bound full-snapshot commits and keep
-  Generation Receipts.
+- Apply accepted sections and summaries through revision-bound full-snapshot
+  commits and keep Generation Receipts.
 
-Current status: the single-section tracer bullet is implemented. Remaining A4
-work adds summary and example proposals, structured template generation, and a
-complete provider-neutral authoring run command.
+Current status: controlled section and Entry-summary generation are implemented.
+Remaining A4 work adds example proposals, structured template generation, and
+a complete provider-neutral authoring run command.
 
 Exit: an AI agent can fill a complete draft through controlled operations while
 unsupported claims remain unverified and no failed operation partially changes
@@ -393,6 +393,9 @@ authoring rules or building a general-purpose CMS.
 - `T-AUTH-013`: source/fact proposals cannot verify themselves or change source
   classification.
 - `T-AUTH-014`: repair attempts are bounded and cannot bypass the full gate.
+- `T-AUTH-015`: generated summaries are single-line, context/revision-bound,
+  claim-reviewed, receipt-backed, summary-only mutations that remain blocked
+  until explicit human review.
 
 ## 11. Metrics and operating policy
 
@@ -413,8 +416,9 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Complete Phase A4 by adding summary/example generation and a provider-neutral
-run orchestration command on top of the delivered single-section tracer bullet.
+Complete Phase A4 by adding example generation, structured bundle templates,
+and a provider-neutral run orchestration command on top of the delivered
+section and summary operations.
 Then implement the resumable Phase A5 batch runner. A real coherent five-Entry
 run must still be retained to close empirical Phase A3 acceptance; later tooling
 must not manufacture that evidence.

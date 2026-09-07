@@ -4,6 +4,7 @@ import Ajv2020, {
 } from "ajv/dist/2020.js";
 
 import authoringGenerationSchema from "./authoring-generation.schema.json" with { type: "json" };
+import authoringSummaryGenerationSchema from "./authoring-summary-generation.schema.json" with { type: "json" };
 
 export interface AuthoringGenerationClaim {
   readonly id: string;
@@ -22,6 +23,16 @@ export interface AuthoringSectionGeneration {
   };
 }
 
+export interface AuthoringSummaryGeneration {
+  readonly schemaVersion: 1;
+  readonly draftId: string;
+  readonly contextDigest: string;
+  readonly summary: {
+    readonly text: string;
+    readonly claims: readonly AuthoringGenerationClaim[];
+  };
+}
+
 export interface GenerationValidationIssue {
   readonly path: string;
   readonly message: string;
@@ -30,6 +41,7 @@ export interface GenerationValidationIssue {
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validateGeneration = ajv.compile(authoringGenerationSchema);
+const validateSummaryGeneration = ajv.compile(authoringSummaryGenerationSchema);
 
 function issuePath(error: ErrorObject): string {
   if (error.keyword === "required") {
@@ -54,6 +66,12 @@ export function validateAuthoringSectionGeneration(
   value: unknown,
 ): readonly GenerationValidationIssue[] {
   return validationIssues(validateGeneration, value);
+}
+
+export function validateAuthoringSummaryGeneration(
+  value: unknown,
+): readonly GenerationValidationIssue[] {
+  return validationIssues(validateSummaryGeneration, value);
 }
 
 export function replaceMarkdownSection(
@@ -109,4 +127,4 @@ export function replaceMarkdownSection(
   return { ok: true, content };
 }
 
-export { authoringGenerationSchema };
+export { authoringGenerationSchema, authoringSummaryGenerationSchema };

@@ -3,6 +3,7 @@ import {
   type ReferenceEntryKind,
 } from "@cpp-learn/contracts";
 import type {
+  ApplyGeneratedSummaryRequest,
   ApplyGeneratedSectionRequest,
   DraftWorkspace,
   ReferenceAuthoring,
@@ -80,9 +81,18 @@ export async function runReferenceAuthorCli(
       dependencies.stderr(applyGenerationUsage);
       return 2;
     }
-    const result = await dependencies.authoring.applyGeneratedSection(
-      input as ApplyGeneratedSectionRequest,
-    );
+    const generation = (input as Record<string, unknown>)["generation"];
+    const summaryGeneration =
+      generation !== null &&
+      typeof generation === "object" &&
+      "summary" in generation;
+    const result = summaryGeneration
+      ? await dependencies.authoring.applyGeneratedSummary(
+          input as ApplyGeneratedSummaryRequest,
+        )
+      : await dependencies.authoring.applyGeneratedSection(
+          input as ApplyGeneratedSectionRequest,
+        );
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
@@ -91,7 +101,7 @@ export async function runReferenceAuthorCli(
       );
     } else {
       dependencies.stdout(
-        `Applied generated section to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
+        `Applied generated ${summaryGeneration ? "summary" : "section"} to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
       );
     }
     return result.ok ? 0 : 1;

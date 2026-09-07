@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -155,7 +155,7 @@ Reference content CI additionally validates:
   fractional counters and empty baselines as usage errors. Fixture results
   validate instrumentation only; acceptance requires a separately observed real
   batch.
-- Authoring Phase A4 verifies provider-neutral generated-section ingestion at
+- Authoring Phase A4 verifies provider-neutral generated-content ingestion at
   the `ReferenceAuthoring` Interface and CLI Adapter. Tests cover authoritative
   context rebuild, claim allowlists, profile heading confinement, revision
   conflict, unchanged state on rejection, Generation Receipts, and complete
@@ -163,6 +163,11 @@ Reference content CI additionally validates:
   filesystem suite also covers active-reader serialization and recovery after a
   writer stops between snapshot moves, including competing recovery readers;
   receipt corruption and pending generated-content review are hard findings.
+  `T-AUTH-A4-SUMMARY-001/002` verifies summary-only mutation, all JSON/Unicode
+  single-line boundaries, claim rejection, stale revision and write conflict,
+  dedicated receipt validation, receipt-derived human-review blocking,
+  filesystem persistence, and correctly labelled CLI dispatch through the same
+  machine command.
 
 ## 5. Security tests
 

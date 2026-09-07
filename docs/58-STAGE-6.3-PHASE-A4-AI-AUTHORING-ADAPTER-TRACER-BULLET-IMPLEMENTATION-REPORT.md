@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-041 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Tracer bullet implemented; phase in progress |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -97,8 +97,9 @@ uses the same compare-and-swap Interface.
 ## 6. Remaining Phase A4 work
 
 This tracer bullet deliberately does not claim a complete AI authoring flow.
-Remaining work includes controlled summary updates, Reference Example proposals,
-bundle-template generation, and a provider-neutral run orchestrator that can
+Controlled summary updates are delivered in [IMP-042](59-STAGE-6.3-PHASE-A4-GENERATED-SUMMARY-IMPLEMENTATION-REPORT.md).
+Remaining work includes Reference Example proposals, bundle-template
+generation, and a provider-neutral run orchestrator that can
 advance all required sections while stopping on review findings. Phase A5 then
 adds resumable coherent-batch execution. A Web review surface remains optional
 and is not part of the current critical path.
