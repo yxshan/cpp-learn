@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-07 |
 
 ## 1. Problem and outcome
 
@@ -298,6 +298,11 @@ and release acceptance remain manual.
 
 Exit: a five-Entry batch meets the time target with no higher escaped-defect rate
 than the current manual baseline.
+
+Implementation status: the reusable-fact, constrained context-pack, and batch
+measurement contracts are delivered. A real observed five-Entry batch is still
+required before the Phase A3 exit can be accepted; deterministic fixture results
+prove calculation and rejection behavior, not author throughput.
 
 ### Phase A4: Web Author Console
 

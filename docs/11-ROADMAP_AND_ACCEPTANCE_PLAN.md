@@ -228,12 +228,13 @@ Acceptance:
 
 ## 12. Stage 6.3: Reference content authoring tools
 
-**Status:** Phases A0, A1, and A2 accepted; Phase A3 planned. Design and phased acceptance are controlled by the [Content
+**Status:** Phases A0, A1, and A2 accepted; Phase A3 tooling implemented with empirical acceptance pending. Design and phased acceptance are controlled by the [Content
 Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
 A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md),
 and A1 evidence in the [CLI Prepare/Check Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
 Phase A2 evidence is in the [Cache, Preview, and Atomic Publish Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md).
+Phase A3 tooling evidence is in the [Fact Reuse, Context Packs, and Batch Metrics Report](57-STAGE-6.3-PHASE-A3-FACT-REUSE-CONTEXT-PACKS-AND-BATCH-METRICS-IMPLEMENTATION-REPORT.md).
 
 Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
 
@@ -251,7 +252,9 @@ assistance, and the Web Author Console were separately gated at that point.
 The accepted Phase A2 adds exact compiler-result caching, impact closure,
 production-renderer preview, revision/input-bound dry-run publication plans, and
 validated whole-tree publication with rollback. AI context packs, batch metrics,
-and the Web Author Console remain later slices.
+and fact reuse are implemented in Phase A3; one real measured five-Entry batch
+is still required before acceptance. The Web Author Console remains a later
+slice.
 
 ## 13. Global definition of done
 

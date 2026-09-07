@@ -164,12 +164,15 @@ Create an explicit draft, edit its generated files, and check it:
 
 ```text
 npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE
+npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE --reuse-from RELATED_ID --reuse-facts FACT_ID[,FACT_ID...]
+npm run reference:author -- context --draft ID --facts FACT_ID[,FACT_ID...] --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
 npm run reference:author -- preview --draft ID
 npm run reference:author -- publish --draft ID --dry-run
 npm run reference:author -- publish --draft ID --revision REVISION
 npm run reference:author -- publish --draft ID --revision REVISION --apply
+npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --corrections N --baseline-corrections N --baseline-entries N --flaky-reruns N --json
 ```
 
 Drafts default to `.cpp-learn/authoring/`, while disposable compiler results
@@ -195,6 +198,22 @@ do not delete the reported `.backup` directory; it contains the preserved
 canonical tree for manual recovery. If a process stops between the two
 directory renames, the next publication restores the single unambiguous backup
 before planning; multiple backups fail closed for manual inspection.
+
+Fact reuse is explicit: the source must be in the target draft's related Entry
+set, remain at the referenced ready revision, and have the same evidence digest.
+The target receives the selected fact groups and exact referenced source
+records; subsequent source changes invalidate reuse. `context` emits only the
+requested verified groups and sources. Save its `--json` output when passing it
+to an AI Adapter, and require generated claims to cite `allowedFactGroupIds`.
+The tool cannot semantically prove arbitrary prose, so new claims still belong
+in `facts.json` and must pass `check` before publication.
+
+Run `measure` after a real batch and retain its JSON result with the batch
+review. Timing values are observations supplied by the author; cache and finding
+counts come from the current revision-bound reports. A five-Entry batch meets
+the planning target only when all five drafts are ready, active time is 60–90
+minutes, and the post-publication correction rate does not exceed the chosen
+baseline batch rate.
 
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.

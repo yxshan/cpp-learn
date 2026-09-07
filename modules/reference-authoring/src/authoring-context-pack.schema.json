@@ -1,0 +1,128 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-context-pack.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "draftId",
+    "draftRevision",
+    "inputDigest",
+    "factGroups",
+    "sources",
+    "policy",
+    "digest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "draftRevision": { "type": "integer", "minimum": 1 },
+    "inputDigest": { "$ref": "#/$defs/digest" },
+    "factGroups": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/factGroup" }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "policy": { "$ref": "#/$defs/policy" },
+    "digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "factKind": {
+      "enum": [
+        "selection",
+        "signature",
+        "availability",
+        "parameters",
+        "return",
+        "ownership",
+        "errors",
+        "complexity",
+        "lifetime_invalidation",
+        "thread_safety",
+        "scope",
+        "direct_include",
+        "facility_map",
+        "examples",
+        "pitfalls",
+        "js_comparison"
+      ]
+    },
+    "reusedFrom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["draftId", "draftRevision", "groupId", "evidenceDigest"],
+      "properties": {
+        "draftId": { "$ref": "#/$defs/id" },
+        "draftRevision": { "type": "integer", "minimum": 1 },
+        "groupId": { "$ref": "#/$defs/id" },
+        "evidenceDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "factGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "summary", "sourceIds", "evidenceDigest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "$ref": "#/$defs/factKind" },
+        "summary": { "type": "string", "minLength": 1 },
+        "sourceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "decision": { "type": "string", "minLength": 1 },
+        "reusedFrom": { "$ref": "#/$defs/reusedFrom" },
+        "evidenceDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "title", "url", "verifiedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["primary", "secondary", "vendor"] },
+        "title": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "verifiedAt": { "type": "string", "format": "date" },
+        "standardSection": { "type": "string", "minLength": 1 },
+        "notes": { "type": "string" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "allowedFactGroupIds", "requirements"],
+      "properties": {
+        "mode": { "const": "verified-facts-only" },
+        "allowedFactGroupIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

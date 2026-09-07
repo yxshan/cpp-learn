@@ -145,6 +145,11 @@ Reference content CI additionally validates:
   diffs, checked-input/target/revision binding, historical redirects, successful
   whole-tree publication, interrupted-swap recovery, and byte-for-byte canonical
   preservation when staging validation is interrupted.
+- Authoring Phase A3 verifies revision/digest-bound fact reuse between related
+  drafts, rejection of unverified context requests, deterministic context-pack
+  source allowlists, CLI parity, and five-Entry batch aggregation for timing,
+  cache, findings, and escaped corrections. Fixture results validate the
+  instrumentation only; acceptance requires a separately observed real batch.
 
 ## 5. Security tests
 

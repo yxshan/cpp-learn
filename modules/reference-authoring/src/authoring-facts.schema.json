@@ -51,7 +51,8 @@
           "uniqueItems": true,
           "items": { "$ref": "#/$defs/id" }
         },
-        "decision": { "type": "string", "minLength": 1 }
+        "decision": { "type": "string", "minLength": 1 },
+        "reusedFrom": { "$ref": "#/$defs/reusedFrom" }
       },
       "allOf": [
         {
@@ -74,6 +75,21 @@
           }
         }
       ]
+    },
+    "reusedFrom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["draftId", "draftRevision", "groupId", "evidenceDigest"],
+      "properties": {
+        "draftId": { "$ref": "#/$defs/id" },
+        "draftRevision": { "type": "integer", "minimum": 1 },
+        "groupId": { "$ref": "#/$defs/id" },
+        "evidenceDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     }
   }
 }

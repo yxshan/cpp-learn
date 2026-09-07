@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import Ajv2020, {
   type ErrorObject,
   type ValidateFunction,
@@ -11,7 +13,9 @@ import type {
 } from "@cpp-learn/reference";
 import { validateReferenceEntryManifest } from "@cpp-learn/reference-schema";
 
+import authoringBatchReportSchema from "./authoring-batch-report.schema.json" with { type: "json" };
 import authoringCatalogProposalSchema from "./authoring-catalog-proposal.schema.json" with { type: "json" };
+import authoringContextPackSchema from "./authoring-context-pack.schema.json" with { type: "json" };
 import authoringDraftSchema from "./authoring-draft.schema.json" with { type: "json" };
 import authoringFactsSchema from "./authoring-facts.schema.json" with { type: "json" };
 import authoringPublicationPlanSchema from "./authoring-publication-plan.schema.json" with { type: "json" };
@@ -63,6 +67,10 @@ export interface PrepareDraftTarget {
 
 export interface PrepareDraftRequest {
   readonly target: PrepareDraftTarget;
+  readonly reuse?: {
+    readonly draftId: string;
+    readonly factGroupIds: readonly string[];
+  };
 }
 
 export interface AuthoringDraftManifest {
@@ -92,6 +100,14 @@ export interface AuthoringFactGroup {
   readonly summary: string;
   readonly sourceIds: readonly string[];
   readonly decision?: string;
+  readonly reusedFrom?: AuthoringFactReuse;
+}
+
+export interface AuthoringFactReuse {
+  readonly draftId: string;
+  readonly draftRevision: number;
+  readonly groupId: string;
+  readonly evidenceDigest: string;
 }
 
 export interface AuthoringFactSheet {
@@ -103,16 +119,118 @@ export interface AuthoringFactSheet {
 export interface AuthoringSourceLedger {
   readonly schemaVersion: 1;
   readonly draftId: string;
-  readonly sources: readonly {
-    readonly id: string;
-    readonly kind: "primary" | "secondary" | "vendor";
-    readonly title: string;
-    readonly url: string;
-    readonly verifiedAt: string;
-    readonly standardSection?: string;
-    readonly notes?: string;
-  }[];
+  readonly sources: readonly AuthoringSourceRecord[];
 }
+
+export interface AuthoringSourceRecord {
+  readonly id: string;
+  readonly kind: "primary" | "secondary" | "vendor";
+  readonly title: string;
+  readonly url: string;
+  readonly verifiedAt: string;
+  readonly standardSection?: string;
+  readonly notes?: string;
+}
+
+export interface BuildAuthoringContextRequest {
+  readonly draftId: string;
+  readonly factGroupIds: readonly string[];
+}
+
+export interface AuthoringContextPack {
+  readonly schemaVersion: 1;
+  readonly draftId: string;
+  readonly draftRevision: number;
+  readonly inputDigest: string;
+  readonly factGroups: readonly {
+    readonly id: string;
+    readonly kind: AuthoringFactKind;
+    readonly summary: string;
+    readonly sourceIds: readonly string[];
+    readonly decision?: string;
+    readonly reusedFrom?: AuthoringFactReuse;
+    readonly evidenceDigest: string;
+  }[];
+  readonly sources: readonly AuthoringSourceRecord[];
+  readonly policy: {
+    readonly mode: "verified-facts-only";
+    readonly allowedFactGroupIds: readonly string[];
+    readonly requirements: readonly string[];
+  };
+  readonly digest: string;
+}
+
+export type BuildAuthoringContextResult =
+  | { readonly ok: true; readonly pack: AuthoringContextPack }
+  | {
+      readonly ok: false;
+      readonly code:
+        | "invalid_request"
+        | "draft_not_found"
+        | "draft_unreadable"
+        | "context_blocked";
+      readonly issues: readonly AuthoringValidationIssue[];
+    };
+
+export interface MeasureAuthoringBatchRequest {
+  readonly batchId: string;
+  readonly draftIds: readonly string[];
+  readonly authorActiveMinutes: number;
+  readonly machineMinutes: number;
+  readonly fullGateMinutes: number;
+  readonly postPublicationCorrections: number;
+  readonly baselinePostPublicationCorrections: number;
+  readonly baselineEntries: number;
+  readonly flakyReruns: number;
+}
+
+export interface AuthoringBatchReport {
+  readonly schemaVersion: 1;
+  readonly batchId: string;
+  readonly draftIds: readonly string[];
+  readonly status: "meets-target" | "needs-attention";
+  readonly entries: number;
+  readonly readyEntries: number;
+  readonly examples: number;
+  readonly cache: {
+    readonly hits: number;
+    readonly misses: number;
+    readonly notChecked: number;
+    readonly hitRate: number;
+  };
+  readonly findings: {
+    readonly hard: number;
+    readonly warning: number;
+    readonly highRisk: number;
+  };
+  readonly timing: {
+    readonly authorActiveMinutes: number;
+    readonly machineMinutes: number;
+    readonly fullGateMinutes: number;
+  };
+  readonly quality: {
+    readonly postPublicationCorrections: number;
+    readonly baselinePostPublicationCorrections: number;
+    readonly baselineEntries: number;
+    readonly correctionRate: number;
+    readonly baselineCorrectionRate: number;
+    readonly flakyReruns: number;
+  };
+  readonly targets: {
+    readonly fiveEntryBatch: boolean;
+    readonly activeMinutesWithinTarget: boolean;
+    readonly noEscapedCorrectionRegression: boolean;
+  };
+  readonly digest: string;
+}
+
+export type MeasureAuthoringBatchResult =
+  | { readonly ok: true; readonly report: AuthoringBatchReport }
+  | {
+      readonly ok: false;
+      readonly code: "invalid_request" | "draft_not_found" | "batch_unreadable";
+      readonly issues: readonly AuthoringValidationIssue[];
+    };
 
 export interface AuthoringReport {
   readonly schemaVersion: 1;
@@ -271,6 +389,12 @@ export interface AuthoringContentQualityValidator {
 }
 
 export interface ReferenceAuthoring {
+  buildContext(
+    request: BuildAuthoringContextRequest,
+  ): Promise<BuildAuthoringContextResult>;
+  measureBatch(
+    request: MeasureAuthoringBatchRequest,
+  ): Promise<MeasureAuthoringBatchResult>;
   prepare(request: PrepareDraftRequest): Promise<PrepareDraftResult>;
   check(request: CheckDraftRequest): Promise<CheckDraftResult>;
   publish(request: PublishDraftRequest): Promise<PublishDraftResult>;
@@ -302,8 +426,10 @@ export interface ReferenceAuthoringDependencies {
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
+const validateBatchReport = ajv.compile(authoringBatchReportSchema);
 const validateDraft = ajv.compile(authoringDraftSchema);
 const validateCatalogProposal = ajv.compile(authoringCatalogProposalSchema);
+const validateContextPack = ajv.compile(authoringContextPackSchema);
 const validateFacts = ajv.compile(authoringFactsSchema);
 const validateSources = ajv.compile(authoringSourcesSchema);
 const validateReport = ajv.compile(authoringReportSchema);
@@ -334,10 +460,22 @@ export function validateAuthoringDraft(
   return validationIssues(validateDraft, value);
 }
 
+export function validateAuthoringBatchReport(
+  value: unknown,
+): readonly AuthoringValidationIssue[] {
+  return validationIssues(validateBatchReport, value);
+}
+
 export function validateAuthoringCatalogProposal(
   value: unknown,
 ): readonly AuthoringValidationIssue[] {
   return validationIssues(validateCatalogProposal, value);
+}
+
+export function validateAuthoringContextPack(
+  value: unknown,
+): readonly AuthoringValidationIssue[] {
+  return validationIssues(validateContextPack, value);
 }
 
 export function validateAuthoringFactSheet(
@@ -937,15 +1075,45 @@ function validateFactCoverage(workspace: DraftWorkspace): AuthoringFinding[] {
   return findings;
 }
 
+const NORMATIVE_FACT_KINDS = new Set<AuthoringFactKind>([
+  "signature",
+  "availability",
+  "parameters",
+  "return",
+  "ownership",
+  "errors",
+  "complexity",
+  "lifetime_invalidation",
+  "thread_safety",
+  "direct_include",
+  "facility_map",
+]);
+
+function hasPrimaryWorkingDraftEvidence(
+  group: AuthoringFactGroup,
+  sources: readonly AuthoringSourceRecord[],
+): boolean {
+  const sourcesById = new Map(sources.map((source) => [source.id, source]));
+  return group.sourceIds.some((sourceId) => {
+    const source = sourcesById.get(sourceId);
+    if (source?.kind !== "primary" || source.standardSection === undefined) {
+      return false;
+    }
+    try {
+      const url = new URL(source.url);
+      return url.hostname === "eel.is" && url.pathname.startsWith("/c++draft");
+    } catch {
+      return false;
+    }
+  });
+}
+
 function validateSourceAlignment(
   workspace: DraftWorkspace,
   entry: ReferenceEntryManifest,
   today: string,
 ): AuthoringFinding[] {
   const findings: AuthoringFinding[] = [];
-  const sourcesById = new Map(
-    workspace.sources.sources.map((source) => [source.id, source]),
-  );
   const usedSourceIds = new Set(
     workspace.facts.groups.flatMap((group) => [...group.sourceIds]),
   );
@@ -1024,38 +1192,11 @@ function validateSourceAlignment(
       );
     }
   }
-  const normativeKinds = new Set<AuthoringFactKind>([
-    "signature",
-    "availability",
-    "parameters",
-    "return",
-    "ownership",
-    "errors",
-    "complexity",
-    "lifetime_invalidation",
-    "thread_safety",
-    "direct_include",
-    "facility_map",
-  ]);
   for (const group of workspace.facts.groups) {
-    if (group.status !== "verified" || !normativeKinds.has(group.kind)) {
+    if (group.status !== "verified" || !NORMATIVE_FACT_KINDS.has(group.kind)) {
       continue;
     }
-    const hasWorkingDraftClause = group.sourceIds.some((sourceId) => {
-      const source = sourcesById.get(sourceId);
-      if (source?.kind !== "primary" || source.standardSection === undefined) {
-        return false;
-      }
-      try {
-        const url = new URL(source.url);
-        return (
-          url.hostname === "eel.is" && url.pathname.startsWith("/c++draft")
-        );
-      } catch {
-        return false;
-      }
-    });
-    if (!hasWorkingDraftClause) {
+    if (!hasPrimaryWorkingDraftEvidence(group, workspace.sources.sources)) {
       findings.push(
         hardFinding(
           "fact-normative-source-missing",
@@ -1357,11 +1498,630 @@ async function validateExamples(
   return { findings, cacheEvidence };
 }
 
+export function authoringFactEvidenceDigest(
+  group: AuthoringFactGroup,
+  sources: readonly AuthoringSourceRecord[],
+): string {
+  const selectedSources = group.sourceIds
+    .map((sourceId) => sources.find(({ id }) => id === sourceId))
+    .filter((source): source is AuthoringSourceRecord => source !== undefined)
+    .sort((left, right) => left.id.localeCompare(right.id));
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        kind: group.kind,
+        summary: group.summary,
+        sourceIds: [...group.sourceIds].sort(),
+        ...(group.decision === undefined ? {} : { decision: group.decision }),
+        sources: selectedSources,
+      }),
+    )
+    .digest("hex");
+}
+
+async function validateFactReuse(
+  workspace: DraftWorkspace,
+  repository: ReferenceDraftRepository,
+  selectedGroupIds?: ReadonlySet<string>,
+): Promise<AuthoringValidationIssue[]> {
+  const issues: AuthoringValidationIssue[] = [];
+  for (const [index, group] of workspace.facts.groups.entries()) {
+    if (
+      group.reusedFrom === undefined ||
+      (selectedGroupIds !== undefined && !selectedGroupIds.has(group.id))
+    ) {
+      continue;
+    }
+    const path = `/groups/${index}/reusedFrom`;
+    const reference = group.reusedFrom;
+    if (!workspace.proposal.relatedEntryIds.includes(reference.draftId)) {
+      issues.push({
+        path: `${path}/draftId`,
+        message: `Reusable facts must come from a related draft: ${reference.draftId}`,
+        keyword: "fact-reuse-unrelated",
+      });
+      continue;
+    }
+    const sourceWorkspace = await repository.get(reference.draftId);
+    if (sourceWorkspace === undefined) {
+      issues.push({
+        path: `${path}/draftId`,
+        message: `Reusable fact source draft is missing: ${reference.draftId}`,
+        keyword: "fact-reuse-source-missing",
+      });
+      continue;
+    }
+    if (
+      sourceWorkspace.draft.revision !== reference.draftRevision ||
+      sourceWorkspace.draft.state !== "checked" ||
+      sourceWorkspace.report.status !== "ready" ||
+      sourceWorkspace.report.draftRevision !== reference.draftRevision ||
+      sourceWorkspace.report.inputDigest !==
+        authoringInputDigest(sourceWorkspace.files)
+    ) {
+      issues.push({
+        path: `${path}/draftRevision`,
+        message:
+          "Reusable fact source is no longer the referenced ready revision",
+        keyword: "fact-reuse-revision-stale",
+      });
+      continue;
+    }
+    const sourceGroup = sourceWorkspace.facts.groups.find(
+      ({ id }) => id === reference.groupId,
+    );
+    if (sourceGroup?.status !== "verified") {
+      issues.push({
+        path: `${path}/groupId`,
+        message: "Reusable fact source group is missing or not verified",
+        keyword: "fact-reuse-source-unverified",
+      });
+      continue;
+    }
+    const sourceDigest = authoringFactEvidenceDigest(
+      sourceGroup,
+      sourceWorkspace.sources.sources,
+    );
+    if (sourceDigest !== reference.evidenceDigest) {
+      issues.push({
+        path: `${path}/evidenceDigest`,
+        message: "Reusable fact evidence digest no longer matches its source",
+        keyword: "fact-reuse-digest-mismatch",
+      });
+      continue;
+    }
+    const localDigest = authoringFactEvidenceDigest(
+      group,
+      workspace.sources.sources,
+    );
+    if (localDigest !== sourceDigest) {
+      issues.push({
+        path,
+        message:
+          "Reused fact or its local source evidence differs from the source draft",
+        keyword: "fact-reuse-content-mismatch",
+      });
+    }
+  }
+  return issues;
+}
+
+function contextPackDigest(pack: Omit<AuthoringContextPack, "digest">): string {
+  return createHash("sha256").update(JSON.stringify(pack)).digest("hex");
+}
+
+async function applyPreparedFactReuse(
+  workspace: DraftWorkspace,
+  reuse: NonNullable<PrepareDraftRequest["reuse"]>,
+  repository: ReferenceDraftRepository,
+): Promise<
+  | { readonly ok: true; readonly workspace: DraftWorkspace }
+  | { readonly ok: false; readonly issues: readonly AuthoringValidationIssue[] }
+> {
+  const stableId = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
+  if (
+    !stableId.test(reuse.draftId) ||
+    reuse.factGroupIds.length === 0 ||
+    new Set(reuse.factGroupIds).size !== reuse.factGroupIds.length ||
+    reuse.factGroupIds.some((id) => !stableId.test(id))
+  ) {
+    return {
+      ok: false,
+      issues: [
+        {
+          path: "/reuse",
+          message: "A source draft and unique fact group IDs are required",
+          keyword: "request",
+        },
+      ],
+    };
+  }
+  if (!workspace.proposal.relatedEntryIds.includes(reuse.draftId)) {
+    return {
+      ok: false,
+      issues: [
+        {
+          path: "/reuse/draftId",
+          message: `Reusable facts must come from a related draft: ${reuse.draftId}`,
+          keyword: "fact-reuse-unrelated",
+        },
+      ],
+    };
+  }
+  const sourceWorkspace = await repository.get(reuse.draftId);
+  if (
+    sourceWorkspace === undefined ||
+    sourceWorkspace.draft.state !== "checked" ||
+    sourceWorkspace.report.status !== "ready" ||
+    sourceWorkspace.report.draftRevision !== sourceWorkspace.draft.revision ||
+    sourceWorkspace.report.inputDigest !==
+      authoringInputDigest(sourceWorkspace.files)
+  ) {
+    return {
+      ok: false,
+      issues: [
+        {
+          path: "/reuse/draftId",
+          message: "Reusable fact source must be an unchanged ready draft",
+          keyword: "fact-reuse-source-unverified",
+        },
+      ],
+    };
+  }
+  const selectedGroups: AuthoringFactGroup[] = [];
+  for (const [index, groupId] of reuse.factGroupIds.entries()) {
+    const sourceGroup = sourceWorkspace.facts.groups.find(
+      ({ id }) => id === groupId,
+    );
+    const targetGroup = workspace.facts.groups.find(({ id }) => id === groupId);
+    if (
+      sourceGroup?.status !== "verified" ||
+      targetGroup === undefined ||
+      targetGroup.kind !== sourceGroup.kind
+    ) {
+      return {
+        ok: false,
+        issues: [
+          {
+            path: `/reuse/factGroupIds/${index}`,
+            message: `Fact group ${groupId} is not verified and compatible with the target profile`,
+            keyword: "fact-reuse-source-unverified",
+          },
+        ],
+      };
+    }
+    selectedGroups.push(sourceGroup);
+  }
+  const sourceIds = new Set(
+    selectedGroups.flatMap((group) => [...group.sourceIds]),
+  );
+  const copiedSources = sourceWorkspace.sources.sources.filter(({ id }) =>
+    sourceIds.has(id),
+  );
+  if (copiedSources.length !== sourceIds.size) {
+    return {
+      ok: false,
+      issues: [
+        {
+          path: "/reuse/factGroupIds",
+          message: "Reusable fact source evidence is incomplete",
+          keyword: "fact-evidence-incomplete",
+        },
+      ],
+    };
+  }
+  const groups = workspace.facts.groups.map((targetGroup) => {
+    const sourceGroup = selectedGroups.find(({ id }) => id === targetGroup.id);
+    if (sourceGroup === undefined) return targetGroup;
+    return {
+      ...sourceGroup,
+      reusedFrom: {
+        draftId: sourceWorkspace.draft.draftId,
+        draftRevision: sourceWorkspace.draft.revision,
+        groupId: sourceGroup.id,
+        evidenceDigest: authoringFactEvidenceDigest(
+          sourceGroup,
+          sourceWorkspace.sources.sources,
+        ),
+      },
+    };
+  });
+  const facts: AuthoringFactSheet = { ...workspace.facts, groups };
+  const sources: AuthoringSourceLedger = {
+    ...workspace.sources,
+    sources: copiedSources,
+  };
+  const files = {
+    ...workspace.files,
+    "facts.json": jsonFile(facts),
+    "sources.json": jsonFile(sources),
+  };
+  const report: AuthoringReport = {
+    ...workspace.report,
+    inputDigest: authoringInputDigest(files),
+  };
+  return {
+    ok: true,
+    workspace: {
+      ...workspace,
+      facts,
+      sources,
+      report,
+      files: { ...files, "report.json": jsonFile(report) },
+    },
+  };
+}
+
 export function createReferenceAuthoring(
   dependencies: ReferenceAuthoringDependencies,
 ): ReferenceAuthoring {
   const clock = dependencies.clock ?? (() => new Date());
   return {
+    async measureBatch(request) {
+      const stableId = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
+      const durationValues = [
+        request.authorActiveMinutes,
+        request.machineMinutes,
+        request.fullGateMinutes,
+      ];
+      const countValues = [
+        request.postPublicationCorrections,
+        request.baselinePostPublicationCorrections,
+        request.flakyReruns,
+      ];
+      if (
+        !stableId.test(request.batchId) ||
+        request.draftIds.length < 1 ||
+        request.draftIds.length > 5 ||
+        new Set(request.draftIds).size !== request.draftIds.length ||
+        request.draftIds.some((id) => !stableId.test(id)) ||
+        durationValues.some((value) => !Number.isFinite(value) || value < 0) ||
+        countValues.some((value) => !Number.isInteger(value) || value < 0) ||
+        !Number.isInteger(request.baselineEntries) ||
+        request.baselineEntries < 1
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/",
+              message:
+                "Batch identity, one to five unique drafts, non-negative timings, and integer counters are required",
+              keyword: "request",
+            },
+          ],
+        };
+      }
+      const workspaces: DraftWorkspace[] = [];
+      for (const [index, draftId] of request.draftIds.entries()) {
+        let workspace: DraftWorkspace | undefined;
+        try {
+          workspace = await dependencies.drafts.get(draftId);
+        } catch (error) {
+          return {
+            ok: false,
+            code: "batch_unreadable",
+            issues: [
+              {
+                path: `/draftIds/${index}`,
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Draft is unreadable",
+                keyword: "read",
+              },
+            ],
+          };
+        }
+        if (workspace === undefined) {
+          return {
+            ok: false,
+            code: "draft_not_found",
+            issues: [
+              {
+                path: `/draftIds/${index}`,
+                message: `Draft is missing: ${draftId}`,
+                keyword: "required",
+              },
+            ],
+          };
+        }
+        const reportIssues = validateAuthoringReport(workspace.report);
+        if (reportIssues.length > 0) {
+          return {
+            ok: false,
+            code: "batch_unreadable",
+            issues: reportIssues.map((issue) => ({
+              ...issue,
+              path: `/draftIds/${index}/report${issue.path}`,
+            })),
+          };
+        }
+        workspaces.push(workspace);
+      }
+      let examples = 0;
+      try {
+        for (const workspace of workspaces) {
+          const entry = JSON.parse(workspace.files["entry.json"] ?? "null") as {
+            examples?: unknown;
+          } | null;
+          if (entry === null || !Array.isArray(entry.examples)) {
+            throw new Error(
+              `Draft ${workspace.draft.draftId} has no valid Entry examples list`,
+            );
+          }
+          examples += entry.examples.length;
+        }
+      } catch (error) {
+        return {
+          ok: false,
+          code: "batch_unreadable",
+          issues: [
+            {
+              path: "/draftIds",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Batch Entry manifests are unreadable",
+              keyword: "parse",
+            },
+          ],
+        };
+      }
+      const cacheEvidence = workspaces.flatMap(
+        ({ report }) => report.cacheEvidence,
+      );
+      const hits = cacheEvidence.filter(
+        ({ status }) => status === "hit",
+      ).length;
+      const misses = cacheEvidence.filter(
+        ({ status }) => status === "miss",
+      ).length;
+      const notChecked = cacheEvidence.length - hits - misses;
+      const checkedCacheRecords = hits + misses;
+      const findings = workspaces.flatMap(({ report }) => report.findings);
+      const readyEntries = workspaces.filter(
+        (workspace) =>
+          workspace.draft.state === "checked" &&
+          workspace.report.status === "ready" &&
+          workspace.report.draftRevision === workspace.draft.revision &&
+          workspace.report.inputDigest ===
+            authoringInputDigest(workspace.files),
+      ).length;
+      const targets = {
+        fiveEntryBatch:
+          workspaces.length === 5 && readyEntries === workspaces.length,
+        activeMinutesWithinTarget:
+          request.authorActiveMinutes >= 60 &&
+          request.authorActiveMinutes <= 90,
+        noEscapedCorrectionRegression:
+          request.postPublicationCorrections / workspaces.length <=
+          request.baselinePostPublicationCorrections / request.baselineEntries,
+      };
+      const reportWithoutDigest: Omit<AuthoringBatchReport, "digest"> = {
+        schemaVersion: 1,
+        batchId: request.batchId,
+        draftIds: [...request.draftIds],
+        status: Object.values(targets).every(Boolean)
+          ? "meets-target"
+          : "needs-attention",
+        entries: workspaces.length,
+        readyEntries,
+        examples,
+        cache: {
+          hits,
+          misses,
+          notChecked,
+          hitRate: checkedCacheRecords === 0 ? 0 : hits / checkedCacheRecords,
+        },
+        findings: {
+          hard: findings.filter(({ severity }) => severity === "hard").length,
+          warning: findings.filter(({ severity }) => severity === "warning")
+            .length,
+          highRisk: findings.filter(({ risk }) => risk === "high").length,
+        },
+        timing: {
+          authorActiveMinutes: request.authorActiveMinutes,
+          machineMinutes: request.machineMinutes,
+          fullGateMinutes: request.fullGateMinutes,
+        },
+        quality: {
+          postPublicationCorrections: request.postPublicationCorrections,
+          baselinePostPublicationCorrections:
+            request.baselinePostPublicationCorrections,
+          baselineEntries: request.baselineEntries,
+          correctionRate:
+            request.postPublicationCorrections / workspaces.length,
+          baselineCorrectionRate:
+            request.baselinePostPublicationCorrections /
+            request.baselineEntries,
+          flakyReruns: request.flakyReruns,
+        },
+        targets,
+      };
+      const report: AuthoringBatchReport = {
+        ...reportWithoutDigest,
+        digest: createHash("sha256")
+          .update(JSON.stringify(reportWithoutDigest))
+          .digest("hex"),
+      };
+      const reportIssues = validateAuthoringBatchReport(report);
+      if (reportIssues.length > 0) {
+        return {
+          ok: false,
+          code: "batch_unreadable",
+          issues: reportIssues,
+        };
+      }
+      return { ok: true, report };
+    },
+    async buildContext(request) {
+      if (
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(request.draftId) ||
+        request.factGroupIds.length === 0 ||
+        new Set(request.factGroupIds).size !== request.factGroupIds.length ||
+        request.factGroupIds.some(
+          (id) => !/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(id),
+        )
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/",
+              message: "draftId and unique factGroupIds are required",
+              keyword: "request",
+            },
+          ],
+        };
+      }
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(request.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/draft",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      const artifactIssues = [
+        ...validateAuthoringDraft(workspace.draft),
+        ...validateAuthoringCatalogProposal(workspace.proposal),
+        ...validateAuthoringFactSheet(workspace.facts),
+        ...validateAuthoringSourceLedger(workspace.sources),
+      ];
+      if (artifactIssues.length > 0) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: artifactIssues,
+        };
+      }
+      const selectedGroups: AuthoringFactGroup[] = [];
+      const contextIssues: AuthoringValidationIssue[] = [];
+      for (const [index, groupId] of request.factGroupIds.entries()) {
+        const group = workspace.facts.groups.find(({ id }) => id === groupId);
+        if (group?.status !== "verified") {
+          contextIssues.push({
+            path: `/factGroupIds/${index}`,
+            message: `Fact group ${groupId} is missing or not verified`,
+            keyword: "fact-not-verified",
+          });
+          continue;
+        }
+        if (
+          group.summary.length === 0 ||
+          group.sourceIds.length === 0 ||
+          group.sourceIds.some(
+            (sourceId) =>
+              !workspace!.sources.sources.some(({ id }) => id === sourceId),
+          )
+        ) {
+          contextIssues.push({
+            path: `/factGroupIds/${index}`,
+            message: `Fact group ${groupId} has incomplete source evidence`,
+            keyword: "fact-evidence-incomplete",
+          });
+          continue;
+        }
+        if (
+          NORMATIVE_FACT_KINDS.has(group.kind) &&
+          !hasPrimaryWorkingDraftEvidence(group, workspace.sources.sources)
+        ) {
+          contextIssues.push({
+            path: `/factGroupIds/${index}`,
+            message: `Normative fact group ${groupId} requires primary Working Draft evidence`,
+            keyword: "fact-primary-source-missing",
+          });
+          continue;
+        }
+        selectedGroups.push(group);
+      }
+      try {
+        contextIssues.push(
+          ...(await validateFactReuse(
+            workspace,
+            dependencies.drafts,
+            new Set(request.factGroupIds),
+          )),
+        );
+      } catch (error) {
+        contextIssues.push({
+          path: "/factGroupIds",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Reusable fact source draft is unreadable",
+          keyword: "fact-reuse-source-unreadable",
+        });
+      }
+      if (contextIssues.length > 0) {
+        return {
+          ok: false,
+          code: "context_blocked",
+          issues: contextIssues,
+        };
+      }
+      const sourceIds = new Set(
+        selectedGroups.flatMap(({ sourceIds }) => [...sourceIds]),
+      );
+      const sources = workspace.sources.sources.filter(({ id }) =>
+        sourceIds.has(id),
+      );
+      const packWithoutDigest: Omit<AuthoringContextPack, "digest"> = {
+        schemaVersion: 1,
+        draftId: workspace.draft.draftId,
+        draftRevision: workspace.draft.revision,
+        inputDigest: authoringInputDigest(workspace.files),
+        factGroups: selectedGroups.map((group) => ({
+          id: group.id,
+          kind: group.kind,
+          summary: group.summary,
+          sourceIds: group.sourceIds,
+          ...(group.decision === undefined ? {} : { decision: group.decision }),
+          ...(group.reusedFrom === undefined
+            ? {}
+            : { reusedFrom: group.reusedFrom }),
+          evidenceDigest: authoringFactEvidenceDigest(group, sources),
+        })),
+        sources,
+        policy: {
+          mode: "verified-facts-only",
+          allowedFactGroupIds: [...request.factGroupIds],
+          requirements: [
+            "每条实质性事实必须引用一个或多个 allowedFactGroupIds。",
+            "不得引入上下文包之外的签名、版本、复杂度、错误或生命周期断言。",
+            "来源文本仅用于核对事实，不得复制来源措辞。",
+          ],
+        },
+      };
+      const pack: AuthoringContextPack = {
+        ...packWithoutDigest,
+        digest: contextPackDigest(packWithoutDigest),
+      };
+      const packIssues = validateAuthoringContextPack(pack);
+      if (packIssues.length > 0) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: packIssues,
+        };
+      }
+      return { ok: true, pack };
+    },
     async prepare(request) {
       const profile = PROFILE_BY_KIND[request.target.kind];
       const now = clock().toISOString();
@@ -1420,7 +2180,40 @@ export function createReferenceAuthoring(
         return { ok: false, code: "invalid_request", issues };
       }
 
-      const workspace = createDraftWorkspace(draft, proposal);
+      let workspace = createDraftWorkspace(draft, proposal);
+      if (request.reuse !== undefined) {
+        let reuseResult: Awaited<ReturnType<typeof applyPreparedFactReuse>>;
+        try {
+          reuseResult = await applyPreparedFactReuse(
+            workspace,
+            request.reuse,
+            dependencies.drafts,
+          );
+        } catch (error) {
+          return {
+            ok: false,
+            code: "invalid_request",
+            issues: [
+              {
+                path: "/reuse/draftId",
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "Reusable fact source is unreadable",
+                keyword: "read",
+              },
+            ],
+          };
+        }
+        if (!reuseResult.ok) {
+          return {
+            ok: false,
+            code: "invalid_request",
+            issues: reuseResult.issues,
+          };
+        }
+        workspace = reuseResult.workspace;
+      }
       const reservation = await dependencies.drafts.reserve(workspace);
       if (!reservation.created) {
         if (!sameTarget(reservation.workspace.draft.target, request.target)) {
@@ -1509,6 +2302,34 @@ export function createReferenceAuthoring(
           : []),
         ...validateContentProfile(workspace),
       ];
+      if (
+        factIssues.length === 0 &&
+        sourceIssues.length === 0 &&
+        proposalIssues.length === 0
+      ) {
+        try {
+          findings.push(
+            ...(await validateFactReuse(workspace, dependencies.drafts)).map(
+              (issue) =>
+                hardFinding(
+                  issue.keyword,
+                  `facts.json${issue.path}`,
+                  issue.message,
+                ),
+            ),
+          );
+        } catch (error) {
+          findings.push(
+            hardFinding(
+              "fact-reuse-source-unreadable",
+              "facts.json",
+              error instanceof Error
+                ? error.message
+                : "Reusable fact source draft is unreadable",
+            ),
+          );
+        }
+      }
 
       const artifactDraftIds: [string, string][] = [];
       if (proposalIssues.length === 0) {
@@ -1919,7 +2740,9 @@ export function createReferenceAuthoring(
 }
 
 export {
+  authoringBatchReportSchema,
   authoringDraftSchema,
+  authoringContextPackSchema,
   authoringFactsSchema,
   authoringPublicationPlanSchema,
   authoringReportSchema,
@@ -1952,4 +2775,3 @@ export {
   createNativeAuthoringExampleValidator,
   type NativeAuthoringExampleValidatorOptions,
 } from "./native-example-validator.js";
-import { createHash } from "node:crypto";

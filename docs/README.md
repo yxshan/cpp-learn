@@ -72,7 +72,8 @@ Read in this order:
 54. [Stage 6.3 Phase A0 Reference Authoring Contracts Implementation Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md)
 55. [Stage 6.3 Phase A1 Reference Authoring CLI Prepare/Check Implementation Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md)
 56. [Stage 6.3 Phase A2 Reference Authoring Cache/Preview/Atomic Publish Implementation Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md)
-57. [Domain Context](CONTEXT.md)
+57. [Stage 6.3 Phase A3 Fact Reuse/Context Packs/Batch Metrics Implementation Report](57-STAGE-6.3-PHASE-A3-FACT-REUSE-CONTEXT-PACKS-AND-BATCH-METRICS-IMPLEMENTATION-REPORT.md)
+58. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

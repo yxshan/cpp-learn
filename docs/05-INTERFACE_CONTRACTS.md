@@ -368,13 +368,22 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns three operations:
+The non-HTTP `ReferenceAuthoring` Interface owns five operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
+buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 check({ draftId }): Promise<CheckDraftResult>;
 publish({ draftId, expectedRevision, mode }): Promise<PublishDraftResult>;
+measureBatch({ batchId, draftIds, ...observations }): Promise<MeasureAuthoringBatchResult>;
 ```
+
+`prepare` optionally accepts an explicit source draft and fact-group allowlist.
+Reuse succeeds only from a related, unchanged `checked` draft at a ready
+revision; the copied fact and source evidence remain bound by an evidence
+digest. `buildContext` accepts only explicit verified group IDs and returns a
+deterministic `AuthoringContextPack`. An AI Adapter must cite those IDs and may
+not treat the pack or generated prose as a primary source.
 
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
@@ -385,7 +394,9 @@ returned as `publication_failed`; no operation creates a Git commit.
 
 The CLI maps `prepare`, `check`, `preview`, and `publish` to this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
-is dry-run unless `--apply` is present.
+is dry-run unless `--apply` is present. The CLI also maps `context` and
+`measure`; batch reports evaluate the 60–90 minute five-Entry target and escaped
+correction regression but do not replace release acceptance.
 
 ## 8. Compatibility tests
 

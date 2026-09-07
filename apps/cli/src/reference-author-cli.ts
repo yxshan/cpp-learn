@@ -20,7 +20,11 @@ export interface ReferenceAuthorCliDependencies {
 }
 
 const prepareUsage =
-  "Usage: npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE [--json]\n";
+  "Usage: npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE [--reuse-from ID --reuse-facts ID[,ID...]] [--json]\n";
+const contextUsage =
+  "Usage: npm run reference:author -- context --draft ID --facts ID[,ID...] [--json]\n";
+const measureUsage =
+  "Usage: npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --corrections N --baseline-corrections N --baseline-entries N [--flaky-reruns N] [--json]\n";
 const checkUsage =
   "Usage: npm run reference:author -- check --draft ID [--json]\n";
 const previewUsage =
@@ -43,23 +47,127 @@ export async function runReferenceAuthorCli(
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
 
+  if (command === "context") {
+    const draftId = flagValue(flags, "--draft");
+    const factList = flagValue(flags, "--facts");
+    const factGroupIds = factList?.split(",").filter((id) => id.length > 0);
+    if (
+      draftId === undefined ||
+      factGroupIds === undefined ||
+      factGroupIds.length === 0
+    ) {
+      dependencies.stderr(contextUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.buildContext({
+      draftId,
+      factGroupIds,
+    });
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else {
+      dependencies.stdout(
+        `CONTEXT ${result.pack.draftId} at revision ${result.pack.draftRevision} (${result.pack.factGroups.length} facts, ${result.pack.sources.length} sources) ${result.pack.digest}\n`,
+      );
+    }
+    return result.ok ? 0 : 1;
+  }
+
+  if (command === "measure") {
+    const batchId = flagValue(flags, "--batch");
+    const draftIds = flagValue(flags, "--drafts")
+      ?.split(",")
+      .filter((id) => id.length > 0);
+    const authorActiveMinutes = Number(flagValue(flags, "--active-minutes"));
+    const machineMinutes = Number(flagValue(flags, "--machine-minutes"));
+    const fullGateMinutes = Number(flagValue(flags, "--gate-minutes"));
+    const postPublicationCorrections = Number(
+      flagValue(flags, "--corrections"),
+    );
+    const baselinePostPublicationCorrections = Number(
+      flagValue(flags, "--baseline-corrections"),
+    );
+    const baselineEntries = Number(flagValue(flags, "--baseline-entries"));
+    const flakyReruns = Number(flagValue(flags, "--flaky-reruns") ?? "0");
+    const numbers = [
+      authorActiveMinutes,
+      machineMinutes,
+      fullGateMinutes,
+      postPublicationCorrections,
+      baselinePostPublicationCorrections,
+      baselineEntries,
+      flakyReruns,
+    ];
+    if (
+      batchId === undefined ||
+      draftIds === undefined ||
+      draftIds.length === 0 ||
+      numbers.some((value) => !Number.isFinite(value) || value < 0)
+    ) {
+      dependencies.stderr(measureUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.measureBatch({
+      batchId,
+      draftIds,
+      authorActiveMinutes,
+      machineMinutes,
+      fullGateMinutes,
+      postPublicationCorrections,
+      baselinePostPublicationCorrections,
+      baselineEntries,
+      flakyReruns,
+    });
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else {
+      dependencies.stdout(
+        `${result.report.status.toUpperCase()} ${result.report.batchId}: ${result.report.readyEntries}/${result.report.entries} ready, ${result.report.timing.authorActiveMinutes} active minutes, ${(result.report.cache.hitRate * 100).toFixed(0)}% cache hits\n`,
+      );
+    }
+    return result.ok ? 0 : 1;
+  }
+
   if (command === "prepare") {
     const entryId = flagValue(flags, "--id");
     const kind = flagValue(flags, "--kind");
     const slug = flagValue(flags, "--slug");
     const title = flagValue(flags, "--title");
+    const reuseFrom = flagValue(flags, "--reuse-from");
+    const reuseFactList = flagValue(flags, "--reuse-facts");
+    const reuseFactGroupIds = reuseFactList
+      ?.split(",")
+      .filter((id) => id.length > 0);
     if (
       entryId === undefined ||
       kind === undefined ||
       !isReferenceEntryKind(kind) ||
       slug === undefined ||
-      title === undefined
+      title === undefined ||
+      (reuseFrom === undefined) !== (reuseFactList === undefined) ||
+      (reuseFactList !== undefined && reuseFactGroupIds?.length === 0)
     ) {
       dependencies.stderr(prepareUsage);
       return 2;
     }
     const result = await dependencies.authoring.prepare({
       target: { entryId, kind, slug, title },
+      ...(reuseFrom === undefined || reuseFactGroupIds === undefined
+        ? {}
+        : {
+            reuse: {
+              draftId: reuseFrom,
+              factGroupIds: reuseFactGroupIds,
+            },
+          }),
     });
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
@@ -184,7 +292,7 @@ export async function runReferenceAuthorCli(
   }
 
   dependencies.stderr(
-    `${prepareUsage}${checkUsage}${previewUsage}${publishUsage}`,
+    `${prepareUsage}${contextUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
   );
   return 2;
 }

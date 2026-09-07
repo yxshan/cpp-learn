@@ -1,0 +1,114 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-batch-report.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "batchId",
+    "draftIds",
+    "status",
+    "entries",
+    "readyEntries",
+    "examples",
+    "cache",
+    "findings",
+    "timing",
+    "quality",
+    "targets",
+    "digest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "batchId": { "$ref": "#/$defs/id" },
+    "draftIds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "status": { "enum": ["meets-target", "needs-attention"] },
+    "entries": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "readyEntries": { "type": "integer", "minimum": 0, "maximum": 5 },
+    "examples": { "type": "integer", "minimum": 0 },
+    "cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hits", "misses", "notChecked", "hitRate"],
+      "properties": {
+        "hits": { "type": "integer", "minimum": 0 },
+        "misses": { "type": "integer", "minimum": 0 },
+        "notChecked": { "type": "integer", "minimum": 0 },
+        "hitRate": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hard", "warning", "highRisk"],
+      "properties": {
+        "hard": { "type": "integer", "minimum": 0 },
+        "warning": { "type": "integer", "minimum": 0 },
+        "highRisk": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorActiveMinutes", "machineMinutes", "fullGateMinutes"],
+      "properties": {
+        "authorActiveMinutes": { "type": "number", "minimum": 0 },
+        "machineMinutes": { "type": "number", "minimum": 0 },
+        "fullGateMinutes": { "type": "number", "minimum": 0 }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "postPublicationCorrections",
+        "baselinePostPublicationCorrections",
+        "baselineEntries",
+        "correctionRate",
+        "baselineCorrectionRate",
+        "flakyReruns"
+      ],
+      "properties": {
+        "postPublicationCorrections": { "type": "integer", "minimum": 0 },
+        "baselinePostPublicationCorrections": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "baselineEntries": { "type": "integer", "minimum": 1 },
+        "correctionRate": { "type": "number", "minimum": 0 },
+        "baselineCorrectionRate": { "type": "number", "minimum": 0 },
+        "flakyReruns": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "targets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fiveEntryBatch",
+        "activeMinutesWithinTarget",
+        "noEscapedCorrectionRegression"
+      ],
+      "properties": {
+        "fiveEntryBatch": { "type": "boolean" },
+        "activeMinutesWithinTarget": { "type": "boolean" },
+        "noEscapedCorrectionRegression": { "type": "boolean" }
+      }
+    },
+    "digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

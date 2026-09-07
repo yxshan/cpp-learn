@@ -115,7 +115,7 @@ itself canonical publication.
 _Avoid_: Judge Report, build log, published Entry
 
 **Publication Plan**:
-The exact create/update digest set for promoting one checked Authoring Draft at
+The exact create/update/delete digest set for promoting one checked Authoring Draft at
 one revision. A dry-run plan is review evidence, not a Git commit or release.
 _Avoid_: patch guess, deployment, automatic publication
 
@@ -123,6 +123,17 @@ _Avoid_: patch guess, deployment, automatic publication
 A disposable compiler-result record addressed by every execution-relevant
 input. It may shorten an inner loop but cannot replace the full release gate.
 _Avoid_: build artifact, source of truth, readiness approval
+
+**Authoring Context Pack**:
+A deterministic, digest-bound allowlist of explicitly selected verified Fact
+Sheet groups and their Source Ledger evidence for a later AI Adapter. It does
+not contain unverified facts and does not make generated prose authoritative.
+_Avoid_: prompt dump, scraped corpus, AI truth source
+
+**Authoring Batch Report**:
+A digest-bound measurement of one to five Authoring Drafts, including readiness,
+examples, cache behavior, findings, time observations, and escaped corrections.
+_Avoid_: synthetic productivity claim, release approval, author score
 
 ## Platform operations
 

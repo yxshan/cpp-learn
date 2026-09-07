@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-08-25 |
+| Last updated | 2026-09-07 |
 
 ## 1. Storage strategy
 
@@ -218,3 +218,22 @@ Reference data invariants:
 Reference content and derived indexes are excluded from learner backup and
 restore. An export may include stable Entry IDs referenced by a future learning
 artifact, but it does not copy the Reference catalog itself.
+
+## 13. Local Reference authoring data
+
+Authoring Drafts and disposable compiler cache records live outside canonical
+Reference content. A Fact Sheet group may carry `reusedFrom`, which binds a
+related source draft ID, exact ready revision, source group ID, and SHA-256
+evidence digest. The digest covers the fact kind, summary, decision, sorted
+source IDs, and exact referenced Source Ledger records.
+
+`AuthoringContextPack` is a transient, deterministic artifact containing an
+explicit subset of verified Fact Sheet groups and only their referenced Source
+Ledger records. Its digest also binds the draft revision, live author-input
+digest, and constraint policy. Context packs are safe to regenerate and are not
+canonical content or learner data.
+
+`AuthoringBatchReport` aggregates one to five current Draft reports plus
+explicitly supplied timing and correction observations. It is digest-bound and
+may be retained with a batch review, but it is not written to the learner event
+log and does not constitute release acceptance.
