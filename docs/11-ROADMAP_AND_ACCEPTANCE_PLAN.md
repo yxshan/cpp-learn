@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.3 |
+| Version | 2.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-07 |
 
 ## 1. Delivery policy
 
@@ -242,7 +242,8 @@ Deliver a local Reference Authoring Module with CLI-first and later Web Adapters
 - structured fact/source ledgers and risk-ranked human review;
 - affected-graph validation and content-addressed example compilation cache;
 - production-renderer preview, exact publish diff, and atomic publication;
-- constrained AI context packs that cannot promote unverified facts; and
+- constrained AI context packs plus generated-claim review that returns
+  unmapped or out-of-pack facts to an unverified queue; and
 - batch metrics proving throughput gains without a quality regression.
 
 The accepted Phase A1 adds confined filesystem drafts, catalog-backed context,
@@ -251,10 +252,10 @@ reports, and the `reference:author` CLI. Canonical writes, caching, preview, AI
 assistance, and the Web Author Console were separately gated at that point.
 The accepted Phase A2 adds exact compiler-result caching, impact closure,
 production-renderer preview, revision/input-bound dry-run publication plans, and
-validated whole-tree publication with rollback. AI context packs, batch metrics,
-and fact reuse are implemented in Phase A3; one real measured five-Entry batch
-is still required before acceptance. The Web Author Console remains a later
-slice.
+validated whole-tree publication with rollback. Reference-only fact reuse,
+context packs, generated-claim provenance review, and revision-bound batch
+metrics are implemented in Phase A3; one real measured five-Entry batch is
+still required before acceptance. The Web Author Console remains a later slice.
 
 ## 13. Global definition of done
 

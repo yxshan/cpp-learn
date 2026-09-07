@@ -1,0 +1,69 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-generated-review.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "draftId",
+    "contextDigest",
+    "status",
+    "acceptedClaimIds",
+    "reviewQueue",
+    "digest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "contextDigest": { "$ref": "#/$defs/digest" },
+    "status": { "enum": ["accepted", "requires-review"] },
+    "acceptedClaimIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "reviewQueue": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "claimId",
+          "text",
+          "status",
+          "reason",
+          "factGroupIds",
+          "unknownFactGroupIds"
+        ],
+        "properties": {
+          "claimId": { "$ref": "#/$defs/id" },
+          "text": { "type": "string", "minLength": 1 },
+          "status": { "const": "unverified" },
+          "reason": {
+            "enum": ["missing-fact-reference", "fact-not-allowed"]
+          },
+          "factGroupIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/id" }
+          },
+          "unknownFactGroupIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/id" }
+          }
+        }
+      }
+    },
+    "digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

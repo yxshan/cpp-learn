@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 1.7 |
+| Version | 1.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-07 |
 
 ## 1. Quality objectives
 
@@ -146,10 +146,15 @@ Reference content CI additionally validates:
   whole-tree publication, interrupted-swap recovery, and byte-for-byte canonical
   preservation when staging validation is interrupted.
 - Authoring Phase A3 verifies revision/digest-bound fact reuse between related
-  drafts, rejection of unverified context requests, deterministic context-pack
-  source allowlists, CLI parity, and five-Entry batch aggregation for timing,
-  cache, findings, and escaped corrections. Fixture results validate the
-  instrumentation only; acceptance requires a separately observed real batch.
+  drafts without copying fact prose, rejection of unverified context requests,
+  draft/artifact identity, and deterministic context-pack source allowlists.
+  Generated claims without allowed fact IDs return to an `unverified` queue.
+  Batch tests bind each member revision/input digest and aggregate timing, cache,
+  categorized hard findings, high-risk reviews, pre/post-publication factual and
+  example corrections, baseline throughput, and flaky reruns. CLI tests reject
+  fractional counters and empty baselines as usage errors. Fixture results
+  validate instrumentation only; acceptance requires a separately observed real
+  batch.
 
 ## 5. Security tests
 

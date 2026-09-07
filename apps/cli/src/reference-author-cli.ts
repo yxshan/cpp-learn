@@ -24,7 +24,7 @@ const prepareUsage =
 const contextUsage =
   "Usage: npm run reference:author -- context --draft ID --facts ID[,ID...] [--json]\n";
 const measureUsage =
-  "Usage: npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --corrections N --baseline-corrections N --baseline-entries N [--flaky-reruns N] [--json]\n";
+  "Usage: npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --baseline-active-minutes N --baseline-entries N --pre-factual-corrections N --pre-example-corrections N --post-factual-corrections N --post-example-corrections N --baseline-factual-corrections N --baseline-example-corrections N --high-risk-reviewed N [--flaky-reruns N] [--json]\n";
 const checkUsage =
   "Usage: npm run reference:author -- check --draft ID [--json]\n";
 const previewUsage =
@@ -85,28 +85,56 @@ export async function runReferenceAuthorCli(
     const authorActiveMinutes = Number(flagValue(flags, "--active-minutes"));
     const machineMinutes = Number(flagValue(flags, "--machine-minutes"));
     const fullGateMinutes = Number(flagValue(flags, "--gate-minutes"));
-    const postPublicationCorrections = Number(
-      flagValue(flags, "--corrections"),
-    );
-    const baselinePostPublicationCorrections = Number(
-      flagValue(flags, "--baseline-corrections"),
+    const baselineAuthorActiveMinutes = Number(
+      flagValue(flags, "--baseline-active-minutes"),
     );
     const baselineEntries = Number(flagValue(flags, "--baseline-entries"));
+    const preFactualCorrections = Number(
+      flagValue(flags, "--pre-factual-corrections"),
+    );
+    const preExampleCorrections = Number(
+      flagValue(flags, "--pre-example-corrections"),
+    );
+    const postFactualCorrections = Number(
+      flagValue(flags, "--post-factual-corrections"),
+    );
+    const postExampleCorrections = Number(
+      flagValue(flags, "--post-example-corrections"),
+    );
+    const baselineFactualCorrections = Number(
+      flagValue(flags, "--baseline-factual-corrections"),
+    );
+    const baselineExampleCorrections = Number(
+      flagValue(flags, "--baseline-example-corrections"),
+    );
+    const highRiskClaimsReviewed = Number(
+      flagValue(flags, "--high-risk-reviewed"),
+    );
     const flakyReruns = Number(flagValue(flags, "--flaky-reruns") ?? "0");
-    const numbers = [
+    const durations = [
       authorActiveMinutes,
       machineMinutes,
       fullGateMinutes,
-      postPublicationCorrections,
-      baselinePostPublicationCorrections,
-      baselineEntries,
+      baselineAuthorActiveMinutes,
+    ];
+    const counters = [
+      preFactualCorrections,
+      preExampleCorrections,
+      postFactualCorrections,
+      postExampleCorrections,
+      baselineFactualCorrections,
+      baselineExampleCorrections,
+      highRiskClaimsReviewed,
       flakyReruns,
     ];
     if (
       batchId === undefined ||
       draftIds === undefined ||
       draftIds.length === 0 ||
-      numbers.some((value) => !Number.isFinite(value) || value < 0)
+      durations.some((value) => !Number.isFinite(value) || value < 0) ||
+      counters.some((value) => !Number.isInteger(value) || value < 0) ||
+      !Number.isInteger(baselineEntries) ||
+      baselineEntries < 1
     ) {
       dependencies.stderr(measureUsage);
       return 2;
@@ -114,13 +142,29 @@ export async function runReferenceAuthorCli(
     const result = await dependencies.authoring.measureBatch({
       batchId,
       draftIds,
-      authorActiveMinutes,
-      machineMinutes,
-      fullGateMinutes,
-      postPublicationCorrections,
-      baselinePostPublicationCorrections,
-      baselineEntries,
-      flakyReruns,
+      timing: {
+        authorActiveMinutes,
+        machineMinutes,
+        fullGateMinutes,
+        baselineAuthorActiveMinutes,
+        baselineEntries,
+      },
+      quality: {
+        prePublicationCorrections: {
+          factual: preFactualCorrections,
+          example: preExampleCorrections,
+        },
+        postPublicationCorrections: {
+          factual: postFactualCorrections,
+          example: postExampleCorrections,
+        },
+        baselinePostPublicationCorrections: {
+          factual: baselineFactualCorrections,
+          example: baselineExampleCorrections,
+        },
+        highRiskClaimsReviewed,
+        flakyReruns,
+      },
     });
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);

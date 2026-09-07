@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.2 |
+| Version | 1.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -225,7 +225,9 @@ Authoring Drafts and disposable compiler cache records live outside canonical
 Reference content. A Fact Sheet group may carry `reusedFrom`, which binds a
 related source draft ID, exact ready revision, source group ID, and SHA-256
 evidence digest. The digest covers the fact kind, summary, decision, sorted
-source IDs, and exact referenced Source Ledger records.
+source IDs, and exact referenced Source Ledger records. A reused target group
+stores only this reference; source prose and ledger rows are resolved from the
+source draft during context building and checking rather than copied.
 
 `AuthoringContextPack` is a transient, deterministic artifact containing an
 explicit subset of verified Fact Sheet groups and only their referenced Source
@@ -233,7 +235,16 @@ Ledger records. Its digest also binds the draft revision, live author-input
 digest, and constraint policy. Context packs are safe to regenerate and are not
 canonical content or learner data.
 
+`AuthoringGeneratedReview` binds an AI-generated claim review to the exact
+context-pack digest. Claims mapped only to allowed fact-group IDs may proceed;
+unmapped claims and claims naming IDs outside the pack remain `unverified` in a
+review queue. This is a provenance boundary, not semantic equivalence checking.
+
 `AuthoringBatchReport` aggregates one to five current Draft reports plus
-explicitly supplied timing and correction observations. It is digest-bound and
-may be retained with a batch review, but it is not written to the learner event
-log and does not constitute release acceptance.
+explicitly supplied timing and correction observations. Each member records its
+draft ID, revision, live input digest, status, and example count. The report
+separates factual from example corrections, before from after publication,
+records hard failures by category and high-risk review coverage, and compares
+active minutes per Entry with a supplied baseline. It is digest-bound and may
+be retained with a batch review, but it is not written to the learner event log
+and does not constitute release acceptance.

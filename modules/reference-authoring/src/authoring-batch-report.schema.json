@@ -6,6 +6,7 @@
     "schemaVersion",
     "batchId",
     "draftIds",
+    "drafts",
     "status",
     "entries",
     "readyEntries",
@@ -27,6 +28,29 @@
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/id" }
     },
+    "drafts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "draftId",
+          "draftRevision",
+          "inputDigest",
+          "status",
+          "examples"
+        ],
+        "properties": {
+          "draftId": { "$ref": "#/$defs/id" },
+          "draftRevision": { "type": "integer", "minimum": 1 },
+          "inputDigest": { "$ref": "#/$defs/digest" },
+          "status": { "enum": ["not_checked", "blocked", "ready"] },
+          "examples": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
     "status": { "enum": ["meets-target", "needs-attention"] },
     "entries": { "type": "integer", "minimum": 1, "maximum": 5 },
     "readyEntries": { "type": "integer", "minimum": 0, "maximum": 5 },
@@ -45,43 +69,58 @@
     "findings": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hard", "warning", "highRisk"],
+      "required": ["hard", "warning", "highRisk", "hardByCategory"],
       "properties": {
         "hard": { "type": "integer", "minimum": 0 },
         "warning": { "type": "integer", "minimum": 0 },
-        "highRisk": { "type": "integer", "minimum": 0 }
+        "highRisk": { "type": "integer", "minimum": 0 },
+        "hardByCategory": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 1 }
+        }
       }
     },
     "timing": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["authorActiveMinutes", "machineMinutes", "fullGateMinutes"],
+      "required": [
+        "authorActiveMinutes",
+        "machineMinutes",
+        "fullGateMinutes",
+        "baselineAuthorActiveMinutes",
+        "baselineEntries",
+        "activeMinutesPerEntry",
+        "baselineActiveMinutesPerEntry"
+      ],
       "properties": {
         "authorActiveMinutes": { "type": "number", "minimum": 0 },
         "machineMinutes": { "type": "number", "minimum": 0 },
-        "fullGateMinutes": { "type": "number", "minimum": 0 }
+        "fullGateMinutes": { "type": "number", "minimum": 0 },
+        "baselineAuthorActiveMinutes": { "type": "number", "minimum": 0 },
+        "baselineEntries": { "type": "integer", "minimum": 1 },
+        "activeMinutesPerEntry": { "type": "number", "minimum": 0 },
+        "baselineActiveMinutesPerEntry": { "type": "number", "minimum": 0 }
       }
     },
     "quality": {
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "prePublicationCorrections",
         "postPublicationCorrections",
         "baselinePostPublicationCorrections",
-        "baselineEntries",
-        "correctionRate",
-        "baselineCorrectionRate",
+        "postPublicationCorrectionRates",
+        "baselinePostPublicationCorrectionRates",
+        "highRiskClaimsReviewed",
         "flakyReruns"
       ],
       "properties": {
-        "postPublicationCorrections": { "type": "integer", "minimum": 0 },
-        "baselinePostPublicationCorrections": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "baselineEntries": { "type": "integer", "minimum": 1 },
-        "correctionRate": { "type": "number", "minimum": 0 },
-        "baselineCorrectionRate": { "type": "number", "minimum": 0 },
+        "prePublicationCorrections": { "$ref": "#/$defs/corrections" },
+        "postPublicationCorrections": { "$ref": "#/$defs/corrections" },
+        "baselinePostPublicationCorrections": { "$ref": "#/$defs/corrections" },
+        "postPublicationCorrectionRates": { "$ref": "#/$defs/rates" },
+        "baselinePostPublicationCorrectionRates": { "$ref": "#/$defs/rates" },
+        "highRiskClaimsReviewed": { "type": "integer", "minimum": 0 },
         "flakyReruns": { "type": "integer", "minimum": 0 }
       }
     },
@@ -91,24 +130,46 @@
       "required": [
         "fiveEntryBatch",
         "activeMinutesWithinTarget",
-        "noEscapedCorrectionRegression"
+        "throughputImproved",
+        "noFactualDefectRegression",
+        "noExampleDefectRegression",
+        "noEscapedCorrectionRegression",
+        "allHighRiskClaimsReviewed",
+        "noFlakyReruns"
       ],
       "properties": {
         "fiveEntryBatch": { "type": "boolean" },
         "activeMinutesWithinTarget": { "type": "boolean" },
-        "noEscapedCorrectionRegression": { "type": "boolean" }
+        "throughputImproved": { "type": "boolean" },
+        "noFactualDefectRegression": { "type": "boolean" },
+        "noExampleDefectRegression": { "type": "boolean" },
+        "noEscapedCorrectionRegression": { "type": "boolean" },
+        "allHighRiskClaimsReviewed": { "type": "boolean" },
+        "noFlakyReruns": { "type": "boolean" }
       }
     },
     "digest": { "$ref": "#/$defs/digest" }
   },
   "$defs": {
-    "id": {
-      "type": "string",
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "corrections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factual", "example"],
+      "properties": {
+        "factual": { "type": "integer", "minimum": 0 },
+        "example": { "type": "integer", "minimum": 0 }
+      }
     },
-    "digest": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
+    "rates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["factual", "example"],
+      "properties": {
+        "factual": { "type": "number", "minimum": 0 },
+        "example": { "type": "number", "minimum": 0 }
+      }
     }
   }
 }

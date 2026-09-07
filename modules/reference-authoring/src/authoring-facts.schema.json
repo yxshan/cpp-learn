@@ -58,8 +58,32 @@
         {
           "if": { "properties": { "status": { "const": "verified" } } },
           "then": {
+            "anyOf": [
+              {
+                "properties": { "reusedFrom": {} },
+                "required": ["reusedFrom"]
+              },
+              {
+                "properties": {
+                  "sourceIds": { "type": "array", "minItems": 1 }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": { "reusedFrom": {} },
+            "required": ["reusedFrom"]
+          },
+          "then": {
             "properties": {
-              "sourceIds": { "type": "array", "minItems": 1 }
+              "summary": { "const": "" },
+              "sourceIds": { "type": "array", "maxItems": 0 }
+            },
+            "not": {
+              "properties": { "decision": {} },
+              "required": ["decision"]
             }
           }
         },

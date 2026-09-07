@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-07 |
 
 ## 1. Contract policy
 
@@ -368,22 +368,28 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns five operations:
+The non-HTTP `ReferenceAuthoring` Interface owns six operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
+reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 check({ draftId }): Promise<CheckDraftResult>;
 publish({ draftId, expectedRevision, mode }): Promise<PublishDraftResult>;
-measureBatch({ batchId, draftIds, ...observations }): Promise<MeasureAuthoringBatchResult>;
+measureBatch({ batchId, draftIds, timing, quality }): Promise<MeasureAuthoringBatchResult>;
 ```
 
 `prepare` optionally accepts an explicit source draft and fact-group allowlist.
 Reuse succeeds only from a related, unchanged `checked` draft at a ready
-revision; the copied fact and source evidence remain bound by an evidence
-digest. `buildContext` accepts only explicit verified group IDs and returns a
-deterministic `AuthoringContextPack`. An AI Adapter must cite those IDs and may
-not treat the pack or generated prose as a primary source.
+revision. The target stores a reference and evidence digest rather than copied
+fact prose or Source Ledger records. `buildContext` resolves those references,
+accepts only explicit verified group IDs, and returns a deterministic
+`AuthoringContextPack`. `reviewGeneratedClaims` accepts an unchanged context
+pack plus claim-to-fact mappings; claims without a mapping or with IDs outside
+the allowlist are returned in an `unverified` review queue. An AI Adapter must
+use this operation and may not treat the pack or generated prose as a primary
+source. A cited allowed ID is provenance evidence, not semantic truth; human
+review remains required.
 
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
@@ -395,8 +401,12 @@ returned as `publication_failed`; no operation creates a Git commit.
 The CLI maps `prepare`, `check`, `preview`, and `publish` to this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
-`measure`; batch reports evaluate the 60–90 minute five-Entry target and escaped
-correction regression but do not replace release acceptance.
+`measure`. Generated-claim review is currently a Module operation for the future
+AI Adapter, not a free-form CLI text protocol. Batch reports bind every member
+revision/input digest and evaluate the 60–90 minute five-Entry target, per-Entry
+throughput improvement, separately observed factual/example defect regression,
+high-risk review coverage, and flaky reruns. They do not replace release
+acceptance.
 
 ## 8. Compatibility tests
 

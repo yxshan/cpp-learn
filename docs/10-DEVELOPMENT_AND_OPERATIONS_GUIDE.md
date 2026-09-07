@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-07 |
 
 ## 1. Supported baseline
 
@@ -172,7 +172,7 @@ npm run reference:author -- preview --draft ID
 npm run reference:author -- publish --draft ID --dry-run
 npm run reference:author -- publish --draft ID --revision REVISION
 npm run reference:author -- publish --draft ID --revision REVISION --apply
-npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --corrections N --baseline-corrections N --baseline-entries N --flaky-reruns N --json
+npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --baseline-active-minutes N --baseline-entries N --pre-factual-corrections N --pre-example-corrections N --post-factual-corrections N --post-example-corrections N --baseline-factual-corrections N --baseline-example-corrections N --high-risk-reviewed N --flaky-reruns N --json
 ```
 
 Drafts default to `.cpp-learn/authoring/`, while disposable compiler results
@@ -201,19 +201,24 @@ before planning; multiple backups fail closed for manual inspection.
 
 Fact reuse is explicit: the source must be in the target draft's related Entry
 set, remain at the referenced ready revision, and have the same evidence digest.
-The target receives the selected fact groups and exact referenced source
-records; subsequent source changes invalidate reuse. `context` emits only the
-requested verified groups and sources. Save its `--json` output when passing it
-to an AI Adapter, and require generated claims to cite `allowedFactGroupIds`.
-The tool cannot semantically prove arbitrary prose, so new claims still belong
-in `facts.json` and must pass `check` before publication.
+The target stores only `reusedFrom`; it does not copy fact prose or source
+records. `context` resolves and emits only the requested verified groups and
+sources, while subsequent source changes invalidate the reference. Save its
+`--json` output when passing it to an AI Adapter. The Adapter must submit each
+generated claim and its cited `allowedFactGroupIds` to
+`reviewGeneratedClaims`; unmapped or out-of-pack claims return to an
+`unverified` queue. This operation cannot prove that prose semantically matches
+a cited fact, so human review and `check` remain mandatory.
 
 Run `measure` after a real batch and retain its JSON result with the batch
 review. Timing values are observations supplied by the author; cache and finding
-counts come from the current revision-bound reports. A five-Entry batch meets
-the planning target only when all five drafts are ready, active time is 60–90
-minutes, and the post-publication correction rate does not exceed the chosen
-baseline batch rate.
+counts come from current revision-bound reports. Integer counters separately
+record factual/example corrections before and after publication, baseline
+escaped corrections, reviewed high-risk claims, and flaky reruns. A five-Entry
+batch meets the planning target only when all drafts are ready, active time is
+60–90 minutes and improves per-Entry baseline throughput, factual and example
+escaped-defect rates do not regress, every observed high-risk finding is
+reviewed, and no flaky rerun occurred.
 
 1. Reserve a stable Entry ID and slug in the Reference catalog.
 2. Add manifest, original Markdown, sources, and standalone example files.

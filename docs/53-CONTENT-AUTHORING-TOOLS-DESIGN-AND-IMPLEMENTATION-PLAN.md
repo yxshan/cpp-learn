@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -300,9 +300,12 @@ Exit: a five-Entry batch meets the time target with no higher escaped-defect rat
 than the current manual baseline.
 
 Implementation status: the reusable-fact, constrained context-pack, and batch
-measurement contracts are delivered. A real observed five-Entry batch is still
-required before the Phase A3 exit can be accepted; deterministic fixture results
-prove calculation and rejection behavior, not author throughput.
+measurement contracts are delivered. Reuse is reference-only, generated claims
+outside the context allowlist return to an unverified queue, and batch reports
+bind member revisions while comparing factual/example defects separately. A
+real observed five-Entry batch is still required before the Phase A3 exit can be
+accepted; deterministic fixture results prove calculation and rejection
+behavior, not author throughput.
 
 ### Phase A4: Web Author Console
 
@@ -350,7 +353,8 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Start Phase A3 with a five-Entry batch fixture, explicit verified-fact reuse,
-constrained AI context-pack contracts, and measurement of author minutes,
-machine minutes, cache hit rate, findings, and escaped corrections. Do not add
-the Web Author Console until batch safety and throughput evidence are accepted.
+Run and retain a real coherent five-Entry Phase A3 batch, then compare its
+per-Entry active minutes and escaped factual/example defects with the recorded
+manual baseline. In parallel, the next implementation slice may begin Phase A4
+with loopback-only Web Author Console contracts, while A3 remains empirically
+pending and cannot be described as accepted.

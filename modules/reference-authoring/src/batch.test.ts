@@ -85,13 +85,20 @@ describe("[T-AUTH-010] authoring batch measurement", () => {
         "vector-member-4",
         "vector-member-5",
       ],
-      authorActiveMinutes: 75,
-      machineMinutes: 12,
-      fullGateMinutes: 4,
-      postPublicationCorrections: 0,
-      baselinePostPublicationCorrections: 0,
-      baselineEntries: 5,
-      flakyReruns: 0,
+      timing: {
+        authorActiveMinutes: 75,
+        machineMinutes: 12,
+        fullGateMinutes: 4,
+        baselineAuthorActiveMinutes: 360,
+        baselineEntries: 5,
+      },
+      quality: {
+        prePublicationCorrections: { factual: 2, example: 1 },
+        postPublicationCorrections: { factual: 0, example: 0 },
+        baselinePostPublicationCorrections: { factual: 1, example: 1 },
+        highRiskClaimsReviewed: 1,
+        flakyReruns: 0,
+      },
     });
 
     expect(result).toMatchObject({
@@ -102,12 +109,34 @@ describe("[T-AUTH-010] authoring batch measurement", () => {
         status: "meets-target",
         entries: 5,
         readyEntries: 5,
+        drafts: expect.arrayContaining([
+          expect.objectContaining({
+            draftId: "vector-member-1",
+            draftRevision: 2,
+            inputDigest: expect.stringMatching(/^[a-f0-9]{64}$/u),
+          }),
+        ]),
         cache: { hits: 4, misses: 1, hitRate: 0.8 },
-        findings: { hard: 0, warning: 1, highRisk: 1 },
-        quality: { correctionRate: 0, baselineCorrectionRate: 0 },
+        findings: {
+          hard: 0,
+          warning: 1,
+          highRisk: 1,
+          hardByCategory: {},
+        },
+        timing: {
+          activeMinutesPerEntry: 15,
+          baselineActiveMinutesPerEntry: 72,
+        },
+        quality: {
+          prePublicationCorrections: { factual: 2, example: 1 },
+          postPublicationCorrectionRates: { factual: 0, example: 0 },
+        },
         targets: {
           fiveEntryBatch: true,
           activeMinutesWithinTarget: true,
+          throughputImproved: true,
+          noFactualDefectRegression: true,
+          noExampleDefectRegression: true,
           noEscapedCorrectionRegression: true,
         },
         digest: expect.stringMatching(/^[a-f0-9]{64}$/u),
@@ -129,21 +158,93 @@ describe("[T-AUTH-010] authoring batch measurement", () => {
         "vector-member-4",
         "vector-member-5",
       ],
-      authorActiveMinutes: 60,
-      machineMinutes: 10,
-      fullGateMinutes: 3,
-      postPublicationCorrections: 1,
-      baselinePostPublicationCorrections: 0,
-      baselineEntries: 5,
-      flakyReruns: 0,
+      timing: {
+        authorActiveMinutes: 60,
+        machineMinutes: 10,
+        fullGateMinutes: 3,
+        baselineAuthorActiveMinutes: 60,
+        baselineEntries: 5,
+      },
+      quality: {
+        prePublicationCorrections: { factual: 0, example: 0 },
+        postPublicationCorrections: { factual: 1, example: 0 },
+        baselinePostPublicationCorrections: { factual: 0, example: 1 },
+        highRiskClaimsReviewed: 1,
+        flakyReruns: 0,
+      },
     });
 
     expect(result).toMatchObject({
       ok: true,
       report: {
         status: "needs-attention",
-        targets: { noEscapedCorrectionRegression: false },
+        targets: {
+          throughputImproved: false,
+          noFactualDefectRegression: false,
+          noExampleDefectRegression: true,
+          noEscapedCorrectionRegression: false,
+        },
       },
     });
+  });
+
+  it("binds the report digest to each member revision and input digest", async () => {
+    const workspaces = await readyBatch();
+    const request = {
+      batchId: "vector-members-binding",
+      draftIds: workspaces.map(({ draft }) => draft.draftId),
+      timing: {
+        authorActiveMinutes: 75,
+        machineMinutes: 12,
+        fullGateMinutes: 4,
+        baselineAuthorActiveMinutes: 360,
+        baselineEntries: 5,
+      },
+      quality: {
+        prePublicationCorrections: { factual: 0, example: 0 },
+        postPublicationCorrections: { factual: 0, example: 0 },
+        baselinePostPublicationCorrections: { factual: 0, example: 0 },
+        highRiskClaimsReviewed: 1,
+        flakyReruns: 0,
+      },
+    };
+    const original = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository(workspaces),
+    }).measureBatch(request);
+    if (!original.ok) throw new Error("original measurement failed");
+
+    const first = workspaces[0]!;
+    const revisedDraft = { ...first.draft, revision: 3 };
+    const revisedFiles = {
+      ...first.files,
+      "draft.json": `${JSON.stringify(revisedDraft, null, 2)}\n`,
+    };
+    const revisedReport = {
+      ...first.report,
+      draftRevision: 3,
+      inputDigest: authoringInputDigest(revisedFiles),
+    };
+    const revised: DraftWorkspace = {
+      ...first,
+      draft: revisedDraft,
+      report: revisedReport,
+      files: {
+        ...revisedFiles,
+        "report.json": `${JSON.stringify(revisedReport, null, 2)}\n`,
+      },
+    };
+    const changed = await createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([
+        revised,
+        ...workspaces.slice(1),
+      ]),
+    }).measureBatch(request);
+    if (!changed.ok) throw new Error("changed measurement failed");
+
+    expect(changed.report.drafts[0]).toMatchObject({
+      draftId: first.draft.draftId,
+      draftRevision: 3,
+    });
+    expect(changed.report.digest).not.toBe(original.report.digest);
   });
 });

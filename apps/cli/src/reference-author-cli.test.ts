@@ -71,12 +71,24 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
         "12",
         "--gate-minutes",
         "4",
-        "--corrections",
-        "0",
-        "--baseline-corrections",
-        "1",
+        "--baseline-active-minutes",
+        "360",
         "--baseline-entries",
         "5",
+        "--pre-factual-corrections",
+        "2",
+        "--pre-example-corrections",
+        "1",
+        "--post-factual-corrections",
+        "0",
+        "--post-example-corrections",
+        "0",
+        "--baseline-factual-corrections",
+        "1",
+        "--baseline-example-corrections",
+        "1",
+        "--high-risk-reviewed",
+        "1",
         "--flaky-reruns",
         "0",
         "--json",
@@ -90,15 +102,84 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     expect(measureBatch).toHaveBeenCalledWith({
       batchId: "vector-batch-1",
       draftIds: ["one", "two", "three", "four", "five"],
-      authorActiveMinutes: 75,
-      machineMinutes: 12,
-      fullGateMinutes: 4,
-      postPublicationCorrections: 0,
-      baselinePostPublicationCorrections: 1,
-      baselineEntries: 5,
-      flakyReruns: 0,
+      timing: {
+        authorActiveMinutes: 75,
+        machineMinutes: 12,
+        fullGateMinutes: 4,
+        baselineAuthorActiveMinutes: 360,
+        baselineEntries: 5,
+      },
+      quality: {
+        prePublicationCorrections: { factual: 2, example: 1 },
+        postPublicationCorrections: { factual: 0, example: 0 },
+        baselinePostPublicationCorrections: { factual: 1, example: 1 },
+        highRiskClaimsReviewed: 1,
+        flakyReruns: 0,
+      },
     });
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
+  it("rejects fractional counters and a zero-entry baseline as CLI usage errors", async () => {
+    const measureBatch = vi.fn();
+    const authoring = { measureBatch } as unknown as ReferenceAuthoring;
+    const stderr = vi.fn();
+    const baseFlags = [
+      "measure",
+      "--batch",
+      "vector-batch-1",
+      "--drafts",
+      "one,two,three,four,five",
+      "--active-minutes",
+      "75",
+      "--machine-minutes",
+      "12",
+      "--gate-minutes",
+      "4",
+      "--baseline-active-minutes",
+      "360",
+      "--baseline-entries",
+      "5",
+      "--pre-factual-corrections",
+      "0.5",
+      "--pre-example-corrections",
+      "0",
+      "--post-factual-corrections",
+      "0",
+      "--post-example-corrections",
+      "0",
+      "--baseline-factual-corrections",
+      "0",
+      "--baseline-example-corrections",
+      "0",
+      "--high-risk-reviewed",
+      "0",
+    ];
+
+    await expect(
+      runReferenceAuthorCli({
+        argv: baseFlags,
+        authoring,
+        stdout: vi.fn(),
+        stderr,
+      }),
+    ).resolves.toBe(2);
+    await expect(
+      runReferenceAuthorCli({
+        argv: baseFlags.map((value, index) =>
+          baseFlags[index - 1] === "--pre-factual-corrections"
+            ? "0"
+            : baseFlags[index - 1] === "--baseline-entries"
+              ? "0"
+              : value,
+        ),
+        authoring,
+        stdout: vi.fn(),
+        stderr,
+      }),
+    ).resolves.toBe(2);
+    expect(measureBatch).not.toHaveBeenCalled();
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining("Usage:"));
   });
 
   it("[T-AUTH-A2-PREVIEW-001] checks then renders a draft with the configured preview Adapter", async () => {

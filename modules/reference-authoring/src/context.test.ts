@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -47,8 +49,11 @@ function withSelectionFact(
       ? {
           ...group,
           status: "verified" as const,
-          summary: "Use this operation when insertion position is known.",
-          sourceIds: [source.id],
+          summary:
+            options.reusedFrom === undefined
+              ? "Use this operation when insertion position is known."
+              : "",
+          sourceIds: options.reusedFrom === undefined ? [source.id] : [],
           ...(options.reusedFrom === undefined
             ? {}
             : { reusedFrom: options.reusedFrom }),
@@ -57,7 +62,7 @@ function withSelectionFact(
   );
   const sources: AuthoringSourceLedger = {
     ...workspace.sources,
-    sources: [source],
+    sources: options.reusedFrom === undefined ? [source] : [],
   };
   const revision = options.state === "checked" ? 2 : workspace.draft.revision;
   const draft = {
@@ -148,7 +153,8 @@ describe("[T-AUTH-A3-CONTEXT-001] constrained AI context packs", () => {
             expect.objectContaining({
               id: "selection",
               status: "verified",
-              summary: "Use this operation when insertion position is known.",
+              summary: "",
+              sourceIds: [],
               reusedFrom: {
                 draftId: "std-vector",
                 draftRevision: 2,
@@ -158,7 +164,24 @@ describe("[T-AUTH-A3-CONTEXT-001] constrained AI context packs", () => {
             }),
           ]),
         },
-        sources: { sources: [source] },
+        sources: { sources: [] },
+      },
+    });
+    await expect(
+      authoring.buildContext({
+        draftId: "vector-insert",
+        factGroupIds: ["selection"],
+      }),
+    ).resolves.toMatchObject({
+      ok: true,
+      pack: {
+        factGroups: [
+          expect.objectContaining({
+            summary: "Use this operation when insertion position is known.",
+            sourceIds: [source.id],
+          }),
+        ],
+        sources: [source],
       },
     });
   });
@@ -198,6 +221,125 @@ describe("[T-AUTH-A3-CONTEXT-001] constrained AI context packs", () => {
       },
     });
     expect(result.ok && result.pack.factGroups).toHaveLength(1);
+  });
+
+  it("returns generated claims outside the context allowlist to an unverified review queue", async () => {
+    const workspace = withSelectionFact(
+      await prepared("vector-insert", "insert"),
+    );
+    const authoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([workspace]),
+    });
+    const context = await authoring.buildContext({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+    });
+    if (!context.ok) throw new Error("context fixture failed");
+
+    const result = await authoring.reviewGeneratedClaims({
+      context: context.pack,
+      claims: [
+        {
+          id: "supported-selection",
+          text: "Use it when the insertion position is known.",
+          factGroupIds: ["selection"],
+        },
+        {
+          id: "unsupported-complexity",
+          text: "This operation has constant complexity.",
+          factGroupIds: ["complexity"],
+        },
+        {
+          id: "uncited-claim",
+          text: "This operation never invalidates iterators.",
+          factGroupIds: [],
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      review: {
+        status: "requires-review",
+        acceptedClaimIds: ["supported-selection"],
+        reviewQueue: [
+          {
+            claimId: "unsupported-complexity",
+            status: "unverified",
+            reason: "fact-not-allowed",
+            unknownFactGroupIds: ["complexity"],
+          },
+          {
+            claimId: "uncited-claim",
+            status: "unverified",
+            reason: "missing-fact-reference",
+            unknownFactGroupIds: [],
+          },
+        ],
+        digest: expect.stringMatching(/^[a-f0-9]{64}$/u),
+      },
+    });
+
+    const { digest: originalDigest, ...forgedContents } = context.pack;
+    void originalDigest;
+    const forgedContentsWithPolicy = {
+      ...forgedContents,
+      policy: {
+        ...forgedContents.policy,
+        allowedFactGroupIds: ["selection", "complexity"],
+      },
+    };
+    const forgedContext = {
+      ...forgedContentsWithPolicy,
+      digest: createHash("sha256")
+        .update(JSON.stringify(forgedContentsWithPolicy))
+        .digest("hex"),
+    };
+    await expect(
+      authoring.reviewGeneratedClaims({
+        context: forgedContext,
+        claims: [
+          {
+            id: "forged-complexity",
+            text: "This operation has constant complexity.",
+            factGroupIds: ["complexity"],
+          },
+        ],
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "context_changed",
+      issues: [expect.objectContaining({ keyword: "digest" })],
+    });
+  });
+
+  it("rejects a context workspace whose artifacts belong to another draft", async () => {
+    const workspace = withSelectionFact(
+      await prepared("vector-insert", "insert"),
+    );
+    const mismatched: DraftWorkspace = {
+      ...workspace,
+      facts: { ...workspace.facts, draftId: "another-draft" },
+    };
+    const authoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([mismatched]),
+    });
+
+    await expect(
+      authoring.buildContext({
+        draftId: "vector-insert",
+        factGroupIds: ["selection"],
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "draft_unreadable",
+      issues: [
+        expect.objectContaining({
+          path: "/facts/draftId",
+          keyword: "draft-id-mismatch",
+        }),
+      ],
+    });
   });
 
   it("rejects an unverified fact instead of exposing it to an AI Adapter", async () => {
@@ -353,6 +495,119 @@ describe("[T-AUTH-A3-CONTEXT-001] constrained AI context packs", () => {
           expect.objectContaining({ code: "fact-reuse-digest-mismatch" }),
         ]),
       },
+    });
+
+    const revisedDraft = {
+      ...sourceWorkspace.draft,
+      revision: 3,
+    };
+    const revisedFiles = {
+      ...sourceWorkspace.files,
+      "draft.json": `${JSON.stringify(revisedDraft, null, 2)}\n`,
+    };
+    const revisedReport = {
+      ...sourceWorkspace.report,
+      draftRevision: 3,
+      inputDigest: authoringInputDigest(revisedFiles),
+    };
+    const revisedSource: DraftWorkspace = {
+      ...sourceWorkspace,
+      draft: revisedDraft,
+      report: revisedReport,
+      files: {
+        ...revisedFiles,
+        "report.json": `${JSON.stringify(revisedReport, null, 2)}\n`,
+      },
+    };
+    const revisedAuthoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([
+        revisedSource,
+        targetWorkspace,
+      ]),
+    });
+    await expect(
+      revisedAuthoring.buildContext({
+        draftId: "vector-insert",
+        factGroupIds: ["selection"],
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "context_blocked",
+      issues: [
+        expect.objectContaining({ keyword: "fact-reuse-revision-stale" }),
+      ],
+    });
+  });
+
+  it("rejects unrelated reuse and does not ignore reuse while resuming a draft", async () => {
+    const sourceWorkspace = withSelectionFact(
+      await prepared("std-vector", "std::vector"),
+      { state: "checked" },
+    );
+    const unrelatedAuthoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([sourceWorkspace]),
+      clock: () => now,
+    });
+    await expect(
+      unrelatedAuthoring.prepare({
+        target: {
+          entryId: "vector-insert",
+          kind: "member",
+          slug: "standard-library/containers/vector/insert",
+          title: "std::vector::insert",
+        },
+        reuse: { draftId: "std-vector", factGroupIds: ["selection"] },
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "invalid_request",
+      issues: [expect.objectContaining({ keyword: "fact-reuse-unrelated" })],
+    });
+
+    const drafts = createInMemoryReferenceDraftRepository([sourceWorkspace]);
+    const authoring = createReferenceAuthoring({
+      drafts,
+      catalog: {
+        load: async () => ({
+          entries: [
+            {
+              id: "std-vector",
+              slug: "standard-library/containers/vector",
+              kind: "type",
+              title: "std::vector",
+              categories: ["containers"],
+              relatedEntryIds: [],
+            },
+          ],
+          entryIds: ["std-vector"],
+          categoryIds: ["containers"],
+          slugsByEntryId: {
+            "std-vector": "standard-library/containers/vector",
+          },
+          redirects: [],
+        }),
+      },
+      clock: () => now,
+    });
+    const target = {
+      entryId: "vector-insert",
+      kind: "member" as const,
+      slug: "standard-library/containers/vector/insert",
+      title: "std::vector::insert",
+    };
+    await expect(authoring.prepare({ target })).resolves.toMatchObject({
+      ok: true,
+      created: true,
+    });
+    await expect(
+      authoring.prepare({
+        target,
+        reuse: { draftId: "std-vector", factGroupIds: ["selection"] },
+      }),
+    ).resolves.toEqual({
+      ok: false,
+      code: "draft_conflict",
+      issues: [expect.objectContaining({ path: "/reuse" })],
     });
   });
 });
