@@ -57,6 +57,37 @@ function isCppStandard(value: string): value is CppStandard {
   return CPP_STANDARDS.some((standard) => standard === value);
 }
 
+async function readJsonCommandInput(
+  dependencies: ReferenceAuthorCliDependencies,
+  flags: readonly string[],
+  usage: string,
+  artifactLabel: string,
+): Promise<
+  | { readonly ok: true; readonly input: unknown }
+  | { readonly ok: false; readonly exitCode: 2 | 3 }
+> {
+  const inputPath = flagValue(flags, "--input");
+  if (inputPath === undefined) {
+    dependencies.stderr(usage);
+    return { ok: false, exitCode: 2 };
+  }
+  if (dependencies.readTextFile === undefined) {
+    dependencies.stderr(`${artifactLabel} file reader is unavailable\n`);
+    return { ok: false, exitCode: 3 };
+  }
+  try {
+    return {
+      ok: true,
+      input: JSON.parse(await dependencies.readTextFile(inputPath)),
+    };
+  } catch (error) {
+    dependencies.stderr(
+      `Unable to read ${artifactLabel.toLowerCase()} input: ${error instanceof Error ? error.message : "invalid JSON"}\n`,
+    );
+    return { ok: false, exitCode: 2 };
+  }
+}
+
 export async function runReferenceAuthorCli(
   dependencies: ReferenceAuthorCliDependencies,
 ): Promise<number> {
@@ -64,25 +95,16 @@ export async function runReferenceAuthorCli(
   const json = flags.includes("--json");
 
   if (command === "batch") {
-    const inputPath = flagValue(flags, "--input");
-    if (inputPath === undefined) {
-      dependencies.stderr(batchUsage);
-      return 2;
+    const parsed = await readJsonCommandInput(
+      dependencies,
+      flags,
+      batchUsage,
+      "Authoring-batch",
+    );
+    if (!parsed.ok) {
+      return parsed.exitCode;
     }
-    if (dependencies.readTextFile === undefined) {
-      dependencies.stderr("Authoring-batch file reader is unavailable\n");
-      return 3;
-    }
-    let input: unknown;
-    try {
-      input = JSON.parse(await dependencies.readTextFile(inputPath));
-    } catch (error) {
-      dependencies.stderr(
-        `Unable to read authoring-batch input: ${error instanceof Error ? error.message : "invalid JSON"}\n`,
-      );
-      return 2;
-    }
-    const result = await dependencies.authoring.advanceBatch(input);
+    const result = await dependencies.authoring.advanceBatch(parsed.input);
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
@@ -112,25 +134,16 @@ export async function runReferenceAuthorCli(
   }
 
   if (command === "run") {
-    const inputPath = flagValue(flags, "--input");
-    if (inputPath === undefined) {
-      dependencies.stderr(runUsage);
-      return 2;
+    const parsed = await readJsonCommandInput(
+      dependencies,
+      flags,
+      runUsage,
+      "Authoring-run",
+    );
+    if (!parsed.ok) {
+      return parsed.exitCode;
     }
-    if (dependencies.readTextFile === undefined) {
-      dependencies.stderr("Authoring-run file reader is unavailable\n");
-      return 3;
-    }
-    let input: unknown;
-    try {
-      input = JSON.parse(await dependencies.readTextFile(inputPath));
-    } catch (error) {
-      dependencies.stderr(
-        `Unable to read authoring-run input: ${error instanceof Error ? error.message : "invalid JSON"}\n`,
-      );
-      return 2;
-    }
-    const result = await dependencies.authoring.advanceRun(input);
+    const result = await dependencies.authoring.advanceRun(parsed.input);
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
