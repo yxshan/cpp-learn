@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.8 |
+| Version | 1.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -321,12 +321,12 @@ behavior, not author throughput.
 - Accept schema-validated generated sections and summaries through a
   provider-neutral JSON bundle and CLI Adapter.
 - Review every declared claim against an authoritative rebuilt context.
-- Apply accepted sections and summaries through revision-bound full-snapshot
-  commits and keep Generation Receipts.
+- Apply accepted sections, summaries, and compiler-validated Reference Examples
+  through revision-bound full-snapshot commits and keep Generation Receipts.
 
-Current status: controlled section and Entry-summary generation are implemented.
-Remaining A4 work adds example proposals, structured template generation, and
-a complete provider-neutral authoring run command.
+Current status: controlled section, Entry-summary, and compiled Reference
+Example generation are implemented. Remaining A4 work adds structured template
+generation and a complete provider-neutral authoring run command.
 
 Exit: an AI agent can fill a complete draft through controlled operations while
 unsupported claims remain unverified and no failed operation partially changes
@@ -396,6 +396,9 @@ authoring rules or building a general-purpose CMS.
 - `T-AUTH-015`: generated summaries are single-line, context/revision-bound,
   claim-reviewed, receipt-backed, summary-only mutations that remain blocked
   until explicit human review.
+- `T-AUTH-016`: generated Reference Examples use derived confined paths,
+  context-reviewed claims, bounded compilation, atomic manifest/source writes,
+  dedicated receipts, and mandatory human review.
 
 ## 11. Metrics and operating policy
 
@@ -416,9 +419,9 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Complete Phase A4 by adding example generation, structured bundle templates,
-and a provider-neutral run orchestration command on top of the delivered
-section and summary operations.
+Complete Phase A4 by adding structured bundle templates and a provider-neutral
+run orchestration command on top of the delivered section, summary, and example
+operations.
 Then implement the resumable Phase A5 batch runner. A real coherent five-Entry
 run must still be retained to close empirical Phase A3 acceptance; later tooling
 must not manufacture that evidence.

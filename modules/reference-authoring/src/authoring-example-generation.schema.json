@@ -1,0 +1,95 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-example-generation.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "draftId", "contextDigest", "example"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "contextDigest": { "$ref": "#/$defs/digest" },
+    "example": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "standard", "source", "claims"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["compile", "run", "expected-compile-failure"] },
+        "standard": { "$ref": "#/$defs/standard" },
+        "stdin": { "type": "string", "maxLength": 65536 },
+        "expectedStdout": { "type": "string", "maxLength": 65536 },
+        "expectedDiagnosticCategory": { "type": "string", "minLength": 1 },
+        "source": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 131072,
+          "pattern": "^(?=[\\s\\S]*\\S)[^\\u0000\\r]*\\n$"
+        },
+        "claims": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/claim" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "run" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "expectedStdout": true },
+            "required": ["expectedStdout"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "expected-compile-failure" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "expectedDiagnosticCategory": true },
+            "required": ["expectedDiagnosticCategory"],
+            "not": { "required": ["expectedStdout"] }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "standard": {
+      "enum": [
+        "c++98",
+        "c++03",
+        "c++11",
+        "c++14",
+        "c++17",
+        "c++20",
+        "c++23",
+        "c++26-draft"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "factGroupIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "factGroupIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    }
+  }
+}

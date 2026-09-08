@@ -135,6 +135,88 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     );
   });
 
+  it("[T-AUTH-A4-EXAMPLE-002] dispatches a generated-example bundle through the same command", async () => {
+    const input = {
+      context: {
+        schemaVersion: 2,
+        draftId: "vector-insert",
+        draftRevision: 1,
+        inputDigest: "a".repeat(64),
+        target: {
+          entryId: "vector-insert",
+          kind: "member",
+          slug: "standard-library/containers/vector/insert",
+          title: "std::vector::insert",
+        },
+        profile: "callable",
+        requiredHeadings: ["示例"],
+        factGroups: [],
+        sources: [],
+        policy: {
+          mode: "verified-facts-only",
+          allowedFactGroupIds: ["examples"],
+          requirements: [],
+        },
+        digest: "b".repeat(64),
+      },
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: "b".repeat(64),
+        example: {
+          id: "minimal",
+          kind: "run",
+          standard: "c++20",
+          expectedStdout: "ok\n",
+          source:
+            '#include <iostream>\n\nint main() {\n  std::cout << "ok\\n";\n}\n',
+          claims: [
+            {
+              id: "deterministic-example",
+              text: "The example prints ok.",
+              factGroupIds: ["examples"],
+            },
+          ],
+        },
+      },
+    };
+    const result = {
+      ok: true as const,
+      workspace: { draft: { draftId: "vector-insert", revision: 2 } },
+      review: { status: "accepted" },
+      receiptPath: "generation/revision-2.json",
+    };
+    const applyGeneratedExample = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["apply-generation", "--input", "example.json"],
+      authoring: { applyGeneratedExample } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(applyGeneratedExample).toHaveBeenCalledWith(input);
+    expect(stdout).toHaveBeenCalledWith(
+      "Applied generated example to vector-insert at revision 2 (generation/revision-2.json)\n",
+    );
+
+    const jsonStdout = vi.fn();
+    await expect(
+      runReferenceAuthorCli({
+        argv: ["apply-generation", "--input", "example.json", "--json"],
+        authoring: { applyGeneratedExample } as unknown as ReferenceAuthoring,
+        readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
+        stdout: jsonStdout,
+        stderr: vi.fn(),
+      }),
+    ).resolves.toBe(0);
+    expect(jsonStdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it("[T-AUTH-A3-CONTEXT-002] returns a constrained context pack as JSON", async () => {
     const result = {
       ok: true as const,

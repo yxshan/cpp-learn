@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.6 |
+| Version | 2.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -259,9 +259,9 @@ production-renderer preview, revision/input-bound dry-run publication plans, and
 validated whole-tree publication with rollback. Reference-only fact reuse,
 context packs, generated-claim provenance review, and revision-bound batch
 metrics are implemented in Phase A3; one real measured five-Entry batch is
-still required before acceptance. Phase A4 can now apply controlled sections
-and Entry summaries through the Module and CLI; example and run orchestration
-remain. A
+still required before acceptance. Phase A4 can now apply controlled sections,
+Entry summaries, and compiled Reference Examples through the Module and CLI;
+structured templates and run orchestration remain. A
 lightweight Web review surface is optional after the automation phases.
 
 ## 13. Global definition of done

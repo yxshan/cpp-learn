@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IMP-042 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Implemented; Phase A4 in progress |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -58,8 +58,6 @@ summary operation. It does not contact a model provider.
 
 ## 5. Remaining Phase A4 work
 
-The next slice adds Reference Example proposals with standalone source files,
-manifest updates, bounded compilation validation, and the same receipt and
-human-review policy. Structured bundle templates and a resumable
-provider-neutral authoring run follow; the optional Web review surface remains
-outside the critical path.
+Reference Example proposals are delivered in [IMP-043](60-STAGE-6.3-PHASE-A4-GENERATED-REFERENCE-EXAMPLE-IMPLEMENTATION-REPORT.md).
+Structured bundle templates and a resumable provider-neutral authoring run
+follow; the optional Web review surface remains outside the critical path.

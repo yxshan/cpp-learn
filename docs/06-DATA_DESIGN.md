@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -258,6 +258,15 @@ shared `generation/revision-N.json` sequence without changing the existing v1
 Section Generation Receipt or Authoring Report schemas. During every check, a
 valid receipt itself creates the pending human-review finding; optional report
 presentation metadata is never trusted as the publication gate.
+
+`AuthoringExampleGeneration` carries an ID, Reference Example execution
+contract, bounded LF-terminated C++ source, claim mappings, and context digest.
+The Module derives both draft and canonical paths from the ID, validates the
+source through the configured bounded compiler Adapter, and upserts the
+candidate Entry manifest by ID. Its dedicated v1 receipt preserves the exact
+proposal and review. Source, manifest, receipt, report reset, and draft revision
+are installed by the same compare-and-swap snapshot; compiler cache writes are
+disposable and never authorize content by themselves.
 
 `AuthoringBatchReport` aggregates one to five current Draft reports plus
 explicitly supplied timing and correction observations. Each member records its

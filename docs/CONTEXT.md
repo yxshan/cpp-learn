@@ -142,6 +142,13 @@ summary. It shares section-generation provenance and review rules but never
 changes article Markdown.
 _Avoid_: page introduction, generated section, search keyword list
 
+**Generated Reference Example**:
+A bounded Authoring Generation containing an original C++ source file and its
+Reference Example execution contract. Its path is derived by the Authoring
+Module, and it must pass claim review plus bounded compiler validation before
+the source and candidate manifest can be installed atomically.
+_Avoid_: learner solution, arbitrary file write, uncompiled code snippet
+
 **Generation Receipt**:
 A revision-bound draft artifact recording the accepted Authoring Generation,
 its claim review, context digest, and application time. It supports audit and

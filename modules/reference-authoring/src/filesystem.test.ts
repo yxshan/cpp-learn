@@ -16,6 +16,7 @@ import {
   createFilesystemReferenceDraftRepository,
   createFilesystemAuthoringCatalogContext,
   createInMemoryReferenceDraftRepository,
+  createNativeAuthoringExampleValidator,
   createReferenceAuthoring,
 } from "./index.js";
 
@@ -120,6 +121,7 @@ describe("[T-AUTH-A1-FS-001] filesystem draft Adapter", () => {
     const drafts = createFilesystemReferenceDraftRepository({ root });
     const authoring = createReferenceAuthoring({
       drafts,
+      examples: createNativeAuthoringExampleValidator(),
       clock: () => new Date("2026-09-07T14:05:00.000Z"),
     });
     const prepared = await authoring.prepare({ target });
@@ -135,11 +137,14 @@ describe("[T-AUTH-A1-FS-001] filesystem draft Adapter", () => {
     const facts = {
       ...prepared.workspace.facts,
       groups: prepared.workspace.facts.groups.map((group) =>
-        group.id === "selection"
+        group.id === "selection" || group.id === "examples"
           ? {
               ...group,
               status: "verified" as const,
-              summary: "Use insert when the insertion position is known.",
+              summary:
+                group.id === "selection"
+                  ? "Use insert when the insertion position is known."
+                  : "A deterministic example prints ok.",
               sourceIds: [source.id],
             }
           : group,
@@ -232,6 +237,50 @@ describe("[T-AUTH-A1-FS-001] filesystem draft Adapter", () => {
         "utf8",
       ),
     ).resolves.toContain('"summary"');
+
+    const exampleContext = await authoring.buildContext({
+      draftId: target.entryId,
+      factGroupIds: ["examples"],
+    });
+    if (!exampleContext.ok) throw new Error("example context build failed");
+    const exampleApplied = await authoring.applyGeneratedExample({
+      context: exampleContext.pack,
+      expectedRevision: 3,
+      generation: {
+        schemaVersion: 1,
+        draftId: target.entryId,
+        contextDigest: exampleContext.pack.digest,
+        example: {
+          id: "minimal",
+          kind: "run",
+          standard: "c++20",
+          expectedStdout: "ok\n",
+          source:
+            '#include <iostream>\n\nint main() {\n  std::cout << "ok\\n";\n}\n',
+          claims: [
+            {
+              id: "deterministic-example",
+              text: "A deterministic example prints ok.",
+              factGroupIds: ["examples"],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(exampleApplied).toMatchObject({
+      ok: true,
+      workspace: { draft: { revision: 4 } },
+    });
+    await expect(
+      readFile(join(root, target.entryId, "examples/minimal.cpp"), "utf8"),
+    ).resolves.toContain('std::cout << "ok\\n";');
+    await expect(
+      readFile(
+        join(root, target.entryId, "generation/revision-4.json"),
+        "utf8",
+      ),
+    ).resolves.toContain('"example"');
 
     await expect(
       authoring.check({ draftId: target.entryId }),

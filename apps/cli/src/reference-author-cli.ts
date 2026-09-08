@@ -3,11 +3,13 @@ import {
   type ReferenceEntryKind,
 } from "@cpp-learn/contracts";
 import type {
+  ApplyGeneratedExampleRequest,
   ApplyGeneratedSummaryRequest,
   ApplyGeneratedSectionRequest,
   DraftWorkspace,
   ReferenceAuthoring,
 } from "@cpp-learn/reference-authoring";
+import { authoringGenerationKind } from "@cpp-learn/reference-authoring";
 
 export interface ReferenceAuthorPreviewAdapter {
   render(workspace: DraftWorkspace): Promise<string>;
@@ -82,17 +84,23 @@ export async function runReferenceAuthorCli(
       return 2;
     }
     const generation = (input as Record<string, unknown>)["generation"];
-    const summaryGeneration =
-      generation !== null &&
-      typeof generation === "object" &&
-      "summary" in generation;
-    const result = summaryGeneration
-      ? await dependencies.authoring.applyGeneratedSummary(
-          input as ApplyGeneratedSummaryRequest,
-        )
-      : await dependencies.authoring.applyGeneratedSection(
-          input as ApplyGeneratedSectionRequest,
-        );
+    const generationKind = authoringGenerationKind(generation);
+    if (generationKind === "unknown") {
+      dependencies.stderr(applyGenerationUsage);
+      return 2;
+    }
+    const result =
+      generationKind === "example"
+        ? await dependencies.authoring.applyGeneratedExample(
+            input as ApplyGeneratedExampleRequest,
+          )
+        : generationKind === "summary"
+          ? await dependencies.authoring.applyGeneratedSummary(
+              input as ApplyGeneratedSummaryRequest,
+            )
+          : await dependencies.authoring.applyGeneratedSection(
+              input as ApplyGeneratedSectionRequest,
+            );
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
@@ -101,7 +109,7 @@ export async function runReferenceAuthorCli(
       );
     } else {
       dependencies.stdout(
-        `Applied generated ${summaryGeneration ? "summary" : "section"} to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
+        `Applied generated ${generationKind} to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
       );
     }
     return result.ok ? 0 : 1;

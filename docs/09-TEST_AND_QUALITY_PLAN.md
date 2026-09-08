@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -168,6 +168,11 @@ Reference content CI additionally validates:
   dedicated receipt validation, receipt-derived human-review blocking,
   filesystem persistence, and correctly labelled CLI dispatch through the same
   machine command.
+  `T-AUTH-A4-EXAMPLE-001/002` verifies derived safe paths, source/manifest
+  atomicity, claim rejection, schema bounds, validator absence/failure,
+  compiler rejection, stale revision, compare-and-swap conflict, same-ID
+  replacement, receipt-derived human review, real native compilation with the
+  filesystem Adapter, and CLI parity.
 
 ## 5. Security tests
 

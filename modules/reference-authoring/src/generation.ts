@@ -1,8 +1,13 @@
+import { Buffer } from "node:buffer";
+
 import Ajv2020, {
   type ErrorObject,
   type ValidateFunction,
 } from "ajv/dist/2020.js";
 
+import type { CppStandard } from "@cpp-learn/contracts";
+
+import authoringExampleGenerationSchema from "./authoring-example-generation.schema.json" with { type: "json" };
 import authoringGenerationSchema from "./authoring-generation.schema.json" with { type: "json" };
 import authoringSummaryGenerationSchema from "./authoring-summary-generation.schema.json" with { type: "json" };
 
@@ -33,6 +38,39 @@ export interface AuthoringSummaryGeneration {
   };
 }
 
+export interface AuthoringExampleGeneration {
+  readonly schemaVersion: 1;
+  readonly draftId: string;
+  readonly contextDigest: string;
+  readonly example: {
+    readonly id: string;
+    readonly kind: "compile" | "run" | "expected-compile-failure";
+    readonly standard: CppStandard;
+    readonly stdin?: string;
+    readonly expectedStdout?: string;
+    readonly expectedDiagnosticCategory?: string;
+    readonly source: string;
+    readonly claims: readonly AuthoringGenerationClaim[];
+  };
+}
+
+export type AuthoringGeneration =
+  | AuthoringExampleGeneration
+  | AuthoringSectionGeneration
+  | AuthoringSummaryGeneration;
+
+export type AuthoringGenerationKind = "example" | "section" | "summary";
+
+export function authoringGenerationKind(
+  value: unknown,
+): AuthoringGenerationKind | "unknown" {
+  if (value === null || typeof value !== "object") return "unknown";
+  if ("example" in value) return "example";
+  if ("summary" in value) return "summary";
+  if ("section" in value) return "section";
+  return "unknown";
+}
+
 export interface GenerationValidationIssue {
   readonly path: string;
   readonly message: string;
@@ -40,6 +78,7 @@ export interface GenerationValidationIssue {
 }
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
+const validateExampleGeneration = ajv.compile(authoringExampleGenerationSchema);
 const validateGeneration = ajv.compile(authoringGenerationSchema);
 const validateSummaryGeneration = ajv.compile(authoringSummaryGenerationSchema);
 
@@ -72,6 +111,22 @@ export function validateAuthoringSummaryGeneration(
   value: unknown,
 ): readonly GenerationValidationIssue[] {
   return validationIssues(validateSummaryGeneration, value);
+}
+
+export function validateAuthoringExampleGeneration(
+  value: unknown,
+): readonly GenerationValidationIssue[] {
+  const issues = [...validationIssues(validateExampleGeneration, value)];
+  if (issues.length > 0) return issues;
+  const generation = value as AuthoringExampleGeneration;
+  if (Buffer.byteLength(generation.example.source, "utf8") > 128 * 1024) {
+    issues.push({
+      path: "/example/source",
+      message: "must be at most 128 KiB when UTF-8 encoded",
+      keyword: "maxBytes",
+    });
+  }
+  return issues;
 }
 
 export function replaceMarkdownSection(
@@ -127,4 +182,8 @@ export function replaceMarkdownSection(
   return { ok: true, content };
 }
 
-export { authoringGenerationSchema, authoringSummaryGenerationSchema };
+export {
+  authoringExampleGenerationSchema,
+  authoringGenerationSchema,
+  authoringSummaryGenerationSchema,
+};

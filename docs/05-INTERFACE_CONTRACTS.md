@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-07 |
@@ -368,7 +368,7 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns eight operations:
+The non-HTTP `ReferenceAuthoring` Interface owns nine operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
@@ -376,6 +376,7 @@ buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
 applyGeneratedSummary({ context, expectedRevision, generation }): Promise<ApplyGeneratedSummaryResult>;
+applyGeneratedExample({ context, expectedRevision, generation }): Promise<ApplyGeneratedExampleResult>;
 check({ draftId }): Promise<CheckDraftResult>;
 publish({ draftId, expectedRevision, mode }): Promise<PublishDraftResult>;
 measureBatch({ batchId, draftIds, timing, quality }): Promise<MeasureAuthoringBatchResult>;
@@ -412,6 +413,18 @@ and human-review rules to the plain-text `entry.json.summary` field. Summary
 text must be a trimmed single line of 4–160 characters. It never changes
 `content.md`; invalid or unsupported input leaves the complete draft unchanged.
 
+`applyGeneratedExample` accepts one bounded source proposal and derives its
+canonical path from the schema-validated example ID; callers cannot supply a
+filesystem path. It claim-reviews the proposal, requires an Authoring Example
+Validator, compiles/runs it according to the Reference Example manifest,
+upserts the manifest by ID, and commits source, manifest, draft metadata, and a
+dedicated receipt as one snapshot. It may replace an untouched profile scaffold
+or a registered same-ID/same-path example, but rejects an unregistered modified
+file instead of overwriting author work. Invalid source, unsupported claims, compiler
+failure, unavailable validation, stale context, or a write race leaves the
+draft unchanged. Generated source must be non-empty LF text ending in a newline
+and is limited to 128 KiB.
+
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
 and its checked author-input digest still matches. A successful result carries a
@@ -425,8 +438,8 @@ Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
 `measure`. `apply-generation --input FILE` is the machine-oriented AI Adapter:
 the JSON file contains the exact context, expected revision, and either a
-generated section or generated summary. The Adapter dispatches by the typed
-generation member rather than exposing a second command. Batch reports bind every member
+generated section, summary, or Reference Example. The Adapter dispatches by the
+typed generation member rather than exposing separate commands. Batch reports bind every member
 revision/input digest and evaluate the 60–90 minute five-Entry target, per-Entry
 throughput improvement, separately observed factual/example defect regression,
 high-risk review coverage, and flaky reruns. They do not replace release
