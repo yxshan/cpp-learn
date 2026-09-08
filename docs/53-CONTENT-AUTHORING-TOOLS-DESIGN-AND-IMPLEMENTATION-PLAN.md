@@ -324,9 +324,9 @@ behavior, not author throughput.
 - Apply accepted sections, summaries, and compiler-validated Reference Examples
   through revision-bound full-snapshot commits and keep Generation Receipts.
 
-Current status: controlled section, Entry-summary, and compiled Reference
-Example generation are implemented. Remaining A4 work adds structured template
-generation and a complete provider-neutral authoring run command.
+Current status: controlled section, Entry-summary, compiled Reference Example
+generation, and revision-bound structured bundle templates are implemented.
+Remaining A4 work adds a complete provider-neutral authoring run command.
 
 Exit: an AI agent can fill a complete draft through controlled operations while
 unsupported claims remain unverified and no failed operation partially changes
@@ -419,9 +419,8 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Complete Phase A4 by adding structured bundle templates and a provider-neutral
-run orchestration command on top of the delivered section, summary, and example
-operations.
+Complete Phase A4 by adding a provider-neutral run orchestration command on top
+of the delivered templates and section, summary, and example operations.
 Then implement the resumable Phase A5 batch runner. A real coherent five-Entry
 run must still be retained to close empirical Phase A3 acceptance; later tooling
 must not manufacture that evidence.

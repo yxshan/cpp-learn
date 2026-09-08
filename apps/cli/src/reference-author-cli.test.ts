@@ -5,6 +5,131 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-A4-TEMPLATE-002] emits an editable generation template as JSON", async () => {
+    const result = {
+      ok: true as const,
+      template: {
+        template: {
+          schemaVersion: 1,
+          status: "incomplete",
+          kind: "section",
+          requiredActions: ["write-content", "declare-claims", "mark-ready"],
+        },
+        context: { draftId: "vector-insert", draftRevision: 1 },
+        expectedRevision: 1,
+        generation: { section: { heading: "什么时候使用" } },
+      },
+    };
+    const buildGenerationTemplate = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: [
+        "template",
+        "--draft",
+        "vector-insert",
+        "--facts",
+        "selection,complexity",
+        "--kind",
+        "section",
+        "--heading",
+        "什么时候使用",
+        "--json",
+      ],
+      authoring: {
+        buildGenerationTemplate,
+      } as unknown as ReferenceAuthoring,
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(buildGenerationTemplate).toHaveBeenCalledWith({
+      draftId: "vector-insert",
+      factGroupIds: ["selection", "complexity"],
+      kind: "section",
+      heading: "什么时候使用",
+    });
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
+  it("rejects an incomplete template before generation dispatch", async () => {
+    const applyGeneratedSection = vi.fn();
+    const stderr = vi.fn();
+    const input = {
+      template: {
+        schemaVersion: 1,
+        status: "incomplete",
+        kind: "section",
+        requiredActions: ["write-content", "declare-claims", "mark-ready"],
+      },
+      context: {
+        schemaVersion: 2,
+        draftId: "vector-insert",
+        draftRevision: 1,
+        inputDigest: "a".repeat(64),
+        target: {
+          entryId: "vector-insert",
+          kind: "member",
+          slug: "standard-library/containers/vector/insert",
+          title: "std::vector::insert",
+        },
+        profile: "callable",
+        requiredHeadings: ["什么时候使用"],
+        factGroups: [
+          {
+            id: "selection",
+            kind: "selection",
+            summary: "Use insert when the position is known.",
+            sourceIds: ["working-draft"],
+            evidenceDigest: "c".repeat(64),
+          },
+        ],
+        sources: [
+          {
+            id: "working-draft",
+            kind: "primary",
+            title: "C++ Working Draft",
+            url: "https://eel.is/c++draft/vector.modifiers",
+            verifiedAt: "2026-09-08",
+          },
+        ],
+        policy: {
+          mode: "verified-facts-only",
+          allowedFactGroupIds: ["selection"],
+          requirements: [
+            "Use only allowed fact groups.",
+            "Declare every generated claim.",
+          ],
+        },
+        digest: "b".repeat(64),
+      },
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: "b".repeat(64),
+        section: { heading: "什么时候使用", markdown: "", claims: [] },
+      },
+    };
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["apply-generation", "--input", "template.json"],
+      authoring: {
+        applyGeneratedSection,
+      } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
+      stdout: vi.fn(),
+      stderr,
+    });
+
+    expect(exitCode).toBe(1);
+    expect(applyGeneratedSection).not.toHaveBeenCalled();
+    expect(stderr).toHaveBeenCalledWith(
+      expect.stringContaining("generation_template_incomplete"),
+    );
+  });
+
   it("[T-AUTH-A4-GENERATION-002] applies a generated-section bundle from a JSON file", async () => {
     const input = {
       context: {

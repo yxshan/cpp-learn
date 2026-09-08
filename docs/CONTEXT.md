@@ -155,6 +155,14 @@ its claim review, context digest, and application time. It supports audit and
 reproduction but does not prove semantic correctness.
 _Avoid_: approval, source evidence, release record
 
+**Generation Bundle Template**:
+A schema-validated, revision-bound editable envelope containing an Authoring
+Context Pack and one intentionally incomplete section, summary, or example
+generation. Its empty content/claims and `incomplete` status prevent accidental
+dispatch; an author or AI fills it and marks it `ready` before the normal
+generation gates run.
+_Avoid_: prompt, accepted generation, provider-specific request
+
 **Authoring Batch Report**:
 A digest-bound measurement of one to five Authoring Drafts, including readiness,
 examples, cache behavior, findings, time observations, and escaped corrections.

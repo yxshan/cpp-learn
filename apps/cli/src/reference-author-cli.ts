@@ -1,5 +1,7 @@
 import {
+  CPP_STANDARDS,
   REFERENCE_ENTRY_KINDS,
+  type CppStandard,
   type ReferenceEntryKind,
 } from "@cpp-learn/contracts";
 import type {
@@ -9,7 +11,10 @@ import type {
   DraftWorkspace,
   ReferenceAuthoring,
 } from "@cpp-learn/reference-authoring";
-import { authoringGenerationKind } from "@cpp-learn/reference-authoring";
+import {
+  authoringGenerationKind,
+  validateAuthoringGenerationBundleTemplate,
+} from "@cpp-learn/reference-authoring";
 
 export interface ReferenceAuthorPreviewAdapter {
   render(workspace: DraftWorkspace): Promise<string>;
@@ -28,6 +33,8 @@ const prepareUsage =
   "Usage: npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE [--reuse-from ID --reuse-facts ID[,ID...]] [--json]\n";
 const contextUsage =
   "Usage: npm run reference:author -- context --draft ID --facts ID[,ID...] [--json]\n";
+const templateUsage =
+  "Usage: npm run reference:author -- template --draft ID --facts ID[,ID...] --kind section|summary|example [--heading HEADING | --example-id ID [--example-kind compile|run|expected-compile-failure] [--standard STANDARD]] [--json]\n";
 const applyGenerationUsage =
   "Usage: npm run reference:author -- apply-generation --input FILE [--json]\n";
 const measureUsage =
@@ -48,11 +55,62 @@ function isReferenceEntryKind(value: string): value is ReferenceEntryKind {
   return REFERENCE_ENTRY_KINDS.some((kind) => kind === value);
 }
 
+function isCppStandard(value: string): value is CppStandard {
+  return CPP_STANDARDS.some((standard) => standard === value);
+}
+
 export async function runReferenceAuthorCli(
   dependencies: ReferenceAuthorCliDependencies,
 ): Promise<number> {
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
+
+  if (command === "template") {
+    const draftId = flagValue(flags, "--draft");
+    const factGroupIds = flagValue(flags, "--facts")
+      ?.split(",")
+      .filter((id) => id.length > 0);
+    const kind = flagValue(flags, "--kind");
+    const heading = flagValue(flags, "--heading");
+    const exampleId = flagValue(flags, "--example-id");
+    const exampleKind = flagValue(flags, "--example-kind");
+    const standard = flagValue(flags, "--standard");
+    if (
+      draftId === undefined ||
+      factGroupIds === undefined ||
+      factGroupIds.length === 0 ||
+      (kind !== "section" && kind !== "summary" && kind !== "example") ||
+      (kind === "section" && heading === undefined) ||
+      (kind === "example" && exampleId === undefined) ||
+      (exampleKind !== undefined &&
+        exampleKind !== "compile" &&
+        exampleKind !== "run" &&
+        exampleKind !== "expected-compile-failure") ||
+      (standard !== undefined && !isCppStandard(standard))
+    ) {
+      dependencies.stderr(templateUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.buildGenerationTemplate({
+      draftId,
+      factGroupIds,
+      kind,
+      ...(heading === undefined ? {} : { heading }),
+      ...(exampleId === undefined ? {} : { exampleId }),
+      ...(exampleKind === undefined ? {} : { exampleKind }),
+      ...(standard === undefined ? {} : { standard }),
+    });
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else {
+      dependencies.stdout(`${JSON.stringify(result.template, null, 2)}\n`);
+    }
+    return result.ok ? 0 : 1;
+  }
 
   if (command === "apply-generation") {
     const inputPath = flagValue(flags, "--input");
@@ -82,6 +140,26 @@ export async function runReferenceAuthorCli(
     ) {
       dependencies.stderr(applyGenerationUsage);
       return 2;
+    }
+    if ("template" in input) {
+      const templateIssues = validateAuthoringGenerationBundleTemplate(input);
+      const metadata = (input as Record<string, unknown>)["template"];
+      if (templateIssues.length > 0) {
+        dependencies.stderr(
+          `invalid_generation_template: ${templateIssues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}\n`,
+        );
+        return 2;
+      }
+      if (
+        metadata === null ||
+        typeof metadata !== "object" ||
+        (metadata as Record<string, unknown>)["status"] !== "ready"
+      ) {
+        dependencies.stderr(
+          "generation_template_incomplete: complete required actions and set template.status to ready\n",
+        );
+        return 1;
+      }
     }
     const generation = (input as Record<string, unknown>)["generation"];
     const generationKind = authoringGenerationKind(generation);
@@ -404,7 +482,7 @@ export async function runReferenceAuthorCli(
   }
 
   dependencies.stderr(
-    `${prepareUsage}${contextUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
+    `${prepareUsage}${contextUsage}${templateUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
   );
   return 2;
 }

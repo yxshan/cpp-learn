@@ -1,0 +1,146 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-generation-bundle-template.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["template", "context", "expectedRevision", "generation"],
+  "properties": {
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "status", "kind", "requiredActions"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "status": { "enum": ["incomplete", "ready"] },
+        "kind": { "enum": ["section", "summary", "example"] },
+        "requiredActions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["write-content", "declare-claims", "mark-ready"]
+          }
+        }
+      }
+    },
+    "context": {
+      "$ref": "https://cpp-learn.local/schemas/reference-authoring-context-pack.v2.json"
+    },
+    "expectedRevision": { "type": "integer", "minimum": 1 },
+    "generation": {
+      "oneOf": [
+        { "$ref": "#/$defs/sectionGeneration" },
+        { "$ref": "#/$defs/summaryGeneration" },
+        { "$ref": "#/$defs/exampleGeneration" }
+      ]
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "factGroupIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "text": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "factGroupIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "sectionGeneration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "draftId", "contextDigest", "section"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "draftId": { "$ref": "#/$defs/id" },
+        "contextDigest": { "$ref": "#/$defs/digest" },
+        "section": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["heading", "markdown", "claims"],
+          "properties": {
+            "heading": { "type": "string", "minLength": 1, "pattern": "\\S" },
+            "markdown": { "type": "string" },
+            "claims": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/claim" }
+            }
+          }
+        }
+      }
+    },
+    "summaryGeneration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "draftId", "contextDigest", "summary"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "draftId": { "$ref": "#/$defs/id" },
+        "contextDigest": { "$ref": "#/$defs/digest" },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "claims"],
+          "properties": {
+            "text": { "type": "string" },
+            "claims": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/claim" }
+            }
+          }
+        }
+      }
+    },
+    "exampleGeneration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "draftId", "contextDigest", "example"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "draftId": { "$ref": "#/$defs/id" },
+        "contextDigest": { "$ref": "#/$defs/digest" },
+        "example": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "kind", "standard", "source", "claims"],
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "kind": { "enum": ["compile", "run", "expected-compile-failure"] },
+            "standard": {
+              "enum": [
+                "c++98",
+                "c++03",
+                "c++11",
+                "c++14",
+                "c++17",
+                "c++20",
+                "c++23",
+                "c++26-draft"
+              ]
+            },
+            "stdin": { "type": "string" },
+            "expectedStdout": { "type": "string" },
+            "expectedDiagnosticCategory": { "type": "string" },
+            "source": { "type": "string" },
+            "claims": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/claim" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

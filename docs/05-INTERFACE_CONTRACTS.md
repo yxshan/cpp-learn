@@ -368,11 +368,12 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns nine operations:
+The non-HTTP `ReferenceAuthoring` Interface owns ten operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
+buildGenerationTemplate({ draftId, factGroupIds, kind, ...target }): Promise<BuildAuthoringGenerationTemplateResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
 applyGeneratedSummary({ context, expectedRevision, generation }): Promise<ApplyGeneratedSummaryResult>;
@@ -425,6 +426,16 @@ failure, unavailable validation, stale context, or a write race leaves the
 draft unchanged. Generated source must be non-empty LF text ending in a newline
 and is limited to 128 KiB.
 
+`buildGenerationTemplate` composes a fresh constrained context pack with one
+editable section, summary, or example bundle. Section templates require a
+profile-owned heading; example templates require a safe ID and default to a
+`run`/C++20 contract unless explicitly configured. The returned generation is
+deliberately incomplete: content and claims are empty, metadata lists the
+required actions, and `template.status` is `incomplete`. The CLI refuses to
+dispatch a template until the author fills the content, maps every claim to the
+context allowlist, and sets the status to `ready`. Final generation schemas and
+all existing review, compiler, revision, and receipt gates still apply.
+
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
 and its checked author-input digest still matches. A successful result carries a
@@ -432,7 +443,7 @@ versioned Publication Plan with exact create/update/delete paths, new digests
 for writes, and previous digests for updates/deletes. Adapter errors are
 returned as `publication_failed`; no operation creates a Git commit.
 
-The CLI maps `prepare`, `apply-generation`, `check`, `preview`, and `publish` to
+The CLI maps `prepare`, `template`, `apply-generation`, `check`, `preview`, and `publish` to
 this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and

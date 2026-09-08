@@ -166,6 +166,9 @@ Create an explicit draft, edit its generated files, and check it:
 npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE
 npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE --reuse-from RELATED_ID --reuse-facts FACT_ID[,FACT_ID...]
 npm run reference:author -- context --draft ID --facts FACT_ID[,FACT_ID...] --json
+npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind section --heading HEADING --json
+npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind summary --json
+npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind example --example-id ID [--example-kind run] [--standard c++20] --json
 npm run reference:author -- apply-generation --input GENERATION_BUNDLE.json --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
@@ -213,21 +216,22 @@ a cited fact, so human review and `check` remain mandatory.
 
 The machine-oriented generation flow is:
 
-1. Run `context` with only the verified fact groups needed for one section,
-   summary, or example.
-2. Produce a JSON bundle containing `context`, `expectedRevision`, and
-   `generation`.
-3. Set `generation.contextDigest` to the exact context digest. For a section,
-   select one `requiredHeadings` value; for a summary, provide one trimmed
-   4–160 character line. For an example, provide a safe ID, execution contract,
-   LF-terminated C++ source no larger than 128 KiB, and expected output or
-   diagnostic required by its kind. Map every generated claim to one or more
-   `allowedFactGroupIds` in all cases.
+1. Run `template` with only the verified fact groups needed for one section,
+   summary, or example. This builds the exact context and revision-bound bundle
+   together, removing manual digest copying.
+2. Save the returned `template` object when using `--json`, or redirect the
+   non-JSON command output directly to a file.
+3. Replace the empty content field and add one or more claims. For a section,
+   fill `generation.section.markdown`; for a summary, provide one trimmed
+   4–160 character `generation.summary.text` line. For an example, provide
+   LF-terminated C++ source no larger than 128 KiB and the output or diagnostic
+   required by its kind. Map every claim to one or more
+   `context.policy.allowedFactGroupIds`, then set `template.status` to `ready`.
 4. Run `apply-generation --input FILE --json` and inspect the structured result.
 5. Continue from the returned revision, then run `check` before preview or
    publication.
 
-The command never contacts a model provider. It is intentionally suitable for
+The commands never contact a model provider. They are intentionally suitable for
 Codex or another agent that can produce the bundle as a local file. Accepted
 content is written by full-snapshot compare-and-swap and records
 `generation/revision-N.json`; a context change, unsupported claim, invalid
