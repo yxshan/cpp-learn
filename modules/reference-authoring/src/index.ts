@@ -2523,9 +2523,39 @@ export function createReferenceAuthoring(
 
   const authoring: ReferenceAuthoring = {
     async applyGenerationBundle(request) {
+      if (request === null || typeof request !== "object") {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/",
+              message:
+                "Generation bundle requires context, expectedRevision, and generation",
+              keyword: "required",
+            },
+          ],
+        };
+      }
+      const unknownFields = Object.keys(request).filter(
+        (field) =>
+          field !== "template" &&
+          field !== "context" &&
+          field !== "expectedRevision" &&
+          field !== "generation",
+      );
+      if (unknownFields.length > 0) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: unknownFields.map((field) => ({
+            path: `/${field}`,
+            message: "Unknown generation bundle field",
+            keyword: "additionalProperties",
+          })),
+        };
+      }
       if (
-        request === null ||
-        typeof request !== "object" ||
         !("context" in request) ||
         !("expectedRevision" in request) ||
         !("generation" in request)

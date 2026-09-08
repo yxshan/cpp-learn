@@ -53,6 +53,34 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
   });
 
+  it("rejects template flags that do not belong to the selected kind", async () => {
+    const buildGenerationTemplate = vi.fn();
+    const stderr = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: [
+        "template",
+        "--draft",
+        "vector-insert",
+        "--facts",
+        "selection",
+        "--kind",
+        "summary",
+        "--heading",
+        "不应接受",
+      ],
+      authoring: {
+        buildGenerationTemplate,
+      } as unknown as ReferenceAuthoring,
+      stdout: vi.fn(),
+      stderr,
+    });
+
+    expect(exitCode).toBe(2);
+    expect(buildGenerationTemplate).not.toHaveBeenCalled();
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining("Usage:"));
+  });
+
   it("delegates incomplete-template rejection to the Authoring Module", async () => {
     const result = {
       ok: false as const,

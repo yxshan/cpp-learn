@@ -76,6 +76,16 @@ export async function runReferenceAuthorCli(
       (kind !== "section" && kind !== "summary" && kind !== "example") ||
       (kind === "section" && heading === undefined) ||
       (kind === "example" && exampleId === undefined) ||
+      (kind === "section" &&
+        (exampleId !== undefined ||
+          exampleKind !== undefined ||
+          standard !== undefined)) ||
+      (kind === "summary" &&
+        (heading !== undefined ||
+          exampleId !== undefined ||
+          exampleKind !== undefined ||
+          standard !== undefined)) ||
+      (kind === "example" && heading !== undefined) ||
       (exampleKind !== undefined &&
         exampleKind !== "compile" &&
         exampleKind !== "run" &&

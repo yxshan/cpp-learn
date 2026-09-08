@@ -51,9 +51,11 @@ remain compatible.
 
 Final evidence: 100 Markdown documents, 70 Activity starters/references/error
 mutations, 120 Reference Entries with 226 locally verified examples, quality
-coverage 116/120 with zero reviewed gaps, 32 test files with 310 tests, and the
+coverage 116/120 with zero reviewed gaps, 32 test files with 312 tests, and the
 production Web build all pass. The loopback Activity check requires the normal
 host environment because the filesystem sandbox denies its local socket bind.
+One parallel unit-suite run exhausted three native-process timeouts; all three
+affected files passed immediately when rerun serially.
 
 ## 5. Remaining Phase A4 work
 

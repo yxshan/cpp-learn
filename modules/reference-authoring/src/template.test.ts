@@ -192,6 +192,34 @@ describe("[T-AUTH-A4-TEMPLATE-001] structured generation bundle templates", () =
     });
   });
 
+  it("rejects unknown top-level fields on a bare generation bundle", async () => {
+    const authoring = await templateFixture();
+    const built = await authoring.buildGenerationTemplate({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+      kind: "summary",
+    });
+    if (!built.ok) throw new Error("template build failed");
+    const bareBundle = {
+      context: built.template.context,
+      expectedRevision: built.template.expectedRevision,
+      generation: built.template.generation,
+    };
+
+    await expect(
+      authoring.applyGenerationBundle({ ...bareBundle, unexpected: true }),
+    ).resolves.toMatchObject({
+      ok: false,
+      code: "invalid_request",
+      issues: [
+        expect.objectContaining({
+          path: "/unexpected",
+          keyword: "additionalProperties",
+        }),
+      ],
+    });
+  });
+
   it("applies a completed ready template through the provider-neutral bundle operation", async () => {
     const authoring = await templateFixture();
     const built = await authoring.buildGenerationTemplate({
