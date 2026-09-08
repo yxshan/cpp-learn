@@ -368,12 +368,13 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns ten operations:
+The non-HTTP `ReferenceAuthoring` Interface owns eleven operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 buildGenerationTemplate({ draftId, factGroupIds, kind, ...target }): Promise<BuildAuthoringGenerationTemplateResult>;
+applyGenerationBundle(bundle: unknown): Promise<ApplyGenerationBundleResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
 applyGeneratedSummary({ context, expectedRevision, generation }): Promise<ApplyGeneratedSummaryResult>;
@@ -431,10 +432,13 @@ editable section, summary, or example bundle. Section templates require a
 profile-owned heading; example templates require a safe ID and default to a
 `run`/C++20 contract unless explicitly configured. The returned generation is
 deliberately incomplete: content and claims are empty, metadata lists the
-required actions, and `template.status` is `incomplete`. The CLI refuses to
-dispatch a template until the author fills the content, maps every claim to the
-context allowlist, and sets the status to `ready`. Final generation schemas and
-all existing review, compiler, revision, and receipt gates still apply.
+required actions, and `template.status` is `incomplete`.
+`applyGenerationBundle` is the single Adapter-facing ingestion operation. The
+Module refuses to dispatch a template until the author fills the content, maps
+every claim to the context allowlist, and sets the status to `ready`; it also
+dispatches bare legacy bundles by their validated generation kind. Final
+generation schemas and all existing review, compiler, revision, and receipt
+gates still apply.
 
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
@@ -449,8 +453,10 @@ Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
 `measure`. `apply-generation --input FILE` is the machine-oriented AI Adapter:
 the JSON file contains the exact context, expected revision, and either a
-generated section, summary, or Reference Example. The Adapter dispatches by the
-typed generation member rather than exposing separate commands. Batch reports bind every member
+generated section, summary, or Reference Example. The Adapter passes the parsed
+bundle to `applyGenerationBundle`; the Module owns template validation and
+dispatches by the typed generation member rather than exposing separate
+commands. Batch reports bind every member
 revision/input digest and evaluate the 60–90 minute five-Entry target, per-Entry
 throughput improvement, separately observed factual/example defect regression,
 high-risk review coverage, and flaky reruns. They do not replace release

@@ -163,13 +163,31 @@ export interface BuildAuthoringContextRequest {
 
 export type AuthoringGenerationTemplateKind = "section" | "summary" | "example";
 
-export interface BuildAuthoringGenerationTemplateRequest extends BuildAuthoringContextRequest {
-  readonly kind: AuthoringGenerationTemplateKind;
-  readonly heading?: string;
-  readonly exampleId?: string;
-  readonly exampleKind?: "compile" | "run" | "expected-compile-failure";
-  readonly standard?: CppStandard;
-}
+export type BuildAuthoringGenerationTemplateRequest =
+  BuildAuthoringContextRequest &
+    (
+      | {
+          readonly kind: "section";
+          readonly heading: string;
+          readonly exampleId?: never;
+          readonly exampleKind?: never;
+          readonly standard?: never;
+        }
+      | {
+          readonly kind: "summary";
+          readonly heading?: never;
+          readonly exampleId?: never;
+          readonly exampleKind?: never;
+          readonly standard?: never;
+        }
+      | {
+          readonly kind: "example";
+          readonly heading?: never;
+          readonly exampleId: string;
+          readonly exampleKind?: "compile" | "run" | "expected-compile-failure";
+          readonly standard?: CppStandard;
+        }
+    );
 
 export interface AuthoringContextPack {
   readonly schemaVersion: 2;
@@ -209,7 +227,7 @@ export type BuildAuthoringContextResult =
       readonly issues: readonly AuthoringValidationIssue[];
     };
 
-interface AuthoringGenerationTemplateMetadata {
+export interface AuthoringGenerationTemplateMetadata {
   readonly schemaVersion: 1;
   readonly status: "incomplete" | "ready";
   readonly kind: AuthoringGenerationTemplateKind;
@@ -262,6 +280,11 @@ export type BuildAuthoringGenerationTemplateResult =
         | "context_blocked";
       readonly issues: readonly AuthoringValidationIssue[];
     };
+
+export type ApplyGenerationBundleResult =
+  | ApplyGeneratedSectionResult
+  | ApplyGeneratedSummaryResult
+  | ApplyGeneratedExampleResult;
 
 export interface AuthoringGeneratedClaim {
   readonly id: string;
@@ -644,6 +667,7 @@ export interface AuthoringContentQualityValidator {
 }
 
 export interface ReferenceAuthoring {
+  applyGenerationBundle(request: unknown): Promise<ApplyGenerationBundleResult>;
   applyGeneratedExample(
     request: ApplyGeneratedExampleRequest,
   ): Promise<ApplyGeneratedExampleResult>;
@@ -2498,6 +2522,101 @@ export function createReferenceAuthoring(
   }
 
   const authoring: ReferenceAuthoring = {
+    async applyGenerationBundle(request) {
+      if (
+        request === null ||
+        typeof request !== "object" ||
+        !("context" in request) ||
+        !("expectedRevision" in request) ||
+        !("generation" in request)
+      ) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/",
+              message:
+                "Generation bundle requires context, expectedRevision, and generation",
+              keyword: "required",
+            },
+          ],
+        };
+      }
+      const bundle = request as {
+        readonly template?: AuthoringGenerationTemplateMetadata;
+        readonly context: AuthoringContextPack;
+        readonly expectedRevision: number;
+        readonly generation: AuthoringGeneration;
+      };
+      if (bundle.template !== undefined) {
+        const templateIssues =
+          validateAuthoringGenerationBundleTemplate(bundle);
+        if (templateIssues.length > 0) {
+          return {
+            ok: false,
+            code: "invalid_request",
+            issues: templateIssues,
+          };
+        }
+        if (bundle.template.status !== "ready") {
+          return {
+            ok: false,
+            code: "invalid_request",
+            issues: [
+              {
+                path: "/template/status",
+                message:
+                  "Generation template must be completed and marked ready before apply",
+                keyword: "template-incomplete",
+              },
+            ],
+          };
+        }
+      }
+      const kind = authoringGenerationKind(bundle.generation);
+      if (kind === "unknown") {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/generation",
+              message:
+                "Generation must contain exactly one section, summary, or example member",
+              keyword: "generation-kind",
+            },
+          ],
+        };
+      }
+      const generationIssues =
+        kind === "section"
+          ? validateAuthoringSectionGeneration(bundle.generation)
+          : kind === "summary"
+            ? validateAuthoringSummaryGeneration(bundle.generation)
+            : validateAuthoringExampleGeneration(bundle.generation);
+      if (generationIssues.length > 0) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: generationIssues.map((issue) => ({
+            ...issue,
+            path: `/generation${issue.path === "/" ? "" : issue.path}`,
+          })),
+        };
+      }
+      return kind === "section"
+        ? authoring.applyGeneratedSection(
+            bundle as ApplyGeneratedSectionRequest,
+          )
+        : kind === "summary"
+          ? authoring.applyGeneratedSummary(
+              bundle as ApplyGeneratedSummaryRequest,
+            )
+          : authoring.applyGeneratedExample(
+              bundle as ApplyGeneratedExampleRequest,
+            );
+    },
     async applyGeneratedExample(request) {
       const requestFailure = generatedRequestFailure(
         request.context,
@@ -2956,7 +3075,7 @@ export function createReferenceAuthoring(
       const context = contextResult.pack;
       if (
         request.kind === "section" &&
-        !context.requiredHeadings.includes(request.heading!)
+        !context.requiredHeadings.includes(request.heading)
       ) {
         return {
           ok: false,
@@ -2977,7 +3096,7 @@ export function createReferenceAuthoring(
               draftId: context.draftId,
               contextDigest: context.digest,
               section: {
-                heading: request.heading!,
+                heading: request.heading,
                 markdown: "",
                 claims: [],
               },
@@ -2994,7 +3113,7 @@ export function createReferenceAuthoring(
                 draftId: context.draftId,
                 contextDigest: context.digest,
                 example: {
-                  id: request.exampleId!,
+                  id: request.exampleId,
                   kind: request.exampleKind ?? "run",
                   standard: request.standard ?? "c++20",
                   ...(request.exampleKind === "compile"

@@ -158,4 +158,73 @@ describe("[T-AUTH-A4-TEMPLATE-001] structured generation bundle templates", () =
       issues: [expect.objectContaining({ path: "/heading", keyword: "enum" })],
     });
   });
+
+  it("rejects incomplete status and a ready-labelled template with incomplete generation", async () => {
+    const authoring = await templateFixture();
+    const built = await authoring.buildGenerationTemplate({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+      kind: "section",
+      heading: "什么时候使用",
+    });
+    if (!built.ok) throw new Error("template build failed");
+
+    await expect(
+      authoring.applyGenerationBundle(built.template),
+    ).resolves.toMatchObject({
+      ok: false,
+      code: "invalid_request",
+      issues: [expect.objectContaining({ path: "/template/status" })],
+    });
+
+    const result = await authoring.applyGenerationBundle({
+      ...built.template,
+      template: { ...built.template.template, status: "ready" },
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "invalid_request",
+      issues: expect.arrayContaining([
+        expect.objectContaining({ path: "/generation/section/markdown" }),
+        expect.objectContaining({ path: "/generation/section/claims" }),
+      ]),
+    });
+  });
+
+  it("applies a completed ready template through the provider-neutral bundle operation", async () => {
+    const authoring = await templateFixture();
+    const built = await authoring.buildGenerationTemplate({
+      draftId: "vector-insert",
+      factGroupIds: ["selection"],
+      kind: "section",
+      heading: "什么时候使用",
+    });
+    if (!built.ok) throw new Error("template build failed");
+
+    const result = await authoring.applyGenerationBundle({
+      ...built.template,
+      template: { ...built.template.template, status: "ready" },
+      generation: {
+        ...built.template.generation,
+        section: {
+          heading: "什么时候使用",
+          markdown: "当插入位置已知时使用 `insert`。",
+          claims: [
+            {
+              id: "known-position",
+              text: "Use insert when the insertion position is known.",
+              factGroupIds: ["selection"],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      workspace: { draft: { revision: 2 } },
+      receiptPath: "generation/revision-2.json",
+    });
+  });
 });

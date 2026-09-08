@@ -5,16 +5,10 @@ import {
   type ReferenceEntryKind,
 } from "@cpp-learn/contracts";
 import type {
-  ApplyGeneratedExampleRequest,
-  ApplyGeneratedSummaryRequest,
-  ApplyGeneratedSectionRequest,
   DraftWorkspace,
   ReferenceAuthoring,
 } from "@cpp-learn/reference-authoring";
-import {
-  authoringGenerationKind,
-  validateAuthoringGenerationBundleTemplate,
-} from "@cpp-learn/reference-authoring";
+import { authoringGenerationKind } from "@cpp-learn/reference-authoring";
 
 export interface ReferenceAuthorPreviewAdapter {
   render(workspace: DraftWorkspace): Promise<string>;
@@ -91,15 +85,28 @@ export async function runReferenceAuthorCli(
       dependencies.stderr(templateUsage);
       return 2;
     }
-    const result = await dependencies.authoring.buildGenerationTemplate({
-      draftId,
-      factGroupIds,
-      kind,
-      ...(heading === undefined ? {} : { heading }),
-      ...(exampleId === undefined ? {} : { exampleId }),
-      ...(exampleKind === undefined ? {} : { exampleKind }),
-      ...(standard === undefined ? {} : { standard }),
-    });
+    const result =
+      kind === "section" && heading !== undefined
+        ? await dependencies.authoring.buildGenerationTemplate({
+            draftId,
+            factGroupIds,
+            kind,
+            heading,
+          })
+        : kind === "example" && exampleId !== undefined
+          ? await dependencies.authoring.buildGenerationTemplate({
+              draftId,
+              factGroupIds,
+              kind,
+              exampleId,
+              ...(exampleKind === undefined ? {} : { exampleKind }),
+              ...(standard === undefined ? {} : { standard }),
+            })
+          : await dependencies.authoring.buildGenerationTemplate({
+              draftId,
+              factGroupIds,
+              kind: "summary",
+            });
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
@@ -131,54 +138,11 @@ export async function runReferenceAuthorCli(
       );
       return 2;
     }
-    if (
-      input === null ||
-      typeof input !== "object" ||
-      !("context" in input) ||
-      !("expectedRevision" in input) ||
-      !("generation" in input)
-    ) {
-      dependencies.stderr(applyGenerationUsage);
-      return 2;
-    }
-    if ("template" in input) {
-      const templateIssues = validateAuthoringGenerationBundleTemplate(input);
-      const metadata = (input as Record<string, unknown>)["template"];
-      if (templateIssues.length > 0) {
-        dependencies.stderr(
-          `invalid_generation_template: ${templateIssues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}\n`,
-        );
-        return 2;
-      }
-      if (
-        metadata === null ||
-        typeof metadata !== "object" ||
-        (metadata as Record<string, unknown>)["status"] !== "ready"
-      ) {
-        dependencies.stderr(
-          "generation_template_incomplete: complete required actions and set template.status to ready\n",
-        );
-        return 1;
-      }
-    }
-    const generation = (input as Record<string, unknown>)["generation"];
-    const generationKind = authoringGenerationKind(generation);
-    if (generationKind === "unknown") {
-      dependencies.stderr(applyGenerationUsage);
-      return 2;
-    }
-    const result =
-      generationKind === "example"
-        ? await dependencies.authoring.applyGeneratedExample(
-            input as ApplyGeneratedExampleRequest,
-          )
-        : generationKind === "summary"
-          ? await dependencies.authoring.applyGeneratedSummary(
-              input as ApplyGeneratedSummaryRequest,
-            )
-          : await dependencies.authoring.applyGeneratedSection(
-              input as ApplyGeneratedSectionRequest,
-            );
+    const result = await dependencies.authoring.applyGenerationBundle(input);
+    const generationKind =
+      input !== null && typeof input === "object" && "generation" in input
+        ? authoringGenerationKind(input.generation)
+        : "unknown";
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
     } else if (!result.ok) {
@@ -187,7 +151,7 @@ export async function runReferenceAuthorCli(
       );
     } else {
       dependencies.stdout(
-        `Applied generated ${generationKind} to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
+        `Applied generated ${generationKind === "unknown" ? "content" : generationKind} to ${result.workspace.draft.draftId} at revision ${result.workspace.draft.revision} (${result.receiptPath})\n`,
       );
     }
     return result.ok ? 0 : 1;

@@ -29,9 +29,12 @@ override their execution kind and C++ standard. A run example defaults to C++20.
 Every new template has empty content, no claims, `status: incomplete`, and the
 required actions `write-content`, `declare-claims`, and `mark-ready`. This shape
 is valid as an editable template but invalid as a final Authoring Generation.
-`apply-generation` additionally refuses a template envelope until its status is
-`ready`; it then still applies the final generation schema, fact allowlist,
-revision/digest, compiler, receipt, and human-review gates.
+`ReferenceAuthoring.applyGenerationBundle` additionally refuses a template
+envelope until its status is `ready` and its final kind-specific Generation
+Schema is complete. It then applies the fact allowlist, revision/digest,
+compiler, receipt, and human-review gates. The CLI only parses the JSON, invokes
+that operation, and formats its result, so a later Web Adapter does not need to
+copy trust rules.
 
 This split makes generation faster without turning placeholders into content or
 allowing metadata to bypass Module validation. Bare legacy generation bundles
@@ -43,12 +46,12 @@ remain compatible.
 |---|---|---|
 | Module template generation | T-AUTH-A4-TEMPLATE-001 covers section, summary, example, context binding, schema validity, defaults, and invalid headings | Passed |
 | CLI parity | T-AUTH-A4-TEMPLATE-002 maps flags to the Interface and returns the editable bundle | Passed |
-| Incomplete-template guard | CLI test proves incomplete envelopes never dispatch generation | Passed |
+| Incomplete-template guard | Module tests prove `incomplete` or ready-labelled-but-empty envelopes never reach a kind-specific mutation | Passed |
 | Existing generation regression | Section, summary, example, filesystem, CLI, type, lint, docs, and full repository gates | Passed |
 
 Final evidence: 100 Markdown documents, 70 Activity starters/references/error
 mutations, 120 Reference Entries with 226 locally verified examples, quality
-coverage 116/120 with zero reviewed gaps, 32 test files with 308 tests, and the
+coverage 116/120 with zero reviewed gaps, 32 test files with 310 tests, and the
 production Web build all pass. The loopback Activity check requires the normal
 host environment because the filesystem sandbox denies its local socket bind.
 

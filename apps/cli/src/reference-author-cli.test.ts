@@ -53,8 +53,19 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
   });
 
-  it("rejects an incomplete template before generation dispatch", async () => {
-    const applyGeneratedSection = vi.fn();
+  it("delegates incomplete-template rejection to the Authoring Module", async () => {
+    const result = {
+      ok: false as const,
+      code: "invalid_request" as const,
+      issues: [
+        {
+          path: "/template/status",
+          message: "Generation template must be completed before apply",
+          keyword: "template-incomplete",
+        },
+      ],
+    };
+    const applyGenerationBundle = vi.fn().mockResolvedValue(result);
     const stderr = vi.fn();
     const input = {
       template: {
@@ -116,7 +127,7 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     const exitCode = await runReferenceAuthorCli({
       argv: ["apply-generation", "--input", "template.json"],
       authoring: {
-        applyGeneratedSection,
+        applyGenerationBundle,
       } as unknown as ReferenceAuthoring,
       readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
       stdout: vi.fn(),
@@ -124,10 +135,8 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     });
 
     expect(exitCode).toBe(1);
-    expect(applyGeneratedSection).not.toHaveBeenCalled();
-    expect(stderr).toHaveBeenCalledWith(
-      expect.stringContaining("generation_template_incomplete"),
-    );
+    expect(applyGenerationBundle).toHaveBeenCalledWith(input);
+    expect(stderr).toHaveBeenCalledWith(expect.stringContaining(result.code));
   });
 
   it("[T-AUTH-A4-GENERATION-002] applies a generated-section bundle from a JSON file", async () => {
@@ -170,7 +179,7 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
       review: { status: "accepted" },
       receiptPath: "generation/revision-2.json",
     };
-    const applyGeneratedSection = vi.fn().mockResolvedValue(result);
+    const applyGenerationBundle = vi.fn().mockResolvedValue(result);
     const stdout = vi.fn();
 
     const exitCode = await runReferenceAuthorCli({
@@ -181,7 +190,7 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
         "--json",
       ],
       authoring: {
-        applyGeneratedSection,
+        applyGenerationBundle,
       } as unknown as ReferenceAuthoring,
       readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
       stdout,
@@ -189,7 +198,7 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     });
 
     expect(exitCode).toBe(0);
-    expect(applyGeneratedSection).toHaveBeenCalledWith(input);
+    expect(applyGenerationBundle).toHaveBeenCalledWith(input);
     expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
   });
 
@@ -240,13 +249,13 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
       review: { status: "accepted" },
       receiptPath: "generation/revision-2.json",
     };
-    const applyGeneratedSummary = vi.fn().mockResolvedValue(result);
+    const applyGenerationBundle = vi.fn().mockResolvedValue(result);
     const stdout = vi.fn();
 
     const exitCode = await runReferenceAuthorCli({
       argv: ["apply-generation", "--input", "summary.json"],
       authoring: {
-        applyGeneratedSummary,
+        applyGenerationBundle,
       } as unknown as ReferenceAuthoring,
       readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
       stdout,
@@ -254,7 +263,7 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     });
 
     expect(exitCode).toBe(0);
-    expect(applyGeneratedSummary).toHaveBeenCalledWith(input);
+    expect(applyGenerationBundle).toHaveBeenCalledWith(input);
     expect(stdout).toHaveBeenCalledWith(
       "Applied generated summary to vector-insert at revision 2 (generation/revision-2.json)\n",
     );
@@ -312,19 +321,19 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
       review: { status: "accepted" },
       receiptPath: "generation/revision-2.json",
     };
-    const applyGeneratedExample = vi.fn().mockResolvedValue(result);
+    const applyGenerationBundle = vi.fn().mockResolvedValue(result);
     const stdout = vi.fn();
 
     const exitCode = await runReferenceAuthorCli({
       argv: ["apply-generation", "--input", "example.json"],
-      authoring: { applyGeneratedExample } as unknown as ReferenceAuthoring,
+      authoring: { applyGenerationBundle } as unknown as ReferenceAuthoring,
       readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
       stdout,
       stderr: vi.fn(),
     });
 
     expect(exitCode).toBe(0);
-    expect(applyGeneratedExample).toHaveBeenCalledWith(input);
+    expect(applyGenerationBundle).toHaveBeenCalledWith(input);
     expect(stdout).toHaveBeenCalledWith(
       "Applied generated example to vector-insert at revision 2 (generation/revision-2.json)\n",
     );
@@ -333,7 +342,7 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     await expect(
       runReferenceAuthorCli({
         argv: ["apply-generation", "--input", "example.json", "--json"],
-        authoring: { applyGeneratedExample } as unknown as ReferenceAuthoring,
+        authoring: { applyGenerationBundle } as unknown as ReferenceAuthoring,
         readTextFile: vi.fn().mockResolvedValue(JSON.stringify(input)),
         stdout: jsonStdout,
         stderr: vi.fn(),
