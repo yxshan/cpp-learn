@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.7 |
+| Version | 2.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -171,6 +171,7 @@ npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --k
 npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind example --example-id ID [--example-kind run] [--standard c++20] --json
 npm run reference:author -- run --input AUTHORING_RUN.json --json
 npm run reference:author -- batch --input AUTHORING_BATCH.json --json
+npm run reference:author -- research --input AUTHORING_RESEARCH.json --json
 npm run reference:author -- apply-generation --input GENERATION_BUNDLE.json --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
@@ -306,6 +307,45 @@ the top-level status as the only work queue. Batch plans contain one to five
 unique drafts and cannot contain missing, self-referential, or cyclic
 dependencies. Save the JSON progress if audit evidence is needed; it is derived
 from child Generation Receipts and is not hidden mutable state.
+
+Prepare source research as a bounded JSON bundle instead of pasting an entire
+external page into the draft:
+
+```json
+{
+  "schemaVersion": 1,
+  "draftId": "std-vector-size",
+  "sources": [
+    {
+      "id": "cpp-standard-vector-capacity",
+      "kind": "primary",
+      "title": "ISO C++ working draft: vector capacity",
+      "url": "https://eel.is/c++draft/vector.capacity#lib:size",
+      "locator": "[vector.capacity], size",
+      "excerpt": "constexpr size_type size() const noexcept;",
+      "standardSection": "[vector.capacity]"
+    }
+  ],
+  "facts": [
+    {
+      "id": "signature",
+      "kind": "signature",
+      "summary": "size() 是 const、noexcept 的成员函数。",
+      "sourceIds": ["cpp-standard-vector-capacity"]
+    }
+  ]
+}
+```
+
+Run `reference:author -- research --input AUTHORING_RESEARCH.json --json` and
+save the returned proposal beside the research notes. The command never fetches
+the URL or edits the draft. It strips URL fragments for record deduplication,
+keeps only excerpt digests in the proposal, and rejects attempts to relabel an
+existing source. Every fact remains `pending_human`, including facts supported
+by primary sources. `reusableFacts` are suggestions from unchanged ready related
+drafts; selecting one still requires the normal explicit `prepare --reuse-from`
+or Fact Sheet editing/review workflow. Re-run the command if the bound draft
+revision or `draftInputDigest` changes.
 
 The commands never contact a model provider. They are intentionally suitable for
 Codex or another agent that can produce the bundle as a local file. Accepted

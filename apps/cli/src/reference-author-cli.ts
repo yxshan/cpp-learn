@@ -31,6 +31,8 @@ const templateUsage =
   "Usage: npm run reference:author -- template --draft ID --facts ID[,ID...] --kind section|summary|example [--heading HEADING | --example-id ID [--example-kind compile|run|expected-compile-failure] [--standard STANDARD]] [--json]\n";
 const batchUsage =
   "Usage: npm run reference:author -- batch --input AUTHORING_BATCH.json [--json]\n";
+const researchUsage =
+  "Usage: npm run reference:author -- research --input AUTHORING_RESEARCH.json [--json]\n";
 const runUsage =
   "Usage: npm run reference:author -- run --input AUTHORING_RUN.json [--json]\n";
 const applyGenerationUsage =
@@ -88,11 +90,64 @@ async function readJsonCommandInput(
   }
 }
 
+interface CliCommandFailure {
+  readonly ok: false;
+  readonly code: string;
+  readonly issues: readonly {
+    readonly path: string;
+    readonly message: string;
+  }[];
+}
+
+type CliCommandResult = { readonly ok: true } | CliCommandFailure;
+
+function presentCommandResult<Result extends CliCommandResult>(
+  dependencies: ReferenceAuthorCliDependencies,
+  json: boolean,
+  result: Result,
+  presentSuccess: (success: Extract<Result, { readonly ok: true }>) => void,
+): 0 | 1 {
+  if (json) {
+    dependencies.stdout(`${JSON.stringify(result)}\n`);
+  } else if (!result.ok) {
+    dependencies.stderr(
+      `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+    );
+  } else {
+    presentSuccess(result as Extract<Result, { readonly ok: true }>);
+  }
+  return result.ok ? 0 : 1;
+}
+
 export async function runReferenceAuthorCli(
   dependencies: ReferenceAuthorCliDependencies,
 ): Promise<number> {
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
+
+  if (command === "research") {
+    const parsed = await readJsonCommandInput(
+      dependencies,
+      flags,
+      researchUsage,
+      "Authoring-research",
+    );
+    if (!parsed.ok) {
+      return parsed.exitCode;
+    }
+    const result = await dependencies.authoring.proposeSourceFacts(
+      parsed.input,
+    );
+    return presentCommandResult(dependencies, json, result, (success) => {
+      const reusableFacts = success.proposal.factGroups.reduce(
+        (count, fact) => count + fact.reusableFacts.length,
+        0,
+      );
+      dependencies.stdout(
+        `PROPOSAL ${success.proposal.draftId} at revision ${success.proposal.draftRevision}: ${success.proposal.sourceRecords.length} sources, ${success.proposal.factGroups.length} unverified facts, ${reusableFacts} reuse suggestions\n`,
+      );
+    });
+  }
 
   if (command === "batch") {
     const parsed = await readJsonCommandInput(
@@ -105,32 +160,25 @@ export async function runReferenceAuthorCli(
       return parsed.exitCode;
     }
     const result = await dependencies.authoring.advanceBatch(parsed.input);
-    if (json) {
-      dependencies.stdout(`${JSON.stringify(result)}\n`);
-    } else if (!result.ok) {
-      dependencies.stderr(
-        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
-      );
-    } else {
+    return presentCommandResult(dependencies, json, result, (success) => {
       const counts = {
-        complete: result.progress.members.filter(
+        complete: success.progress.members.filter(
           ({ status }) => status === "complete",
         ).length,
-        ready: result.progress.members.filter(
+        ready: success.progress.members.filter(
           ({ status }) => status === "awaiting_generation",
         ).length,
-        waiting: result.progress.members.filter(
+        waiting: success.progress.members.filter(
           ({ status }) => status === "awaiting_dependency",
         ).length,
-        blocked: result.progress.members.filter(
+        blocked: success.progress.members.filter(
           ({ status }) => status === "blocked",
         ).length,
       };
       dependencies.stdout(
-        `BATCH ${result.progress.batchId}: ${result.progress.status} (${counts.complete} complete, ${counts.ready} ready, ${counts.waiting} waiting, ${counts.blocked} blocked)\n`,
+        `BATCH ${success.progress.batchId}: ${success.progress.status} (${counts.complete} complete, ${counts.ready} ready, ${counts.waiting} waiting, ${counts.blocked} blocked)\n`,
       );
-    }
-    return result.ok ? 0 : 1;
+    });
   }
 
   if (command === "run") {
@@ -144,22 +192,17 @@ export async function runReferenceAuthorCli(
       return parsed.exitCode;
     }
     const result = await dependencies.authoring.advanceRun(parsed.input);
-    if (json) {
-      dependencies.stdout(`${JSON.stringify(result)}\n`);
-    } else if (!result.ok) {
-      dependencies.stderr(
-        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
-      );
-    } else if (result.progress.status === "complete") {
-      dependencies.stdout(
-        `COMPLETE ${result.progress.runId}: ${result.progress.completedStepIds.length} generation steps at revision ${result.progress.currentRevision}\n`,
-      );
-    } else {
-      dependencies.stdout(
-        `NEXT ${result.progress.runId}: ${result.progress.next.stepId} at revision ${result.progress.currentRevision}\n`,
-      );
-    }
-    return result.ok ? 0 : 1;
+    return presentCommandResult(dependencies, json, result, (success) => {
+      if (success.progress.status === "complete") {
+        dependencies.stdout(
+          `COMPLETE ${success.progress.runId}: ${success.progress.completedStepIds.length} generation steps at revision ${success.progress.currentRevision}\n`,
+        );
+      } else {
+        dependencies.stdout(
+          `NEXT ${success.progress.runId}: ${success.progress.next.stepId} at revision ${success.progress.currentRevision}\n`,
+        );
+      }
+    });
   }
 
   if (command === "template") {
@@ -559,7 +602,7 @@ export async function runReferenceAuthorCli(
   }
 
   dependencies.stderr(
-    `${prepareUsage}${contextUsage}${templateUsage}${batchUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
+    `${prepareUsage}${contextUsage}${templateUsage}${researchUsage}${batchUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
   );
   return 2;
 }

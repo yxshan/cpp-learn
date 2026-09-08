@@ -36,6 +36,7 @@ import type {
   AuthoringValidationCache,
   AuthoringValidationCacheValue,
 } from "./cache.js";
+import { authoringFactEvidenceDigest } from "./fact-evidence.js";
 import {
   advanceAuthoringBatch,
   type AdvanceAuthoringBatchResult,
@@ -66,6 +67,14 @@ import {
   type AuthoringGenerationOrchestration,
   type AuthoringRunPlan,
 } from "./run.js";
+import {
+  buildAuthoringResearchProposal,
+  type AuthoringResearchRequest,
+  type ProposeSourceFactsResult,
+  validateAuthoringResearchProposal,
+  validateAuthoringResearchRequest,
+  validateAuthoringResearchWorkspace,
+} from "./research.js";
 
 export const AUTHORING_FACT_KINDS = [
   "selection",
@@ -722,6 +731,7 @@ export interface AuthoringContentQualityValidator {
 export interface ReferenceAuthoring {
   advanceBatch(request: unknown): Promise<AdvanceAuthoringBatchResult>;
   advanceRun(request: unknown): Promise<AdvanceAuthoringRunResult>;
+  proposeSourceFacts(request: unknown): Promise<ProposeSourceFactsResult>;
   applyGenerationBundle(request: unknown): Promise<ApplyGenerationBundleResult>;
   applyGeneratedExample(
     request: ApplyGeneratedExampleRequest,
@@ -2036,27 +2046,6 @@ async function validateExamples(
   return { findings, cacheEvidence };
 }
 
-export function authoringFactEvidenceDigest(
-  group: AuthoringFactGroup,
-  sources: readonly AuthoringSourceRecord[],
-): string {
-  const selectedSources = group.sourceIds
-    .map((sourceId) => sources.find(({ id }) => id === sourceId))
-    .filter((source): source is AuthoringSourceRecord => source !== undefined)
-    .sort((left, right) => left.id.localeCompare(right.id));
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        kind: group.kind,
-        summary: group.summary,
-        sourceIds: [...group.sourceIds].sort(),
-        ...(group.decision === undefined ? {} : { decision: group.decision }),
-        sources: selectedSources,
-      }),
-    )
-    .digest("hex");
-}
-
 async function validateFactReuse(
   workspace: DraftWorkspace,
   repository: ReferenceDraftRepository,
@@ -2615,6 +2604,75 @@ export function createReferenceAuthoring(
   }
 
   const authoring: ReferenceAuthoring = {
+    async proposeSourceFacts(request) {
+      const requestIssues = validateAuthoringResearchRequest(request);
+      if (requestIssues.length > 0) {
+        return { ok: false, code: "invalid_request", issues: requestIssues };
+      }
+      const proposalRequest = request as AuthoringResearchRequest;
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(proposalRequest.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/draftId",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      const workspaceIssues = validateAuthoringResearchWorkspace(
+        workspace,
+        proposalRequest,
+      );
+      if (workspaceIssues.length > 0) {
+        return { ok: false, code: "invalid_request", issues: workspaceIssues };
+      }
+      const relatedWorkspaces: DraftWorkspace[] = [];
+      for (const relatedDraftId of workspace.proposal.relatedEntryIds) {
+        let related: DraftWorkspace | undefined;
+        try {
+          related = await dependencies.drafts.get(relatedDraftId);
+        } catch {
+          continue;
+        }
+        if (
+          related !== undefined &&
+          related.draft.state === "checked" &&
+          related.report.status === "ready" &&
+          related.report.draftRevision === related.draft.revision &&
+          related.report.inputDigest === authoringInputDigest(related.files)
+        ) {
+          relatedWorkspaces.push(related);
+        }
+      }
+      const proposal = buildAuthoringResearchProposal(
+        workspace,
+        proposalRequest,
+        authoringInputDigest(workspace.files),
+        relatedWorkspaces,
+      );
+      const proposalIssues = validateAuthoringResearchProposal(proposal);
+      return proposalIssues.length === 0
+        ? { ok: true, proposal }
+        : {
+            ok: false,
+            code: "invalid_request",
+            issues: proposalIssues.map((issue) => ({
+              ...issue,
+              path: `/proposal${issue.path === "/" ? "" : issue.path}`,
+            })),
+          };
+    },
     async advanceBatch(request) {
       return advanceAuthoringBatch(request, (plan) =>
         authoring.advanceRun(plan),
@@ -4726,6 +4784,19 @@ export {
   type AuthoringBatchPlan,
   type AuthoringBatchProgress,
 } from "./batch.js";
+export {
+  AUTHORING_NORMATIVE_FACT_KINDS,
+  authoringResearchProposalSchema,
+  authoringResearchRequestSchema,
+  buildAuthoringResearchProposal,
+  type AuthoringResearchProposal,
+  type AuthoringResearchRequest,
+  type ProposeSourceFactsResult,
+  validateAuthoringResearchProposal,
+  validateAuthoringResearchRequest,
+  validateAuthoringResearchWorkspace,
+} from "./research.js";
+export { authoringFactEvidenceDigest } from "./fact-evidence.js";
 export {
   authoringGenerationOrchestrationSchema,
   authoringRunSchema,

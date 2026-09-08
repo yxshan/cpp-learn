@@ -1,0 +1,107 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-research-request.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "draftId", "sources", "facts"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/fact" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "title", "url", "locator", "excerpt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["primary", "secondary", "vendor"] },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "pattern": "\\S"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "excerpt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "pattern": "\\S"
+        },
+        "standardSection": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "factKind": {
+      "enum": [
+        "selection",
+        "signature",
+        "availability",
+        "parameters",
+        "return",
+        "ownership",
+        "errors",
+        "complexity",
+        "lifetime_invalidation",
+        "thread_safety",
+        "scope",
+        "direct_include",
+        "facility_map",
+        "examples",
+        "pitfalls",
+        "js_comparison"
+      ]
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "summary", "sourceIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "$ref": "#/$defs/factKind" },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "pattern": "\\S"
+        },
+        "sourceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-research-proposal.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "draftId",
+    "draftRevision",
+    "draftInputDigest",
+    "sourceRecords",
+    "factGroups",
+    "policy",
+    "digest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "draftId": { "$ref": "#/$defs/id" },
+    "draftRevision": { "type": "integer", "minimum": 1 },
+    "draftInputDigest": { "$ref": "#/$defs/digest" },
+    "sourceRecords": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/sourceRecord" }
+    },
+    "factGroups": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/factGroup" }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "allowsAutomaticVerification"],
+      "properties": {
+        "mode": { "const": "proposal-only" },
+        "allowsAutomaticVerification": { "const": false }
+      }
+    },
+    "digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceKind": { "enum": ["primary", "secondary", "vendor"] },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locator", "excerptDigest"],
+      "properties": {
+        "locator": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "excerptDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "sourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "action",
+        "inputIds",
+        "kind",
+        "title",
+        "url",
+        "evidence"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "action": { "enum": ["create", "reuse"] },
+        "inputIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "kind": { "$ref": "#/$defs/sourceKind" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "standardSection": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      }
+    },
+    "reuseCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "draftId",
+        "draftRevision",
+        "groupId",
+        "evidenceDigest",
+        "matchedBy"
+      ],
+      "properties": {
+        "draftId": { "$ref": "#/$defs/id" },
+        "draftRevision": { "type": "integer", "minimum": 1 },
+        "groupId": { "$ref": "#/$defs/id" },
+        "evidenceDigest": { "$ref": "#/$defs/digest" },
+        "matchedBy": { "enum": ["shared-source", "same-summary"] }
+      }
+    },
+    "factGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "summary",
+        "sourceIds",
+        "verification",
+        "reusableFacts"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "$ref": "https://cpp-learn.local/schemas/reference-authoring-research-request.v1.json#/$defs/factKind"
+        },
+        "status": { "const": "unverified" },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "sourceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required", "state", "reason"],
+          "properties": {
+            "required": { "const": true },
+            "state": { "const": "pending_human" },
+            "reason": { "enum": ["normative-fact", "proposed-fact"] }
+          }
+        },
+        "reusableFacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reuseCandidate" }
+        }
+      }
+    }
+  }
+}

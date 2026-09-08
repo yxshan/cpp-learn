@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -355,6 +355,14 @@ Exit: one command advances a five-Entry batch without hiding blocked Entries.
 - Require human verification for normative facts and preserve source class.
 - Deduplicate source records and suggest reusable related facts.
 
+**Status: Accepted.** Schema-v1 Authoring Research Bundles accept one to twenty
+explicit HTTPS source excerpts and Fact Sheet summaries. The Module
+canonicalizes fragment-only URL variants, reuses matching Source Ledger
+identities without changing source class, stores only excerpt digests in its
+revision/input-bound proposal, rejects long verbatim prose reuse, and marks
+every fact for human verification. Reusable facts from unchanged ready related
+drafts are suggestions only and retain their evidence digests.
+
 Exit: source research becomes structured input while verification authority
 remains outside generated prose.
 
@@ -427,7 +435,7 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Implement the Phase A6 source and fact-sheet assistant for explicitly supplied
-sources without allowing proposals to verify themselves. A real coherent
+Implement the Phase A7 bounded quality repair loop without weakening existing
+fact, compiler, revision, receipt, or publication gates. A real coherent
 five-Entry run must still be retained to close empirical Phase A3 acceptance;
 later tooling must not manufacture that evidence.

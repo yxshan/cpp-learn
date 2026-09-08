@@ -108,6 +108,18 @@ The versioned source records used to verify Fact Sheet claim groups. A ledger
 records provenance but does not authorize copying source prose.
 _Avoid_: bibliography only, mirrored source page
 
+**Authoring Research Bundle**:
+A bounded schema-v1 input containing URLs, declared source classes, precise
+locators, short supplied excerpts, and proposed Fact Sheet summaries for one
+Authoring Draft. It is caller-supplied evidence, not fetched or verified content.
+_Avoid_: scraped page, mirrored documentation, verified source record
+
+**Authoring Research Proposal**:
+A draft-revision/input-digest-bound, proposal-only view of deduplicated Source
+Ledger records, unverified Fact Sheet groups, excerpt digests, and eligible
+related-fact reuse suggestions. It cannot verify facts or mutate a draft.
+_Avoid_: applied Fact Sheet, source approval, imported webpage
+
 **Authoring Report**:
 A revision-bound, machine-readable result for one Authoring Draft. `blocked`
 contains actionable findings; `ready` authorizes later human review but is not

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.9 |
+| Version | 3.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -268,9 +268,12 @@ still required before acceptance. Phase A4 can apply controlled sections,
 Entry summaries, and compiled Reference Examples through the Module and CLI,
 then resume an unchanged single-draft plan from durable receipts. Phase A5 is
 accepted with one-to-five Entry DAG plans, per-run receipt recovery, complete
-blocked/waiting/ready reporting, and CLI parity. Phase A6 source/fact proposals
-are the next implementation slice. A lightweight Web review surface remains
-optional after the automation phases.
+blocked/waiting/ready reporting, and CLI parity. Phase A6 is accepted with
+bounded explicit research bundles, digest-only excerpt evidence,
+source-class-preserving deduplication, unverified normative fact proposals, and
+related-fact reuse suggestions. Phase A7's bounded quality repair loop is the
+next implementation slice. A lightweight Web review surface remains optional
+after the automation phases.
 
 ## 13. Global definition of done
 

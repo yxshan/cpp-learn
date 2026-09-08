@@ -5,6 +5,60 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-A6-RESEARCH-002] emits a source/fact proposal from a JSON evidence bundle", async () => {
+    const request = {
+      schemaVersion: 1,
+      draftId: "std-vector-size",
+      sources: [
+        {
+          id: "cpp-standard-vector-capacity",
+          kind: "primary",
+          title: "ISO C++ working draft: vector capacity",
+          url: "https://eel.is/c++draft/vector.capacity#lib:size",
+          locator: "[vector.capacity], size",
+          excerpt: "constexpr size_type size() const noexcept;",
+        },
+      ],
+      facts: [
+        {
+          id: "signature",
+          kind: "signature",
+          summary: "size() 是 const、noexcept 的成员函数。",
+          sourceIds: ["cpp-standard-vector-capacity"],
+        },
+      ],
+    };
+    const result = {
+      ok: true as const,
+      proposal: {
+        schemaVersion: 1,
+        draftId: "std-vector-size",
+        draftRevision: 1,
+        sourceRecords: [],
+        factGroups: [],
+        policy: {
+          mode: "proposal-only",
+          allowsAutomaticVerification: false,
+        },
+        digest: "a".repeat(64),
+      },
+    };
+    const proposeSourceFacts = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["research", "--input", "vector-size-research.json", "--json"],
+      authoring: { proposeSourceFacts } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(request)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(proposeSourceFacts).toHaveBeenCalledWith(request);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it("[T-AUTH-A5-BATCH-002] advances a coherent batch plan from JSON", async () => {
     const plan = {
       schemaVersion: 1,

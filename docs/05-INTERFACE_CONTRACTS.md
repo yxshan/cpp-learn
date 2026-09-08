@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 2.4 |
+| Version | 2.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -368,7 +368,7 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns thirteen operations:
+The non-HTTP `ReferenceAuthoring` Interface owns fourteen operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
@@ -376,6 +376,7 @@ buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 buildGenerationTemplate({ draftId, factGroupIds, kind, ...target }): Promise<BuildAuthoringGenerationTemplateResult>;
 advanceRun(plan: unknown): Promise<AdvanceAuthoringRunResult>;
 advanceBatch(plan: unknown): Promise<AdvanceAuthoringBatchResult>;
+proposeSourceFacts(bundle: unknown): Promise<ProposeSourceFactsResult>;
 applyGenerationBundle(bundle: unknown): Promise<ApplyGenerationBundleResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
@@ -469,6 +470,23 @@ draft, or run IDs, missing dependencies, self-dependencies, cycles, and batches
 larger than five fail before any child run advances. The batch operation does
 not publish, invent timing evidence, or replace `measureBatch`.
 
+`proposeSourceFacts` accepts one schema-v1 Authoring Research Bundle containing
+only explicitly supplied HTTPS URLs, declared source classes, precise locators,
+bounded excerpts, and proposed summaries. It performs no network request and
+does not mutate the Authoring Draft. Equivalent fragment-only URLs collapse to
+one source proposal; an existing Source Ledger URL is reused only when its
+recorded `primary`, `secondary`, or `vendor` class matches. Class and stable-ID
+conflicts fail closed. Excerpts are represented in the output only by SHA-256
+digests, and long verbatim excerpt reuse as proposed prose is rejected.
+
+Every proposed Fact Sheet group remains `unverified` and explicitly
+`pending_human`; normative kinds cannot grant themselves verification. The
+proposal is bound to the draft revision and author-input digest. Eligible facts
+from unchanged ready related drafts may be returned as revision/evidence-digest
+reuse suggestions when they share a source URL or exact summary, but the Module
+does not apply those suggestions. Proposed IDs and kinds must match the target
+draft's existing Fact Sheet profile.
+
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
 and its checked author-input digest still matches. A successful result carries a
@@ -476,8 +494,8 @@ versioned Publication Plan with exact create/update/delete paths, new digests
 for writes, and previous digests for updates/deletes. Adapter errors are
 returned as `publication_failed`; no operation creates a Git commit.
 
-The CLI maps `prepare`, `template`, `run`, `batch`, `apply-generation`, `check`,
-`preview`, and `publish` to this Interface.
+The CLI maps `prepare`, `research`, `template`, `run`, `batch`,
+`apply-generation`, `check`, `preview`, and `publish` to this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
 `measure`. `apply-generation --input FILE` is the machine-oriented AI Adapter:

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 2.3 |
+| Version | 2.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -184,6 +184,12 @@ Reference content CI additionally validates:
   receipt-backed child-run resume, idempotent completion, complete member-state
   reporting, independent work beside blocked members, duplicate draft/run
   rejection, missing dependency and cycle rejection, and CLI JSON parity.
+- Authoring Phase A6 `T-AUTH-A6-RESEARCH-001/002` verifies explicit bounded
+  evidence ingestion, proposal-only/no-mutation behavior, mandatory human
+  verification, normative-fact classification, URL and Source Ledger
+  deduplication, source-class conflict rejection, Fact Sheet profile matching,
+  long verbatim excerpt rejection, eligible related-fact suggestions, and CLI
+  JSON parity. No test uses network access or treats fixture prose as verified.
 
 ## 5. Security tests
 
