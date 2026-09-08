@@ -29,6 +29,8 @@ const contextUsage =
   "Usage: npm run reference:author -- context --draft ID --facts ID[,ID...] [--json]\n";
 const templateUsage =
   "Usage: npm run reference:author -- template --draft ID --facts ID[,ID...] --kind section|summary|example [--heading HEADING | --example-id ID [--example-kind compile|run|expected-compile-failure] [--standard STANDARD]] [--json]\n";
+const batchUsage =
+  "Usage: npm run reference:author -- batch --input AUTHORING_BATCH.json [--json]\n";
 const runUsage =
   "Usage: npm run reference:author -- run --input AUTHORING_RUN.json [--json]\n";
 const applyGenerationUsage =
@@ -60,6 +62,54 @@ export async function runReferenceAuthorCli(
 ): Promise<number> {
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
+
+  if (command === "batch") {
+    const inputPath = flagValue(flags, "--input");
+    if (inputPath === undefined) {
+      dependencies.stderr(batchUsage);
+      return 2;
+    }
+    if (dependencies.readTextFile === undefined) {
+      dependencies.stderr("Authoring-batch file reader is unavailable\n");
+      return 3;
+    }
+    let input: unknown;
+    try {
+      input = JSON.parse(await dependencies.readTextFile(inputPath));
+    } catch (error) {
+      dependencies.stderr(
+        `Unable to read authoring-batch input: ${error instanceof Error ? error.message : "invalid JSON"}\n`,
+      );
+      return 2;
+    }
+    const result = await dependencies.authoring.advanceBatch(input);
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else {
+      const counts = {
+        complete: result.progress.members.filter(
+          ({ status }) => status === "complete",
+        ).length,
+        ready: result.progress.members.filter(
+          ({ status }) => status === "awaiting_generation",
+        ).length,
+        waiting: result.progress.members.filter(
+          ({ status }) => status === "awaiting_dependency",
+        ).length,
+        blocked: result.progress.members.filter(
+          ({ status }) => status === "blocked",
+        ).length,
+      };
+      dependencies.stdout(
+        `BATCH ${result.progress.batchId}: ${result.progress.status} (${counts.complete} complete, ${counts.ready} ready, ${counts.waiting} waiting, ${counts.blocked} blocked)\n`,
+      );
+    }
+    return result.ok ? 0 : 1;
+  }
 
   if (command === "run") {
     const inputPath = flagValue(flags, "--input");
@@ -496,7 +546,7 @@ export async function runReferenceAuthorCli(
   }
 
   dependencies.stderr(
-    `${prepareUsage}${contextUsage}${templateUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
+    `${prepareUsage}${contextUsage}${templateUsage}${batchUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
   );
   return 2;
 }

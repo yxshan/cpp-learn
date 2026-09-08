@@ -36,6 +36,10 @@ import type {
   AuthoringValidationCache,
   AuthoringValidationCacheValue,
 } from "./cache.js";
+import {
+  advanceAuthoringBatch,
+  type AdvanceAuthoringBatchResult,
+} from "./batch.js";
 import type {
   AuthoringPublicationCandidate,
   AuthoringPublisher,
@@ -716,6 +720,7 @@ export interface AuthoringContentQualityValidator {
 }
 
 export interface ReferenceAuthoring {
+  advanceBatch(request: unknown): Promise<AdvanceAuthoringBatchResult>;
   advanceRun(request: unknown): Promise<AdvanceAuthoringRunResult>;
   applyGenerationBundle(request: unknown): Promise<ApplyGenerationBundleResult>;
   applyGeneratedExample(
@@ -2610,6 +2615,11 @@ export function createReferenceAuthoring(
   }
 
   const authoring: ReferenceAuthoring = {
+    async advanceBatch(request) {
+      return advanceAuthoringBatch(request, (plan) =>
+        authoring.advanceRun(plan),
+      );
+    },
     async advanceRun(request) {
       const planIssues = validateAuthoringRunPlan(request);
       if (planIssues.length > 0) {
@@ -4706,6 +4716,16 @@ export type {
   AuthoringSummaryGeneration,
 } from "./generation.js";
 export { authoringGenerationKind } from "./generation.js";
+export {
+  authoringBatchPlanDigest,
+  authoringBatchRunSchema,
+  validateAuthoringBatchPlan,
+  type AdvanceAuthoringBatchResult,
+  type AuthoringBatchMemberPlan,
+  type AuthoringBatchMemberProgress,
+  type AuthoringBatchPlan,
+  type AuthoringBatchProgress,
+} from "./batch.js";
 export {
   authoringGenerationOrchestrationSchema,
   authoringRunSchema,

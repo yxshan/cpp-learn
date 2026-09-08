@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.6 |
+| Version | 2.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -170,6 +170,7 @@ npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --k
 npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind summary --json
 npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind example --example-id ID [--example-kind run] [--standard c++20] --json
 npm run reference:author -- run --input AUTHORING_RUN.json --json
+npm run reference:author -- batch --input AUTHORING_BATCH.json --json
 npm run reference:author -- apply-generation --input GENERATION_BUNDLE.json --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
@@ -259,6 +260,52 @@ given `runId`; a changed plan is blocked after its first run receipt exists.
 Every step rebuilds a fresh context and expected revision. Do not remove or edit
 `orchestration`, because the matching receipt metadata is what advances only
 that plan step.
+
+For two or more related drafts, compose unchanged run plans into a batch plan:
+
+```json
+{
+  "schemaVersion": 1,
+  "batchId": "vector-core",
+  "members": [
+    {
+      "id": "vector",
+      "dependsOn": [],
+      "run": {
+        "schemaVersion": 1,
+        "runId": "vector-type",
+        "draftId": "vector",
+        "steps": [
+          { "id": "summary", "kind": "summary", "factGroupIds": ["selection"] }
+        ]
+      }
+    },
+    {
+      "id": "insert",
+      "dependsOn": ["vector"],
+      "run": {
+        "schemaVersion": 1,
+        "runId": "vector-insert",
+        "draftId": "vector-insert",
+        "steps": [
+          { "id": "summary", "kind": "summary", "factGroupIds": ["selection"] }
+        ]
+      }
+    }
+  ]
+}
+```
+
+Run `reference:author -- batch --input AUTHORING_BATCH.json --json`. Every
+member marked `awaiting_generation` carries its own fresh run template and may
+be completed with `apply-generation`; `awaiting_dependency` names the member
+IDs that must complete first. Continue the same plan until the batch is
+`complete`. A batch may be `blocked` while still exposing ready work on an
+independent branch, so automation must inspect every member instead of treating
+the top-level status as the only work queue. Batch plans contain one to five
+unique drafts and cannot contain missing, self-referential, or cyclic
+dependencies. Save the JSON progress if audit evidence is needed; it is derived
+from child Generation Receipts and is not hidden mutable state.
 
 The commands never contact a model provider. They are intentionally suitable for
 Codex or another agent that can produce the bundle as a local file. Accepted

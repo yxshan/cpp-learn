@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -179,6 +179,11 @@ Reference content CI additionally validates:
   resume, receipt-bound step completion, exact example execution-contract
   matching, changed-plan and duplicate-target rejection, next-template refresh,
   and provider-neutral CLI dispatch.
+- Authoring Phase A5 `T-AUTH-A5-BATCH-001/002` verifies one-to-five Entry
+  plans, stable batch digests, out-of-order acyclic dependency execution,
+  receipt-backed child-run resume, idempotent completion, complete member-state
+  reporting, independent work beside blocked members, duplicate draft/run
+  rejection, missing dependency and cycle rejection, and CLI JSON parity.
 
 ## 5. Security tests
 

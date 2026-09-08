@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 5.6 |
+| Version | 5.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -78,7 +78,8 @@ Read in this order:
 60. [Stage 6.3 Phase A4 Generated Reference Example Implementation Report](60-STAGE-6.3-PHASE-A4-GENERATED-REFERENCE-EXAMPLE-IMPLEMENTATION-REPORT.md)
 61. [Stage 6.3 Phase A4 Structured Generation Template Implementation Report](61-STAGE-6.3-PHASE-A4-STRUCTURED-GENERATION-TEMPLATE-IMPLEMENTATION-REPORT.md)
 62. [Stage 6.3 Phase A4 Provider-neutral Authoring Run Implementation Report](62-STAGE-6.3-PHASE-A4-PROVIDER-NEUTRAL-AUTHORING-RUN-IMPLEMENTATION-REPORT.md)
-63. [Domain Context](CONTEXT.md)
+63. [Stage 6.3 Phase A5 Coherent Batch Runner Implementation Report](63-STAGE-6.3-PHASE-A5-COHERENT-BATCH-RUNNER-IMPLEMENTATION-REPORT.md)
+64. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

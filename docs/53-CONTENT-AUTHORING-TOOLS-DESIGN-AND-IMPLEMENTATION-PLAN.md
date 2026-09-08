@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 2.0 |
+| Version | 2.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -340,6 +340,12 @@ the draft.
 - Reuse verified fact references and cache results across the batch.
 - Resume idempotently from per-Entry receipts and emit one batch report.
 
+**Status: Accepted.** Schema-v1 plans coordinate one to five unique draft runs
+through an acyclic dependency graph. Progress is derived from child Generation
+Receipts, exposes every ready, waiting, blocked, and complete member, and keeps
+independent work visible when another branch is blocked. The same behavior is
+available through the provider-neutral CLI Adapter.
+
 Exit: one command advances a five-Entry batch without hiding blocked Entries.
 
 ### Phase A6: source and fact-sheet assistant
@@ -421,7 +427,7 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Implement the resumable Phase A5 coherent batch runner on top of the accepted
-single-draft run and Generation Receipt contracts. A real coherent five-Entry
-run must still be retained to close empirical Phase A3 acceptance; later tooling
-must not manufacture that evidence.
+Implement the Phase A6 source and fact-sheet assistant for explicitly supplied
+sources without allowing proposals to verify themselves. A real coherent
+five-Entry run must still be retained to close empirical Phase A3 acceptance;
+later tooling must not manufacture that evidence.

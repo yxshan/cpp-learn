@@ -176,6 +176,18 @@ fresh Generation Bundle Template. It is rebuilt from validated Generation
 Receipts and never grants publication approval.
 _Avoid_: stored cursor, model session, Authoring Report
 
+**Authoring Batch Plan**:
+A schema-validated dependency graph of one to five unique Authoring Run Plans.
+It orders related Reference Entry work without owning model or publication
+state.
+_Avoid_: Authoring Batch Report, hidden queue, release plan
+
+**Authoring Batch Progress**:
+A versioned, digest-bound derived view of every complete, ready, dependency-
+waiting, and blocked member in an Authoring Batch Plan. Child Generation
+Receipts are its durable resume evidence.
+_Avoid_: Authoring Batch Report, persisted scheduler state, approval
+
 **Authoring Batch Report**:
 A digest-bound measurement of one to five Authoring Drafts, including readiness,
 examples, cache behavior, findings, time observations, and escaped corrections.

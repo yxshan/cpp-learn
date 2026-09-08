@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.8 |
+| Version | 2.9 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -228,7 +228,7 @@ Acceptance:
 
 ## 12. Stage 6.3: Reference content authoring tools
 
-**Status:** Phases A0, A1, A2, and A4 accepted; Phase A3 tooling is implemented with empirical acceptance pending. Design and phased acceptance are controlled by the [Content
+**Status:** Phases A0, A1, A2, A4, and A5 accepted; Phase A3 tooling is implemented with empirical acceptance pending. Design and phased acceptance are controlled by the [Content
 Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
 A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md),
@@ -240,6 +240,8 @@ with summary-generation evidence in the [Generated Summary Report](59-STAGE-6.3-
 Compiled-example, structured-template, and resumable-run evidence is recorded
 in reports 60–62, culminating in the [Provider-neutral Authoring Run
 Report](62-STAGE-6.3-PHASE-A4-PROVIDER-NEUTRAL-AUTHORING-RUN-IMPLEMENTATION-REPORT.md).
+Phase A5 evidence is in the [Coherent Batch Runner
+Report](63-STAGE-6.3-PHASE-A5-COHERENT-BATCH-RUNNER-IMPLEMENTATION-REPORT.md).
 
 Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
 
@@ -265,8 +267,10 @@ metrics are implemented in Phase A3; one real measured five-Entry batch is
 still required before acceptance. Phase A4 can apply controlled sections,
 Entry summaries, and compiled Reference Examples through the Module and CLI,
 then resume an unchanged single-draft plan from durable receipts. Phase A5 is
-the next implementation slice for coherent multi-Entry batches. A lightweight
-Web review surface remains optional after the automation phases.
+accepted with one-to-five Entry DAG plans, per-run receipt recovery, complete
+blocked/waiting/ready reporting, and CLI parity. Phase A6 source/fact proposals
+are the next implementation slice. A lightweight Web review surface remains
+optional after the automation phases.
 
 ## 13. Global definition of done
 

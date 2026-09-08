@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 2.3 |
+| Version | 2.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-08 |
@@ -368,13 +368,14 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns twelve operations:
+The non-HTTP `ReferenceAuthoring` Interface owns thirteen operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 buildGenerationTemplate({ draftId, factGroupIds, kind, ...target }): Promise<BuildAuthoringGenerationTemplateResult>;
 advanceRun(plan: unknown): Promise<AdvanceAuthoringRunResult>;
+advanceBatch(plan: unknown): Promise<AdvanceAuthoringBatchResult>;
 applyGenerationBundle(bundle: unknown): Promise<ApplyGenerationBundleResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
@@ -447,12 +448,26 @@ The plan is the caller-owned resume token; the Module derives a deterministic
 SHA-256 plan digest and never stores provider state or credentials. An applied
 template copies `runId`, `planDigest`, `stepId`, and `factGroupIds` into its
 Generation Receipt. Only a receipt with all three identity values, the exact
-fact allowlist, and the exact target contract can complete a step. Repeating an unchanged plan is
-idempotent. The first applied run receipt establishes run identity; before that
-point the caller may still revise an unstarted plan. Afterward, reusing its run
-ID for a changed plan, encountering a corrupt receipt, or finding inconsistent
-run metadata fails closed with `run_blocked`. Example completion also matches
-the planned execution kind and C++ standard, including the `run`/C++20 defaults.
+fact allowlist, and the exact target contract can complete a step. Repeating an
+unchanged plan is idempotent. The first applied run receipt establishes run
+identity; before that point the caller may still revise an unstarted plan.
+Afterward, reusing its run ID for a changed plan, encountering a corrupt receipt,
+or finding inconsistent run metadata fails closed with `run_blocked`. Example
+completion also matches the planned execution kind and C++ standard, including
+the `run`/C++20 defaults.
+
+`advanceBatch` validates a schema-v1 Authoring Batch Plan containing one to five
+unique draft runs and an acyclic dependency graph. Member order controls output
+order, but not dependency correctness. The Module topologically evaluates every
+member whose dependencies are complete and returns a versioned Authoring Batch
+Progress containing every `complete`, `awaiting_generation`,
+`awaiting_dependency`, and `blocked` member. A blocked member does not suppress
+ready work on an independent branch. Batch progress is derived rather than
+stored: each child run resumes from its own Generation Receipts, while a
+deterministic batch-plan digest provides comparison evidence. Duplicate member,
+draft, or run IDs, missing dependencies, self-dependencies, cycles, and batches
+larger than five fail before any child run advances. The batch operation does
+not publish, invent timing evidence, or replace `measureBatch`.
 
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
@@ -461,7 +476,7 @@ versioned Publication Plan with exact create/update/delete paths, new digests
 for writes, and previous digests for updates/deletes. Adapter errors are
 returned as `publication_failed`; no operation creates a Git commit.
 
-The CLI maps `prepare`, `template`, `run`, `apply-generation`, `check`,
+The CLI maps `prepare`, `template`, `run`, `batch`, `apply-generation`, `check`,
 `preview`, and `publish` to this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and

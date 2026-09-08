@@ -5,6 +5,55 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-A5-BATCH-002] advances a coherent batch plan from JSON", async () => {
+    const plan = {
+      schemaVersion: 1,
+      batchId: "vector-core",
+      members: [
+        {
+          id: "vector",
+          dependsOn: [],
+          run: {
+            schemaVersion: 1,
+            runId: "vector-core-type",
+            draftId: "vector",
+            steps: [
+              {
+                id: "summary",
+                kind: "summary",
+                factGroupIds: ["selection"],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const result = {
+      ok: true as const,
+      progress: {
+        schemaVersion: 1,
+        batchId: "vector-core",
+        planDigest: "a".repeat(64),
+        status: "awaiting_generation",
+        members: [{ id: "vector", status: "awaiting_generation" }],
+      },
+    };
+    const advanceBatch = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["batch", "--input", "vector-batch.json", "--json"],
+      authoring: { advanceBatch } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(plan)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(advanceBatch).toHaveBeenCalledWith(plan);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it("[T-AUTH-A4-RUN-002] advances a provider-neutral run plan from JSON", async () => {
     const plan = {
       schemaVersion: 1,
