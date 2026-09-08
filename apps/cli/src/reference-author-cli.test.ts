@@ -5,6 +5,42 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-A4-RUN-002] advances a provider-neutral run plan from JSON", async () => {
+    const plan = {
+      schemaVersion: 1,
+      runId: "vector-insert-core",
+      draftId: "vector-insert",
+      steps: [{ id: "summary", kind: "summary", factGroupIds: ["selection"] }],
+    };
+    const result = {
+      ok: true as const,
+      progress: {
+        schemaVersion: 1,
+        runId: "vector-insert-core",
+        draftId: "vector-insert",
+        status: "awaiting_generation",
+        currentRevision: 1,
+        completedStepIds: [],
+        pendingStepIds: ["summary"],
+        next: { stepId: "summary", template: { expectedRevision: 1 } },
+      },
+    };
+    const advanceRun = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["run", "--input", "vector-run.json", "--json"],
+      authoring: { advanceRun } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(plan)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(advanceRun).toHaveBeenCalledWith(plan);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it("[T-AUTH-A4-TEMPLATE-002] emits an editable generation template as JSON", async () => {
     const result = {
       ok: true as const,

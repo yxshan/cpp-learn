@@ -16,6 +16,7 @@
     "draftId": { "$ref": "#/$defs/id" },
     "appliedRevision": { "type": "integer", "minimum": 2 },
     "contextDigest": { "$ref": "#/$defs/digest" },
+    "orchestration": { "$ref": "#/$defs/orchestration" },
     "generation": {
       "$ref": "https://cpp-learn.local/schemas/reference-authoring-summary-generation.v1.json"
     },
@@ -32,6 +33,17 @@
     "digest": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "runId", "planDigest", "stepId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "runId": { "$ref": "#/$defs/id" },
+        "planDigest": { "$ref": "#/$defs/digest" },
+        "stepId": { "$ref": "#/$defs/id" }
+      }
     }
   }
 }

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | DEVOPS-001 |
-| Version | 2.5 |
+| Version | 2.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-07 |
+| Last updated | 2026-09-08 |
 
 ## 1. Supported baseline
 
@@ -169,6 +169,7 @@ npm run reference:author -- context --draft ID --facts FACT_ID[,FACT_ID...] --js
 npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind section --heading HEADING --json
 npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind summary --json
 npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --kind example --example-id ID [--example-kind run] [--standard c++20] --json
+npm run reference:author -- run --input AUTHORING_RUN.json --json
 npm run reference:author -- apply-generation --input GENERATION_BUNDLE.json --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
@@ -230,6 +231,34 @@ The machine-oriented generation flow is:
 4. Run `apply-generation --input FILE --json` and inspect the structured result.
 5. Continue from the returned revision, then run `check` before preview or
    publication.
+
+For a resumable single-draft run, save a plan such as:
+
+```json
+{
+  "schemaVersion": 1,
+  "runId": "vector-insert-core",
+  "draftId": "vector-insert",
+  "steps": [
+    { "id": "summary", "kind": "summary", "factGroupIds": ["selection"] },
+    {
+      "id": "usage",
+      "kind": "section",
+      "heading": "什么时候使用",
+      "factGroupIds": ["selection"]
+    }
+  ]
+}
+```
+
+Run `reference:author -- run --input AUTHORING_RUN.json --json`, fill the
+returned `progress.next.template`, mark it `ready`, and apply it with
+`apply-generation`. Repeat the unchanged plan until `progress.status` is
+`complete`. The plan file is the resume token and must remain unchanged for a
+given `runId`; a changed plan is blocked after its first run receipt exists.
+Every step rebuilds a fresh context and expected revision. Do not remove or edit
+`orchestration`, because the matching receipt metadata is what advances only
+that plan step.
 
 The commands never contact a model provider. They are intentionally suitable for
 Codex or another agent that can produce the bundle as a local file. Accepted

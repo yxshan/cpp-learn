@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | IC-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-07 |
+| Last updated | 2026-09-08 |
 
 ## 1. Contract policy
 
@@ -368,12 +368,13 @@ Exit codes:
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns eleven operations:
+The non-HTTP `ReferenceAuthoring` Interface owns twelve operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
 buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 buildGenerationTemplate({ draftId, factGroupIds, kind, ...target }): Promise<BuildAuthoringGenerationTemplateResult>;
+advanceRun(plan: unknown): Promise<AdvanceAuthoringRunResult>;
 applyGenerationBundle(bundle: unknown): Promise<ApplyGenerationBundleResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
 applyGeneratedSection({ context, expectedRevision, generation }): Promise<ApplyGeneratedSectionResult>;
@@ -440,6 +441,17 @@ dispatches bare legacy bundles by their validated generation kind. Final
 generation schemas and all existing review, compiler, revision, and receipt
 gates still apply.
 
+`advanceRun` validates a schema-v1 Authoring Run Plan for exactly one draft and
+returns either `complete` progress or the next fresh Generation Bundle Template.
+The plan is the caller-owned resume token; the Module derives a deterministic
+SHA-256 plan digest and never stores provider state or credentials. An applied
+template copies `runId`, `planDigest`, and `stepId` into its Generation Receipt.
+Only a receipt with all three matching values and the exact target contract can
+complete a step. Repeating an unchanged plan is idempotent, while reusing a run
+ID for a changed plan, encountering a corrupt receipt, or finding inconsistent
+run metadata fails closed with `run_blocked`. Example completion also matches
+the planned execution kind and C++ standard, including the `run`/C++20 defaults.
+
 `mode` is `dry_run` or `apply`. Publication succeeds only when the stored draft
 revision equals `expectedRevision`, its ready report names the same revision,
 and its checked author-input digest still matches. A successful result carries a
@@ -447,8 +459,8 @@ versioned Publication Plan with exact create/update/delete paths, new digests
 for writes, and previous digests for updates/deletes. Adapter errors are
 returned as `publication_failed`; no operation creates a Git commit.
 
-The CLI maps `prepare`, `template`, `apply-generation`, `check`, `preview`, and `publish` to
-this Interface.
+The CLI maps `prepare`, `template`, `run`, `apply-generation`, `check`,
+`preview`, and `publish` to this Interface.
 Preview is a presentation operation over a fresh check result. CLI publication
 is dry-run unless `--apply` is present. The CLI also maps `context` and
 `measure`. `apply-generation --input FILE` is the machine-oriented AI Adapter:

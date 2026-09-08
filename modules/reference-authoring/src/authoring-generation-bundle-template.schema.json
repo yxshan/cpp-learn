@@ -22,6 +22,7 @@
         }
       }
     },
+    "orchestration": { "$ref": "#/$defs/orchestration" },
     "context": {
       "$ref": "https://cpp-learn.local/schemas/reference-authoring-context-pack.v2.json"
     },
@@ -42,6 +43,17 @@
     "digest": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
+    },
+    "orchestration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "runId", "planDigest", "stepId"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "runId": { "$ref": "#/$defs/id" },
+        "planDigest": { "$ref": "#/$defs/digest" },
+        "stepId": { "$ref": "#/$defs/id" }
+      }
     },
     "claim": {
       "type": "object",

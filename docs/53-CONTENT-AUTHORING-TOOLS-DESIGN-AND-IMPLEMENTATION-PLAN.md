@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 1.9 |
+| Version | 2.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-07 |
+| Last updated | 2026-09-08 |
 
 ## 1. Problem and outcome
 
@@ -324,9 +324,11 @@ behavior, not author throughput.
 - Apply accepted sections, summaries, and compiler-validated Reference Examples
   through revision-bound full-snapshot commits and keep Generation Receipts.
 
-Current status: controlled section, Entry-summary, compiled Reference Example
-generation, and revision-bound structured bundle templates are implemented.
-Remaining A4 work adds a complete provider-neutral authoring run command.
+**Status: Accepted.** Controlled section, Entry-summary, compiled Reference
+Example generation, revision-bound structured bundle templates, and a resumable
+provider-neutral single-draft run are implemented. Run progress is reconstructed
+from Generation Receipts; a deterministic plan digest prevents a reused run ID
+from silently changing meaning.
 
 Exit: an AI agent can fill a complete draft through controlled operations while
 unsupported claims remain unverified and no failed operation partially changes
@@ -419,8 +421,7 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Complete Phase A4 by adding a provider-neutral run orchestration command on top
-of the delivered templates and section, summary, and example operations.
-Then implement the resumable Phase A5 batch runner. A real coherent five-Entry
+Implement the resumable Phase A5 coherent batch runner on top of the accepted
+single-draft run and Generation Receipt contracts. A real coherent five-Entry
 run must still be retained to close empirical Phase A3 acceptance; later tooling
 must not manufacture that evidence.

@@ -1,0 +1,82 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-run.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "draftId", "steps"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runId": { "$ref": "#/$defs/id" },
+    "draftId": { "$ref": "#/$defs/id" },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/summaryStep" },
+          { "$ref": "#/$defs/sectionStep" },
+          { "$ref": "#/$defs/exampleStep" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "summaryStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "factGroupIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "summary" },
+        "factGroupIds": { "$ref": "#/$defs/facts" }
+      }
+    },
+    "sectionStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "heading", "factGroupIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "section" },
+        "heading": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "factGroupIds": { "$ref": "#/$defs/facts" }
+      }
+    },
+    "exampleStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "exampleId", "factGroupIds"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "example" },
+        "exampleId": { "$ref": "#/$defs/id" },
+        "exampleKind": {
+          "enum": ["compile", "run", "expected-compile-failure"]
+        },
+        "standard": {
+          "enum": [
+            "c++98",
+            "c++03",
+            "c++11",
+            "c++14",
+            "c++17",
+            "c++20",
+            "c++23",
+            "c++26-draft"
+          ]
+        },
+        "factGroupIds": { "$ref": "#/$defs/facts" }
+      }
+    }
+  }
+}

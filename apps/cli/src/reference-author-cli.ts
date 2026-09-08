@@ -29,6 +29,8 @@ const contextUsage =
   "Usage: npm run reference:author -- context --draft ID --facts ID[,ID...] [--json]\n";
 const templateUsage =
   "Usage: npm run reference:author -- template --draft ID --facts ID[,ID...] --kind section|summary|example [--heading HEADING | --example-id ID [--example-kind compile|run|expected-compile-failure] [--standard STANDARD]] [--json]\n";
+const runUsage =
+  "Usage: npm run reference:author -- run --input AUTHORING_RUN.json [--json]\n";
 const applyGenerationUsage =
   "Usage: npm run reference:author -- apply-generation --input FILE [--json]\n";
 const measureUsage =
@@ -58,6 +60,44 @@ export async function runReferenceAuthorCli(
 ): Promise<number> {
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
+
+  if (command === "run") {
+    const inputPath = flagValue(flags, "--input");
+    if (inputPath === undefined) {
+      dependencies.stderr(runUsage);
+      return 2;
+    }
+    if (dependencies.readTextFile === undefined) {
+      dependencies.stderr("Authoring-run file reader is unavailable\n");
+      return 3;
+    }
+    let input: unknown;
+    try {
+      input = JSON.parse(await dependencies.readTextFile(inputPath));
+    } catch (error) {
+      dependencies.stderr(
+        `Unable to read authoring-run input: ${error instanceof Error ? error.message : "invalid JSON"}\n`,
+      );
+      return 2;
+    }
+    const result = await dependencies.authoring.advanceRun(input);
+    if (json) {
+      dependencies.stdout(`${JSON.stringify(result)}\n`);
+    } else if (!result.ok) {
+      dependencies.stderr(
+        `${result.code}${result.issues.length === 0 ? "" : `: ${result.issues.map((issue) => `${issue.path} ${issue.message}`).join("; ")}`}\n`,
+      );
+    } else if (result.progress.status === "complete") {
+      dependencies.stdout(
+        `COMPLETE ${result.progress.runId}: ${result.progress.completedStepIds.length} generation steps at revision ${result.progress.currentRevision}\n`,
+      );
+    } else {
+      dependencies.stdout(
+        `NEXT ${result.progress.runId}: ${result.progress.next.stepId} at revision ${result.progress.currentRevision}\n`,
+      );
+    }
+    return result.ok ? 0 : 1;
+  }
 
   if (command === "template") {
     const draftId = flagValue(flags, "--draft");
@@ -456,7 +496,7 @@ export async function runReferenceAuthorCli(
   }
 
   dependencies.stderr(
-    `${prepareUsage}${contextUsage}${templateUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
+    `${prepareUsage}${contextUsage}${templateUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
   );
   return 2;
 }

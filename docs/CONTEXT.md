@@ -163,6 +163,19 @@ dispatch; an author or AI fills it and marks it `ready` before the normal
 generation gates run.
 _Avoid_: prompt, accepted generation, provider-specific request
 
+**Authoring Run Plan**:
+A schema-validated, caller-owned sequence of unique generation targets for one
+Authoring Draft. Its deterministic digest and stable run/step IDs bind later
+receipts; the unchanged plan file is the resume token and contains no model
+provider state.
+_Avoid_: prompt chain, hidden workflow state, multi-Entry batch
+
+**Authoring Run Progress**:
+A derived view of completed and pending Authoring Run Plan steps plus the next
+fresh Generation Bundle Template. It is rebuilt from validated Generation
+Receipts and never grants publication approval.
+_Avoid_: stored cursor, model session, Authoring Report
+
 **Authoring Batch Report**:
 A digest-bound measurement of one to five Authoring Drafts, including readiness,
 examples, cache behavior, findings, time observations, and escaped corrections.

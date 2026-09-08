@@ -53,6 +53,12 @@ import {
   type AuthoringSectionGeneration,
   type AuthoringSummaryGeneration,
 } from "./generation.js";
+import {
+  authoringRunPlanDigest,
+  generationCompletesAuthoringRunStep,
+  validateAuthoringRunPlan,
+  type AuthoringRunPlan,
+} from "./run.js";
 
 export const AUTHORING_FACT_KINDS = [
   "selection",
@@ -236,6 +242,13 @@ export interface AuthoringGenerationTemplateMetadata {
   )[];
 }
 
+export interface AuthoringGenerationOrchestration {
+  readonly schemaVersion: 1;
+  readonly runId: string;
+  readonly planDigest: string;
+  readonly stepId: string;
+}
+
 type AuthoringGenerationDraft =
   | (Omit<AuthoringSectionGeneration, "section"> & {
       readonly section: Omit<
@@ -264,6 +277,7 @@ type AuthoringGenerationDraft =
 
 export interface AuthoringGenerationBundleTemplate {
   readonly template: AuthoringGenerationTemplateMetadata;
+  readonly orchestration?: AuthoringGenerationOrchestration;
   readonly context: AuthoringContextPack;
   readonly expectedRevision: number;
   readonly generation: AuthoringGenerationDraft;
@@ -285,6 +299,41 @@ export type ApplyGenerationBundleResult =
   | ApplyGeneratedSectionResult
   | ApplyGeneratedSummaryResult
   | ApplyGeneratedExampleResult;
+
+interface AuthoringRunProgressBase {
+  readonly schemaVersion: 1;
+  readonly runId: string;
+  readonly draftId: string;
+  readonly planDigest: string;
+  readonly currentRevision: number;
+  readonly completedStepIds: readonly string[];
+  readonly pendingStepIds: readonly string[];
+}
+
+export type AuthoringRunProgress = AuthoringRunProgressBase &
+  (
+    | {
+        readonly status: "awaiting_generation";
+        readonly next: {
+          readonly stepId: string;
+          readonly template: AuthoringGenerationBundleTemplate;
+        };
+      }
+    | { readonly status: "complete"; readonly next?: never }
+  );
+
+export type AdvanceAuthoringRunResult =
+  | { readonly ok: true; readonly progress: AuthoringRunProgress }
+  | {
+      readonly ok: false;
+      readonly code:
+        | "invalid_request"
+        | "draft_not_found"
+        | "draft_unreadable"
+        | "context_blocked"
+        | "run_blocked";
+      readonly issues: readonly AuthoringValidationIssue[];
+    };
 
 export interface AuthoringGeneratedClaim {
   readonly id: string;
@@ -330,6 +379,7 @@ export interface ApplyGeneratedSectionRequest {
   readonly context: AuthoringContextPack;
   readonly expectedRevision: number;
   readonly generation: AuthoringSectionGeneration;
+  readonly orchestration?: AuthoringGenerationOrchestration;
 }
 
 interface ApplyGeneratedContentSuccess {
@@ -364,6 +414,7 @@ export interface ApplyGeneratedSummaryRequest {
   readonly context: AuthoringContextPack;
   readonly expectedRevision: number;
   readonly generation: AuthoringSummaryGeneration;
+  readonly orchestration?: AuthoringGenerationOrchestration;
 }
 
 export type ApplyGeneratedSummaryResult = ApplyGeneratedSectionResult;
@@ -372,6 +423,7 @@ export interface ApplyGeneratedExampleRequest {
   readonly context: AuthoringContextPack;
   readonly expectedRevision: number;
   readonly generation: AuthoringExampleGeneration;
+  readonly orchestration?: AuthoringGenerationOrchestration;
 }
 
 export type ApplyGeneratedExampleResult =
@@ -517,6 +569,7 @@ interface AuthoringGenerationReceiptBase {
   readonly draftId: string;
   readonly appliedRevision: number;
   readonly contextDigest: string;
+  readonly orchestration?: AuthoringGenerationOrchestration;
   readonly review: AuthoringGeneratedReview;
   readonly appliedAt: string;
 }
@@ -667,6 +720,7 @@ export interface AuthoringContentQualityValidator {
 }
 
 export interface ReferenceAuthoring {
+  advanceRun(request: unknown): Promise<AdvanceAuthoringRunResult>;
   applyGenerationBundle(request: unknown): Promise<ApplyGenerationBundleResult>;
   applyGeneratedExample(
     request: ApplyGeneratedExampleRequest,
@@ -2353,6 +2407,7 @@ export function createReferenceAuthoring(
     readonly context: AuthoringContextPack;
     readonly expectedRevision: number;
     readonly generation: AuthoringGeneration;
+    readonly orchestration?: AuthoringGenerationOrchestration;
     readonly claims: readonly AuthoringGenerationClaim[];
     readonly claimPath: string;
     readonly writeFailureMessage: string;
@@ -2449,6 +2504,9 @@ export function createReferenceAuthoring(
       draftId: draft.draftId,
       appliedRevision: nextRevision,
       contextDigest: options.context.digest,
+      ...(options.orchestration === undefined
+        ? {}
+        : { orchestration: options.orchestration }),
       generation: options.generation,
       review: reviewed.review,
       appliedAt: draft.updatedAt,
@@ -2522,6 +2580,205 @@ export function createReferenceAuthoring(
   }
 
   const authoring: ReferenceAuthoring = {
+    async advanceRun(request) {
+      const planIssues = validateAuthoringRunPlan(request);
+      if (planIssues.length > 0) {
+        return { ok: false, code: "invalid_request", issues: planIssues };
+      }
+      const plan = request as AuthoringRunPlan;
+      let workspace: DraftWorkspace | undefined;
+      try {
+        workspace = await dependencies.drafts.get(plan.draftId);
+      } catch (error) {
+        return {
+          ok: false,
+          code: "draft_unreadable",
+          issues: [
+            {
+              path: "/draftId",
+              message:
+                error instanceof Error ? error.message : "Draft is unreadable",
+              keyword: "read",
+            },
+          ],
+        };
+      }
+      if (workspace === undefined) {
+        return { ok: false, code: "draft_not_found", issues: [] };
+      }
+      const planDigest = authoringRunPlanDigest(plan);
+      const receiptIssues: AuthoringValidationIssue[] = [];
+      const receipts: AuthoringGenerationReceipt[] = [];
+      for (const path of Object.keys(workspace.files)
+        .filter((candidate) =>
+          /^generation\/revision-[1-9][0-9]*\.json$/u.test(candidate),
+        )
+        .sort()) {
+        let receipt: unknown;
+        try {
+          receipt = JSON.parse(workspace.files[path]!);
+        } catch (error) {
+          receiptIssues.push({
+            path: `/${path}`,
+            message:
+              error instanceof Error
+                ? error.message
+                : "Generation Receipt is not valid JSON",
+            keyword: "parse",
+          });
+          continue;
+        }
+        const issues = validateAuthoringGenerationReceipt(receipt);
+        if (issues.length > 0) {
+          receiptIssues.push(
+            ...issues.map((issue) => ({
+              ...issue,
+              path: `/${path}${issue.path === "/" ? "" : issue.path}`,
+            })),
+          );
+          continue;
+        }
+        const validated = receipt as AuthoringGenerationReceipt;
+        const pathRevision = Number(
+          path.match(/revision-([1-9][0-9]*)\.json$/u)?.[1],
+        );
+        if (
+          validated.draftId !== plan.draftId ||
+          validated.appliedRevision !== pathRevision ||
+          validated.appliedRevision > workspace.draft.revision
+        ) {
+          receiptIssues.push({
+            path: `/${path}`,
+            message:
+              "Receipt path, revision, and draft identity must match the run draft",
+            keyword: "identity",
+          });
+          continue;
+        }
+        receipts.push(validated);
+      }
+      if (receiptIssues.length > 0) {
+        return {
+          ok: false,
+          code: "run_blocked",
+          issues: receiptIssues,
+        };
+      }
+      const changedPlanReceipt = receipts.find(
+        (receipt) =>
+          receipt.orchestration?.runId === plan.runId &&
+          receipt.orchestration.planDigest !== planDigest,
+      );
+      if (changedPlanReceipt !== undefined) {
+        return {
+          ok: false,
+          code: "run_blocked",
+          issues: [
+            {
+              path: "/runId",
+              message:
+                "Run ID is already associated with a different plan digest",
+              keyword: "plan-changed",
+            },
+          ],
+        };
+      }
+      const knownStepIds = new Set(plan.steps.map(({ id }) => id));
+      const unknownStepReceipt = receipts.find(
+        (receipt) =>
+          receipt.orchestration?.runId === plan.runId &&
+          receipt.orchestration.planDigest === planDigest &&
+          !knownStepIds.has(receipt.orchestration.stepId),
+      );
+      if (unknownStepReceipt !== undefined) {
+        return {
+          ok: false,
+          code: "run_blocked",
+          issues: [
+            {
+              path: "/steps",
+              message: `Receipt references unknown run step ${unknownStepReceipt.orchestration!.stepId}`,
+              keyword: "unknown-step",
+            },
+          ],
+        };
+      }
+      const completedStepIds = plan.steps
+        .filter((step) =>
+          receipts.some(
+            (receipt) =>
+              receipt.orchestration?.runId === plan.runId &&
+              receipt.orchestration.planDigest === planDigest &&
+              receipt.orchestration.stepId === step.id &&
+              generationCompletesAuthoringRunStep(step, receipt.generation),
+          ),
+        )
+        .map(({ id }) => id);
+      const completed = new Set(completedStepIds);
+      const pendingSteps = plan.steps.filter((step) => !completed.has(step.id));
+      const progressBase = {
+        schemaVersion: 1 as const,
+        runId: plan.runId,
+        draftId: plan.draftId,
+        planDigest,
+        currentRevision: workspace.draft.revision,
+        completedStepIds,
+        pendingStepIds: pendingSteps.map(({ id }) => id),
+      };
+      const nextStep = pendingSteps[0];
+      if (nextStep === undefined) {
+        return {
+          ok: true,
+          progress: { ...progressBase, status: "complete" },
+        };
+      }
+      const templateResult = await authoring.buildGenerationTemplate(
+        nextStep.kind === "summary"
+          ? {
+              draftId: plan.draftId,
+              factGroupIds: nextStep.factGroupIds,
+              kind: "summary",
+            }
+          : nextStep.kind === "section"
+            ? {
+                draftId: plan.draftId,
+                factGroupIds: nextStep.factGroupIds,
+                kind: "section",
+                heading: nextStep.heading,
+              }
+            : {
+                draftId: plan.draftId,
+                factGroupIds: nextStep.factGroupIds,
+                kind: "example",
+                exampleId: nextStep.exampleId,
+                ...(nextStep.exampleKind === undefined
+                  ? {}
+                  : { exampleKind: nextStep.exampleKind }),
+                ...(nextStep.standard === undefined
+                  ? {}
+                  : { standard: nextStep.standard }),
+              },
+      );
+      if (!templateResult.ok) return templateResult;
+      const template: AuthoringGenerationBundleTemplate = {
+        ...templateResult.template,
+        orchestration: {
+          schemaVersion: 1,
+          runId: plan.runId,
+          planDigest,
+          stepId: nextStep.id,
+        },
+      };
+      return {
+        ok: true,
+        progress: {
+          ...progressBase,
+          status: "awaiting_generation",
+          currentRevision: template.expectedRevision,
+          next: { stepId: nextStep.id, template },
+        },
+      };
+    },
     async applyGenerationBundle(request) {
       if (request === null || typeof request !== "object") {
         return {
@@ -2540,6 +2797,7 @@ export function createReferenceAuthoring(
       const unknownFields = Object.keys(request).filter(
         (field) =>
           field !== "template" &&
+          field !== "orchestration" &&
           field !== "context" &&
           field !== "expectedRevision" &&
           field !== "generation",
@@ -2575,10 +2833,25 @@ export function createReferenceAuthoring(
       }
       const bundle = request as {
         readonly template?: AuthoringGenerationTemplateMetadata;
+        readonly orchestration?: AuthoringGenerationOrchestration;
         readonly context: AuthoringContextPack;
         readonly expectedRevision: number;
         readonly generation: AuthoringGeneration;
       };
+      if (bundle.orchestration !== undefined && bundle.template === undefined) {
+        return {
+          ok: false,
+          code: "invalid_request",
+          issues: [
+            {
+              path: "/orchestration",
+              message:
+                "Orchestration metadata is accepted only on a generation template",
+              keyword: "dependency",
+            },
+          ],
+        };
+      }
       if (bundle.template !== undefined) {
         const templateIssues =
           validateAuthoringGenerationBundleTemplate(bundle);
@@ -2666,6 +2939,9 @@ export function createReferenceAuthoring(
         context: request.context,
         expectedRevision: request.expectedRevision,
         generation: request.generation,
+        ...(request.orchestration === undefined
+          ? {}
+          : { orchestration: request.orchestration }),
         claims: request.generation.example.claims,
         claimPath: "/generation/example/claims",
         writeFailureMessage: "Generated example could not be committed",
@@ -2912,6 +3188,9 @@ export function createReferenceAuthoring(
         context: request.context,
         expectedRevision: request.expectedRevision,
         generation: request.generation,
+        ...(request.orchestration === undefined
+          ? {}
+          : { orchestration: request.orchestration }),
         claims: request.generation.summary.claims,
         claimPath: "/generation/summary/claims",
         writeFailureMessage: "Generated summary could not be committed",
@@ -2986,6 +3265,9 @@ export function createReferenceAuthoring(
         context: request.context,
         expectedRevision: request.expectedRevision,
         generation: request.generation,
+        ...(request.orchestration === undefined
+          ? {}
+          : { orchestration: request.orchestration }),
         claims: request.generation.section.claims,
         claimPath: "/generation/section/claims",
         writeFailureMessage: "Generated section could not be committed",
@@ -4501,6 +4783,12 @@ export type {
   AuthoringSummaryGeneration,
 } from "./generation.js";
 export { authoringGenerationKind } from "./generation.js";
+export {
+  authoringRunSchema,
+  validateAuthoringRunPlan,
+  type AuthoringRunPlan,
+  type AuthoringRunStep,
+} from "./run.js";
 
 export {
   createFilesystemReferenceDraftRepository,

@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 2.1 |
+| Version | 2.2 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-07 |
+| Last updated | 2026-09-08 |
 
 ## 1. Quality objectives
 
@@ -173,6 +173,12 @@ Reference content CI additionally validates:
   compiler rejection, stale revision, compare-and-swap conflict, same-ID
   replacement, receipt-derived human review, real native compilation with the
   filesystem Adapter, and CLI parity.
+  `T-AUTH-A4-TEMPLATE-001/002` verifies constrained editable templates,
+  kind-specific defaults, incomplete-template rejection, and CLI parity.
+  `T-AUTH-A4-RUN-001/002` verifies deterministic plan digests, idempotent
+  resume, receipt-bound step completion, exact example execution-contract
+  matching, changed-plan and duplicate-target rejection, next-template refresh,
+  and provider-neutral CLI dispatch.
 
 ## 5. Security tests
 

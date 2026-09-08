@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 2.7 |
+| Version | 2.8 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-07 |
+| Last updated | 2026-09-08 |
 
 ## 1. Delivery policy
 
@@ -228,7 +228,7 @@ Acceptance:
 
 ## 12. Stage 6.3: Reference content authoring tools
 
-**Status:** Phases A0, A1, and A2 accepted; Phase A3 tooling implemented with empirical acceptance pending; Phase A4 section and summary generation implemented, with example/template/run work remaining. Design and phased acceptance are controlled by the [Content
+**Status:** Phases A0, A1, A2, and A4 accepted; Phase A3 tooling is implemented with empirical acceptance pending. Design and phased acceptance are controlled by the [Content
 Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
 and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
 A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md),
@@ -237,6 +237,9 @@ Phase A2 evidence is in the [Cache, Preview, and Atomic Publish Report](56-STAGE
 Phase A3 tooling evidence is in the [Fact Reuse, Context Packs, and Batch Metrics Report](57-STAGE-6.3-PHASE-A3-FACT-REUSE-CONTEXT-PACKS-AND-BATCH-METRICS-IMPLEMENTATION-REPORT.md).
 Phase A4 tracer evidence is in the [AI Authoring Adapter Report](58-STAGE-6.3-PHASE-A4-AI-AUTHORING-ADAPTER-TRACER-BULLET-IMPLEMENTATION-REPORT.md),
 with summary-generation evidence in the [Generated Summary Report](59-STAGE-6.3-PHASE-A4-GENERATED-SUMMARY-IMPLEMENTATION-REPORT.md).
+Compiled-example, structured-template, and resumable-run evidence is recorded
+in reports 60–62, culminating in the [Provider-neutral Authoring Run
+Report](62-STAGE-6.3-PHASE-A4-PROVIDER-NEUTRAL-AUTHORING-RUN-IMPLEMENTATION-REPORT.md).
 
 Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
 
@@ -246,8 +249,8 @@ Deliver a local Reference Authoring Module with CLI-first and later Web Adapters
 - production-renderer preview, exact publish diff, and atomic publication;
 - constrained AI context packs plus generated-claim review that returns
   unmapped or out-of-pack facts to an unverified queue; and
-- provider-neutral generated-section and summary ingestion with revision-bound
-  receipts;
+- provider-neutral section, summary, and compiled-example ingestion with
+  revision-bound receipts plus resumable single-draft run orchestration;
 - batch metrics proving throughput gains without a quality regression.
 
 The accepted Phase A1 adds confined filesystem drafts, catalog-backed context,
@@ -259,10 +262,11 @@ production-renderer preview, revision/input-bound dry-run publication plans, and
 validated whole-tree publication with rollback. Reference-only fact reuse,
 context packs, generated-claim provenance review, and revision-bound batch
 metrics are implemented in Phase A3; one real measured five-Entry batch is
-still required before acceptance. Phase A4 can now apply controlled sections,
-Entry summaries, and compiled Reference Examples through the Module and CLI;
-structured templates and run orchestration remain. A
-lightweight Web review surface is optional after the automation phases.
+still required before acceptance. Phase A4 can apply controlled sections,
+Entry summaries, and compiled Reference Examples through the Module and CLI,
+then resume an unchanged single-draft plan from durable receipts. Phase A5 is
+the next implementation slice for coherent multi-Entry batches. A lightweight
+Web review surface remains optional after the automation phases.
 
 ## 13. Global definition of done
 
