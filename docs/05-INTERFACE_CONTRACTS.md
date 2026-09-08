@@ -445,9 +445,9 @@ gates still apply.
 returns either `complete` progress or the next fresh Generation Bundle Template.
 The plan is the caller-owned resume token; the Module derives a deterministic
 SHA-256 plan digest and never stores provider state or credentials. An applied
-template copies `runId`, `planDigest`, and `stepId` into its Generation Receipt.
-Only a receipt with all three matching values, the exact fact allowlist, and the
-exact target contract can complete a step. Repeating an unchanged plan is
+template copies `runId`, `planDigest`, `stepId`, and `factGroupIds` into its
+Generation Receipt. Only a receipt with all three identity values, the exact
+fact allowlist, and the exact target contract can complete a step. Repeating an unchanged plan is
 idempotent. The first applied run receipt establishes run identity; before that
 point the caller may still revise an unstarted plan. Afterward, reusing its run
 ID for a changed plan, encountering a corrupt receipt, or finding inconsistent
