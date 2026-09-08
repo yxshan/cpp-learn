@@ -36,9 +36,11 @@ the generation target, its fact allowlist, and any example execution contract
 match. Legacy or unrelated receipts do not advance a run.
 
 Repeated use of an unchanged plan is idempotent and returns the same next
-template until it is applied. Reusing a run ID with a changed plan, encountering
-a corrupt or identity-inconsistent receipt, or finding unknown step metadata
-fails closed. Every next template rebuilds its constrained context and expected
+template until it is applied. The first applied receipt establishes run
+identity; an unstarted plan may still be edited without leaving hidden state.
+After that point, reusing its run ID with a changed plan, encountering a corrupt
+or identity-inconsistent receipt, or finding unknown step metadata fails
+closed. Every next template rebuilds its constrained context and expected
 revision, so normal provenance, compiler, stale-context, compare-and-swap, and
 human-review gates remain authoritative. A run never calls a model provider and
 does not publish content.
@@ -54,7 +56,7 @@ does not publish content.
 Final repository evidence: 101 Markdown documents, 70 Activity
 starters/references/error mutations, 120 Reference Entries with 226 locally
 verified examples, quality coverage 116/120 with zero reviewed gaps, 33 test
-files with 316 tests, and the production Web build pass.
+files with 317 tests, and the production Web build pass.
 
 ## 5. Next phase
 

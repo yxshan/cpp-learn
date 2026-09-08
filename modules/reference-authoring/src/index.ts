@@ -54,9 +54,12 @@ import {
   type AuthoringSummaryGeneration,
 } from "./generation.js";
 import {
-  authoringRunPlanDigest,
-  generationCompletesAuthoringRunStep,
+  authoringGenerationOrchestrationSchema,
+  createAuthoringGenerationOrchestration,
+  inspectAuthoringRun,
+  sameFactGroupAllowlist,
   validateAuthoringRunPlan,
+  type AuthoringGenerationOrchestration,
   type AuthoringRunPlan,
 } from "./run.js";
 
@@ -240,13 +243,6 @@ export interface AuthoringGenerationTemplateMetadata {
   readonly requiredActions: readonly (
     "write-content" | "declare-claims" | "mark-ready"
   )[];
-}
-
-export interface AuthoringGenerationOrchestration {
-  readonly schemaVersion: 1;
-  readonly runId: string;
-  readonly planDigest: string;
-  readonly stepId: string;
 }
 
 type AuthoringGenerationDraft =
@@ -778,6 +774,7 @@ const validateBatchReport = ajv.compile(authoringBatchReportSchema);
 const validateDraft = ajv.compile(authoringDraftSchema);
 const validateCatalogProposal = ajv.compile(authoringCatalogProposalSchema);
 const validateContextPack = ajv.compile(authoringContextPackSchema);
+ajv.addSchema(authoringGenerationOrchestrationSchema);
 const validateGenerationBundleTemplate = ajv.compile(
   authoringGenerationBundleTemplateSchema,
 );
@@ -853,6 +850,19 @@ export function validateAuthoringGenerationBundleTemplate(
       path: "/generation",
       message: "Template generation identity must match its context",
       keyword: "context-mismatch",
+    });
+  }
+  if (
+    template.orchestration !== undefined &&
+    !sameFactGroupAllowlist(
+      template.orchestration.factGroupIds,
+      template.context.policy.allowedFactGroupIds,
+    )
+  ) {
+    issues.push({
+      path: "/orchestration/factGroupIds",
+      message: "Run step fact allowlist must match the template context",
+      keyword: "fact-context-mismatch",
     });
   }
   return issues;
@@ -2423,6 +2433,26 @@ export function createReferenceAuthoring(
     | ApplyGeneratedContentSuccess
     | ApplyGeneratedContentFailure<ApplyGeneratedContentFailureCode | Code>
   > {
+    if (
+      options.orchestration !== undefined &&
+      !sameFactGroupAllowlist(
+        options.orchestration.factGroupIds,
+        options.context.policy.allowedFactGroupIds,
+      )
+    ) {
+      return {
+        ok: false,
+        code: "invalid_request",
+        issues: [
+          {
+            path: "/orchestration/factGroupIds",
+            message:
+              "Run step fact allowlist must match the generation context",
+            keyword: "fact-context-mismatch",
+          },
+        ],
+      };
+    }
     const reviewed = await authoring.reviewGeneratedClaims({
       context: options.context,
       claims: options.claims,
@@ -2606,126 +2636,24 @@ export function createReferenceAuthoring(
       if (workspace === undefined) {
         return { ok: false, code: "draft_not_found", issues: [] };
       }
-      const planDigest = authoringRunPlanDigest(plan);
-      const receiptIssues: AuthoringValidationIssue[] = [];
-      const receipts: AuthoringGenerationReceipt[] = [];
-      for (const path of Object.keys(workspace.files)
-        .filter((candidate) =>
-          /^generation\/revision-[1-9][0-9]*\.json$/u.test(candidate),
-        )
-        .sort()) {
-        let receipt: unknown;
-        try {
-          receipt = JSON.parse(workspace.files[path]!);
-        } catch (error) {
-          receiptIssues.push({
-            path: `/${path}`,
-            message:
-              error instanceof Error
-                ? error.message
-                : "Generation Receipt is not valid JSON",
-            keyword: "parse",
-          });
-          continue;
-        }
-        const issues = validateAuthoringGenerationReceipt(receipt);
-        if (issues.length > 0) {
-          receiptIssues.push(
-            ...issues.map((issue) => ({
-              ...issue,
-              path: `/${path}${issue.path === "/" ? "" : issue.path}`,
-            })),
-          );
-          continue;
-        }
-        const validated = receipt as AuthoringGenerationReceipt;
-        const pathRevision = Number(
-          path.match(/revision-([1-9][0-9]*)\.json$/u)?.[1],
-        );
-        if (
-          validated.draftId !== plan.draftId ||
-          validated.appliedRevision !== pathRevision ||
-          validated.appliedRevision > workspace.draft.revision
-        ) {
-          receiptIssues.push({
-            path: `/${path}`,
-            message:
-              "Receipt path, revision, and draft identity must match the run draft",
-            keyword: "identity",
-          });
-          continue;
-        }
-        receipts.push(validated);
-      }
-      if (receiptIssues.length > 0) {
-        return {
-          ok: false,
-          code: "run_blocked",
-          issues: receiptIssues,
-        };
-      }
-      const changedPlanReceipt = receipts.find(
-        (receipt) =>
-          receipt.orchestration?.runId === plan.runId &&
-          receipt.orchestration.planDigest !== planDigest,
+      const inspection = inspectAuthoringRun(
+        plan,
+        workspace,
+        validateAuthoringGenerationReceipt,
       );
-      if (changedPlanReceipt !== undefined) {
-        return {
-          ok: false,
-          code: "run_blocked",
-          issues: [
-            {
-              path: "/runId",
-              message:
-                "Run ID is already associated with a different plan digest",
-              keyword: "plan-changed",
-            },
-          ],
-        };
+      if (!inspection.ok) {
+        return { ok: false, code: "run_blocked", issues: inspection.issues };
       }
-      const knownStepIds = new Set(plan.steps.map(({ id }) => id));
-      const unknownStepReceipt = receipts.find(
-        (receipt) =>
-          receipt.orchestration?.runId === plan.runId &&
-          receipt.orchestration.planDigest === planDigest &&
-          !knownStepIds.has(receipt.orchestration.stepId),
-      );
-      if (unknownStepReceipt !== undefined) {
-        return {
-          ok: false,
-          code: "run_blocked",
-          issues: [
-            {
-              path: "/steps",
-              message: `Receipt references unknown run step ${unknownStepReceipt.orchestration!.stepId}`,
-              keyword: "unknown-step",
-            },
-          ],
-        };
-      }
-      const completedStepIds = plan.steps
-        .filter((step) =>
-          receipts.some(
-            (receipt) =>
-              receipt.orchestration?.runId === plan.runId &&
-              receipt.orchestration.planDigest === planDigest &&
-              receipt.orchestration.stepId === step.id &&
-              generationCompletesAuthoringRunStep(step, receipt.generation),
-          ),
-        )
-        .map(({ id }) => id);
-      const completed = new Set(completedStepIds);
-      const pendingSteps = plan.steps.filter((step) => !completed.has(step.id));
       const progressBase = {
         schemaVersion: 1 as const,
         runId: plan.runId,
         draftId: plan.draftId,
-        planDigest,
-        currentRevision: workspace.draft.revision,
-        completedStepIds,
-        pendingStepIds: pendingSteps.map(({ id }) => id),
+        planDigest: inspection.planDigest,
+        currentRevision: inspection.currentRevision,
+        completedStepIds: inspection.completedStepIds,
+        pendingStepIds: inspection.pendingSteps.map(({ id }) => id),
       };
-      const nextStep = pendingSteps[0];
+      const nextStep = inspection.pendingSteps[0];
       if (nextStep === undefined) {
         return {
           ok: true,
@@ -2762,12 +2690,7 @@ export function createReferenceAuthoring(
       if (!templateResult.ok) return templateResult;
       const template: AuthoringGenerationBundleTemplate = {
         ...templateResult.template,
-        orchestration: {
-          schemaVersion: 1,
-          runId: plan.runId,
-          planDigest,
-          stepId: nextStep.id,
-        },
+        orchestration: createAuthoringGenerationOrchestration(plan, nextStep),
       };
       return {
         ok: true,
@@ -4784,8 +4707,10 @@ export type {
 } from "./generation.js";
 export { authoringGenerationKind } from "./generation.js";
 export {
+  authoringGenerationOrchestrationSchema,
   authoringRunSchema,
   validateAuthoringRunPlan,
+  type AuthoringGenerationOrchestration,
   type AuthoringRunPlan,
   type AuthoringRunStep,
 } from "./run.js";

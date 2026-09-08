@@ -115,6 +115,7 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
               runId: "vector-insert-core",
               stepId: "summary",
               planDigest: expect.stringMatching(/^[a-f0-9]{64}$/u),
+              factGroupIds: ["selection"],
             },
             template: { status: "incomplete", kind: "summary" },
             expectedRevision: 1,
@@ -128,7 +129,7 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
       throw new Error("first run step missing");
     }
     const summaryTemplate = first.progress.next.template;
-    const summaryApplied = await authoring.applyGenerationBundle({
+    const summaryBundle = {
       ...summaryTemplate,
       template: { ...summaryTemplate.template, status: "ready" },
       generation: {
@@ -146,7 +147,21 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
           ],
         },
       },
+    } as const;
+    await expect(
+      authoring.applyGenerationBundle({
+        ...summaryBundle,
+        orchestration: {
+          ...summaryTemplate.orchestration!,
+          factGroupIds: ["selection", "complexity"],
+        },
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      code: "invalid_request",
+      issues: [expect.objectContaining({ keyword: "fact-context-mismatch" })],
     });
+    const summaryApplied = await authoring.applyGenerationBundle(summaryBundle);
     expect(summaryApplied.ok).toBe(true);
 
     await expect(
@@ -184,6 +199,7 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
               runId: "vector-insert-core",
               stepId: "usage",
               planDigest: expect.stringMatching(/^[a-f0-9]{64}$/u),
+              factGroupIds: ["selection"],
             },
             template: { kind: "section", status: "incomplete" },
             expectedRevision: 2,
@@ -254,6 +270,13 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
           factGroupIds: [],
         },
         generation,
+        {
+          schemaVersion: 1,
+          runId: "example-run",
+          planDigest: "b".repeat(64),
+          stepId: "example",
+          factGroupIds: [],
+        },
       ),
     ).toBe(false);
     expect(
@@ -267,6 +290,13 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
           factGroupIds: [],
         },
         generation,
+        {
+          schemaVersion: 1,
+          runId: "example-run",
+          planDigest: "b".repeat(64),
+          stepId: "example",
+          factGroupIds: [],
+        },
       ),
     ).toBe(true);
   });
@@ -289,5 +319,34 @@ describe("[T-AUTH-A4-RUN-001] provider-neutral authoring run", () => {
       code: "invalid_request",
       issues: [expect.objectContaining({ keyword: "unique-target" })],
     });
+  });
+
+  it("allows plan editing until the first receipt establishes run identity", async () => {
+    const authoring = await runFixture();
+    const initial = await authoring.advanceRun({
+      schemaVersion: 1,
+      runId: "editable-before-start",
+      draftId: "vector-insert",
+      steps: [{ id: "summary", kind: "summary", factGroupIds: ["selection"] }],
+    });
+    const revised = await authoring.advanceRun({
+      schemaVersion: 1,
+      runId: "editable-before-start",
+      draftId: "vector-insert",
+      steps: [
+        { id: "summary", kind: "summary", factGroupIds: ["selection"] },
+        {
+          id: "usage",
+          kind: "section",
+          heading: "什么时候使用",
+          factGroupIds: ["selection"],
+        },
+      ],
+    });
+
+    expect(initial).toMatchObject({ ok: true });
+    expect(revised).toMatchObject({ ok: true });
+    if (!initial.ok || !revised.ok) throw new Error("run planning failed");
+    expect(revised.progress.planDigest).not.toBe(initial.progress.planDigest);
   });
 });
