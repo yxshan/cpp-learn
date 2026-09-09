@@ -351,7 +351,8 @@ revision or `draftInputDigest` changes.
 
 After `check` produces a current report, `repair-plan` converts only supported
 deterministic content-quality, placeholder, missing-example, and example
-validation findings into section/example targets. The plan fixes the checked
+validation findings, plus absent required sections, into section/example
+targets. The plan fixes the checked
 revision, author-input digest, report digest, profile, verified fact allowlists,
 and a maximum of three attempts per target. Findings that need fact review,
 catalog repair, infrastructure, or other human action remain in
@@ -362,7 +363,8 @@ Save the returned `plan`, then run `repair --input AUTHORING_REPAIR.json
 atomically records that the attempt was issued under `repair/` without changing
 the content revision. Re-submit the original immutable plan after a rejected
 model response; the stored counter survives process restarts and stops issuing
-that target after attempt 3. Fill an accepted template and pass it to
+that target after attempt 3. `repairId` is only a display label; changing it
+does not create a new retry budget for the same checked report. Fill an accepted template and pass it to
 `apply-generation` normally. That write resets the report to `not_checked`, so
 run the complete `check` command again before preview or publication. A changed
 draft, Fact Sheet, quality profile, report, or plan fails closed; never edit the

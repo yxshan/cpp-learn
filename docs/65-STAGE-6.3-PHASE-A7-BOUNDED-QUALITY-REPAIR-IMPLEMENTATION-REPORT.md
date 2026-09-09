@@ -36,7 +36,9 @@ draft's `repair/` namespace. Repair evidence is excluded from the author-input
 digest and does not increment the content revision, allowing retries to use the
 exact same context. The stored counter survives a new process and adapter; the
 same target receives at most three templates. Attempt history is module-managed,
-and caller-supplied history is rejected.
+and caller-supplied history is rejected. Retry-budget identity is derived from
+the checked baseline and targets rather than the caller's display-only
+`repairId`, so relabelling a plan cannot reset the counter.
 
 The repair operation never edits content. A completed template must still pass
 the existing `applyGenerationBundle` path: context and revision binding, claim
@@ -48,8 +50,10 @@ full check and outstanding generated-content human review still blocks release.
 ## 4. Finding coverage and limits
 
 The first repair policy handles canonical content-quality areas, TODO bodies in
-known profile sections, missing required examples, missing example source files,
-and deterministic example-validation failures. It does not invent repairs for
+known profile sections, absent required sections, missing required examples,
+missing example source files, and deterministic example-validation failures.
+Metadata-level example gaps create example targets rather than unrelated prose
+repairs. New example targets use C++20 or the Entry's later `since` standard. It does not invent repairs for
 unverified facts, source/citation defects, catalog conflicts, schema corruption,
 unavailable validators, or findings that lack a verified fact group. Those
 digests stay explicit in the plan result for manual or infrastructure work.
@@ -60,14 +64,14 @@ digests stay explicit in the plan result for manual or infrastructure work.
 |---|---|---|
 | Finding translation | `T-AUTH-014` maps only the affected complexity section and failing example while retaining an unrelated fact finding | Passed |
 | Context stability | Repair templates retain the checked revision, profile, and exact verified fact allowlist | Passed |
-| Durable bound | Three issued attempts persist across fresh filesystem adapters; a fourth call returns `exhausted` | Passed |
+| Durable bound | Three issued attempts persist across fresh filesystem adapters and alternate repair labels; a fourth call returns `exhausted` | Passed |
 | Gate preservation | Applying a repair increments the revision, writes through the standard generation path, and resets the report to `not_checked` | Passed |
 | CLI parity | `repair-plan` and `repair` return the Module results unchanged in JSON mode | Passed |
 
 Final repository evidence: 104 Markdown documents, 70 Activity
 starters/references/error mutations, 120 Reference Entries with 226 locally
 verified examples, quality coverage 116/120 with zero reviewed gaps, 36 test
-files with 344 tests, and a passing production Web build.
+files with 349 tests, and a passing production Web build.
 
 ## 6. Next phase
 

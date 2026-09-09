@@ -92,7 +92,6 @@ function repairPlanPayload(
 ) {
   return {
     schemaVersion: plan.schemaVersion,
-    repairId: plan.repairId,
     draftId: plan.draftId,
     baseline: plan.baseline,
     maxAttempts: plan.maxAttempts,
@@ -171,32 +170,65 @@ export function validateAuthoringRepairPlan(
   return issues;
 }
 
-const AREA_REPAIR: Readonly<
-  Record<
-    string,
-    {
-      readonly headings: readonly string[];
-      readonly kinds: readonly AuthoringFactKind[];
-    }
-  >
+const SECTION_FACT_KINDS: Readonly<
+  Record<string, readonly AuthoringFactKind[]>
 > = {
-  selection: { headings: ["什么时候使用", "如何选择"], kinds: ["selection"] },
-  interface: {
-    headings: ["声明与重载", "快速信息", "类型与所有权"],
-    kinds: ["signature", "availability", "ownership"],
-  },
-  parameters: { headings: ["参数与前置条件"], kinds: ["parameters"] },
-  returns: { headings: ["返回值"], kinds: ["return"] },
-  complexity: { headings: ["复杂度"], kinds: ["complexity"] },
-  errors: { headings: ["异常与错误"], kinds: ["errors"] },
-  lifetime: {
-    headings: ["生命周期与失效", "类型与所有权"],
-    kinds: ["lifetime_invalidation", "ownership"],
-  },
-  examples: { headings: ["示例"], kinds: ["examples"] },
-  mistakes: { headings: ["常见误区"], kinds: ["pitfalls"] },
-  javascript: { headings: ["与 JavaScript 对照"], kinds: ["js_comparison"] },
+  快速信息: ["signature", "availability", "scope"],
+  什么时候使用: ["selection"],
+  声明与重载: ["signature", "availability"],
+  参数与前置条件: ["parameters"],
+  返回值: ["return"],
+  复杂度: ["complexity"],
+  异常与错误: ["errors"],
+  生命周期与失效: ["lifetime_invalidation", "ownership"],
+  类型与所有权: ["ownership", "lifetime_invalidation"],
+  线程安全: ["thread_safety"],
+  示例: ["examples"],
+  常见误区: ["pitfalls"],
+  "与 JavaScript 对照": ["js_comparison"],
+  何时直接包含: ["direct_include", "availability"],
+  设施地图: ["facility_map"],
+  标准版本边界: ["availability"],
+  适用范围: ["scope"],
+  如何选择: ["selection"],
+  核心条目: ["scope", "selection"],
 };
+
+const AREA_HEADINGS: Readonly<Record<string, readonly string[]>> = {
+  selection: ["什么时候使用", "如何选择"],
+  interface: ["声明与重载", "快速信息", "类型与所有权"],
+  parameters: ["参数与前置条件"],
+  returns: ["返回值"],
+  complexity: ["复杂度"],
+  errors: ["异常与错误"],
+  lifetime: ["生命周期与失效", "类型与所有权"],
+  mistakes: ["常见误区"],
+  javascript: ["与 JavaScript 对照"],
+};
+
+const CPP_STANDARD_ORDER: readonly CppStandard[] = [
+  "c++98",
+  "c++03",
+  "c++11",
+  "c++14",
+  "c++17",
+  "c++20",
+  "c++23",
+  "c++26-draft",
+];
+
+function defaultExampleStandard(
+  entry: ReferenceEntryManifest | undefined,
+): CppStandard {
+  const since = entry?.since;
+  if (
+    since !== undefined &&
+    CPP_STANDARD_ORDER.indexOf(since) > CPP_STANDARD_ORDER.indexOf("c++20")
+  ) {
+    return since;
+  }
+  return "c++20";
+}
 
 function verifiedFactIds(
   workspace: DraftWorkspace,
@@ -280,12 +312,17 @@ export function buildAuthoringRepairPlan(options: BuildRepairPlanOptions): {
       ignored.add(findingDigest);
       return false;
     }
-    const existing = targets.get(id);
-    targets.set(id, {
-      id,
+    const existing = [...targets.values()].find(
+      (target) => target.kind === "section" && target.heading === heading,
+    );
+    const targetId = existing?.id ?? id;
+    targets.set(targetId, {
+      id: targetId,
       kind: "section",
       heading,
-      factGroupIds,
+      factGroupIds: [
+        ...new Set([...(existing?.factGroupIds ?? []), ...factGroupIds]),
+      ],
       findingDigests: [
         ...(existing?.findingDigests ?? []),
         ...((existing?.findingDigests ?? []).includes(findingDigest)
@@ -310,7 +347,7 @@ export function buildAuthoringRepairPlan(options: BuildRepairPlanOptions): {
       kind: "example",
       exampleId,
       exampleKind: manifest?.kind ?? "run",
-      standard: manifest?.standard ?? "c++20",
+      standard: manifest?.standard ?? defaultExampleStandard(entry),
       factGroupIds,
       findingDigests: [
         ...(existing?.findingDigests ?? []),
@@ -326,12 +363,14 @@ export function buildAuthoringRepairPlan(options: BuildRepairPlanOptions): {
     const findingDigest = authoringFindingDigest(finding);
     if (finding.code === "content-quality") {
       const area = finding.path.match(/^content\.md\/([^/]+)/u)?.[1];
-      const repair = area === undefined ? undefined : AREA_REPAIR[area];
-      const heading = repair?.headings.find((candidate) =>
+      const headings = area === undefined ? undefined : AREA_HEADINGS[area];
+      const heading = headings?.find((candidate) =>
         options.requiredHeadings.includes(candidate),
       );
-      if (repair !== undefined && heading !== undefined) {
-        addSection(`section-${area}`, heading, repair.kinds, findingDigest);
+      const kinds =
+        heading === undefined ? undefined : SECTION_FACT_KINDS[heading];
+      if (kinds !== undefined && heading !== undefined) {
+        addSection(`section-${area}`, heading, kinds, findingDigest);
       } else {
         ignored.add(findingDigest);
       }
@@ -341,19 +380,32 @@ export function buildAuthoringRepairPlan(options: BuildRepairPlanOptions): {
       let added = false;
       for (const [index, heading] of options.requiredHeadings.entries()) {
         if (!/\bTODO\b/u.test(contentBodies.get(heading) ?? "")) continue;
-        const repair = Object.values(AREA_REPAIR).find(({ headings }) =>
-          headings.includes(heading),
-        );
-        if (repair === undefined) continue;
+        const kinds = SECTION_FACT_KINDS[heading];
+        if (kinds === undefined) continue;
         added =
-          addSection(
-            `section-${index + 1}`,
-            heading,
-            repair.kinds,
-            findingDigest,
-          ) || added;
+          addSection(`section-${index + 1}`, heading, kinds, findingDigest) ||
+          added;
       }
       if (!added) ignored.add(findingDigest);
+      continue;
+    }
+    if (finding.code === "content-section-missing") {
+      const heading = options.requiredHeadings.find(
+        (candidate) =>
+          finding.message === `Required section ${candidate} is missing`,
+      );
+      const kinds =
+        heading === undefined ? undefined : SECTION_FACT_KINDS[heading];
+      if (heading === undefined || kinds === undefined) {
+        ignored.add(findingDigest);
+      } else {
+        addSection(
+          `section-${options.requiredHeadings.indexOf(heading) + 1}`,
+          heading,
+          kinds,
+          findingDigest,
+        );
+      }
       continue;
     }
     if (

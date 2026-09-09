@@ -375,7 +375,7 @@ remains outside generated prose.
 
 **Status: Accepted.** A schema-v1 immutable Repair Plan is derived only from a
 current full-check report. Supported content-quality, TODO-section,
-missing-example, missing-source, and compiler/example findings become narrow
+missing-section, missing-example, missing-source, and compiler/example findings become narrow
 section or example targets with verified Fact Sheet allowlists; all other
 findings remain explicit manual/infrastructure work. The plan binds the draft
 revision, author-input digest, report digest, authoring profile, target set, and
@@ -385,7 +385,8 @@ fixed three-attempt policy.
 Generation Bundle Template. Issued attempts are atomically persisted under the
 draft's `repair/` evidence namespace without changing the content revision or
 digest, so restarting the CLI or resubmitting the original plan cannot reset
-the limit. Applying a repair still uses the existing claim, compiler, context,
+the limit. The caller's `repairId` is not part of the retry-budget identity, so
+renaming a run cannot mint more attempts. Applying a repair still uses the existing claim, compiler, context,
 revision, receipt, human-review, and publication gates and resets the report to
 `not_checked`.
 

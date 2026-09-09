@@ -133,6 +133,7 @@ export function replaceMarkdownSection(
   source: string,
   heading: string,
   markdown: string,
+  insertionOrder?: readonly string[],
 ):
   | { readonly ok: true; readonly content: string }
   | { readonly ok: false; readonly message: string } {
@@ -157,11 +158,46 @@ export function replaceMarkdownSection(
   const matches = lines
     .map((line, index) => (line === marker ? index : -1))
     .filter((index) => index >= 0);
-  if (matches.length !== 1) {
+  if (
+    matches.length > 1 ||
+    (matches.length === 0 && insertionOrder === undefined)
+  ) {
     return {
       ok: false,
       message: `Expected exactly one section heading ${marker}`,
     };
+  }
+  const body = markdown.trim().split("\n");
+  if (matches.length === 0) {
+    const headingIndex = insertionOrder!.indexOf(heading);
+    if (headingIndex < 0) {
+      return {
+        ok: false,
+        message: `Section heading ${marker} is not present in the insertion order`,
+      };
+    }
+    let insertionIndex = lines.length;
+    for (const nextHeading of insertionOrder!.slice(headingIndex + 1)) {
+      const candidate = lines.indexOf(`## ${nextHeading}`);
+      if (candidate >= 0) {
+        insertionIndex = candidate;
+        break;
+      }
+    }
+    const before = lines.slice(0, insertionIndex);
+    const after = lines.slice(insertionIndex);
+    const content = [
+      ...before,
+      ...(before.at(-1) === "" ? [] : [""]),
+      marker,
+      "",
+      ...body,
+      "",
+      ...after,
+    ]
+      .join("\n")
+      .replace(/\n+$/u, "\n");
+    return { ok: true, content };
   }
   const start = matches[0]!;
   const nextHeadingOffset = lines
@@ -169,7 +205,6 @@ export function replaceMarkdownSection(
     .findIndex((line) => /^##\s+/u.test(line));
   const end =
     nextHeadingOffset < 0 ? lines.length : start + 1 + nextHeadingOffset;
-  const body = markdown.trim().split("\n");
   const content = [
     ...lines.slice(0, start + 1),
     "",

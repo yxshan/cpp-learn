@@ -212,7 +212,7 @@ describe("[T-AUTH-014] bounded quality repair loop", () => {
     expect(exhausted.ok && exhausted.progress).not.toHaveProperty("next");
     const persisted = await repository.get("vector-insert");
     const statePath = Object.keys(persisted?.files ?? {}).find((path) =>
-      path.startsWith("repair/vector-insert-quality-"),
+      path.startsWith("repair/"),
     );
     expect(statePath).toBeDefined();
     expect(JSON.parse(persisted!.files[statePath!]!)).toMatchObject({
@@ -244,6 +244,232 @@ describe("[T-AUTH-014] bounded quality repair loop", () => {
           { id: "example-realistic", exampleId: "realistic" },
         ],
       },
+    });
+  });
+
+  it("deduplicates findings that identify the same semantic section", async () => {
+    const placeholder: AuthoringFinding = {
+      severity: "hard",
+      risk: "medium",
+      code: "content-placeholder",
+      path: "content.md",
+      message: "Candidate Markdown still contains TODO placeholders",
+    };
+    const { authoring } = await repairFixture([placeholder, qualityFinding]);
+
+    const result = await authoring.buildRepairPlan({
+      draftId: "vector-insert",
+      repairId: "vector-insert-sections",
+    });
+    if (!result.ok || result.status !== "repairable") {
+      throw new Error("repair plan missing");
+    }
+
+    expect(
+      result.plan.targets.filter(
+        (target) => target.kind === "section" && target.heading === "复杂度",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("does not reset persisted attempts when the caller changes repairId", async () => {
+    const { authoring } = await repairFixture([qualityFinding]);
+    const first = await authoring.buildRepairPlan({
+      draftId: "vector-insert",
+      repairId: "first-label",
+    });
+    const renamed = await authoring.buildRepairPlan({
+      draftId: "vector-insert",
+      repairId: "renamed-label",
+    });
+    if (
+      !first.ok ||
+      first.status !== "repairable" ||
+      !renamed.ok ||
+      renamed.status !== "repairable"
+    ) {
+      throw new Error("repair plan missing");
+    }
+    expect(renamed.plan.planDigest).toBe(first.plan.planDigest);
+    await authoring.advanceRepair(first.plan);
+    await authoring.advanceRepair(first.plan);
+    await authoring.advanceRepair(first.plan);
+
+    await expect(authoring.advanceRepair(renamed.plan)).resolves.toMatchObject({
+      ok: true,
+      progress: { status: "exhausted" },
+    });
+  });
+
+  it("turns a missing required heading into an insertable section repair", async () => {
+    const missing: AuthoringFinding = {
+      severity: "hard",
+      risk: "medium",
+      code: "content-section-missing",
+      path: "content.md",
+      message: "Required section 复杂度 is missing",
+    };
+    const fixture = await repairFixture([missing]);
+    const current = await fixture.repository.get("vector-insert");
+    if (current === undefined) throw new Error("fixture workspace missing");
+    const content = current.files["content.md"]!.replace(
+      /\n## 复杂度\n[\s\S]*?(?=\n## )/u,
+      "",
+    );
+    const files = { ...current.files, "content.md": content };
+    const report = {
+      ...current.report,
+      inputDigest: authoringInputDigest(files),
+    };
+    const workspace: DraftWorkspace = {
+      ...current,
+      report,
+      files: {
+        ...files,
+        "report.json": `${JSON.stringify(report, null, 2)}\n`,
+      },
+    };
+    const repository = createInMemoryReferenceDraftRepository([workspace]);
+    const authoring = createReferenceAuthoring({ drafts: repository });
+
+    const planned = await authoring.buildRepairPlan({
+      draftId: "vector-insert",
+      repairId: "missing-section",
+    });
+    if (!planned.ok || planned.status !== "repairable") {
+      throw new Error("repair plan missing");
+    }
+    const advanced = await authoring.advanceRepair(planned.plan);
+    if (!advanced.ok || advanced.progress.next === undefined) {
+      throw new Error("repair template missing");
+    }
+    const template = advanced.progress.next.template;
+    const applied = await authoring.applyGenerationBundle({
+      ...template,
+      template: { ...template.template, status: "ready" },
+      generation: {
+        ...template.generation,
+        section: {
+          heading: "复杂度",
+          markdown: "复杂度为线性。",
+          claims: [
+            {
+              id: "linear-complexity",
+              text: "Complexity is linear.",
+              factGroupIds: ["complexity"],
+            },
+          ],
+        },
+      },
+    });
+    expect(applied).toMatchObject({ ok: true });
+    expect(applied.ok && applied.workspace.files["content.md"]).toContain(
+      "## 复杂度\n\n复杂度为线性。\n\n## 异常与错误",
+    );
+  });
+
+  it("uses a post-C++20 entry availability as the missing-example standard", async () => {
+    const missingExamples: AuthoringFinding = {
+      severity: "hard",
+      risk: "medium",
+      code: "examples-missing",
+      path: "entry.json/examples",
+      message: "Profile requires at least 2 example(s)",
+    };
+    const fixture = await repairFixture([missingExamples]);
+    const current = await fixture.repository.get("vector-insert");
+    if (current === undefined) throw new Error("fixture workspace missing");
+    const entry = JSON.parse(current.files["entry.json"]!) as Record<
+      string,
+      unknown
+    >;
+    const files = {
+      ...current.files,
+      "entry.json": `${JSON.stringify({ ...entry, since: "c++23" }, null, 2)}\n`,
+    };
+    const report = {
+      ...current.report,
+      inputDigest: authoringInputDigest(files),
+    };
+    const workspace: DraftWorkspace = {
+      ...current,
+      report,
+      files: {
+        ...files,
+        "report.json": `${JSON.stringify(report, null, 2)}\n`,
+      },
+    };
+    const authoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([workspace]),
+    });
+
+    const planned = await authoring.buildRepairPlan({
+      draftId: "vector-insert",
+      repairId: "missing-cpp23-examples",
+    });
+    expect(planned).toMatchObject({
+      ok: true,
+      status: "repairable",
+      plan: {
+        targets: [
+          { exampleId: "minimal", standard: "c++23" },
+          { exampleId: "realistic", standard: "c++23" },
+        ],
+      },
+    });
+  });
+
+  it("returns a structured failure instead of throwing on a malformed Fact Sheet", async () => {
+    const fixture = await repairFixture([qualityFinding]);
+    const current = await fixture.repository.get("vector-insert");
+    if (current === undefined) throw new Error("fixture workspace missing");
+    const malformedFacts = {
+      schemaVersion: 1,
+      draftId: "vector-insert",
+      groups: "broken",
+    };
+    const files = {
+      ...current.files,
+      "facts.json": `${JSON.stringify(malformedFacts, null, 2)}\n`,
+    };
+    const report = {
+      ...current.report,
+      inputDigest: authoringInputDigest(files),
+      status: "blocked" as const,
+      findings: [
+        {
+          severity: "hard" as const,
+          risk: "high" as const,
+          code: "facts-schema",
+          path: "facts.json/groups",
+          message: "must be array",
+        },
+        qualityFinding,
+      ],
+      reviewQueue: [qualityFinding],
+    };
+    const workspace = {
+      ...current,
+      facts: malformedFacts,
+      report,
+      files: {
+        ...files,
+        "report.json": `${JSON.stringify(report, null, 2)}\n`,
+      },
+    } as unknown as DraftWorkspace;
+    const authoring = createReferenceAuthoring({
+      drafts: createInMemoryReferenceDraftRepository([workspace]),
+    });
+
+    await expect(
+      authoring.buildRepairPlan({
+        draftId: "vector-insert",
+        repairId: "malformed-facts",
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      code: "draft_unreadable",
+      issues: [expect.objectContaining({ path: "/facts/groups" })],
     });
   });
 

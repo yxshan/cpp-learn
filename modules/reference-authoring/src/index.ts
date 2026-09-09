@@ -2723,6 +2723,10 @@ export function createReferenceAuthoring(
           ...issue,
           path: `/report${issue.path === "/" ? "" : issue.path}`,
         })),
+        ...validateAuthoringFactSheet(workspace.facts).map((issue) => ({
+          ...issue,
+          path: `/facts${issue.path === "/" ? "" : issue.path}`,
+        })),
       ];
       const expectedReportStatus = workspace.report.findings.some(
         ({ severity }) => severity === "hard",
@@ -2867,7 +2871,7 @@ export function createReferenceAuthoring(
           ],
         };
       }
-      const statePath = `repair/${plan.repairId}-${plan.planDigest.slice(0, 12)}.json`;
+      const statePath = `repair/${plan.planDigest}.json`;
       let activePlan = plan;
       const persistedState = workspace.files[statePath];
       if (persistedState !== undefined) {
@@ -3719,6 +3723,7 @@ export function createReferenceAuthoring(
             currentContent,
             request.generation.section.heading,
             request.generation.section.markdown,
+            PROFILE_DEFINITIONS[workspace.draft.profile].headings,
           );
           if (!replacement.ok) {
             return {
