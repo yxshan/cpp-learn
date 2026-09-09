@@ -115,6 +115,7 @@ Each draft owns the following versioned artifacts:
 | `content.md` | Original project prose following the selected learning-quality profile |
 | `examples/*.cpp` | Minimal and realistic deterministic examples |
 | `report.json` | Machine-readable gate results, cache evidence, and review decisions |
+| `repair/*.json` | Module-managed issued-attempt evidence for one digest-bound Repair Plan |
 
 Every substantive fact group must map to at least one source ID. A source record
 does not authorize copying its prose. The authoring Module stores citations and
@@ -372,6 +373,22 @@ remains outside generated prose.
 - Retry only affected sections/examples with fixed attempt limits.
 - Compare each retry with the same revision-bound facts and quality profile.
 
+**Status: Accepted.** A schema-v1 immutable Repair Plan is derived only from a
+current full-check report. Supported content-quality, TODO-section,
+missing-example, missing-source, and compiler/example findings become narrow
+section or example targets with verified Fact Sheet allowlists; all other
+findings remain explicit manual/infrastructure work. The plan binds the draft
+revision, author-input digest, report digest, authoring profile, target set, and
+fixed three-attempt policy.
+
+`advanceRepair` rebuilds the authoritative target set before issuing a normal
+Generation Bundle Template. Issued attempts are atomically persisted under the
+draft's `repair/` evidence namespace without changing the content revision or
+digest, so restarting the CLI or resubmitting the original plan cannot reset
+the limit. Applying a repair still uses the existing claim, compiler, context,
+revision, receipt, human-review, and publication gates and resets the report to
+`not_checked`.
+
 Exit: common completeness and compilation failures can be repaired quickly
 without weakening gates or looping indefinitely.
 
@@ -435,7 +452,7 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Implement the Phase A7 bounded quality repair loop without weakening existing
-fact, compiler, revision, receipt, or publication gates. A real coherent
-five-Entry run must still be retained to close empirical Phase A3 acceptance;
-later tooling must not manufacture that evidence.
+Evaluate whether Phase A8's lightweight local Web review surface is justified
+by observed manual-review demand. A real coherent five-Entry run must still be
+retained to close empirical Phase A3 acceptance; later tooling must not
+manufacture that evidence.

@@ -205,6 +205,19 @@ A digest-bound measurement of one to five Authoring Drafts, including readiness,
 examples, cache behavior, findings, time observations, and escaped corrections.
 _Avoid_: synthetic productivity claim, release approval, author score
 
+**Authoring Repair Plan**:
+An immutable, full-check-bound mapping from supported deterministic findings to
+narrow section or example generation targets. It fixes the draft revision,
+input/report digests, authoring profile, verified fact allowlists, and retry
+limit without granting permission to publish.
+_Avoid_: free-form fix prompt, quality waiver, mutable retry log
+
+**Authoring Repair Attempt State**:
+Module-managed evidence that a repair template was issued for one plan target.
+It persists without changing author content or its revision and enforces the
+fixed retry limit across process restarts.
+_Avoid_: model transcript, author-supplied counter, Generation Receipt
+
 ## Platform operations
 
 **Workspace**:

@@ -33,6 +33,10 @@ const batchUsage =
   "Usage: npm run reference:author -- batch --input AUTHORING_BATCH.json [--json]\n";
 const researchUsage =
   "Usage: npm run reference:author -- research --input AUTHORING_RESEARCH.json [--json]\n";
+const repairPlanUsage =
+  "Usage: npm run reference:author -- repair-plan --draft ID --id REPAIR_ID [--json]\n";
+const repairUsage =
+  "Usage: npm run reference:author -- repair --input AUTHORING_REPAIR.json [--json]\n";
 const runUsage =
   "Usage: npm run reference:author -- run --input AUTHORING_RUN.json [--json]\n";
 const applyGenerationUsage =
@@ -124,6 +128,50 @@ export async function runReferenceAuthorCli(
 ): Promise<number> {
   const [command, ...flags] = dependencies.argv;
   const json = flags.includes("--json");
+
+  if (command === "repair-plan") {
+    const draftId = flagValue(flags, "--draft");
+    const repairId = flagValue(flags, "--id");
+    if (draftId === undefined || repairId === undefined) {
+      dependencies.stderr(repairPlanUsage);
+      return 2;
+    }
+    const result = await dependencies.authoring.buildRepairPlan({
+      draftId,
+      repairId,
+    });
+    return presentCommandResult(dependencies, json, result, (success) => {
+      if (success.status === "no_repairs") {
+        dependencies.stdout(
+          `NO REPAIRS ${draftId}: ${success.ignoredFindingDigests.length} findings require manual or infrastructure work\n`,
+        );
+      } else {
+        dependencies.stdout(`${JSON.stringify(success.plan, null, 2)}\n`);
+      }
+    });
+  }
+
+  if (command === "repair") {
+    const parsed = await readJsonCommandInput(
+      dependencies,
+      flags,
+      repairUsage,
+      "Authoring-repair",
+    );
+    if (!parsed.ok) return parsed.exitCode;
+    const result = await dependencies.authoring.advanceRepair(parsed.input);
+    return presentCommandResult(dependencies, json, result, (success) => {
+      if (success.progress.status === "exhausted") {
+        dependencies.stdout(
+          `EXHAUSTED ${success.progress.repairId}: ${success.progress.exhaustedTargetIds.length} targets reached the retry limit\n`,
+        );
+      } else {
+        dependencies.stdout(
+          `REPAIR ${success.progress.repairId}: ${success.progress.next!.targetId} attempt ${success.progress.next!.attempt}/${success.progress.next!.maxAttempts}\n${JSON.stringify(success.progress.next!.template, null, 2)}\n`,
+        );
+      }
+    });
+  }
 
   if (command === "research") {
     const parsed = await readJsonCommandInput(
@@ -602,7 +650,7 @@ export async function runReferenceAuthorCli(
   }
 
   dependencies.stderr(
-    `${prepareUsage}${contextUsage}${templateUsage}${researchUsage}${batchUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
+    `${prepareUsage}${contextUsage}${templateUsage}${researchUsage}${repairPlanUsage}${repairUsage}${batchUsage}${runUsage}${applyGenerationUsage}${measureUsage}${checkUsage}${previewUsage}${publishUsage}`,
   );
   return 2;
 }

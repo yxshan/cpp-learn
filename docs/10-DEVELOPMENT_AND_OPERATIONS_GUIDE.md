@@ -172,6 +172,8 @@ npm run reference:author -- template --draft ID --facts FACT_ID[,FACT_ID...] --k
 npm run reference:author -- run --input AUTHORING_RUN.json --json
 npm run reference:author -- batch --input AUTHORING_BATCH.json --json
 npm run reference:author -- research --input AUTHORING_RESEARCH.json --json
+npm run reference:author -- repair-plan --draft ID --id REPAIR_ID --json
+npm run reference:author -- repair --input AUTHORING_REPAIR.json --json
 npm run reference:author -- apply-generation --input GENERATION_BUNDLE.json --json
 npm run reference:author -- check --draft ID
 npm run reference:author -- check --draft ID --json
@@ -346,6 +348,25 @@ by primary sources. `reusableFacts` are suggestions from unchanged ready related
 drafts; selecting one still requires the normal explicit `prepare --reuse-from`
 or Fact Sheet editing/review workflow. Re-run the command if the bound draft
 revision or `draftInputDigest` changes.
+
+After `check` produces a current report, `repair-plan` converts only supported
+deterministic content-quality, placeholder, missing-example, and example
+validation findings into section/example targets. The plan fixes the checked
+revision, author-input digest, report digest, profile, verified fact allowlists,
+and a maximum of three attempts per target. Findings that need fact review,
+catalog repair, infrastructure, or other human action remain in
+`ignoredFindingDigests`; the repair tool never disguises them as prose work.
+
+Save the returned `plan`, then run `repair --input AUTHORING_REPAIR.json
+--json`. Each successful call returns one normal Generation Bundle Template and
+atomically records that the attempt was issued under `repair/` without changing
+the content revision. Re-submit the original immutable plan after a rejected
+model response; the stored counter survives process restarts and stops issuing
+that target after attempt 3. Fill an accepted template and pass it to
+`apply-generation` normally. That write resets the report to `not_checked`, so
+run the complete `check` command again before preview or publication. A changed
+draft, Fact Sheet, quality profile, report, or plan fails closed; never edit the
+module-managed `attempts` array.
 
 The commands never contact a model provider. They are intentionally suitable for
 Codex or another agent that can produce the bundle as a local file. Accepted

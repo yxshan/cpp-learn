@@ -1,0 +1,137 @@
+{
+  "$id": "https://cpp-learn.local/schemas/reference-authoring-repair.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "repairId",
+    "draftId",
+    "baseline",
+    "maxAttempts",
+    "targets",
+    "attempts",
+    "ignoredFindingDigests",
+    "planDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "repairId": { "$ref": "#/$defs/id" },
+    "draftId": { "$ref": "#/$defs/id" },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["draftRevision", "inputDigest", "reportDigest", "profile"],
+      "properties": {
+        "draftRevision": { "type": "integer", "minimum": 1 },
+        "inputDigest": { "$ref": "#/$defs/digest" },
+        "reportDigest": { "$ref": "#/$defs/digest" },
+        "profile": {
+          "enum": ["callable", "entity", "header", "navigation"]
+        }
+      }
+    },
+    "maxAttempts": { "const": 3 },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/sectionTarget" },
+          { "$ref": "#/$defs/exampleTarget" }
+        ]
+      }
+    },
+    "attempts": {
+      "type": "array",
+      "maxItems": 192,
+      "items": { "$ref": "#/$defs/attempt" }
+    },
+    "ignoredFindingDigests": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/digest" }
+    },
+    "planDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "findingDigests": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/digest" }
+    },
+    "sectionTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "heading", "factGroupIds", "findingDigests"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "section" },
+        "heading": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "factGroupIds": { "$ref": "#/$defs/facts" },
+        "findingDigests": { "$ref": "#/$defs/findingDigests" }
+      }
+    },
+    "exampleTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "exampleId",
+        "exampleKind",
+        "standard",
+        "factGroupIds",
+        "findingDigests"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "example" },
+        "exampleId": { "$ref": "#/$defs/id" },
+        "exampleKind": {
+          "enum": ["compile", "run", "expected-compile-failure"]
+        },
+        "standard": {
+          "enum": [
+            "c++98",
+            "c++03",
+            "c++11",
+            "c++14",
+            "c++17",
+            "c++20",
+            "c++23",
+            "c++26-draft"
+          ]
+        },
+        "factGroupIds": { "$ref": "#/$defs/facts" },
+        "findingDigests": { "$ref": "#/$defs/findingDigests" }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetId", "attempt", "outcome", "issuedAt"],
+      "properties": {
+        "targetId": { "$ref": "#/$defs/id" },
+        "attempt": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "outcome": { "const": "issued" },
+        "issuedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

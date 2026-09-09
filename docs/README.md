@@ -80,7 +80,8 @@ Read in this order:
 62. [Stage 6.3 Phase A4 Provider-neutral Authoring Run Implementation Report](62-STAGE-6.3-PHASE-A4-PROVIDER-NEUTRAL-AUTHORING-RUN-IMPLEMENTATION-REPORT.md)
 63. [Stage 6.3 Phase A5 Coherent Batch Runner Implementation Report](63-STAGE-6.3-PHASE-A5-COHERENT-BATCH-RUNNER-IMPLEMENTATION-REPORT.md)
 64. [Stage 6.3 Phase A6 Source and Fact-sheet Assistant Implementation Report](64-STAGE-6.3-PHASE-A6-SOURCE-FACT-SHEET-ASSISTANT-IMPLEMENTATION-REPORT.md)
-65. [Domain Context](CONTEXT.md)
+65. [Stage 6.3 Phase A7 Bounded Quality Repair Implementation Report](65-STAGE-6.3-PHASE-A7-BOUNDED-QUALITY-REPAIR-IMPLEMENTATION-REPORT.md)
+66. [Domain Context](CONTEXT.md)
 
 Core learner references:
 

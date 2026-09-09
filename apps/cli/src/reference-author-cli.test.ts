@@ -5,6 +5,85 @@ import type { ReferenceAuthoring } from "@cpp-learn/reference-authoring";
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 
 describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
+  it("[T-AUTH-014] emits a deterministic repair plan for a checked draft", async () => {
+    const result = {
+      ok: true as const,
+      status: "repairable" as const,
+      plan: {
+        schemaVersion: 1,
+        repairId: "vector-insert-quality",
+        draftId: "vector-insert",
+        maxAttempts: 3,
+        targets: [],
+        attempts: [],
+        ignoredFindingDigests: [],
+        planDigest: "a".repeat(64),
+      },
+    };
+    const buildRepairPlan = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: [
+        "repair-plan",
+        "--draft",
+        "vector-insert",
+        "--id",
+        "vector-insert-quality",
+        "--json",
+      ],
+      authoring: { buildRepairPlan } as unknown as ReferenceAuthoring,
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(buildRepairPlan).toHaveBeenCalledWith({
+      draftId: "vector-insert",
+      repairId: "vector-insert-quality",
+    });
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
+  it("[T-AUTH-014] advances a bounded repair plan from JSON", async () => {
+    const plan = {
+      schemaVersion: 1,
+      repairId: "vector-insert-quality",
+      draftId: "vector-insert",
+      baseline: {},
+      maxAttempts: 3,
+      targets: [],
+      attempts: [],
+      ignoredFindingDigests: [],
+      planDigest: "a".repeat(64),
+    };
+    const result = {
+      ok: true as const,
+      progress: {
+        schemaVersion: 1,
+        repairId: "vector-insert-quality",
+        draftId: "vector-insert",
+        planDigest: "a".repeat(64),
+        status: "exhausted" as const,
+        exhaustedTargetIds: ["section-complexity"],
+      },
+    };
+    const advanceRepair = vi.fn().mockResolvedValue(result);
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["repair", "--input", "vector-insert-repair.json", "--json"],
+      authoring: { advanceRepair } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(plan)),
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(advanceRepair).toHaveBeenCalledWith(plan);
+    expect(stdout).toHaveBeenCalledWith(`${JSON.stringify(result)}\n`);
+  });
+
   it("[T-AUTH-A6-RESEARCH-002] emits a source/fact proposal from a JSON evidence bundle", async () => {
     const request = {
       schemaVersion: 1,
