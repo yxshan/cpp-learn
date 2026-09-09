@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createFilesystemReferenceCatalog,
   createInMemoryReferenceCatalog,
+  REFERENCE_CPP_COMPILER_ENVIRONMENT_VARIABLE,
   resolveReferenceCppCompiler,
   type ReferenceCatalogManifest,
   type ReferenceEntryManifest,
@@ -31,13 +32,30 @@ describe("Reference native toolchain selection", () => {
     ).toThrow(/does not exist/u);
   });
 
+  it("reads an existing absolute compiler from the environment", () => {
+    vi.stubEnv(
+      REFERENCE_CPP_COMPILER_ENVIRONMENT_VARIABLE,
+      "/custom/clang++",
+    );
+
+    try {
+      expect(
+        resolveReferenceCppCompiler(undefined, (path) =>
+          path.startsWith("/custom/"),
+        ),
+      ).toBe("/custom/clang++");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("selects an installed Homebrew LLVM and otherwise uses system Clang", () => {
     expect(
-      resolveReferenceCppCompiler(undefined, (path) =>
+      resolveReferenceCppCompiler("", (path) =>
         path.startsWith("/usr/local/"),
       ),
     ).toBe("/usr/local/opt/llvm/bin/clang++");
-    expect(resolveReferenceCppCompiler(undefined, () => false)).toBe(
+    expect(resolveReferenceCppCompiler("", () => false)).toBe(
       "/usr/bin/clang++",
     );
   });

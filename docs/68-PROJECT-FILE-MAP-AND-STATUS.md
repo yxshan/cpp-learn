@@ -169,7 +169,7 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 - `e2e/reference-production.spec.ts`：生产构建下的 Reference 行为。
 - 各模块/应用旁的 `*.test.ts(x)`：单元、契约、失败与恢复测试。
 
-当前有 36 个测试文件与 350 个 Vitest 测试。该数字只表示 2026-09-09 快照，不能替代运行 `npm test`。
+当前有 36 个测试文件与 351 个 Vitest 测试。该数字只表示 2026-09-09 快照，不能替代运行 `npm test`。
 
 ## 8. 维护脚本
 

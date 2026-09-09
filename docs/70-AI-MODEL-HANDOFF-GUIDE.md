@@ -73,7 +73,7 @@ npm run test:e2e:production
 | 纳入 Reference 质量审计 | 116/120 |
 | 已知质量豁免 | 0 |
 | Vitest 测试文件 | 36 |
-| Vitest 测试 | 350 |
+| Vitest 测试 | 351 |
 | Reference Authoring 公共操作 | 16 |
 | Authoring JSON Schema | 22 |
 
