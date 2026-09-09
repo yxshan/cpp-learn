@@ -1,299 +1,138 @@
-# Roadmap and Acceptance Plan
+# 路线图与验收计划
 
 | Field | Value |
 |---|---|
 | Document ID | ROADMAP-001 |
-| Version | 3.0 |
+| Version | 4.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-08 |
+| Prepared by | GPT-5.6 Sol |
+| Last updated | 2026-09-09 |
 
-## 1. Delivery policy
+## 1. 交付原则
 
-Delivery is capability-gated, not calendar-gated. A stage is complete only when its acceptance evidence is reproducible on the reference environment and linked in the traceability matrix.
+项目按能力和证据验收，不按日历或代码量验收。一个阶段只有在参考环境中可重复通过约定的内容、单元、契约、浏览器和构建门禁后，才能标为 Accepted。
 
-## 2. Stage 0: Engineering baseline
+Implementation Report 证明历史交付；当前代码和测试证明现状。历史报告里的“下一步”如果已被后续阶段完成，不再构成待办。
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md).
+## 2. 已交付基线
 
-Deliver:
+| 阶段 | 状态 | 已交付能力 | 主要证据 |
+|---|---|---|---|
+| Stage 0 | Accepted | npm workspace、契约、模块壳、CI 与文档门禁 | [报告 13](13-STAGE-0-IMPLEMENTATION-REPORT.md) |
+| Stage 1 | Accepted | Dashboard 到 Monaco、Run、Grade 和持久化的 Web 纵切 | [报告 14](14-STAGE-1-IMPLEMENTATION-REPORT.md) |
+| Stage 2 | Accepted | 多文件 Workspace、可靠 Judge、事件与恢复 | [报告 15](15-STAGE-2-IMPLEMENTATION-REPORT.md) |
+| Stage 3 | Accepted | Hint、Reflection、Evidence、Concept 与延迟复习 | [报告 16](16-STAGE-3-IMPLEMENTATION-REPORT.md) |
+| Stage 4 | Accepted | 现代 C++ 课程主线与工程实践 | [报告 17](17-STAGE-4-IMPLEMENTATION-REPORT.md) |
+| Stage 5 | Accepted | 算法、系统、网络、SQLite、CMake 与确定性测试 | [报告 18](18-STAGE-5-IMPLEMENTATION-REPORT.md) |
+| Stage 5.1 | Accepted | 响应式学习导航、独立滚动、前后切换与无障碍 | [报告 19](19-STAGE-5.1-IMPLEMENTATION-REPORT.md) |
+| Stage 6 | Accepted | 70 个 Activity、5 个作品集项目与职业方向内容 | [报告 20](20-STAGE-6-IMPLEMENTATION-REPORT.md) |
+| Stage 6.1 | Accepted | C++ 初始格式、显式 Format 与确认 Reset | [报告 21](21-STAGE-6.1-IMPLEMENTATION-REPORT.md) |
+| Stage 6.2 | Accepted | 120 条 Reference、226 个示例、搜索、导航与 Playground | [报告 52](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md) |
 
-- npm-workspaces repository skeleton.
-- Shared contracts and JSON Schemas.
-- Learning Platform, Curriculum, Workspace, Judge, and Learning Record Module shells.
-- Web/server/CLI composition roots.
-- CI quality gates and document checks.
+Stage 6.2 的内容扩展和质量修复证据分布在报告 25–52。它们保留用于追溯，不要求接手模型逐篇阅读。
 
-Acceptance:
+## 3. Reference Authoring 当前验收
 
-- Modules compile and are testable through declared Interfaces.
-- Web and CLI execute a shared health/query fixture.
-- Invalid content and invalid paths fail contract tests.
-- Documentation and ADR index are current.
+| 阶段 | 状态 | 说明 |
+|---|---|---|
+| A0 Contracts/fixtures | Accepted | 工件 Schema、profile fixture 与 non-publishing prepare |
+| A1 CLI prepare/check | Accepted | 文件系统草稿、结构/事实/来源/示例检查 |
+| A2 Cache/preview/publish | Accepted | 内容寻址缓存、生产 renderer 预览、原子发布 |
+| A3 Fact reuse/context/metrics | Implemented, acceptance pending | 逻辑与 fixture 已完成，缺真实五条目批次测量 |
+| A4 AI authoring adapter | Accepted | Provider-neutral 生成、claim gate、summary 与 example |
+| A5 Batch runner | Accepted | 有依赖图、可恢复的一至五条目批次 |
+| A6 Research assistant | Accepted | 显式来源摘录、Fact Sheet proposal 与人工验证边界 |
+| A7 Bounded repair | Accepted | 固定三次预算、digest/revision 绑定的定向修复 |
+| A8 Web review | Optional, not implemented | 只在人工审阅需求证明价值后开发 |
 
-## 3. Stage 1: Web vertical slice
+完整工件和验收规则见 [作者工具设计与实施计划](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)。A3 不能因后续阶段已实现而自动视为 Accepted。
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md).
+## 4. 近期路线
 
-Deliver:
+### R0：恢复稳定交接基线
 
-```text
-Dashboard → first Lesson → Monaco edit → save → Run → Grade
-→ Judge Report → learning event → dashboard refresh
-```
+目标：保证新模型可以理解仓库、复现现状并安全开始工作。
 
-Also deliver `serve`, `check`, `status`, and `doctor` CLI operations and migrate the existing first Lesson.
+验收：README、架构、文件地图、未来计划与接手指南一致；`npm run check` 和生产式 E2E 通过；工作树中没有来源不明的改动。
 
-Acceptance:
+### R1：统一 Reference 内容策略
 
-- Same Source Snapshot has equivalent Web and CLI verdict.
-- Run never changes Concept State.
-- Grade survives server restart with history intact.
-- Workspace save conflicts do not overwrite code.
-- Playwright covers the complete path.
+目标：建立一个类型化的 Reference content policy，统一 Entry kind profile、semantic area、标题识别、必需事实、风险和 repairability。
 
-## 4. Stage 2: Reliable Judge and records
+验收：质量检查、prepare scaffold 与 repair plan 使用同一策略；Header 等 area 不再通过独立字符串映射漏接；现有 120 个 Entry 的质量结果不回退。
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 2 Implementation Report](15-STAGE-2-IMPLEMENTATION-REPORT.md).
+### R2：收敛 Reference Authoring 内部结构
 
-Deliver:
+目标：按 Draft、Evidence、Generation、Repair/Batch、Validation/Publication 生命周期深化模块，保留现有 16 操作兼容门面。
 
-- Multi-file Workspaces and immutable Source Snapshots.
-- Public/private tests, timeout, output limit, ASan, and UBSan.
-- Structured diagnostics, cancellation, worker crash handling.
-- Append-only events, SQLite projections, rebuild, export, and restore.
+验收：CLI、artifact schema 与已有 fixture 兼容；主要实现不再包含多个独立变更原因；失败、恢复、CAS 和原子发布测试仍通过。
 
-Acceptance:
+### R3：修正共享呈现与应用依赖
 
-- Every required Judge verdict has a golden fixture.
-- Worker crash does not stop the server or append false Evidence.
-- Duplicate report ingestion is idempotent.
-- Rebuilt projections match pre-rebuild state.
-- Private material is absent from browser payloads, logs, and Teacher Packs.
+目标：让 Web 与 CLI 共同依赖一个 Reference presentation 模块，移除 CLI 对 `@cpp-learn/web` 的直接依赖。
 
-## 5. Stage 3: Learning loop
+验收：静态预览与在线 Reference 使用同一 renderer；浏览器路由仍只在 Web；文件输出仍只在 CLI；相关单元和 E2E 通过。
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 3 Implementation Report](16-STAGE-3-IMPLEMENTATION-REPORT.md).
+### R4：完成真实作者效率验收
 
-Deliver:
+目标：使用作者流水线完成一个相关的五条目批次，记录 active author time、machine time、cache hit、review findings 与 escaped defects。
 
-- Ordered hints and assistance tracking.
-- Reflections and Teacher Observations.
-- Concept Evidence, state explanations, Review scheduling, and variants.
-- Knowledge Map and Review Queue.
+验收：测量过程使用真实内容和正常门禁，不用确定性 fixture 代替人时；满足既定时间目标或形成有证据的新瓶颈计划。
 
-Acceptance:
+## 5. 中期路线
 
-- Full-solution exposure cannot create `demonstrated` Evidence.
-- Public-test pass alone remains `practiced` or lower.
-- Independent delayed Review can create `retained`.
-- Every state transition links to supporting Evidence and explanation.
+### R5：按领域深化 HTTP Adapter
 
-## 6. Stage 4: Modern C++ curriculum release
+把 Fastify 注册分为 Learning、Reference/Playground 和 Local Data 路由组。保留一个小 composition implementation，集中共享 transport policy。
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 4 Implementation Report](17-STAGE-4-IMPLEMENTATION-REPORT.md).
+验收不是“文件变多”，而是一个路由组的变更不要求理解无关领域；不能把领域规则移动到 Fastify。
 
-Deliver initially:
+### R6：按学习者工作流深化 Web Adapter
 
-- 10–12 Lessons.
-- 15–20 Exercises/Review variants.
-- One progressive Project.
-- Core reference documents and interactive blocks.
+把 Dashboard、Lesson Workspace、Reference 和备份恢复的状态局部化。App shell 只负责顶层导航与路由选择。
 
-Then expand through types, references, pointers, lifetime, RAII, classes, STL, copy/move, smart pointers, templates, tests, and CMake.
+验收包括 direct URL、history、dirty state、键盘操作、桌面独立滚动、390px 无横向溢出和无浏览器错误。
 
-Acceptance:
+### R7：持续扩展高质量内容
 
-- All required content passes lint and reference-solution checks.
-- Known incorrect solutions exercise intended failure categories.
-- Every core Concept has an Evidence policy and delayed Review.
-- Existing Learner Workspaces survive content upgrades.
+先依据学习路径和搜索缺口选择条目，再按相关批次扩展。每个实质性 API 条目尽量覆盖参数、返回、错误、复杂度、生命周期/失效、常见误区、可运行示例和适当的 JS 对照。
 
-## 7. Stage 5: Algorithms and systems
+不是每个字段都适用于每种 Entry。任何省略都需要由 profile 的 `notApplicable` 或结构化理由表达，不能用空泛段落凑齐模板。
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 5 Implementation Report](18-STAGE-5-IMPLEMENTATION-REPORT.md).
+## 6. A8 Web 审阅界面的决策门
 
-Deliver:
+Web 审阅界面不是开发日志。只有出现下列证据时才进入实现：
 
-- Deterministic property tests and relative performance checks.
-- Data-structure and algorithm Modules.
-- Files, processes, threads, loopback sockets, HTTP, and SQLite labs.
-- CMake/CTest project workflows.
-- Optional Linux/container verification.
+- CLI 风险队列难以完成逐项人审；
+- 预览、事实来源和编译证据需要并排比较；
+- 用户确实希望在浏览器中批准或拒绝 finding；
+- 该界面可以复用 Authoring 模块而不复制规则。
 
-Acceptance:
+若实现，第一版只做只读/审批型 Adapter：风险队列、published-vs-draft diff、claim-to-source、编译证据、render preview 与 publication plan。不要建设账号、协作、聊天记录或通用 CMS。
 
-- Random failures reproduce from recorded seeds.
-- System labs clean up files, processes, ports, and databases.
-- Performance checks are same-machine relative comparisons.
-- Linux-only outcomes are labeled and not inferred from macOS.
+## 7. 延后事项
 
-## 8. Stage 5.1: Web learning experience stabilization
+以下能力当前不在路线主干：
 
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 5.1 Implementation Report](19-STAGE-5.1-IMPLEMENTATION-REPORT.md).
+- 微服务、多仓库或远程数据库迁移；
+- 公网多用户账号与权限系统；
+- 分布式或公开代码执行服务；
+- 自动抓取、镜像或翻译 cppreference；
+- 无人工事实核验的自动发布；
+- 为“架构整洁”而拆出大量浅层文件。
 
-Deliver:
+如果实际需求突破本地单用户边界，应先更新需求并新增 ADR，再改变部署架构。
 
-- A responsive overview with semantic navigation, Activity filtering, and durable URL state.
-- Direct Activity links and ordered previous/next navigation across the complete Track.
-- A desktop training layout where Lesson content scrolls independently while the code editor and Judge actions remain visible.
-- A single-column narrow-screen layout without horizontal overflow.
-- Keyboard-visible controls, semantic labels, skip navigation, and unsaved-work confirmation.
-
-Acceptance:
-
-- Opening, filtering, and navigating Activities preserves a meaningful URL and browser history.
-- Previous/next controls expose boundary states and switch both Activity content and Workspace.
-- Scrolling long Lesson content does not move the desktop editor or the browser viewport.
-- A 390-pixel viewport has no document-level horizontal overflow.
-- The complete real-browser learning loop still passes with no browser errors.
-
-## 9. Stage 6: Career track completion
-
-**Status:** Accepted on 2026-08-23. Reproducible evidence is recorded in the [Stage 6 Implementation Report](20-STAGE-6-IMPLEMENTATION-REPORT.md).
-
-Deliver:
-
-- Network, database, concurrency, performance, and deployment Modules.
-- 4–5 progressive Projects.
-- Project rubrics, load testing, incident exercises, and interview review.
-- Advanced visualizations that materially improve understanding.
-
-Acceptance:
-
-- Projects have reproducible builds, tests, documentation, benchmarks, and failure retrospectives.
-- Knowledge Map traces Project evidence back to Concepts.
-- Export contains a coherent learner-owned portfolio history without private judge material.
-
-## 10. Stage 6.1: C++ editor ergonomics
-
-**Status:** Accepted on 2026-08-25. Reproducible evidence is recorded in the [Stage 6.1 Implementation Report](21-STAGE-6.1-IMPLEMENTATION-REPORT.md).
-
-Deliver:
-
-- Conventionally formatted C++ starter code in the Lesson editor.
-- Active-file Format and confirmed Reset controls.
-- A read-only starter baseline without silent replacement of learner work.
-
-Acceptance:
-
-- String and comment contents survive deterministic formatting.
-- Previously edited learner files are not automatically formatted or reset.
-- Format and Reset remain buffer-only until Save, Run, or Grade persists them.
-- The real-browser regression covers initial formatting, explicit formatting, and confirmed reset.
-
-## 11. Stage 6.2: C++ API Reference
-
-**Status:** Phases 1–4 accepted; the controlled catalog contains 120 Entries
-and 226 locally verified examples. The Playground tracer bullet and completed
-bounded execution flow are recorded in the [Tracer Bullet Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
-and [Phase 4 Completion Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md).
-Design and remaining acceptance sources are the [Reference Module
-Design](22-API-REFERENCE-MODULE-DESIGN.md) and [Implementation
-Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md).
-
-Deliver the read-only vertical release:
-
-- Separate Reference Module, schema, filesystem and in-memory Adapters, shared
-  contracts, and degraded readiness.
-- Deterministic navigation, lookup, search, aliases, categories, C++ standard
-  filters, and stable Entry URLs.
-- Lazy-loaded Web Reference with accessible desktop and narrow-screen layouts.
-- 15 original, source-backed Entries across at least five categories.
-- Content gates for relationships, sources, licensing, terminology, and example
-  compilation.
-- Reference-to-Activity navigation without learner-state mutation.
-
-Then expand through 80–120 core standard-library Entries and bidirectional
-Activity links. The temporary non-Activity Playground is accepted; grounded AI
-assistance remains a separately gated later phase.
-
-Acceptance:
-
-- Exact symbol, header, alias, Chinese title, prefix, and filtered searches are
-  deterministic and contract-tested.
-- Direct Entry/anchor URLs, browser history, keyboard operation, and a
-  390-pixel viewport pass Playwright coverage.
-- Ordinary examples compile under their declared standard with the warning
-  profile enabled.
-- Reading, searching, and copying Reference content produce no Workspace,
-  Attempt, Evidence, Concept, Review, or Project mutation.
-- Installed content works without external network access.
-- Invalid Reference content cannot activate, while Reference degradation does
-  not disable existing learning flows.
-- Sources and any reused-material attribution pass content validation.
-- Playground runs have stable client-visible identities, bounded outcomes,
-  active cancellation, explicit reset/discard behavior, and no learning-state
-  mutation.
-
-## 12. Stage 6.3: Reference content authoring tools
-
-**Status:** Phases A0, A1, A2, A4, and A5 accepted; Phase A3 tooling is implemented with empirical acceptance pending. Design and phased acceptance are controlled by the [Content
-Authoring Tools Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
-and accepted [ADR-0007](adr/0007-local-reference-authoring-pipeline.md). Phase
-A0 evidence is recorded in the [Authoring Contracts Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md),
-and A1 evidence in the [CLI Prepare/Check Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md).
-Phase A2 evidence is in the [Cache, Preview, and Atomic Publish Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md).
-Phase A3 tooling evidence is in the [Fact Reuse, Context Packs, and Batch Metrics Report](57-STAGE-6.3-PHASE-A3-FACT-REUSE-CONTEXT-PACKS-AND-BATCH-METRICS-IMPLEMENTATION-REPORT.md).
-Phase A4 tracer evidence is in the [AI Authoring Adapter Report](58-STAGE-6.3-PHASE-A4-AI-AUTHORING-ADAPTER-TRACER-BULLET-IMPLEMENTATION-REPORT.md),
-with summary-generation evidence in the [Generated Summary Report](59-STAGE-6.3-PHASE-A4-GENERATED-SUMMARY-IMPLEMENTATION-REPORT.md).
-Compiled-example, structured-template, and resumable-run evidence is recorded
-in reports 60–62, culminating in the [Provider-neutral Authoring Run
-Report](62-STAGE-6.3-PHASE-A4-PROVIDER-NEUTRAL-AUTHORING-RUN-IMPLEMENTATION-REPORT.md).
-Phase A5 evidence is in the [Coherent Batch Runner
-Report](63-STAGE-6.3-PHASE-A5-COHERENT-BATCH-RUNNER-IMPLEMENTATION-REPORT.md).
-
-Deliver a local Reference Authoring Module with CLI-first and later Web Adapters:
-
-- draft workspaces and deterministic Entry-kind scaffolding;
-- structured fact/source ledgers and risk-ranked human review;
-- affected-graph validation and content-addressed example compilation cache;
-- production-renderer preview, exact publish diff, and atomic publication;
-- constrained AI context packs plus generated-claim review that returns
-  unmapped or out-of-pack facts to an unverified queue; and
-- provider-neutral section, summary, and compiled-example ingestion with
-  revision-bound receipts plus resumable single-draft run orchestration;
-- batch metrics proving throughput gains without a quality regression.
-
-The accepted Phase A1 adds confined filesystem drafts, catalog-backed context,
-canonical structural quality reuse, bounded native example checks, revisioned
-reports, and the `reference:author` CLI. Canonical writes, caching, preview, AI
-assistance, and the Web Author Console were separately gated at that point.
-The accepted Phase A2 adds exact compiler-result caching, impact closure,
-production-renderer preview, revision/input-bound dry-run publication plans, and
-validated whole-tree publication with rollback. Reference-only fact reuse,
-context packs, generated-claim provenance review, and revision-bound batch
-metrics are implemented in Phase A3; one real measured five-Entry batch is
-still required before acceptance. Phase A4 can apply controlled sections,
-Entry summaries, and compiled Reference Examples through the Module and CLI,
-then resume an unchanged single-draft plan from durable receipts. Phase A5 is
-accepted with one-to-five Entry DAG plans, per-run receipt recovery, complete
-blocked/waiting/ready reporting, and CLI parity. Phase A6 is accepted with
-bounded explicit research bundles, digest-only excerpt evidence,
-source-class-preserving deduplication, unverified normative fact proposals, and
-related-fact reuse suggestions. Phase A7's bounded quality repair loop is the
-next implementation slice. A lightweight Web review surface remains optional
-after the automation phases.
-
-## 13. Global definition of done
-
-- Requirement implemented and traced.
-- Module/contract/integration/E2E tests pass as applicable.
-- Security and privacy impacts reviewed.
-- Migration and rollback considered.
-- User-facing errors and documentation updated.
-- No known S1/S2 defects in the released scope.
-- Acceptance evidence is reproducible and archived with the release.
-
-## 14. Deferred decisions
-
-- Desktop packaging.
-- Specific SQLite Node Adapter.
-- Container runtime and remote Linux runner.
-- Specific AI provider versus MCP-only integration.
-- Multi-user/cloud support.
-- Public curriculum plugin ecosystem.
-- External Reference synchronization or import pipeline.
-- The provider and interaction contract for grounded Reference AI assistance.
-
-These remain behind defined seams and are decided only when a concrete second Adapter or product requirement exists.
+## 8. 每个后续切片的最低完成定义
+
+1. 在实现前写清目标、不变量、影响文件和回滚方式。
+2. 保持 Web、CLI、模块与内容的责任边界。
+3. 为成功、失败、恢复和兼容路径补测试。
+4. 跑与风险相称的最小门禁，合并前跑全仓门禁。
+5. 更新 Baseline、文件地图、路线图和相关追踪信息。
+6. 只在真实证据可复现后写 Implementation Report 和 Accepted。
+
+更细的执行切片见 [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)。
+
+本轮路线图由 **GPT-5.6 Sol** 根据当前交付状态和架构审计重写。

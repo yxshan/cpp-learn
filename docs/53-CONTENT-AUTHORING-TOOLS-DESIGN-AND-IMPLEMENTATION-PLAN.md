@@ -3,10 +3,11 @@
 | Field | Value |
 |---|---|
 | Document ID | AUTHOR-TOOLS-001 |
-| Version | 2.2 |
+| Version | 2.3 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-08 |
+| Prepared by | GPT-5.6 Sol |
+| Last updated | 2026-09-09 |
 
 ## 1. Problem and outcome
 
@@ -71,22 +72,19 @@ promises.
 
 ## 4. Deep Module boundary
 
-The target `Reference Authoring Module` hides draft storage, templates, schema details,
-catalog graph updates, claim ledgers, compiler cache keys, preview artifacts,
-and atomic filesystem publication behind three operations:
+The original plan placed draft storage, templates, schema details, catalog graph
+updates, claim ledgers, compiler cache keys, preview artifacts, and atomic
+publication behind the `prepare` / `check` / `publish` lifecycle.
 
-```ts
-interface ReferenceAuthoring {
-  prepare(request: PrepareDraftRequest): Promise<DraftWorkspace>;
-  check(request: CheckDraftRequest): Promise<AuthoringReport>;
-  publish(request: PublishDraftRequest): Promise<PublishResult>;
-}
-```
+That lifecycle remains the authority boundary, but the implementation now has a
+16-operation compatibility facade after A3–A7 added context, generation,
+research, run, batch, measurement, and bounded repair capabilities. The current
+interface is documented in [Detailed Design](04-DETAILED_DESIGN.md#8-reference-authoring).
 
-Phase A0 exposes only `prepare`; an Interface does not advertise `check` or
-`publish` before those behaviors exist. Phase A1 adds `check`, and Phase A2 adds
-`publish`, preserving the request/result vocabulary established by the
-versioned artifact Schemas.
+Future work must preserve current requests, results, receipts, and artifact
+Schemas while grouping the facade internally by lifecycle capability. New
+Adapters should receive the narrowest required capability interface; they must
+not recreate rules or make the broad facade grow by default.
 
 - `prepare` creates or resumes a draft and materializes the selected Entry-kind
   profile and reusable fact sheet. Phase A0 creates controlled related-Entry
@@ -453,7 +451,11 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-Evaluate whether Phase A8's lightweight local Web review surface is justified
-by observed manual-review demand. A real coherent five-Entry run must still be
-retained to close empirical Phase A3 acceptance; later tooling must not
-manufacture that evidence.
+First unify the Reference content policy used by quality checks, profiles, and
+repair targeting. Then deepen the Authoring lifecycle internals and complete a
+real coherent five-Entry run for empirical Phase A3 acceptance. Evaluate A8's
+lightweight Web review surface only after observed manual-review demand proves
+that it is the remaining bottleneck.
+
+This status clarification and current-interface correction were prepared by
+**GPT-5.6 Sol**.

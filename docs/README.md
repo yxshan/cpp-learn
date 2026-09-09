@@ -1,145 +1,130 @@
-# C++ Learning Platform Documentation
+# C++ Learning Platform 文档导航
 
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 5.8 |
+| Version | 6.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-08 |
+| Prepared by | GPT-5.6 Sol |
+| Last updated | 2026-09-09 |
 
-## Purpose
+## 1. 文档的作用
 
-This directory is the controlled documentation baseline for the local, Web-first C++ learning platform. Current documents define product scope, requirements, architecture, interfaces, data, curriculum, judging, security, testing, operations, and delivery acceptance.
+`docs/` 同时保存当前规范、架构决策、实现计划、研究证据和历史交付报告。它们的有效性不同，不能把编号靠后的文件自动视为更权威。
 
-## Current baseline
+发生冲突时，按以下顺序判断：
 
-Read in this order:
+1. 当前代码、自动化测试和可复现命令说明“实际上是什么”。
+2. 已接受的 ADR 说明“不可随意改变的方向”。
+3. 当前 Baseline 规范说明“应当是什么”。
+4. In Review 文档是建议或审计结论，尚未自动改变架构。
+5. Implementation Report 只证明某个历史节点交付过什么。
+6. `archive/` 与根目录早期原型材料不构成当前规范。
 
-1. [Project Charter](01-PROJECT_CHARTER.md)
-2. [Software Requirements Specification](02-SOFTWARE_REQUIREMENTS_SPECIFICATION.md)
-3. [System Architecture](03-SYSTEM_ARCHITECTURE.md)
-4. [Detailed Design](04-DETAILED_DESIGN.md)
-5. [Interface Contracts](05-INTERFACE_CONTRACTS.md)
-6. [Data Design](06-DATA_DESIGN.md)
-7. [Curriculum and Judge Specification](07-CURRICULUM_AND_JUDGE_SPECIFICATION.md)
-8. [Security and Privacy](08-SECURITY_AND_PRIVACY.md)
-9. [Test and Quality Plan](09-TEST_AND_QUALITY_PLAN.md)
-10. [Development and Operations Guide](10-DEVELOPMENT_AND_OPERATIONS_GUIDE.md)
-11. [Roadmap and Acceptance Plan](11-ROADMAP_AND_ACCEPTANCE_PLAN.md)
-12. [Requirements Traceability Matrix](12-REQUIREMENTS_TRACEABILITY_MATRIX.md)
-13. [Stage 0 Implementation Report](13-STAGE-0-IMPLEMENTATION-REPORT.md)
-14. [Stage 1 Implementation Report](14-STAGE-1-IMPLEMENTATION-REPORT.md)
-15. [Stage 2 Implementation Report](15-STAGE-2-IMPLEMENTATION-REPORT.md)
-16. [Stage 3 Implementation Report](16-STAGE-3-IMPLEMENTATION-REPORT.md)
-17. [Stage 4 Implementation Report](17-STAGE-4-IMPLEMENTATION-REPORT.md)
-18. [Stage 5 Implementation Report](18-STAGE-5-IMPLEMENTATION-REPORT.md)
-19. [Stage 5.1 Implementation Report](19-STAGE-5.1-IMPLEMENTATION-REPORT.md)
-20. [Stage 6 Implementation Report](20-STAGE-6-IMPLEMENTATION-REPORT.md)
-21. [Stage 6.1 Implementation Report](21-STAGE-6.1-IMPLEMENTATION-REPORT.md)
-22. [C++ API Reference Module Design](22-API-REFERENCE-MODULE-DESIGN.md)
-23. [C++ API Reference Content Authoring Guide](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md)
-24. [C++ API Reference Implementation Plan](24-API-REFERENCE-IMPLEMENTATION-PLAN.md)
-25. [Stage 6.2 Phase 1 Implementation Report](25-STAGE-6.2-PHASE-1-IMPLEMENTATION-REPORT.md)
-26. [Stage 6.2 Phase 2 Implementation Report](26-STAGE-6.2-PHASE-2-IMPLEMENTATION-REPORT.md)
-27. [Stage 6.2 Phase 3 Batch 1 Implementation Report](27-STAGE-6.2-PHASE-3-BATCH-1-IMPLEMENTATION-REPORT.md)
-28. [Stage 6.2 Phase 3 Local Verification Implementation Report](28-STAGE-6.2-PHASE-3-LOCAL-VERIFICATION-IMPLEMENTATION-REPORT.md)
-29. [Stage 6.2 Phase 3 Content Quality Batch 1 Implementation Report](29-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-1-IMPLEMENTATION-REPORT.md)
-30. [Stage 6.2 Phase 3 Content Quality Batch 2 Implementation Report](30-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-2-IMPLEMENTATION-REPORT.md)
-31. [Stage 6.2 Phase 3 Content Quality Batch 3 Implementation Report](31-STAGE-6.2-PHASE-3-CONTENT-QUALITY-BATCH-3-IMPLEMENTATION-REPORT.md)
-32. [Stage 6.2 Phase 3 Breadth Expansion Batch 4 Implementation Report](32-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-4-IMPLEMENTATION-REPORT.md)
-33. [Stage 6.2 Phase 3 Breadth Expansion Batch 5 Implementation Report](33-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-5-IMPLEMENTATION-REPORT.md)
-34. [Stage 6.2 Phase 3 Breadth Expansion Batch 6 Implementation Report](34-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-6-IMPLEMENTATION-REPORT.md)
-35. [Stage 6.2 Phase 3 Reference Quality Ratchet Implementation Report](35-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-RATCHET-IMPLEMENTATION-REPORT.md)
-36. [Stage 6.2 Phase 3 Reference Quality Ratchet Batch 8 Implementation Report](36-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-RATCHET-BATCH-8-IMPLEMENTATION-REPORT.md)
-37. [Stage 6.2 Phase 3 Reference Quality Debt Closure Implementation Report](37-STAGE-6.2-PHASE-3-REFERENCE-QUALITY-DEBT-CLOSURE-IMPLEMENTATION-REPORT.md)
-38. [Stage 6.2 Phase 3 Breadth Expansion Batch 7 Implementation Report](38-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-7-IMPLEMENTATION-REPORT.md)
-39. [Stage 6.2 Phase 3 Breadth Expansion Batch 8 Implementation Report](39-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-8-IMPLEMENTATION-REPORT.md)
-40. [Stage 6.2 Phase 3 Breadth Expansion Batch 9 Implementation Report](40-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-9-IMPLEMENTATION-REPORT.md)
-41. [Stage 6.2 Phase 3 Breadth Expansion Batch 10 Implementation Report](41-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-10-IMPLEMENTATION-REPORT.md)
-42. [Stage 6.2 Phase 3 Breadth Expansion Batch 11 Implementation Report](42-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-11-IMPLEMENTATION-REPORT.md)
-43. [Stage 6.2 Phase 3 Breadth Expansion Batch 12 Implementation Report](43-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-12-IMPLEMENTATION-REPORT.md)
-44. [Stage 6.2 Phase 3 Breadth Expansion Batch 13 Implementation Report](44-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-13-IMPLEMENTATION-REPORT.md)
-45. [Stage 6.2 Phase 3 Breadth Expansion Batch 14 Implementation Report](45-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-14-IMPLEMENTATION-REPORT.md)
-46. [Stage 6.2 Phase 3 Breadth Expansion Batch 15 Implementation Report](46-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-15-IMPLEMENTATION-REPORT.md)
-47. [Stage 6.2 Phase 3 Breadth Expansion Batch 16 Implementation Report](47-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-16-IMPLEMENTATION-REPORT.md)
-48. [Stage 6.2 Phase 3 Breadth Expansion Batch 17 Implementation Report](48-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-17-IMPLEMENTATION-REPORT.md)
-49. [Stage 6.2 Phase 3 Breadth Expansion Batch 18 Implementation Report](49-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-18-IMPLEMENTATION-REPORT.md)
-50. [Stage 6.2 Phase 3 Breadth Expansion Batch 19 Implementation Report](50-STAGE-6.2-PHASE-3-BREADTH-EXPANSION-BATCH-19-IMPLEMENTATION-REPORT.md)
-51. [Stage 6.2 Phase 4 Playground Tracer Bullet Implementation Report](51-STAGE-6.2-PHASE-4-PLAYGROUND-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
-52. [Stage 6.2 Phase 4 Playground Completion Implementation Report](52-STAGE-6.2-PHASE-4-COMPLETION-IMPLEMENTATION-REPORT.md)
-53. [C++ API Reference Content Authoring Tools Design and Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md)
-54. [Stage 6.3 Phase A0 Reference Authoring Contracts Implementation Report](54-STAGE-6.3-PHASE-A0-AUTHORING-CONTRACTS-IMPLEMENTATION-REPORT.md)
-55. [Stage 6.3 Phase A1 Reference Authoring CLI Prepare/Check Implementation Report](55-STAGE-6.3-PHASE-A1-CLI-PREPARE-CHECK-IMPLEMENTATION-REPORT.md)
-56. [Stage 6.3 Phase A2 Reference Authoring Cache/Preview/Atomic Publish Implementation Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md)
-57. [Stage 6.3 Phase A3 Fact Reuse/Context Packs/Batch Metrics Implementation Report](57-STAGE-6.3-PHASE-A3-FACT-REUSE-CONTEXT-PACKS-AND-BATCH-METRICS-IMPLEMENTATION-REPORT.md)
-58. [Stage 6.3 Phase A4 AI Authoring Adapter Tracer Bullet Implementation Report](58-STAGE-6.3-PHASE-A4-AI-AUTHORING-ADAPTER-TRACER-BULLET-IMPLEMENTATION-REPORT.md)
-59. [Stage 6.3 Phase A4 Generated Summary Implementation Report](59-STAGE-6.3-PHASE-A4-GENERATED-SUMMARY-IMPLEMENTATION-REPORT.md)
-60. [Stage 6.3 Phase A4 Generated Reference Example Implementation Report](60-STAGE-6.3-PHASE-A4-GENERATED-REFERENCE-EXAMPLE-IMPLEMENTATION-REPORT.md)
-61. [Stage 6.3 Phase A4 Structured Generation Template Implementation Report](61-STAGE-6.3-PHASE-A4-STRUCTURED-GENERATION-TEMPLATE-IMPLEMENTATION-REPORT.md)
-62. [Stage 6.3 Phase A4 Provider-neutral Authoring Run Implementation Report](62-STAGE-6.3-PHASE-A4-PROVIDER-NEUTRAL-AUTHORING-RUN-IMPLEMENTATION-REPORT.md)
-63. [Stage 6.3 Phase A5 Coherent Batch Runner Implementation Report](63-STAGE-6.3-PHASE-A5-COHERENT-BATCH-RUNNER-IMPLEMENTATION-REPORT.md)
-64. [Stage 6.3 Phase A6 Source and Fact-sheet Assistant Implementation Report](64-STAGE-6.3-PHASE-A6-SOURCE-FACT-SHEET-ASSISTANT-IMPLEMENTATION-REPORT.md)
-65. [Stage 6.3 Phase A7 Bounded Quality Repair Implementation Report](65-STAGE-6.3-PHASE-A7-BOUNDED-QUALITY-REPAIR-IMPLEMENTATION-REPORT.md)
-66. [Domain Context](CONTEXT.md)
+如果代码与 Baseline 不一致，应记录偏差并决定修代码、修文档或新增 ADR，不能静默选择其中一边。
 
-Core learner references:
+## 2. 接手模型的最短阅读路径
 
-- [Modern C++ Mental Model](reference/MODERN_CPP_MENTAL_MODEL.md)
-- [Ownership and Lifetime](reference/OWNERSHIP_AND_LIFETIME.md)
-- [Build, Test, and Debug](reference/BUILD_TEST_DEBUG.md)
-- [Deterministic Algorithm Testing](reference/DETERMINISTIC_ALGORITHM_TESTING.md)
-- [Local System Labs](reference/LOCAL_SYSTEM_LABS.md)
-- [Production C++ Service Evidence](reference/PRODUCTION_CPP_SERVICE.md)
+新的维护者或 AI 模型先阅读：
 
-API Reference research and editorial baselines:
+1. [根 README](../README.md)
+2. [AI 模型接手指南](70-AI-MODEL-HANDOFF-GUIDE.md)
+3. [系统架构](03-SYSTEM_ARCHITECTURE.md)
+4. [项目文件地图与状态](68-PROJECT-FILE-MAP-AND-STATUS.md)
+5. [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
+6. [领域上下文](CONTEXT.md)
+7. 与当前任务直接相关的 ADR、规范和历史报告
 
-- [Phase 3 Batch 1 primary-source research](reference/API_REFERENCE_PHASE3_BATCH1_RESEARCH.md)
-- [Content Quality Backlog](reference/API_REFERENCE_CONTENT_QUALITY_BACKLOG.md)
-- [Content Quality Batch 1 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH1_RESEARCH.md)
-- [Content Quality Batch 2 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH2_RESEARCH.md)
-- [Content Quality Batch 3 primary-source research](reference/API_REFERENCE_QUALITY_UPGRADE_BATCH3_RESEARCH.md)
-- [Breadth Expansion Batch 4 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH4_RESEARCH.md)
-- [Breadth Expansion Batch 5 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH5_RESEARCH.md)
-- [Breadth Expansion Batch 6 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH6_RESEARCH.md)
-- [Breadth Expansion Batch 7 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH7_RESEARCH.md)
-- [Breadth Expansion Batch 8 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH8_RESEARCH.md)
-- [Breadth Expansion Batch 9 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH9_RESEARCH.md)
-- [Breadth Expansion Batch 10 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH10_RESEARCH.md)
-- [Breadth Expansion Batch 11 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH11_RESEARCH.md)
-- [Breadth Expansion Batch 12 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH12_RESEARCH.md)
-- [Breadth Expansion Batch 13 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH13_RESEARCH.md)
-- [Breadth Expansion Batch 14 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH14_RESEARCH.md)
-- [Breadth Expansion Batch 15 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH15_RESEARCH.md)
-- [Breadth Expansion Batch 16 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH16_RESEARCH.md)
-- [Breadth Expansion Batch 17 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH17_RESEARCH.md)
-- [Breadth Expansion Batch 18 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH18_RESEARCH.md)
-- [Breadth Expansion Batch 19 primary-source research](reference/API_REFERENCE_BREADTH_EXPANSION_BATCH19_RESEARCH.md)
+不需要从 01 顺序读到 67。历史报告用于追溯决策和验收，不是日常开发的必读上下文。
 
-## Architecture decisions
+## 3. 当前产品与工程基线
 
-- [ADR-0001: Web-first local single-user product](adr/0001-web-first-local-single-user.md)
-- [ADR-0002: Shared learning core with multiple adapters](adr/0002-shared-learning-core.md)
-- [ADR-0003: Event log with rebuildable SQLite projections](adr/0003-event-log-and-sqlite-projections.md)
-- [ADR-0004: Native judge first, container adapter later](adr/0004-native-judge-first.md)
-- [ADR-0005: Declarative curriculum content](adr/0005-declarative-curriculum-content.md)
-- [ADR-0006: Separate declarative C++ API Reference Module](adr/0006-separate-declarative-api-reference.md)
-- [ADR-0007: Local Reference authoring Module with CLI-first Adapter](adr/0007-local-reference-authoring-pipeline.md)
+| 文档 | 作用 | 当前使用方式 |
+|---|---|---|
+| [项目章程](01-PROJECT_CHARTER.md) | 产品目标、范围和约束 | 稳定产品边界 |
+| [软件需求规格](02-SOFTWARE_REQUIREMENTS_SPECIFICATION.md) | 功能与非功能需求 | 需求变更的主入口 |
+| [系统架构](03-SYSTEM_ARCHITECTURE.md) | 当前模块、数据流和部署形态 | 架构事实基线 |
+| [详细设计](04-DETAILED_DESIGN.md) | 关键接口、状态和实现约束 | 开发设计基线 |
+| [接口契约](05-INTERFACE_CONTRACTS.md) | HTTP、命令、查询与事件 | 修改边界时核对 |
+| [数据设计](06-DATA_DESIGN.md) | 内容、工作区和学习记录 | 修改持久化时核对 |
+| [课程与判题规范](07-CURRICULUM_AND_JUDGE_SPECIFICATION.md) | Activity、Evidence 与 Judge | 课程和判题主规范 |
+| [安全与隐私](08-SECURITY_AND_PRIVACY.md) | 本地运行、路径与执行边界 | 安全变更必读 |
+| [测试与质量计划](09-TEST_AND_QUALITY_PLAN.md) | 分层验证和发布门禁 | 测试策略基线 |
+| [开发与运维指南](10-DEVELOPMENT_AND_OPERATIONS_GUIDE.md) | 本地命令和故障处理 | 日常操作入口 |
+| [路线图与验收](11-ROADMAP_AND_ACCEPTANCE_PLAN.md) | 已交付阶段和未来能力门禁 | 里程碑基线 |
+| [需求追踪矩阵](12-REQUIREMENTS_TRACEABILITY_MATRIX.md) | 需求到实现/测试的映射 | 需求变更同步更新 |
 
-## Archive
+## 4. Reference 与作者工具
 
-Documents under `archive/` record earlier exploration and are not normative:
+| 文档 | 作用 | 状态 |
+|---|---|---|
+| [Reference 模块设计](22-API-REFERENCE-MODULE-DESIGN.md) | 阅读、搜索、导航、Playground | 当前设计基线 |
+| [内容编写指南](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md) | 单条目内容结构与事实要求 | 编辑规范 |
+| [Reference 实施计划](24-API-REFERENCE-IMPLEMENTATION-PLAN.md) | Stage 6.2 的分期与验收 | 历史计划，主体已完成 |
+| [作者工具设计与实施计划](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md) | CLI-first 作者流水线 | A0–A2、A4–A7 已验收；A3 实测待完成 |
 
-- [Alternative project designs](archive/PROJECT_DESIGN_OPTIONS.md)
-- [Initial Web architecture proposal](archive/WEB_PLATFORM_ARCHITECTURE.md)
+Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。这些文件保存当时使用的来源与批次证据，不是可以直接复制的上游正文。
 
-If an archived statement conflicts with a current baseline document or accepted ADR, the current baseline and ADR take precedence.
+学习者导向的补充材料也位于 `docs/reference/`：
 
-## Document control
+- [现代 C++ 心智模型](reference/MODERN_CPP_MENTAL_MODEL.md)
+- [所有权与生命周期](reference/OWNERSHIP_AND_LIFETIME.md)
+- [构建、测试与调试](reference/BUILD_TEST_DEBUG.md)
+- [确定性算法测试](reference/DETERMINISTIC_ALGORITHM_TESTING.md)
+- [本地系统实验](reference/LOCAL_SYSTEM_LABS.md)
+- [生产级 C++ 服务证据](reference/PRODUCTION_CPP_SERVICE.md)
 
-- Status values: `Draft`, `In Review`, `Baseline`, `Accepted`, `Superseded`,
-  `Archived`.
-- Changes affecting scope or acceptance require an update to the SRS and traceability matrix.
-- Hard-to-reverse architecture changes require an ADR.
-- Interface changes require versioning and corresponding contract-test updates.
-- Dates use `YYYY-MM-DD`; identifiers remain stable after publication.
+## 5. 架构决策与当前审计
+
+已接受的决策：
+
+- [ADR-0001：Web-first 本地单用户产品](adr/0001-web-first-local-single-user.md)
+- [ADR-0002：共享 Learning Platform 核心](adr/0002-shared-learning-core.md)
+- [ADR-0003：事件日志与可重建投影](adr/0003-event-log-and-sqlite-projections.md)
+- [ADR-0004：Native Judge 优先](adr/0004-native-judge-first.md)
+- [ADR-0005：声明式课程内容](adr/0005-declarative-curriculum-content.md)
+- [ADR-0006：独立声明式 API Reference](adr/0006-separate-declarative-api-reference.md)
+- [ADR-0007：本地 CLI-first Reference 作者流水线](adr/0007-local-reference-authoring-pipeline.md)
+
+当前审计与建议：
+
+- [外部架构对照](66-EXTERNAL-ARCHITECTURE-BENCHMARKS.md)
+- [当前架构审计](67-CURRENT-ARCHITECTURE-AUDIT.md)
+- [项目文件地图与状态](68-PROJECT-FILE-MAP-AND-STATUS.md)
+- [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
+
+`66` 与 `67` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
+
+## 6. 历史交付证据
+
+以下编号段属于历史 Implementation Report：
+
+- `13`–`21`：Stage 0 到 Stage 6.1。
+- `25`–`52`：Stage 6.2 Reference 分期、内容批次与 Playground。
+- `54`–`65`：Stage 6.3 作者工具 A0–A7。
+
+这些文件保留稳定名称，便于已有链接和验收追溯。当前不物理搬迁到子目录，因为批量移动会制造大量链接改动；新增报告应优先按生命周期归类，并在本索引中标明用途。
+
+需要调查某个行为为何存在时，先从相应 ADR 和当前设计开始，再按功能名称用 `rg` 搜索报告。不要把旧报告中的未来时态当成当前待办。
+
+## 7. Archive
+
+`archive/` 记录早期探索，不是规范：
+
+- [备选项目方案](archive/PROJECT_DESIGN_OPTIONS.md)
+- [早期 Web 架构方案](archive/WEB_PLATFORM_ARCHITECTURE.md)
+
+若归档内容与当前 Baseline 或已接受 ADR 冲突，以当前 Baseline 和 ADR 为准。
+
+## 8. 文档维护规则
+
+- 状态使用 `Draft`、`In Review`、`Baseline`、`Accepted`、`Superseded`、`Archived`。
+- 影响范围或验收的改动同步更新 SRS 与追踪矩阵。
+- 难以撤销的架构变化先新增或更新 ADR。
+- 接口变化同步更新契约、详细设计和契约测试。
+- 实现报告只记录已发生且可复现的交付，不用于隐藏未完成工作。
+- 文件地图、路线图和 AI 接手指南在模块、脚本、状态或优先级变化后同步更新。
+- 日期使用 `YYYY-MM-DD`；发布后保持 Document ID 稳定。
+
+本轮文档信息架构与导航由 **GPT-5.6 Sol** 整理。

@@ -1,326 +1,122 @@
-# Detailed Design
+# 详细设计
 
 | Field | Value |
 |---|---|
 | Document ID | DD-001 |
-| Version | 2.0 |
+| Version | 3.0 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Prepared by | GPT-5.6 Sol |
+| Last updated | 2026-09-09 |
 
-## 1. Package layout
+## 1. 代码布局
 
 ```text
 apps/
-  web/                      React Web Adapter
-  server/                   Fastify HTTP Adapter and composition root
-  cli/                      CLI Adapter
+  web/                 React/Vite 学习与 Reference 适配器
+  server/              Fastify HTTP 适配器和生产组合根
+  cli/                 学习 CLI 与 Reference Authoring CLI
 modules/
-  learning-platform/        teaching rules and orchestration
-  curriculum/               content loading and validation
-  reference/                C++ Reference lookup, navigation, and search
-  reference-authoring/      local Reference drafts, checks, cache, and publication
-  workspace/                learner files and snapshots
-  judge/                    jobs, workers, stages, reports
-  learning-record/          events and projections
+  learning-platform/   学习规则和跨模块编排
+  curriculum/          课程加载、验证和私有判题合成
+  workspace/           学习者文件、revision 和快照
+  judge/               C++ 编译、运行、测试与报告
+  learning-record/     事件与可重建投影
+  reference/           Reference 激活、搜索、导航与查询
+  reference-authoring/ 草稿、事实、生成、检查、修复和发布
 packages/
-  contracts/                versioned commands, queries, DTOs, events
-  content-schema/           JSON Schemas and validators
-  reference-schema/         Reference Entry schemas and validators
-  ui/                       visual system and typed lesson blocks
-curriculum/                 public versioned content; no private Judge inputs
-reference-content/          public versioned Reference Entries and examples
-judge-private/              server-only pedagogical-test registry
-student-workspaces/         learner-editable files
-data/                       events, projections, snapshots, logs
+  contracts/           版本化命令、查询、DTO 与事件
+  content-schema/      Curriculum JSON Schema
+  reference-schema/    Reference JSON Schema
+  ui/                  当前为空的预留包
+curriculum/            生产课程内容
+reference/             生产 Reference 内容和质量基线
+judge-private/         Server-only 私有判题注册表
 ```
 
-Production executable entry points are composition roots: `apps/server` wires
-HTTP behavior and `apps/cli` wires local commands. Modules accept dependencies
-and do not instantiate production Adapters internally.
+生产内容目录是 `reference/`，不是旧文档中曾出现的 `reference-content/`。运行时学习数据默认位于 `.cpp-learn/`，不是根目录的早期 `student-workspaces/` 设计名称。
 
-### Reference Authoring Module seam
+## 2. Learning Platform
 
-Phase A0 exposes `prepare({ target })` through the `ReferenceAuthoring`
-Interface. It validates a stable Entry target, selects a controlled authoring
-profile, scaffolds versioned draft/fact/source/report artifacts plus Markdown
-and example files, resumes an identical draft, and rejects identity conflicts.
-It cannot publish canonical Reference content. Draft repositories atomically
-reserve an Entry ID: concurrent prepares either resume the same target or return
-a conflict without replacing the first reservation.
-
-The in-memory draft repository Adapter defensively copies on reads and atomic
-reservations. The filesystem Adapter implements the same Interface with
-temporary-directory reservation, confined file discovery, protected canonical
-roots, and revision-plus-file-snapshot compare-and-swap for check commits.
-Phase A1 adds `check({ draftId })` behind the same Module seam. Catalog-backed
-prepare emits a reviewable proposal and related context; check returns hard
-failures separately from a risk-ranked warning queue and rejects source-policy,
-active/historical slug, and stale-snapshot conflicts. The CLI supplies
-filesystem, catalog, canonical quality, and native compiler Adapters but owns no
-validation decisions. The later Web Author Console must reuse this Interface.
-
-Phase A2 adds `publish({ draftId, expectedRevision, mode })` to the same
-Interface. A ready report records a digest of every author-controlled input;
-publication rejects a changed digest, stale revision, or non-ready report.
-Example results use a disposable content-addressed cache keyed by the compiler,
-resolved standard flag, rule versions, source, input, and expected outcome.
-Preview is CLI Adapter sugar over `check` and the production React/GFM renderer.
-The filesystem publication Adapter validates a complete sibling Reference tree,
-compares planned canonical digests again, then swaps the tree with rollback. Git
-commit and release remain outside the Module.
-
-## 2. Learning Platform Module
-
-### Interface invariants
-
-- Commands with side effects require a unique `commandId`.
-- Replaying a successful `commandId` returns the prior result and produces no duplicate events.
-- Queries do not mutate state.
-- `events(jobId)` preserves event order for one job but makes no ordering promise across jobs.
-- Activity and Concept identifiers are stable strings; version changes do not change identifiers.
-
-### Command handling
+### 2.1 公共接口
 
 ```ts
-type CommandEnvelope<C extends LearningCommand> = {
-  schemaVersion: 1;
-  commandId: string;
-  issuedAt: string;
-  command: C;
-};
-```
-
-Processing order:
-
-1. Validate contract and caller preconditions.
-2. Read required Curriculum, Workspace, and projection state.
-3. Calculate a deterministic decision.
-4. Invoke external Module behavior if required.
-5. Append resulting Learning Events atomically.
-6. Return a versioned result.
-
-Judge completion is handled as an internal command with the immutable Judge Report, preventing Web callbacks from writing Evidence directly.
-
-### Session selection
-
-Priority:
-
-1. Incomplete blocking Activity.
-2. Overdue Review whose prerequisite state is still valid.
-3. Current Project Milestone.
-4. Next unlocked required Activity fitting available time.
-5. Optional enrichment Activity.
-
-Tie-breaking must be deterministic and recorded in the session decision event.
-
-### Concept transition rules
-
-Concept transitions are derived using an Evidence policy attached to the Activity version. A transition may require several Evidence sources. The rules engine returns both the new state and a human-readable explanation.
-
-## 3. Curriculum Module
-
-### Public model
-
-```ts
-interface Activity {
-  id: ActivityId;
-  version: number;
-  kind: "lesson" | "exercise" | "review" | "project-milestone";
-  title: string;
-  project?: {
-    id: ProjectId;
-    title: string;
-    milestone: number;
-    milestoneCount: number;
-    portfolioOutcome: string;
-  };
-  estimatedMinutes: number;
-  conceptIds: ConceptId[];
-  prerequisiteIds: ActivityId[];
-  content: ContentDocument;
-  workspace?: WorkspaceContract;
-  judge?: PublicJudgeContract;
-  evidencePolicy: EvidencePolicy;
+interface LearningPlatform {
+  dispatch<C extends LearningCommand>(
+    command: C,
+  ): Promise<CommandResultFor<C>>;
+  query<Q extends LearningQuery>(query: Q): Promise<QueryResultFor<Q>>;
+  events(jobId: JobId): AsyncIterable<PlatformEvent>;
 }
 ```
 
-Validation returns all detected errors in one report where possible. Catalog activation is all-or-nothing: invalid required content cannot create a partially active Track.
+`dispatch` 是改变学习状态的唯一主入口，`query` 不得产生副作用，`events` 为单个 Job 提供有序事件流。相同幂等标识的成功命令不得重复追加事件。
 
-The filesystem Adapter loads public Activity manifests and the server-only `judge-private/tests.json` registry separately. It rejects a public manifest containing `privateTests`, rejects private entries for unknown Activities, merges them only inside the Curriculum Module, and maps browser/API responses through the public model above.
+### 2.2 关键不变量
 
-### Content versioning
+- Run 只产生执行结果，不改变 Concept 状态。
+- Grade 依据 Activity 版本和 Evidence Policy 生成 Evidence。
+- 提示、完整答案暴露和延迟复习会影响 Evidence 独立性。
+- Judge Report 是不可变输入；HTTP 回调不能直接写学习证据。
+- Session 选择、复习到期和 Concept 转换必须可解释、可重放。
 
-- Patch: wording, references, and non-semantic hint corrections.
-- Minor activity version: starter or public-test change that may affect Attempts.
-- Major schema version: breaking manifest format change with migration.
-- Historical Attempts retain the content and judge versions used at the time.
-- Adding or changing Project identity, Milestone sequence, Workspace identity, or portfolio outcome is semantic and requires an Activity version increment.
+## 3. Curriculum
 
-## 4. Workspace Module
+每个 Activity 位于 `curriculum/activities/<activity-id>/`，包含 manifest、教学 Markdown、starter 和公开资源。`curriculum/catalog.json` 决定激活顺序，70 个 Activity 在启动前整体验证。
 
-### Interface
+Activity 类型包括 lesson、exercise、review 与 project-milestone。它声明前置关系、Concept、预计时长、Workspace、公开 Judge 契约和 Evidence Policy。
 
-```ts
-interface Workspace {
-  open(activityId: ActivityId): Promise<WorkspaceView>;
-  save(request: SaveWorkspaceRequest): Promise<SaveWorkspaceResult>;
-  snapshot(activityId: ActivityId): Promise<SourceSnapshot>;
-  diff(from: SnapshotId, to: SnapshotId): Promise<WorkspaceDiff>;
-}
-```
+私有测试从 `judge-private/tests.json` 单独加载，只在 Curriculum 模块内部与公开 Activity 合成。公开响应、日志、学习者导出和 Teacher Pack 都不能包含私有 oracle 或测试输入。
 
-`WorkspaceView` exposes both the mutable learner `files` and an immutable copy
-of the current Activity's `starterFiles`. The starter copy is a presentation
-reset baseline; it is never persisted back into learner files by `open`.
+版本规则：文案修正可保持 Activity 版本；starter、公开测试、Project identity、Milestone 顺序或 Evidence 语义变化必须提升相应内容版本。
 
-### Invariants
+## 4. Workspace
 
-- Starter initialization is idempotent.
-- Save paths must be relative, normalized, and listed as editable.
-- Symlinks, `..`, absolute paths, and device paths are rejected.
-- Saves require `baseRevision`; a mismatch returns `revision_conflict` without overwriting.
-- Snapshots include all build inputs allowed by the Workspace contract and are immutable.
+Workspace 负责打开、保存、快照和差异。学习者可编辑文件与不可变 starter 基线同时返回，后者只用于浏览器中的重置，不会在 open 时覆盖现有代码。
 
-### Upgrade behavior
+保存请求必须携带 `baseRevision`。revision 不匹配时返回 conflict，并保持磁盘内容不变。路径必须是 manifest 允许的相对路径，拒绝绝对路径、父目录穿越、设备路径和越界符号链接。
 
-Curriculum upgrades may add new read-only support files but never overwrite an existing editable file. Conflicts produce a migration report requiring explicit resolution.
+Run 与 Grade 都基于保存后的不可变 Source Snapshot。课程升级可以增加只读支持文件，但不能静默替换学习者已经编辑的文件。
 
-## 5. Judge Module
+## 5. Judge
 
-### Internal state machine
+### 5.1 状态
 
 ```text
 queued → preparing → compiling → testing → analyzing → completed
-   │         │            │          │          │
-   └─────────┴────────────┴──────────┴──────────┴→ cancelled / system_error
+   └──────────────────────────────────────→ cancelled / system_error
 ```
 
-State is monotonic. A completed, cancelled, or failed job is terminal.
+终态不可逆。阶段返回结构化数据，不直接追加学习事件。
 
-### Stage interface
+### 5.2 执行规则
 
-```ts
-interface JudgeStage {
-  readonly kind: JudgeStageKind;
-  execute(context: JudgeStageContext): Promise<JudgeStageResult>;
-}
-```
+- 使用参数数组启动工具，不拼接 shell 命令。
+- 每个 Job 使用独立临时目录和最小环境。
+- 分别限制 stdout、stderr、执行时间与并发。
+- 超时或取消时终止进程组并清理临时目录。
+- 记录工具链指纹、source digest、flags、exit code、signal 和截断状态。
+- 编译器或运行环境缺失属于 system/toolchain 问题，不判为学习者错误。
 
-Stages return data; they do not append learning events. The pipeline stops after a blocking failure unless the specification marks the following stage safe and informative.
+固定 profile 包括直接 C++20 编译和 CMake/CTest 工程。受控能力可以注入 Node、Git 与 Web 前端测试 harness，但 Activity 不能传入任意可执行路径、安装命令或环境变量名。
 
-### Process execution
+确定性属性测试记录 seed、case index 与可重放输入。性能测试比较同机相对规模和中位数，不使用跨机器固定毫秒阈值。
 
-- Use argument arrays, never a shell command string.
-- Use a per-job temporary root and minimal environment.
-- Capture stdout and stderr separately with byte limits.
-- Enforce wall-clock timeout and terminate the process group.
-- Apply the same timeout, cancellation, and output limit to compiler/build-tool version inspection.
-- Record exit code, signal, duration, and truncation.
-- Delete transient artifacts after report persistence, except explicitly retained diagnostics.
+### 5.3 安全界限
 
-### Report determinism
+Native Judge 通过目录、参数、时间和输出限制降低风险，但不是容器或操作系统级强隔离。只运行本机学习者代码，不接受公网多租户执行。
 
-Reports include source digest, activity/judge version, compiler fingerprint, CMake/CTest versions when applicable, build flags, deterministic seeds, stage results, and redacted feedback. Same inputs under the same toolchain should produce semantically equivalent results.
+## 6. Learning Record
 
-Generated integer-vector properties use an Activity-owned 32-bit seed. A failed case records the seed, zero-based case index, and generated stdin so the Learner can replay it. The public Activity response omits the generator and oracle configuration.
+学习记录以带 schemaVersion、事件 ID 和因果 ID 的追加事件为权威数据。启动时扫描到最后一个有效事件；不完整尾部需隔离，再从事件重建投影。
 
-Relative performance checks first verify declared output for baseline and scaled inputs, alternate both against the same executable and temporary environment, then compare median durations. They never use a cross-machine absolute millisecond threshold.
+投影覆盖 Dashboard、当前 Activity、Workspace revision、Concept/Evidence、Review Queue、Attempts、Hints、Projects 与幂等回执。投影是可丢弃缓存，迁移失败时应重建而不是修改历史事件。
 
-The fixed build profiles are:
+导出包含学习者拥有的工作区、事件与反思，不包含 Curriculum 私有判题定义。恢复必须先验证归档结构和版本，再以可回滚方式安装。
 
-- `direct`: C++20 compilation with optional `-pthread` and allowlisted `sqlite3` linkage.
-- `cmake`: clean configure, option-safe named application and test targets, optional CTest, then the normal Judge tests; reports include CMake and CTest version fingerprints.
+## 7. Reference
 
-A CMake profile may request a closed set of runtime capabilities: `node` for executable TypeScript contracts, `git` for an isolated diagnostic-history fixture, and `web-frontend` for the platform-owned Vite/React build-and-mount harness. The composition root/Judge resolves each identifier to a trusted absolute executable or harness path and injects it as a CMake definition using an argument array. Activity content cannot supply or override paths, environment-variable names, package-install commands, or arbitrary configure arguments. Before CMake configure, the bounded inspection runner obtains Node/Git versions and a Web harness fingerprint containing its SHA-256 digest plus pinned Vite/React versions. Missing, timed-out, or incompatible capabilities produce a system/toolchain verdict rather than a Learner test failure, and all fingerprints are persisted in the immutable Judge Report. The Web harness builds the learner's clean Workspace into a disposable directory, mounts its component test through Vite SSR, and removes its output afterward.
-
-System labs receive a unique temporary root through `cwd` and `TMPDIR`. Child process groups are killed on timeout/cancellation, and the root is recursively removed after every terminal report.
-
-## 6. Learning Record Module
-
-### Append protocol
-
-- Events are newline-delimited JSON with schema version and checksum.
-- Append is serialized through one writer.
-- Events contain unique IDs and causal command/job IDs.
-- Startup scans to the last valid event; a corrupt partial tail is quarantined before normal operation.
-- Projection updates occur after durable append. Failed projection updates are repaired by rebuild.
-
-### Projections
-
-- Dashboard summary.
-- Active Activity and Workspace revision.
-- Concept state and Evidence history.
-- Due Review queue.
-- Attempts and Hint history.
-- Project and Milestone state.
-- Idempotency receipts.
-
-Projection schemas are disposable and carry their own migration version.
-
-## 7. Presentation Adapters
-
-### Web Adapter
-
-The Web Adapter validates transport contracts, translates them to Learning Commands/Queries, and maps results to HTTP. It may manage authentication in a future multi-user product, but no teaching rule belongs in routes or React state.
-
-The Lesson editor formats C/C++ files with a token-aware, deterministic
-formatter. Automatic presentation formatting is limited to a Workspace whose
-editable files still exactly match its starter baseline, so existing learner
-code is not silently rewritten. Explicit Format and Reset actions update only
-the browser buffer, clear stale Judge output, update unsaved-change state, and
-require Save, Run, or Grade before persistence. Reset requires confirmation.
-
-### CLI Adapter
-
-The CLI formats the same result types for humans or emits unmodified JSON with `--json`. Exit codes reflect transport/command success, not the detailed learning verdict alone.
-
-### SSE Adapter
-
-SSE events contain a monotonically increasing sequence for one job. Reconnection sends `Last-Event-ID`; the server replays retained events or returns a final report if the job is complete.
-
-## 8. Teacher integration
-
-Initial integration uses a generated Teacher Pack and structured observation file. A future MCP Adapter may call the same Learning Platform Interface. Teacher input is considered untrusted qualitative data and requires schema validation and an applicable rubric.
-
-## 9. Error model
-
-```ts
-type PlatformErrorCode =
-  | "validation_error"
-  | "not_found"
-  | "precondition_failed"
-  | "revision_conflict"
-  | "activity_locked"
-  | "job_not_running"
-  | "toolchain_unavailable"
-  | "content_invalid"
-  | "record_unavailable"
-  | "internal_error";
-```
-
-Errors carry `correlationId`, safe details, and a retry classification. Raw process output is not placed in generic error messages.
-
-## 10. Configuration
-
-Configuration precedence:
-
-1. CLI flag.
-2. project-local configuration file.
-3. environment variable allowlist.
-4. safe default.
-
-Paths are resolved once by the composition root and passed as explicit dependencies.
-
-## 11. Reference Module
-
-The Reference Module is a read-only content Module separate from Curriculum and
-Learning Platform orchestration. Under the accepted
-[ADR-0006](adr/0006-separate-declarative-api-reference.md), it owns Reference Entry activation,
-navigation, lookup, deterministic search, source metadata, and relationship
-resolution.
-
-### Interface
+### 7.1 公共接口
 
 ```ts
 interface ReferenceCatalog {
@@ -332,75 +128,120 @@ interface ReferenceCatalog {
 }
 ```
 
-The filesystem Adapter reads a catalog plus JSON manifests, Markdown, and
-example files. An in-memory Adapter supplies Module and caller tests. Catalog
-activation validates the Entry/category graph, builds navigation and a bounded
-in-memory search index, and publishes the new catalog atomically. After
-Curriculum and Reference activation, the composition root validates Activity
-`referenceIds` and supplies the Reference query view with an immutable reverse
-Activity-link index. A failed reload retains the previous valid catalog.
+`reference/catalog.json` 与 120 个 `entry.json`、`content.md`、示例文件组成声明式目录。激活时验证 ID、slug、类别、关系、来源、Markdown 路径、示例和 Activity 反向链接，再原子发布内存索引。
 
-### Invariants
+搜索索引覆盖 ID、symbol、header、title、alias、category、heading 和正文 token。精确 symbol、header、ID、alias 与 title 的权重高于前缀、标题、类别和正文；相同分数使用确定性排序。
 
-- Entry IDs are stable; IDs and active slugs are unique.
-- Content and example paths are relative, normalized, and confined to the
-  configured Reference root.
-- Entry relationships resolve before Reference activation; Activity
-  `referenceIds` resolve in composition before content readiness succeeds.
-- Search ranking and tie-breaking are deterministic.
-- Markdown is declarative and rendered through the existing safe renderer;
-  arbitrary HTML, MDX, and scripts are rejected.
-- Runtime Reference queries never write Workspace or Learning Record state.
-- Standard status and local toolchain verification are represented separately.
-- Standard filters use availability intervals rather than exact introduction
-  versions; deprecation remains visible and removal ends the interval.
-- Active and historical slugs resolve to a canonical slug before Entry lookup;
-  redirect records target stable Entry IDs and cannot form chains.
+历史 slug 先解析到稳定 Entry ID，再返回 canonical slug。重定向不能形成链或环。标准版本用可用区间表达，deprecated 与 removed 分开表示。
 
-### Search implementation
+Markdown 通过 React Markdown 与 GFM 安全呈现。内容不支持任意 HTML、MDX 或脚本。表格、代码块、锚点与内部链接必须同时经过内容检查和浏览器测试。
 
-Activation normalizes and indexes Entry ID, symbol, header, title, aliases,
-categories, headings, and plain-text body tokens. Ranking favors exact symbol,
-header, ID, alias, and title matches before prefix, heading, category, and body
-matches. Version 1 uses curated aliases rather than fuzzy edit distance.
+### 7.2 Playground
 
-Search accepts bounded text plus closed kind, category, standard, and local-
-verification filters. It returns summaries only; Entry Markdown is returned by
-`getEntry`.
+可运行示例接受编辑后的 source，但标准、stdin 和示例身份来自已发布 manifest。浏览器先创建唯一 run ID，Server 再登记取消控制器和并发名额。
 
-### Degraded capability
+Playground 默认只允许一个本地执行。重复活跃 ID 返回 conflict，繁忙返回 429，取消请求中止对应 Runner。无论成功、编译失败、超时还是取消，都不得写入学习记录。
 
-Reference readiness is reported through bootstrap. Missing or invalid
-Reference content disables Reference routes with a safe capability error but
-does not block Dashboard, Activity, Workspace, Run, or Grade startup.
+## 8. Reference Authoring
 
-### Reference Playground seam
+### 8.1 当前接口事实
 
-A published `run` Reference Example may create a temporary, non-Activity source
-root and use a closed native Judge execution profile. The Playground has no
-Activity identity, private tests, Attempt, Evidence policy, Concept transition,
-or Review effect. The first tracer bullet accepts edited source only; standard
-and stdin come from the published Example, while compiler flags, environment,
-working paths, time, output, and global concurrency remain Adapter-owned.
+最初的 prepare/check/publish 深模块已经扩展为 16 个兼容操作，覆盖 repair、batch、run、research、context、generation、review、measure 和发布生命周期。
 
-The browser creates a UUIDv4-derived `ref_run_*` identity before it starts the
-synchronous execution request. Before its first asynchronous Reference lookup,
-the HTTP Adapter derives an immutable content-addressed non-Activity Source
-Snapshot from the accepted source and registers the run identity with an
-`AbortController`. It rejects an active duplicate with
-`409 playground_run_id_conflict`, admits one native Playground execution by
-default, and returns `429 playground_busy` with `Retry-After` when occupied. A
-separate cancellation request aborts the matching Runner signal while the
-original request completes with the terminal `cancelled` result.
+当前 `ReferenceAuthoring` 门面包含：
 
-The Runner tries a documented draft-standard alias only when the compiler
-explicitly rejects the canonical flag, and returns infrastructure and cleanup
-failures as structured `system_error` outcomes. Browser state is keyed by Entry
-plus Example so same-named examples cannot share source or results across
-navigation. Reset restores published source while explicit discard also closes
-the editor; dirty discard requires confirmation. Compile errors, runtime errors,
-timeout, output-limit, cancellation, reset/discard, and narrow-screen behavior
-are covered through the real browser boundary.
+```text
+advanceRepair          advanceBatch          advanceRun
+proposeSourceFacts     buildContext          buildRepairPlan
+buildGenerationTemplate                    measureBatch
+reviewGeneratedClaims  applyGenerationBundle
+applyGeneratedSection  applyGeneratedSummary
+applyGeneratedExample  prepare  check  publish
+```
 
-The complete model, rollout, and rollback are defined in [C++ API Reference
-Module Design](22-API-REFERENCE-MODULE-DESIGN.md).
+CLI 面向用户的命令包括 prepare、context、template、research、repair-plan、repair、batch、run、apply-generation、measure、check、preview 和 publish。CLI 只负责参数、文件输入和呈现，不拥有正确性规则。
+
+### 8.2 草稿模型
+
+每个 draft 位于 `.cpp-learn/authoring/<draft-id>/`，主要工件包括：
+
+| 工件 | 责任 |
+|---|---|
+| `draft.json` | 身份、kind、revision、目标与状态 |
+| `facts.json` | signature、参数、返回、错误、复杂度、生命周期等事实组 |
+| `sources.json` | 来源类别、URL、验证日期与事实映射 |
+| `entry.json` | 候选 Reference manifest |
+| `content.md` | 项目原创教学正文 |
+| `examples/*.cpp` | 最小与真实场景示例 |
+| `report.json` | hard failure、warning、review queue 和 digest |
+| `repair/*.json` | 固定预算、版本绑定的修复尝试证据 |
+
+filesystem draft repository 使用 revision 与完整文件快照做 compare-and-swap。相同 Entry ID 的并发 prepare 只能恢复同一目标或返回 conflict，不能覆盖已有保留。
+
+### 8.3 生成与事实边界
+
+AI Adapter 接受 provider-neutral JSON，不保存模型密钥，也不把供应商协议放入领域模块。上下文由当前 draft、profile、Fact Sheet、Source Ledger 和邻近已发布页面重建。
+
+每个生成 claim 必须映射到允许的事实组。超出 context allowlist 的事实进入 unverified queue，不能满足 publish gate。示例还必须经过真实编译与预期结果检查。
+
+`sources.json` 保存引用、分类和作者笔记，不保存整页镜像。cppreference、标准草案和官方库文档用于事实核验与覆盖参考，最终解释性文字必须由本项目原创。
+
+### 8.4 检查、修复与发布
+
+check 组合 Schema、路径、来源、事实覆盖、profile、关系、slug、Markdown、质量和示例验证。hard failure 阻止发布；warning 进入按风险排序的人审队列。
+
+示例缓存 key 包含编译器指纹、标准 flag、规则版本、source、stdin 与 expected outcome。任何相关输入变化都使缓存失效。
+
+repair plan 只把受支持的确定性 finding 转成有限目标，固定最多三次尝试。重命名 repair ID 不能重置预算，应用修复仍需经过事实、claim、编译、revision 和 receipt 检查。
+
+publish 绑定 draft revision、作者输入摘要、检查报告与 canonical target 摘要。它先在 sibling tree 中验证完整 Reference，再原子交换并支持回滚；Git commit 与发布验收仍由维护者显式完成。
+
+### 8.5 当前设计债务
+
+16 操作兼容门面和超过 5,000 行的主要实现文件降低了局部性。后续应按 Draft、Evidence、Generation、Repair/Batch、Validation/Publication 生命周期在内部拆分，同时保持外部 CLI 行为和 artifact schema 兼容。
+
+## 9. HTTP Adapter
+
+当前 Fastify v1 路由按能力分为：
+
+| 路由族 | 主要能力 |
+|---|---|
+| `/api/v1/health`、`bootstrap` | 健康、能力与版本 |
+| `/api/v1/dashboard`、`activities` | 课程导航与活动详情 |
+| `/api/v1/workspaces` | 打开与 revision-aware 保存 |
+| Activity `runs`、`grades` | 执行与判题 |
+| `hints`、`reflections` | 学习互动 |
+| `reviews`、`progress`、`concepts`、`attempts` | 学习记录查询 |
+| `teacher-packs`、`teacher-observations` | 教师协作工件 |
+| `jobs`、SSE events | 状态、取消与事件流 |
+| `exports`、`restores` | 本地数据备份 |
+| `/api/v1/reference/*` | 目录、搜索、slug、Entry 与 Playground |
+
+HTTP 适配器负责 transport 校验、状态码、origin/loopback 策略与错误映射，不拥有学习、Reference 或判题规则。当前全部注册集中在 `apps/server/src/server.ts`，未来应按领域路由组拆分。
+
+## 10. Web Adapter
+
+Web 包含学习 Dashboard、Activity 工作台、Reference 浏览器与 Playground。URL 和 history 是导航状态的一部分；直接链接、前后切换、刷新和浏览器回退必须保持一致。
+
+桌面训练页让课程内容与编辑器独立滚动；窄屏退化为无横向溢出的单栏。编辑器中的 Format 与 Reset 只改变浏览器缓冲区，Save、Run 或 Grade 才持久化。
+
+Reference 应保持独立可加载。其不可用状态不能覆盖学习 Dashboard。Reference 文章的表格使用 GFM renderer，并在桌面与 390px 视口验证。
+
+`App.tsx` 和 `LessonWorkspace.tsx` 当前承担多个工作流。后续应以学习者工作流为边界抽取 view model 和状态，而不是创建大量一文件一组件的浅层包装。
+
+## 11. 配置与错误
+
+配置优先级为 CLI flag、项目本地配置、允许列表中的环境变量、安全默认值。路径在组合根中解析一次，再作为显式依赖传给模块。
+
+错误必须包含安全 code、correlation ID、可公开 details 与重试分类。原始进程输出不能塞入通用 internal error；学习者错误、内容错误与基础设施错误要分开。
+
+## 12. 验证层级
+
+- JSON Schema 和内容脚本验证声明式输入。
+- Vitest 覆盖模块、适配器、契约、恢复与失败路径。
+- Reference 质量基线实施 ratchet，防止已审计条目回退。
+- Playwright 通过真实浏览器覆盖学习、Reference 和 Playground 主路径。
+- `npm run build` 验证 TypeScript 与生产 Web 构建。
+- `npm run check` 是合并前全仓门禁。
+
+本轮详细设计由 **GPT-5.6 Sol** 依据当前代码接口和目录结构重写。
