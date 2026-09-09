@@ -49,8 +49,9 @@ full check and outstanding generated-content human review still blocks release.
 
 ## 4. Finding coverage and limits
 
-The first repair policy handles canonical content-quality areas, TODO bodies in
-known profile sections, absent required sections, missing required examples,
+The first repair policy handles canonical content-quality areas, including the
+Header-specific quick-information, direct-include, and facility-map checks;
+TODO bodies in known profile sections, absent required sections, missing required examples,
 missing example source files, and deterministic example-validation failures.
 Metadata-level example gaps create example targets rather than unrelated prose
 repairs. New example targets use C++20 or the Entry's later `since` standard. It does not invent repairs for
@@ -71,7 +72,7 @@ digests stay explicit in the plan result for manual or infrastructure work.
 Final repository evidence: 104 Markdown documents, 70 Activity
 starters/references/error mutations, 120 Reference Entries with 226 locally
 verified examples, quality coverage 116/120 with zero reviewed gaps, 36 test
-files with 349 tests, and a passing production Web build.
+files with 350 tests, and a passing production Web build.
 
 ## 6. Next phase
 

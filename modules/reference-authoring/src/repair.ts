@@ -195,13 +195,16 @@ const SECTION_FACT_KINDS: Readonly<
 };
 
 const AREA_HEADINGS: Readonly<Record<string, readonly string[]>> = {
-  selection: ["什么时候使用", "如何选择"],
+  "quick-info": ["快速信息"],
+  selection: ["什么时候使用", "如何选择", "何时直接包含"],
   interface: ["声明与重载", "快速信息", "类型与所有权"],
   parameters: ["参数与前置条件"],
   returns: ["返回值"],
   complexity: ["复杂度"],
   errors: ["异常与错误"],
   lifetime: ["生命周期与失效", "类型与所有权"],
+  "direct-include": ["何时直接包含"],
+  "facility-map": ["设施地图"],
   mistakes: ["常见误区"],
   javascript: ["与 JavaScript 对照"],
 };

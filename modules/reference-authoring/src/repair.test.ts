@@ -9,17 +9,29 @@ import {
   createFilesystemReferenceDraftRepository,
   createInMemoryReferenceDraftRepository,
   createReferenceAuthoring,
+  type AuthoringFactKind,
   type AuthoringFinding,
   type DraftWorkspace,
 } from "./index.js";
 
-async function repairFixture(findings: readonly AuthoringFinding[]) {
+async function repairFixture(
+  findings: readonly AuthoringFinding[],
+  options: {
+    readonly target?: {
+      readonly entryId: string;
+      readonly kind: "member" | "header";
+      readonly slug: string;
+      readonly title: string;
+    };
+    readonly verifiedFactKinds?: readonly AuthoringFactKind[];
+  } = {},
+) {
   const seed = createReferenceAuthoring({
     drafts: createInMemoryReferenceDraftRepository(),
     clock: () => new Date("2026-09-08T08:00:00.000Z"),
   });
   const prepared = await seed.prepare({
-    target: {
+    target: options.target ?? {
       entryId: "vector-insert",
       kind: "member",
       slug: "standard-library/containers/vector/insert",
@@ -38,7 +50,9 @@ async function repairFixture(findings: readonly AuthoringFinding[]) {
   const facts = {
     ...prepared.workspace.facts,
     groups: prepared.workspace.facts.groups.map((group) =>
-      group.kind === "complexity" || group.kind === "examples"
+      (options.verifiedFactKinds ?? ["complexity", "examples"]).includes(
+        group.kind,
+      )
         ? {
             ...group,
             status: "verified" as const,
@@ -270,6 +284,52 @@ describe("[T-AUTH-014] bounded quality repair loop", () => {
         (target) => target.kind === "section" && target.heading === "复杂度",
       ),
     ).toHaveLength(1);
+  });
+
+  it("maps deterministic header quality areas to bounded section repairs", async () => {
+    const areas = [
+      "quick-info",
+      "selection",
+      "direct-include",
+      "facility-map",
+    ] as const;
+    const findings: AuthoringFinding[] = areas.map((area) => ({
+      severity: "warning",
+      risk: "medium",
+      code: "content-quality",
+      path: `content.md/${area}`,
+      message: `Canonical Reference quality area ${area} is incomplete`,
+    }));
+    const { authoring } = await repairFixture(findings, {
+      target: {
+        entryId: "header-vector",
+        kind: "header",
+        slug: "standard-library/headers/vector",
+        title: "<vector>",
+      },
+      verifiedFactKinds: [
+        "scope",
+        "availability",
+        "direct_include",
+        "facility_map",
+      ],
+    });
+
+    const result = await authoring.buildRepairPlan({
+      draftId: "header-vector",
+      repairId: "header-vector-quality",
+    });
+    if (!result.ok || result.status !== "repairable") {
+      throw new Error(`repair plan missing: ${JSON.stringify(result)}`);
+    }
+
+    expect(result.plan.targets).toMatchObject([
+      { kind: "section", heading: "快速信息" },
+      { kind: "section", heading: "何时直接包含" },
+      { kind: "section", heading: "设施地图" },
+    ]);
+    expect(result.plan.targets).toHaveLength(3);
+    expect(result.plan.ignoredFindingDigests).toHaveLength(0);
   });
 
   it("does not reset persisted attempts when the caller changes repairId", async () => {
