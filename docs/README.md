@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-INDEX |
-| Version | 6.0 |
+| Version | 6.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Prepared by | GPT-5.6 Sol |
@@ -91,10 +91,11 @@ Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。�
 
 - [外部架构对照](66-EXTERNAL-ARCHITECTURE-BENCHMARKS.md)
 - [当前架构审计](67-CURRENT-ARCHITECTURE-AUDIT.md)
+- [当前安全审计](71-CURRENT-SECURITY-AUDIT.md)
 - [项目文件地图与状态](68-PROJECT-FILE-MAP-AND-STATUS.md)
 - [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
 
-`66` 与 `67` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
+`66`、`67` 与 `71` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
 
 ## 6. 历史交付证据
 

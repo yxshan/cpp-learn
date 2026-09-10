@@ -3,14 +3,19 @@
 | Field | Value |
 |---|---|
 | Document ID | SEC-001 |
-| Version | 1.3 |
+| Version | 1.4 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-06 |
+| Last updated | 2026-09-09 |
 
 ## 1. Security posture
 
 The initial product is a single-user local application. The Learner and curriculum repository are trusted to a limited degree; compiled programs are treated as unreliable and potentially harmful. Native execution is risk-reduced but is not a security sandbox.
+
+The implementation status and unresolved risks at commit `8f99f7e` are recorded
+in [the current security audit](71-CURRENT-SECURITY-AUDIT.md). Controls in this
+document are requirements; the audit distinguishes controls already implemented
+from controls that remain planned.
 
 ## 2. Protected assets
 
@@ -62,12 +67,12 @@ Controls:
 
 - Wall-clock timeout and process-group termination.
 - stdout/stderr byte limits.
-- Queue concurrency limits.
+- A bounded queue and shared concurrency limit across every Judge entry point.
 - Input and file-size limits.
 - Optional CPU/memory/container controls when the container Adapter is available.
 - Judge health monitoring and back-pressure.
 
-Native macOS mode cannot reliably prevent every fork bomb or host read. Only trusted learner code is permitted in this mode.
+Native macOS mode currently has no shared Activity admission limit and cannot reliably prevent every fork bomb, memory exhaustion, or host read. Only trusted learner code is permitted in this mode. Reference Playground has bounded admission; Activity Run/Grade still requires the shared control described above.
 
 ### Host filesystem or network access
 
@@ -141,7 +146,7 @@ Controls:
 - Bind to `127.0.0.1` by default.
 - Reject non-loopback binding without explicit configuration and warning.
 - Validate `Origin` for state-changing requests.
-- Use a random per-start local session token if cross-origin risk requires it.
+- Add a random per-start local session token before the trust scope expands; it is not implemented in the current baseline.
 - Do not enable permissive CORS.
 
 ## 5. Privacy
@@ -166,7 +171,8 @@ Logs should use identifiers and summaries instead of full source. Crash reports 
 - Private-data redaction tests for HTTP, SSE, logs, Teacher Packs, and exports.
 - Loopback binding and origin-validation tests.
 - Event tampering and duplicate-report tests.
-- Dependency and secret scanning in CI.
+- Dependency and secret scanning in CI. This remains open in the current
+  implementation; see SEC-F04 in the current security audit.
 - Reference path, Markdown, external-link, relationship, attribution, search-
   bound, and no-learning-state-mutation tests.
 

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | AI-HANDOFF-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Prepared by | GPT-5.6 Sol |
@@ -59,7 +59,8 @@ npm run test:e2e:production
 4. [项目文件地图](68-PROJECT-FILE-MAP-AND-STATUS.md)
 5. [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
 6. [当前架构审计](67-CURRENT-ARCHITECTURE-AUDIT.md)
-7. 与任务直接相关的 ADR 和规范
+7. [当前安全审计](71-CURRENT-SECURITY-AUDIT.md)
+8. 与任务直接相关的 ADR 和规范
 
 不要把 40 多份 Implementation Report 全部放进上下文。只有当你需要追溯某个行为、验收或失败模式时，才读取对应报告。
 
@@ -101,9 +102,9 @@ npm run test:e2e:production
 
 ## 7. 推荐的下一项工作
 
-首选 [后续开发计划 P1](69-FUTURE-DEVELOPMENT-PLAN.md#4-p1统一-reference-content-policy)：统一类型化 Reference content policy。
+首选 [后续开发计划 P1](69-FUTURE-DEVELOPMENT-PLAN.md#4-p1安全债务收敛)：先收敛已确认的依赖、Judge 准入与 CI 安全债务。
 
-原因：它先解决一个已经造成真实漏接的重复规则问题，并为 Authoring 重构、真实批次和后续内容扩展提供共同语义。它比先做 Web 审阅面或继续大量扩条目具有更高杠杆。
+安全工作按独立小提交完成后，继续 [P2](69-FUTURE-DEVELOPMENT-PLAN.md#5-p2统一-reference-content-policy)：统一类型化 Reference content policy。后者解决已经造成真实漏接的重复规则问题，并为 Authoring 重构、真实批次和后续内容扩展提供共同语义。
 
 若用户明确要求页面问题，则先完成该 UI 任务，不强行插入 P1。修复后仍应回到路线图，而不是把一次 UI 需求扩成全站重写。
 
@@ -131,6 +132,7 @@ npm run test:e2e:production
 - `.cpp-learn/` 是用户本地状态，不要无故删除或提交。
 - `judge-private/` 不得进入客户端响应或学习者导出。
 - Native Judge 不是强沙箱，不得对公网开放。
+- 当前安全审计仍有 1 项 High、3 项 Medium 和 4 项 Low finding；不要把“本地可用”描述成“安全加固完成”。
 - 文件写入保持路径约束、revision/CAS 和原子发布。
 - 不要使用破坏性 Git 命令清理不理解的改动。
 
