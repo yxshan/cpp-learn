@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveServerAddress, resolveServerStoragePaths } from "./config.js";
+import { resolveServerAddress, resolveServerStoragePaths } from "./config.ts";
 
 describe("[T-SEC-001] local server address", () => {
   it("rejects a non-loopback binding", () => {

@@ -13,11 +13,9 @@ import {
   resolveReferenceSlug,
   searchReference,
 } from "./api.js";
-import {
-  articleHeadings,
-  ReferenceArticle,
-  referenceKindLabels,
-} from "./ReferenceArticle.js";
+import { articleHeadings } from "@cpp-learn/reference-presentation";
+
+import { ReferenceArticle, referenceKindLabels } from "./ReferenceArticle.js";
 import {
   canonicalReferenceUrl,
   parseReferenceLocation,

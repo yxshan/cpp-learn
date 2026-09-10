@@ -1,14 +1,43 @@
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, lstatSync, realpathSync } from "node:fs";
-import { mkdir, realpath, rename, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  realpath,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type { ReferenceEntryDetail } from "@cpp-learn/contracts";
 import type { DraftWorkspace } from "@cpp-learn/reference-authoring";
+import { renderArticleDocument } from "@cpp-learn/reference-presentation";
 import type { ReferenceEntryManifest } from "@cpp-learn/reference";
-import { renderReferenceArticleDocument } from "@cpp-learn/web/reference-preview";
 
 import type { ReferenceAuthorPreviewAdapter } from "./reference-author-cli.js";
+
+/**
+ * The preview reproduces the published page, so it inlines the Web Adapter's
+ * stylesheets. This is the only remaining reference to the Web Adapter from the
+ * CLI and it is a build asset, not a code dependency: no React and no Web
+ * module is loaded. Splitting the Reference styles out of the application
+ * stylesheet would remove even this.
+ */
+const referenceStylesheets = [
+  fileURLToPath(new URL("../../web/src/styles.css", import.meta.url)),
+  fileURLToPath(new URL("../../web/src/mdn-theme.css", import.meta.url)),
+];
+
+let stylesheet: Promise<string> | undefined;
+
+function loadReferenceStylesheet(): Promise<string> {
+  stylesheet ??= Promise.all(
+    referenceStylesheets.map((path) => readFile(path, "utf8")),
+  ).then((parts) => parts.join("\n"));
+  return stylesheet;
+}
 
 export interface FilesystemReferenceAuthorPreviewOptions {
   readonly root: string;
@@ -109,10 +138,11 @@ export function createFilesystemReferenceAuthorPreview({
         throw new Error(`Draft preview directory must not be a symbolic link`);
       }
       const entry = toPreviewEntry(workspace);
-      const html = await renderReferenceArticleDocument({
+      const html = renderArticleDocument({
         entry,
         relatedEntries: {},
         currentUrl: new URL(`/reference/${entry.slug}`, baseUrl),
+        stylesheet: await loadReferenceStylesheet(),
       });
       const target = join(directory, "preview.html");
       const temporary = join(

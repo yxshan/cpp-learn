@@ -1,6 +1,4 @@
-import { Children, isValidElement, useState, type ReactNode } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Fragment, useState, type ReactNode } from "react";
 
 import type {
   ReferenceEntryDetail,
@@ -8,6 +6,11 @@ import type {
   ReferencePlaygroundRunResult,
   ReferenceSearchItem,
 } from "@cpp-learn/contracts";
+import {
+  parseArticleBlocks,
+  type ArticleBlock,
+  type ArticleInline,
+} from "@cpp-learn/reference-presentation";
 
 import {
   HttpRequestError,
@@ -17,11 +20,7 @@ import {
 import { referenceEntryUrl, referenceSearchUrl } from "./reference-location.js";
 import type { ReferenceLinkTarget } from "./reference-links.js";
 
-export interface ArticleHeading {
-  readonly level: 2 | 3;
-  readonly title: string;
-  readonly id: string;
-}
+export type { ArticleHeading } from "@cpp-learn/reference-presentation";
 
 export const referenceKindLabels: Readonly<
   Record<ReferenceSearchItem["kind"], string>
@@ -36,40 +35,153 @@ export const referenceKindLabels: Readonly<
   guide: "指南",
 };
 
-function headingId(title: string): string {
-  return title
-    .normalize("NFKC")
-    .trim()
-    .toLocaleLowerCase("zh-CN")
-    .replace(/[<>`'"“”‘’()[\]{}]/g, "")
-    .replace(/[^\p{L}\p{N}_:+-]+/gu, "-")
-    .replace(/^-+|-+$/g, "");
+function InlineNodes({ nodes }: { readonly nodes: readonly ArticleInline[] }) {
+  return (
+    <>
+      {nodes.map((node, index) => {
+        switch (node.kind) {
+          case "text":
+            return <Fragment key={index}>{node.value}</Fragment>;
+          case "code":
+            return <code key={index}>{node.value}</code>;
+          case "strong":
+            return (
+              <strong key={index}>
+                <InlineNodes nodes={node.children} />
+              </strong>
+            );
+          case "emphasis":
+            return (
+              <em key={index}>
+                <InlineNodes nodes={node.children} />
+              </em>
+            );
+          case "link":
+            return (
+              <a key={index} href={node.href} rel="noreferrer">
+                <InlineNodes nodes={node.children} />
+              </a>
+            );
+        }
+      })}
+    </>
+  );
 }
 
-function nodeText(node: ReactNode): string {
-  return Children.toArray(node)
-    .map((child) =>
-      typeof child === "string" || typeof child === "number"
-        ? String(child)
-        : isValidElement<{ children?: ReactNode | undefined }>(child)
-          ? nodeText(child.props.children)
-          : "",
-    )
-    .join("");
+/**
+ * Renders the shared Reference block model. Heading ids, block taxonomy, and
+ * link resolution come from `@cpp-learn/reference-presentation`, so the Web
+ * article and the CLI preview cannot drift semantically.
+ */
+function ArticleBlocks({
+  blocks,
+}: {
+  readonly blocks: readonly ArticleBlock[];
+}) {
+  return (
+    <>
+      {blocks.map((block, index) => (
+        <ArticleBlockView key={index} block={block} />
+      ))}
+    </>
+  );
 }
 
-export function articleHeadings(markdown: string): readonly ArticleHeading[] {
-  return [...markdown.matchAll(/^(##|###)\s+(.+)$/gm)].map((match) => ({
-    level: match[1] === "##" ? 2 : 3,
-    title: String(match[2])
-      .replace(/\s+#+$/, "")
-      .trim(),
-    id: headingId(
-      String(match[2])
-        .replace(/\s+#+$/, "")
-        .trim(),
-    ),
-  }));
+function ArticleBlockView({ block }: { readonly block: ArticleBlock }) {
+  switch (block.kind) {
+    case "heading": {
+      const anchor = (
+        <a
+          className="reference-section-anchor"
+          href={`#${encodeURIComponent(block.id)}`}
+          aria-label={`链接到“${block.title}”`}
+        >
+          #
+        </a>
+      );
+      const content = (
+        <>
+          <span>
+            <InlineNodes nodes={block.children} />
+          </span>
+          {anchor}
+        </>
+      );
+      const className = block.jsComparison ? "is-js-comparison" : undefined;
+      return block.depth === 2 ? (
+        <h2 id={block.id} className={className}>
+          {content}
+        </h2>
+      ) : (
+        <h3 id={block.id} className={className}>
+          {content}
+        </h3>
+      );
+    }
+    case "paragraph":
+      return (
+        <p>
+          <InlineNodes nodes={block.children} />
+        </p>
+      );
+    case "code":
+      return (
+        <CodeBlock
+          className={block.language ? `language-${block.language}` : undefined}
+        >
+          {block.value}
+        </CodeBlock>
+      );
+    case "blockquote":
+      return (
+        <blockquote className="reference-callout">
+          <ArticleBlocks blocks={block.children} />
+        </blockquote>
+      );
+    case "list": {
+      const items = block.items.map((item, index) => (
+        <li key={index}>
+          <ArticleBlocks blocks={item} />
+        </li>
+      ));
+      return block.ordered ? (
+        <ol start={block.start}>{items}</ol>
+      ) : (
+        <ul>{items}</ul>
+      );
+    }
+    case "table":
+      return (
+        <div className="reference-table-scroll">
+          <table>
+            <thead>
+              <tr>
+                {block.header.map((cell, index) => (
+                  <th key={index} align={block.align[index]}>
+                    <InlineNodes nodes={cell} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {block.rows.length > 0 && (
+              <tbody>
+                {block.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, index) => (
+                      <td key={index} align={block.align[index]}>
+                        <InlineNodes nodes={cell} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            )}
+          </table>
+        </div>
+      );
+    case "unsupported":
+      return null;
+  }
 }
 
 function aggregateVerification(entry: ReferenceEntryDetail): string {
@@ -317,53 +429,6 @@ function ReferenceExamplePlayground({
   );
 }
 
-function MarkdownPre({
-  children,
-}: {
-  readonly children?: ReactNode | undefined;
-}) {
-  const className = isValidElement<{ className?: string | undefined }>(children)
-    ? children.props.className
-    : undefined;
-  return <CodeBlock className={className}>{nodeText(children)}</CodeBlock>;
-}
-
-function ArticleHeading({
-  level,
-  children,
-}: {
-  readonly level: 2 | 3;
-  readonly children?: ReactNode | undefined;
-}) {
-  const title = nodeText(children);
-  const id = headingId(title);
-  const className = /javascript|js\s*类比/i.test(title)
-    ? "is-js-comparison"
-    : undefined;
-  const content = (
-    <>
-      <span>{children}</span>
-      <a
-        className="reference-section-anchor"
-        href={`#${encodeURIComponent(id)}`}
-        aria-label={`链接到“${title}”`}
-      >
-        #
-      </a>
-    </>
-  );
-
-  return level === 2 ? (
-    <h2 id={id} className={className}>
-      {content}
-    </h2>
-  ) : (
-    <h3 id={id} className={className}>
-      {content}
-    </h3>
-  );
-}
-
 const sourceKindLabels = {
   primary: "标准来源",
   secondary: "参考资料",
@@ -428,39 +493,7 @@ export function ReferenceArticle({
       </header>
 
       <div className="reference-markdown">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            h1: ({ children }) => (
-              <ArticleHeading level={2}>{children}</ArticleHeading>
-            ),
-            h2: ({ children }) => (
-              <ArticleHeading level={2}>{children}</ArticleHeading>
-            ),
-            h3: ({ children }) => (
-              <ArticleHeading level={3}>{children}</ArticleHeading>
-            ),
-            pre: MarkdownPre,
-            code: ({ className, children }) => (
-              <code className={className}>{children}</code>
-            ),
-            a: ({ href, children }) => (
-              <a href={href} rel="noreferrer">
-                {children}
-              </a>
-            ),
-            table: ({ children }) => (
-              <div className="reference-table-scroll">
-                <table>{children}</table>
-              </div>
-            ),
-            blockquote: ({ children }) => (
-              <blockquote className="reference-callout">{children}</blockquote>
-            ),
-          }}
-        >
-          {entry.content.replace(/^#\s+.+\n+/, "")}
-        </ReactMarkdown>
+        <ArticleBlocks blocks={parseArticleBlocks(entry.content)} />
       </div>
 
       {entry.examples.length > 0 && (

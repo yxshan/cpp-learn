@@ -5,6 +5,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  headingMatchesArea,
+  type HeadingAreaId,
+} from "@cpp-learn/reference-policy";
+
+import {
   authoringInputDigest,
   createFilesystemReferenceDraftRepository,
   createInMemoryReferenceDraftRepository,
@@ -116,6 +121,87 @@ const qualityFinding: AuthoringFinding = {
   path: "content.md/complexity",
   message: "Canonical Reference quality area complexity is incomplete",
 };
+
+/**
+ * A repair plan that writes a heading the quality matcher does not accept would
+ * leave the finding in place and burn the three-attempt budget. Every heading
+ * the planner emits must therefore satisfy the shared policy for its area.
+ */
+describe("[T-REF-014] repair targets satisfy the shared quality policy", () => {
+  const cases: readonly {
+    readonly label: string;
+    readonly area: string;
+    readonly kind: "member" | "header";
+    readonly factKinds: readonly AuthoringFactKind[];
+  }[] = [
+    {
+      label: "callable interface",
+      area: "interface",
+      kind: "member",
+      factKinds: ["signature", "availability"],
+    },
+    {
+      label: "header facility map",
+      area: "facility-map",
+      kind: "header",
+      factKinds: ["facility_map"],
+    },
+    {
+      label: "header direct include",
+      area: "direct-include",
+      kind: "header",
+      factKinds: ["direct_include", "availability"],
+    },
+  ];
+
+  for (const testCase of cases) {
+    it(`plans a heading the matcher accepts: ${testCase.label}`, async () => {
+      const { authoring } = await repairFixture(
+        [
+          {
+            severity: "warning",
+            risk: "high",
+            code: "content-quality",
+            path: `content.md/${testCase.area}`,
+            message: `Canonical Reference quality area ${testCase.area} is incomplete`,
+          },
+        ],
+        {
+          ...(testCase.kind === "header"
+            ? {
+                target: {
+                  entryId: "vector-insert",
+                  kind: "header" as const,
+                  slug: "standard-library/headers/vector",
+                  title: "<vector>",
+                },
+              }
+            : {}),
+          verifiedFactKinds: testCase.factKinds,
+        },
+      );
+      const planned = await authoring.buildRepairPlan({
+        draftId: "vector-insert",
+        repairId: "vector-insert-quality",
+      });
+      if (!planned.ok || planned.status !== "repairable") {
+        throw new Error(`repair plan missing for ${testCase.label}`);
+      }
+
+      const sectionTargets = planned.plan.targets.filter(
+        (target) => target.kind === "section",
+      );
+      expect(sectionTargets.length).toBeGreaterThan(0);
+      for (const target of sectionTargets) {
+        const area = target.id.replace(/^section-/u, "");
+        expect(
+          headingMatchesArea(area as HeadingAreaId, target.heading),
+          `area ${area} planned heading "${target.heading}"`,
+        ).toBe(true);
+      }
+    });
+  }
+});
 
 const exampleFinding: AuthoringFinding = {
   severity: "hard",

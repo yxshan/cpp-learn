@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": {
-    "./reference-preview": "./src/reference-preview.tsx"
-  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,6 +10,7 @@
   },
   "dependencies": {
     "@cpp-learn/contracts": "*",
+    "@cpp-learn/reference-presentation": "*",
     "@monaco-editor/react": "4.7.0",
     "monaco-editor": "0.56.0",
     "react": "19.2.8",

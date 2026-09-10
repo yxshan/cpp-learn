@@ -1,11 +1,12 @@
 import { fileURLToPath } from "node:url";
 
 import {
-  createProductionDataArchive,
   createProductionApplication,
+  createProductionDataArchive,
   createProductionHttpServer,
-} from "./composition.js";
-import { resolveServerAddress, resolveServerStoragePaths } from "./config.js";
+  resolveServerAddress,
+  resolveServerStoragePaths,
+} from "@cpp-learn/composition";
 
 const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
 

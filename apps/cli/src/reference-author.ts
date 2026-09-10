@@ -11,8 +11,7 @@ import {
   createReferenceAuthoring,
 } from "@cpp-learn/reference-authoring";
 import { createFilesystemReferenceCatalog } from "@cpp-learn/reference";
-
-import { auditReferenceContent } from "../../../scripts/reference-content-quality.js";
+import { auditReferenceContent } from "@cpp-learn/reference-policy";
 
 import { runReferenceAuthorCli } from "./reference-author-cli.js";
 import { createFilesystemReferenceAuthorPreview } from "./reference-author-preview.js";

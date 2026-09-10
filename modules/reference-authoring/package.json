@@ -8,6 +8,7 @@
     "@cpp-learn/contracts": "*",
     "@cpp-learn/judge": "*",
     "@cpp-learn/reference": "*",
+    "@cpp-learn/reference-policy": "*",
     "@cpp-learn/reference-schema": "*",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1"

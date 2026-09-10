@@ -30,7 +30,7 @@ import {
   createInMemoryWorkspace,
 } from "@cpp-learn/workspace";
 
-import { createServer } from "./server.js";
+import { createServer } from "./server.ts";
 
 const bootstrap: LearningBootstrapResult = {
   schemaVersion: 1,

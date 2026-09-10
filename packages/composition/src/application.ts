@@ -23,7 +23,7 @@ import {
 } from "@cpp-learn/reference";
 import { createFilesystemWorkspace } from "@cpp-learn/workspace";
 
-import { createServer, type ServerDependencies } from "./server.js";
+import { createServer, type ServerDependencies } from "./server.ts";
 
 const projectRoot = fileURLToPath(new URL("../../../", import.meta.url));
 

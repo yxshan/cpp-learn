@@ -1,3 +1,12 @@
+import {
+  encodedReferencePath,
+  referenceContext,
+  referenceEntryUrl,
+  referenceSearchUrl,
+} from "@cpp-learn/reference-presentation";
+
+export { referenceEntryUrl, referenceSearchUrl };
+
 export interface ReferenceLocation {
   readonly slug?: string;
   readonly query: string;
@@ -13,17 +22,6 @@ function decodePathSegment(segment: string): string {
   } catch {
     return segment;
   }
-}
-
-function encodedReferencePath(slug: string): string {
-  return `${REFERENCE_PREFIX}${slug.split("/").map(encodeURIComponent).join("/")}`;
-}
-
-function referenceContext(url: URL): URLSearchParams {
-  const parameters = new URLSearchParams();
-  const query = url.searchParams.get("q");
-  if (query) parameters.set("q", query);
-  return parameters;
 }
 
 export function parseReferenceLocation(url: URL): ReferenceLocation {
@@ -46,20 +44,6 @@ export function canonicalReferenceUrl(url: URL, slug: string): URL {
   const canonical = new URL(url);
   canonical.pathname = encodedReferencePath(slug);
   return canonical;
-}
-
-export function referenceEntryUrl(url: URL, slug: string): string {
-  const parameters = referenceContext(url);
-  const query = parameters.toString();
-  return `${encodedReferencePath(slug)}${query ? `?${query}` : ""}`;
-}
-
-export function referenceSearchUrl(url: URL, query: string): string {
-  const location = new URL("/reference", url);
-  const parameters = new URLSearchParams();
-  if (query.trim()) parameters.set("q", query.trim());
-  location.search = parameters.toString();
-  return `${location.pathname}${location.search}`;
 }
 
 export function referenceCategoryUrl(

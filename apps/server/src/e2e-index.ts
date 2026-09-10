@@ -2,11 +2,12 @@ import { mkdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import {
-  createProductionDataArchive,
   createProductionApplication,
-} from "./composition.js";
-import { resolveServerAddress, resolveServerStoragePaths } from "./config.js";
-import { createServer } from "./server.js";
+  createProductionDataArchive,
+  createServer,
+  resolveServerAddress,
+  resolveServerStoragePaths,
+} from "@cpp-learn/composition";
 
 const webRoot = fileURLToPath(new URL("../../web/dist", import.meta.url));
 const { host, port } = resolveServerAddress(process.env);

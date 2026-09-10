@@ -7,14 +7,19 @@ import {
   createProductionApplication,
   createProductionDataArchive,
   createProductionHttpServer,
-} from "@cpp-learn/server/composition";
+  resolveServerAddress,
+  resolveServerStoragePaths,
+} from "@cpp-learn/composition";
 
 import { runCli } from "./cli.js";
 
-const archive = createProductionDataArchive();
+const storagePaths = resolveServerStoragePaths(process.env);
+const archive = createProductionDataArchive(storagePaths);
 const command = process.argv[2];
 const dataOnly = command === "export" || command === "restore";
-const application = dataOnly ? undefined : await createProductionApplication();
+const application = dataOnly
+  ? undefined
+  : await createProductionApplication(storagePaths);
 const platform = application
   ? application.platform
   : ({
@@ -38,12 +43,13 @@ process.exitCode = await runCli({
     if (!application) {
       throw new Error("HTTP server is unavailable in data-only mode");
     }
+    const { host, port } = resolveServerAddress(process.env);
     const server = createProductionHttpServer(application, {
       archive,
       logger: true,
       webRoot,
     });
-    const address = await server.listen({ host: "127.0.0.1", port: 4173 });
+    const address = await server.listen({ host, port });
     process.stdout.write(`C++ Learn server listening at ${address}\n`);
   },
 });

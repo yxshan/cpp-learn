@@ -17,11 +17,11 @@ import {
   referenceVerificationManifestPath,
   resolveReferenceCppCompiler,
 } from "@cpp-learn/reference";
-import { createServer } from "@cpp-learn/server";
 import {
   createProductionApplication,
   createProductionHttpServer,
-} from "@cpp-learn/server/composition";
+  createServer,
+} from "@cpp-learn/composition";
 import { createInMemoryWorkspace } from "@cpp-learn/workspace";
 
 import { runCli } from "./cli.js";

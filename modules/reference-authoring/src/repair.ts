@@ -5,6 +5,7 @@ import addFormats from "ajv-formats";
 
 import type { CppStandard } from "@cpp-learn/contracts";
 import type { ReferenceEntryManifest } from "@cpp-learn/reference";
+import { REPAIR_HEADINGS_BY_AREA } from "@cpp-learn/reference-policy";
 
 import authoringRepairSchema from "./authoring-repair.schema.json" with { type: "json" };
 import type {
@@ -194,21 +195,6 @@ const SECTION_FACT_KINDS: Readonly<
   核心条目: ["scope", "selection"],
 };
 
-const AREA_HEADINGS: Readonly<Record<string, readonly string[]>> = {
-  "quick-info": ["快速信息"],
-  selection: ["什么时候使用", "如何选择", "何时直接包含"],
-  interface: ["声明与重载", "快速信息", "类型与所有权"],
-  parameters: ["参数与前置条件"],
-  returns: ["返回值"],
-  complexity: ["复杂度"],
-  errors: ["异常与错误"],
-  lifetime: ["生命周期与失效", "类型与所有权"],
-  "direct-include": ["何时直接包含"],
-  "facility-map": ["设施地图"],
-  mistakes: ["常见误区"],
-  javascript: ["与 JavaScript 对照"],
-};
-
 const CPP_STANDARD_ORDER: readonly CppStandard[] = [
   "c++98",
   "c++03",
@@ -366,7 +352,12 @@ export function buildAuthoringRepairPlan(options: BuildRepairPlanOptions): {
     const findingDigest = authoringFindingDigest(finding);
     if (finding.code === "content-quality") {
       const area = finding.path.match(/^content\.md\/([^/]+)/u)?.[1];
-      const headings = area === undefined ? undefined : AREA_HEADINGS[area];
+      const headings =
+        area === undefined
+          ? undefined
+          : REPAIR_HEADINGS_BY_AREA[
+              area as keyof typeof REPAIR_HEADINGS_BY_AREA
+            ];
       const heading = headings?.find((candidate) =>
         options.requiredHeadings.includes(candidate),
       );

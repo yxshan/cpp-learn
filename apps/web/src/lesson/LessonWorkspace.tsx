@@ -4,143 +4,27 @@ import EditorWorker from "monaco-editor/editor/editor.worker.js?worker";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-import type {
-  ActivityDetail,
-  InteractiveLessonBlock,
-  JudgeReport,
-  WorkspaceView,
-} from "@cpp-learn/contracts";
+import type { ActivityDetail, WorkspaceView } from "@cpp-learn/contracts";
 
 import {
-  cancelJob,
-  executeActivity,
   getActivity,
   getWorkspace,
   revealHint,
-  saveWorkspace,
   submitReflection,
-} from "./api.js";
-import { formatCppSource, isCppSourcePath } from "./cpp-format.js";
-import { referenceEntryUrl, referenceSearchUrl } from "./reference-location.js";
-import { useReferenceLinks } from "./reference-links.js";
+} from "../api.js";
+import { isCppSourcePath } from "../cpp-format.js";
+import { InteractiveBlock } from "./InteractiveBlock.js";
+import { commandId } from "./command-id.js";
+import { useActivityExecution } from "./useActivityExecution.js";
+import { useEditorSession } from "./useEditorSession.js";
+import {
+  referenceEntryUrl,
+  referenceSearchUrl,
+} from "../reference-location.js";
+import { useReferenceLinks } from "../reference-links.js";
 
 self.MonacoEnvironment = { getWorker: () => new EditorWorker() };
 loader.config({ monaco });
-
-function prepareInitialSources(
-  workspace: WorkspaceView,
-  editablePaths: readonly string[],
-): Record<string, string> {
-  const files = { ...workspace.files };
-  const isUntouchedStarter = editablePaths.every(
-    (path) => files[path] === workspace.starterFiles[path],
-  );
-  if (!isUntouchedStarter) return files;
-
-  for (const path of editablePaths) {
-    if (isCppSourcePath(path)) files[path] = formatCppSource(files[path] ?? "");
-  }
-  return files;
-}
-
-function InteractiveBlock({
-  block,
-}: {
-  readonly block: InteractiveLessonBlock;
-}) {
-  const steps = block.fallback.split(/\s*->\s*/);
-  const [step, setStep] = useState(0);
-  const stateClass = (index: number): string =>
-    index < step ? "complete" : index === step ? "current" : "";
-
-  const visualization =
-    block.type === "network-flow" ? (
-      <ol
-        className="network-trace"
-        aria-label={`网络流可视化，共 ${steps.length} 个节点`}
-        aria-live="polite"
-      >
-        {steps.map((label, index) => (
-          <li className={stateClass(index)} key={`${block.id}-${index}`}>
-            <span className="network-node" aria-hidden="true">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <strong>{label}</strong>
-            {index < steps.length - 1 && (
-              <span className="network-link" aria-hidden="true">
-                ↓
-              </span>
-            )}
-          </li>
-        ))}
-      </ol>
-    ) : block.type === "lifetime-timeline" ||
-      block.type === "memory-visualization" ? (
-      <ol
-        className="lifetime-trace"
-        aria-label={`${block.type} 可视化，共 ${steps.length} 个状态`}
-        aria-live="polite"
-      >
-        {steps.map((label, index) => (
-          <li className={stateClass(index)} key={`${block.id}-${index}`}>
-            <span aria-hidden="true" />
-            <div>
-              <small>
-                {block.type === "memory-visualization" ? "MEM" : "LIFE"}
-              </small>
-              <strong>{label}</strong>
-            </div>
-          </li>
-        ))}
-      </ol>
-    ) : (
-      <div
-        className="interactive-stepper"
-        aria-label={`${block.type} 可视化，共 ${steps.length} 步`}
-        aria-live="polite"
-      >
-        {steps.map((label, index) => (
-          <div className={stateClass(index)} key={`${block.id}-${index}`}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <strong>{label}</strong>
-            {index < steps.length - 1 && <i aria-hidden="true">→</i>}
-          </div>
-        ))}
-      </div>
-    );
-
-  return (
-    <section className="interactive-fallback" data-visualization={block.type}>
-      <p className="eyebrow">INTERACTIVE · {block.type}</p>
-      {visualization}
-      <p className="interactive-position">
-        当前步骤 {step + 1} / {steps.length}
-      </p>
-      {steps.length > 1 && (
-        <div className="interactive-controls">
-          <button
-            type="button"
-            disabled={step === 0}
-            onClick={() => setStep((value) => value - 1)}
-          >
-            上一步
-          </button>
-          <button
-            type="button"
-            disabled={step === steps.length - 1}
-            onClick={() => setStep((value) => value + 1)}
-          >
-            下一步
-          </button>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function commandId(prefix: string): string {
-  return `${prefix}_${crypto.randomUUID()}`;
-}
 
 export interface LessonWorkspaceProps {
   readonly activityId?: string;
@@ -177,12 +61,7 @@ export function LessonWorkspace({
 }: LessonWorkspaceProps) {
   const [activity, setActivity] = useState<ActivityDetail>();
   const [workspace, setWorkspace] = useState<WorkspaceView>();
-  const [sources, setSources] = useState<Record<string, string>>({});
-  const [activePath, setActivePath] = useState("main.cpp");
-  const [report, setReport] = useState<JudgeReport>();
-  const [busy, setBusy] = useState<"save" | "run" | "grade">();
-  const [isDirty, setIsDirty] = useState(false);
-  const [activeJobId, setActiveJobId] = useState<string>();
+
   const [message, setMessage] = useState("正在加载课程工作区…");
   const [attemptId, setAttemptId] = useState(
     () => `web_attempt_${crypto.randomUUID()}`,
@@ -198,24 +77,46 @@ export function LessonWorkspace({
     Record<string, string>
   >({});
   const referenceLinks = useReferenceLinks(activity?.referenceIds);
+  const editor = useEditorSession({
+    baseline: workspace?.files,
+    editablePaths: activity?.workspace.editablePaths,
+    starterFiles: workspace?.starterFiles,
+    onDirtyChange,
+    onEdited: () => execution.clearReport(),
+    onMessage: setMessage,
+  });
+  const { sources, activePath, load, clear } = editor;
+  const execution = useActivityExecution({
+    activityId,
+    attemptId,
+    workspace,
+    editablePaths: activity?.workspace.editablePaths,
+    sources,
+    onSaved: (files, revision) =>
+      setWorkspace((current) =>
+        current === undefined ? current : { ...current, revision, files },
+      ),
+    markClean: editor.markClean,
+    onEvidenceChanged,
+    onMessage: setMessage,
+  });
+  const { busy, report, activeJobId, save, execute, cancel } = execution;
 
   useEffect(() => {
     let cancelled = false;
     setActivity(undefined);
     setWorkspace(undefined);
-    setSources({});
-    setReport(undefined);
+    clear();
+    execution.clearReport();
     setRevealedHints([]);
     setReflectionAnswers({});
     setAttemptId(`web_attempt_${crypto.randomUUID()}`);
-    setIsDirty(false);
-    onDirtyChange(false);
     setMessage("正在加载课程工作区…");
     void Promise.all([getActivity(activityId), getWorkspace(activityId)])
       .then(([activityResult, workspaceResult]) => {
         if (cancelled) return;
         if (!activityResult.activity) throw new Error("课程不存在");
-        const initialSources = prepareInitialSources(
+        const initialSources = load(
           workspaceResult.workspace,
           activityResult.activity.workspace.editablePaths,
         );
@@ -224,11 +125,6 @@ export function LessonWorkspace({
           ...workspaceResult.workspace,
           files: initialSources,
         });
-        setSources(initialSources);
-        setActivePath(
-          activityResult.activity.workspace.editablePaths[0] ?? "main.cpp",
-        );
-        setIsDirty(false);
         setMessage("工作区已加载");
       })
       .catch((error: unknown) => {
@@ -239,87 +135,7 @@ export function LessonWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [activityId, onDirtyChange]);
-
-  useEffect(() => {
-    const warnBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (!isDirty) return;
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", warnBeforeUnload);
-    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
-  }, [isDirty]);
-
-  const persist = async (): Promise<void> => {
-    if (!workspace || !activity) return;
-    const result = await saveWorkspace(activityId, {
-      commandId: commandId("save"),
-      baseRevision: workspace.revision,
-      changes: activity.workspace.editablePaths.map((path) => ({
-        path,
-        content: sources[path] ?? "",
-      })),
-    });
-    if (!result.result.ok) {
-      throw new Error(
-        result.result.code === "revision_conflict"
-          ? "文件已在别处更新，请刷新后重试"
-          : "文件路径不允许编辑",
-      );
-    }
-    setWorkspace({
-      ...workspace,
-      revision: result.result.revision,
-      files: { ...sources },
-    });
-    setIsDirty(false);
-    onDirtyChange(false);
-  };
-
-  const save = async (): Promise<void> => {
-    setBusy("save");
-    try {
-      await persist();
-      setMessage("已保存到本地工作区");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "保存失败");
-    } finally {
-      setBusy(undefined);
-    }
-  };
-
-  const execute = async (mode: "run" | "grade"): Promise<void> => {
-    setBusy(mode);
-    setReport(undefined);
-    try {
-      await persist();
-      setMessage(mode === "run" ? "正在编译并运行…" : "正在提交判题…");
-      const executionCommandId = commandId(mode);
-      const jobId = `job_${executionCommandId}`;
-      setActiveJobId(jobId);
-      const result = await executeActivity(
-        activityId,
-        mode,
-        executionCommandId,
-        attemptId,
-      );
-      setReport(result.report);
-      setMessage(
-        result.report.verdict === "automated_pass"
-          ? mode === "grade"
-            ? "Grade 通过，学习证据已记录"
-            : "Run 通过（不会计入掌握证据）"
-          : `结果：${result.report.verdict}`,
-      );
-      if (mode === "grade") await onEvidenceChanged();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "执行失败");
-    } finally {
-      setActiveJobId(undefined);
-      setBusy(undefined);
-    }
-  };
+  }, [activityId, clear, load, onDirtyChange]);
 
   const revealNextHint = async (): Promise<void> => {
     const hint = activity?.learning?.hints[revealedHints.length];
@@ -363,66 +179,6 @@ export function LessonWorkspace({
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "反思保存失败");
     }
-  };
-
-  const cancel = async (): Promise<void> => {
-    if (!activeJobId) return;
-    try {
-      const result = await cancelJob(activeJobId, commandId("cancel"));
-      setMessage(result.cancelled ? "正在取消判题…" : "任务已经结束");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "取消失败");
-    }
-  };
-
-  const updateActiveSource = (content: string): void => {
-    if (!workspace || !activity) return;
-    const nextSources = { ...sources, [activePath]: content };
-    const dirty = activity.workspace.editablePaths.some(
-      (path) => nextSources[path] !== workspace.files[path],
-    );
-    setSources(nextSources);
-    setReport(undefined);
-    setIsDirty(dirty);
-    onDirtyChange(dirty);
-  };
-
-  const replaceActiveSource = (
-    content: string,
-    successMessage: string,
-  ): void => {
-    updateActiveSource(content);
-    setMessage(successMessage);
-  };
-
-  const formatActiveFile = (): void => {
-    if (!isCppSourcePath(activePath)) return;
-    const currentSource = sources[activePath] ?? "";
-    const formattedSource = formatCppSource(currentSource);
-    if (formattedSource === currentSource) {
-      setMessage(`${activePath} 已符合 C++ 格式`);
-      return;
-    }
-    replaceActiveSource(
-      formattedSource,
-      `已格式化 ${activePath}；保存后写入工作区`,
-    );
-  };
-
-  const resetActiveFile = (): void => {
-    const starterSource = workspace?.starterFiles[activePath];
-    if (starterSource === undefined) return;
-    if (
-      !window.confirm(
-        `确定将 ${activePath} 恢复为课程初始代码吗？当前未保存修改会被替换。`,
-      )
-    ) {
-      return;
-    }
-    const resetSource = isCppSourcePath(activePath)
-      ? formatCppSource(starterSource)
-      : starterSource;
-    replaceActiveSource(resetSource, `已重置 ${activePath}；保存后写入工作区`);
   };
 
   return (
@@ -652,7 +408,7 @@ export function LessonWorkspace({
                   type="button"
                   aria-pressed={path === activePath}
                   className={path === activePath ? "active" : ""}
-                  onClick={() => setActivePath(path)}
+                  onClick={() => editor.setActivePath(path)}
                 >
                   {path}
                 </button>
@@ -662,7 +418,7 @@ export function LessonWorkspace({
               <button
                 type="button"
                 disabled={Boolean(busy) || !isCppSourcePath(activePath)}
-                onClick={formatActiveFile}
+                onClick={editor.formatActiveFile}
               >
                 格式化代码
               </button>
@@ -672,7 +428,7 @@ export function LessonWorkspace({
                   Boolean(busy) ||
                   workspace?.starterFiles[activePath] === undefined
                 }
-                onClick={resetActiveFile}
+                onClick={editor.resetActiveFile}
               >
                 重置当前文件
               </button>
@@ -685,7 +441,7 @@ export function LessonWorkspace({
             theme="vs-light"
             value={sources[activePath] ?? ""}
             onChange={(value) => {
-              updateActiveSource(value ?? "");
+              editor.updateActiveSource(value ?? "");
             }}
             options={{
               automaticLayout: true,

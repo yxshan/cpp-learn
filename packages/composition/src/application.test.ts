@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createInMemoryReferenceCatalog } from "@cpp-learn/reference";
 
-import { buildReferenceActivityIndex } from "./composition.js";
+import { buildReferenceActivityIndex } from "./application.ts";
 
 function referenceFixture() {
   return createInMemoryReferenceCatalog({
