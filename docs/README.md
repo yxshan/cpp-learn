@@ -94,10 +94,11 @@ Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。�
 - [当前安全审计](71-CURRENT-SECURITY-AUDIT.md)
 - [文档与代码冲突审计](72-DOC-CODE-CONFLICT-AUDIT.md)
 - [重构方案与执行计划](73-REFACTORING-PLAN.md)
+- [验证范围裁剪方案](74-VERIFICATION-SCOPING-PLAN.md)
 - [项目文件地图与状态](68-PROJECT-FILE-MAP-AND-STATUS.md)
 - [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
 
-`66`、`67`、`71`、`72` 与 `73` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
+`66`、`67`、`71`、`72`、`73` 与 `74` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
 
 ## 6. 历史交付证据
 
