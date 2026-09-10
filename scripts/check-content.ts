@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import { createHash } from "node:crypto";
@@ -18,18 +19,90 @@ if (!readiness.ready) {
 }
 
 const judge = createNativeJudge();
-const activityFlag = process.argv.indexOf("--activity");
-const selectedActivityId =
-  activityFlag >= 0 ? process.argv[activityFlag + 1] : undefined;
-if (activityFlag >= 0 && !selectedActivityId) {
-  throw new Error("--activity requires an Activity identifier");
+
+/**
+ * Compiling every Activity's starter, reference solution and mutations takes
+ * about three minutes. `--activity` and `--changed` narrow that to the
+ * Activities that actually changed so the inner loop stays usable; the full run
+ * remains the merge gate.
+ */
+const argv = process.argv.slice(2);
+const flagValue = (flag: string): string | undefined => {
+  const index = argv.indexOf(flag);
+  if (index < 0) return undefined;
+  const value = argv[index + 1];
+  if (value === undefined || value.startsWith("--")) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return value;
+};
+
+const explicitActivityId = flagValue("--activity");
+const changed = argv.includes("--changed");
+const base = flagValue("--base");
+if (explicitActivityId !== undefined && changed) {
+  throw new Error("--activity and --changed are mutually exclusive");
 }
+
+/**
+ * A catalog or private-judge change can affect any Activity, so those opt out of
+ * scoping entirely.
+ */
+function changedActivityIds(): {
+  readonly ids: Set<string>;
+  readonly full: boolean;
+} {
+  const output = execFileSync(
+    "git",
+    [
+      "diff",
+      "--name-only",
+      base ?? "HEAD",
+      "--",
+      "curriculum",
+      "judge-private",
+    ],
+    { encoding: "utf8" },
+  );
+  const paths = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (
+    paths.some(
+      (path) =>
+        path === "curriculum/catalog.json" || path.startsWith("judge-private/"),
+    )
+  ) {
+    return { ids: new Set(), full: true };
+  }
+  const ids = new Set<string>();
+  for (const path of paths) {
+    const match = /^curriculum\/activities\/([^/]+)\//u.exec(path);
+    if (match?.[1] !== undefined) ids.add(match[1]);
+  }
+  return { ids, full: false };
+}
+
 const allCases = await curriculum.listVerificationCases();
-const cases = selectedActivityId
-  ? allCases.filter((candidate) => candidate.activity.id === selectedActivityId)
-  : allCases;
-if (selectedActivityId && cases.length === 0) {
-  throw new Error(`Unknown Activity: ${selectedActivityId}`);
+let selectedIds: Set<string> | undefined;
+let scopeNote = "";
+if (changed) {
+  const selection = changedActivityIds();
+  if (!selection.full) {
+    selectedIds = selection.ids;
+    scopeNote = `; --changed selected ${selectedIds.size} of ${allCases.length} Activities`;
+  }
+} else if (explicitActivityId !== undefined) {
+  selectedIds = new Set([explicitActivityId]);
+}
+
+const cases =
+  selectedIds === undefined
+    ? allCases
+    : allCases.filter((candidate) => selectedIds.has(candidate.activity.id));
+if (explicitActivityId !== undefined && cases.length === 0) {
+  throw new Error(`Unknown Activity: ${explicitActivityId}`);
 }
 const workspaces = await curriculum.listWorkspaceActivities();
 let mutationCount = 0;
@@ -96,5 +169,7 @@ for (const candidate of cases) {
 }
 
 console.log(
-  `Curriculum content check passed (${readiness.activityCount} activities, ${starterCount} starters, ${cases.length} references, ${mutationCount} mutations).`,
+  `Curriculum content check passed (${readiness.activityCount} activities, ` +
+    `${starterCount} starters, ${cases.length} references, ${mutationCount} ` +
+    `mutations${scopeNote}).`,
 );

@@ -59,31 +59,43 @@
 
 ## 3. 方案
 
-### 3.1 给 `check-reference.ts` 加按 Entry 限定的能力（最高优先级）
-
-照搬 `check-content.ts` 已有的 `--activity`：
+### 3.1 给 `check-reference.ts` 加按 Entry 限定的能力（已完成）
 
 ```bash
 npm run check:reference -- --entry std-vector          # 只验该 Entry 的示例
-npm run check:reference -- --changed                   # 从 git diff 推导
+npm run check:reference -- --entry a --entry b         # 可重复
+npm run check:reference -- --changed [--base <ref>]    # 从 git diff 推导
 ```
 
-`--changed` 用 `git diff --name-only <base> -- reference/entries reference/catalog.json`
-推导出受影响的 Entry id。要点：
+`--changed` 用 `git diff --name-only <base|HEAD> -- reference` 推导受影响的 Entry id。要点：
 
-- **本地验证清单是累积的**：`check-reference.ts` 会写一份
-  `.cpp-learn/data/reference-verification.json`。增量运行必须**合并**进已有清单，而不是
-  整体覆盖，否则未跑的 Entry 会变成 `not-checked`，Reference 页面会退化成"未验证"。
-- `catalog.json`、`entry.json` 的 Schema、或 `reference/` 之外的共享代码变化时，**不接受
-  限定**，直接跑全量。
-- 预计一个 Entry 的改动从 183s 降到约 5s。
+- **本地验证清单是累积的**，增量运行**合并**进
+  `.cpp-learn/data/reference-verification.json`，不整体覆盖；否则未跑的 Entry 会变成
+  `not-checked`，Reference 页面会退化成"未验证"。
+- 复用旧清单前会先校验：Schema 合法、`catalogVersion` 与 `compilerFingerprint` 都匹配。
+  任一不符就从空清单开始，过期证据一律不采信。
+- `reference/catalog.json` 变化时**不接受**限定，直接跑全量（它可能影响任意 Entry）。
+- 未知 `--entry` 直接报错，不静默跳过。
 
-### 3.2 给 `check-content.ts` 加 `--changed`
+**实测**：单 Entry 183s → **2s**（编译 2 个示例），合并后清单仍持有 226 条记录
+（224 条复用 + 2 条重编），**没有被降级**。
+`--changed` 在无改动时 0 个 Entry、清单不变。
 
-`--activity` 已存在，但用起来需要手工查 id。补一个 `--changed` 从
-`git diff --name-only -- curriculum/` 推导 Activity id，把已存在的能力变得可用。
+### 3.2 给 `check-content.ts` 加 `--changed`（已完成）
 
-### 3.3 代码门禁按**声明的**依赖图裁剪
+原有的 `--activity` 保留，新增 `--changed`：
+
+```bash
+npm run check:content -- --activity source-to-program   # 单个 Activity
+npm run check:content -- --changed [--base <ref>]       # 从 git diff 推导
+```
+
+`curriculum/catalog.json` 或 `judge-private/` 变化时不接受限定（私有判题影响所有 Activity 的
+判分）。`--activity` 与 `--changed` 互斥，同时给出直接报错。
+
+**实测**：单 Activity 175s → **4s**；`--changed` 无改动时 175s → **1s**。
+
+### 3.3 代码门禁按**声明的**依赖图裁剪（未做）
 
 仓库现在的依赖图是干净且无环的：`apps/*` 之间零依赖，`packages/*` 只依赖 `contracts`
 （`composition` 例外，它依赖领域模块）。因此"受影响集合"= 改动包 + 其反向依赖闭包。
@@ -115,6 +127,18 @@ npm run check:changed -- --base HEAD~1
 这道测试很便宜（一个脚本 + 一次 glob），但它把"我认为不会影响"变成"机器证明不会影响"。
 **没有它，本方案的轴 B 不成立**；有了它，轴 B 才可以从"经验"升级为"规则"。
 
+**已完成**：`scripts/check-boundaries.test.ts`（`[T-ARCH-001]`，随 `npm test` 运行）。
+它做三件事：
+
+1. 任何 `@cpp-learn/<pkg>` 引用都必须是已知工作区包，且被引用方必须在引用方的
+   `dependencies` 或 `devDependencies` 中声明过；
+2. 任何跨出本包目录的相对 import 都直接失败（深路径引用绕过了包的接缝）；
+3. 断言覆盖到全部 14 个及以上工作区包，防止 glob 写错导致"零发现"的假通过。
+
+**它第一次运行就抓到一处真实问题**：`apps/cli/src/cli.test.ts` 引用 `@cpp-learn/judge`，
+但 `@cpp-learn/cli` 从未声明该依赖 —— 一直靠 npm workspaces 的提升在 `node_modules` 里
+偶然可用。已补声明。
+
 ## 5. 永远不能裁剪的改动
 
 以下变化会改变其他检查的含义，命中任意一条都必须跑全量 `npm run check`（并加跑 E2E）：
@@ -145,14 +169,20 @@ npm run check:changed -- --base HEAD~1
 2. **裁剪必须 fail closed。** 路径分类不出来的改动、或边界测试失败时，`check:changed`
    必须退化为全量，而不是猜一个较小的集合。
 
-## 8. 建议的执行顺序
+## 8. 执行顺序与当前状态
 
-1. **边界测试**（§4）—— 其他两项都依赖它，且它本身就能发现现存问题。
-2. **`check-reference --entry/--changed`**（§3.1）—— 单项收益最大，约 180s → 5s。
-3. **`check-content --changed`**（§3.2）—— 把已有能力变得可用。
-4. **`scripts/check-scope.mjs`**（§3.3）—— 收益最小，但让规则可审计。
+| 步骤 | 状态 | 实测收益 |
+|---|---|---|
+| 1. 边界测试（§4） | **已完成** | 抓到 1 处未声明依赖 |
+| 2. `check-reference --entry/--changed`（§3.1） | **已完成** | 183s → 2s（单 Entry） |
+| 3. `check-content --changed`（§3.2） | **已完成** | 175s → 4s（单 Activity）/ 1s（无改动） |
+| 4. `scripts/check-scope.mjs`（§3.3） | 未做 | 收益最小，让规则可审计 |
 
-前三项都是"给已有机制加参数"，风险低；第四项引入了新的门禁选择逻辑，建议在边界测试
-稳定运行一段时间后再做。
+前三项都是"给已有机制加参数"，风险低。第四项引入了新的门禁选择逻辑，建议在边界测试
+稳定运行一段时间后再做 —— 它是唯一一处需要"决定跳过什么"的地方，也是最容易出错的。
+
+按当前状态，只改一个 Reference Entry 的本地循环从约 390s 降到约 **15s**
+（`check:reference --changed` + `check:reference-quality` + Prettier + docs），
+而 CI 与合并门禁仍然是全量。
 
 本方案由 **DeepSeek Harness Agent** 依据 2026-09-10 在 `739767d` 上的实测耗时编写。

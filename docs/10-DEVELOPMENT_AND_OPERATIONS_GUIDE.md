@@ -46,6 +46,25 @@ the test runner does not reuse an existing learner server.
 
 `npm run check:content` executes the system-lab references. It therefore needs normal local permission to create temporary files/processes, bind `127.0.0.1` on a dynamic port, link SQLite, and invoke CMake/CTest. It never requires external network access.
 
+The two content checks dominate the gate: a full `check:content` and
+`check:reference` together take about six minutes because they compile every
+Activity and all 226 Reference examples. Both accept a scope for inner-loop work;
+the unscoped run remains the merge gate:
+
+```bash
+npm run check:content -- --activity source-to-program   # one Activity
+npm run check:content -- --changed [--base <ref>]       # from git diff
+npm run check:reference -- --entry std-vector           # one Entry (repeatable)
+npm run check:reference -- --changed [--base <ref>]     # from git diff
+```
+
+`check:reference` writes a cumulative verification manifest, so a scoped run
+merges its results instead of replacing them; the previous manifest is reused
+only when its schema, catalog version, and compiler fingerprint all still match.
+A change to `curriculum/catalog.json`, `judge-private/`, or
+`reference/catalog.json` disables scoping for that check. See
+[the verification scoping plan](74-VERIFICATION-SCOPING-PLAN.md).
+
 ## 3. Local startup
 
 After `npm run build`, `./cpplearn serve`:
