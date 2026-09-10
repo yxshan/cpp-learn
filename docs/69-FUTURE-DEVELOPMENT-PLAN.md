@@ -182,7 +182,7 @@ npm run check
 
 ### P6-1 Server route groups
 
-把 `apps/server/src/server.ts` 深化为 Learning、Reference/Playground、Local Data 三个路由注册模块和一个共享 transport policy。
+把 `packages/composition/src/server.ts` 深化为 Learning、Reference/Playground、Local Data 三个路由注册模块和一个共享 transport policy。
 
 避免一文件一路由。每个 route group 应隐藏该领域的 parsing、status mapping 和 cancellation/streaming 细节，Fastify composition 只负责安装。
 
@@ -194,7 +194,7 @@ npm run check
 
 ## 10. P7：内容扩展方法
 
-### 9.1 选题
+### 10.1 选题
 
 从课程引用缺口、搜索无结果、高频标准库使用和职业项目需求中选条目。每批五至十个主题相关 Entry，共享来源调查，但不共享未经证明的操作语义。
 

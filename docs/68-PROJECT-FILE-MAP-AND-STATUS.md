@@ -46,36 +46,43 @@
 
 ### 3.1 `apps/web`
 
-状态：Active，局部 Transitional。
+状态：Active。按工作流分为 `dashboard/`（学习总览）与 `lesson/`（训练页）两个目录，
+Reference 呈现保持平铺。
 
 | 文件 | 责任 | 注意事项 |
 |---|---|---|
 | `src/main.tsx` | React 挂载入口 | 保持轻量 |
-| `src/App.tsx` | 应用壳、路由状态、Dashboard 和备份流程 | 约 1,100 行，后续按工作流深化 |
-| `src/LessonWorkspace.tsx` | 训练页、Monaco、Run/Grade、格式化与重置 | 约 750 行，课程与编辑器独立滚动 |
+| `src/App.tsx` | 路由分支（`/reference` 与学习总览）与懒加载 | 26 行，只做入口 |
+| `src/dashboard/LearningApp.tsx` | 总览壳：组合 12 个子组件 | 234 行 |
+| `src/dashboard/useDashboardView.ts` | 视图模型派生 | 汇总与目录必须一致 |
+| `src/dashboard/useDashboardNavigation.ts` | 工作区活动、目录筛选、history 与脏确认 | history 是唯一事实来源 |
+| `src/dashboard/useDashboardQueries.ts` | 5 个读模型、错误与刷新 | 5 个查询同屏，保持一起取 |
+| `src/dashboard/useBackupRestore.ts` | 备份导出与恢复 | 导出完全在浏览器内完成 |
+| `src/dashboard/navigation.ts` | URL/history 纯函数 | 直接链接、刷新与回退都依赖它 |
+| `src/dashboard/*Section.tsx` | 目录、项目、记录、复习、环境、知识地图、顶部与页脚 | 纯展示，无状态无 effect |
+| `src/lesson/LessonWorkspace.tsx` | 训练页组合：取数 effect、提示、反思与渲染 | 约 510 行 |
+| `src/lesson/useEditorSession.ts` | 编辑器会话：缓冲区、dirty 判定、格式化与重置 | 只改浏览器缓冲区 |
+| `src/lesson/useActivityExecution.ts` | 保存 / Run / Grade / 取消工作流 | 判题前先落盘 |
+| `src/lesson/InteractiveBlock.tsx` | 交互式课程块逐步演示 | 纯展示 |
 | `src/ReferenceBrowser.tsx` | Reference 布局、导航与搜索 | Reference 降级不能影响课程 |
-| `src/ReferenceArticle.tsx` | GFM 文章、表格、代码与锚点呈现 | 与静态预览保持一致 |
+| `src/ReferenceArticle.tsx` | GFM 文章、表格、代码与锚点呈现 | 消费共享块模型，见 `reference-presentation` |
 | `src/api.ts` | 类型化 HTTP 调用 | 不放教学规则 |
 | `src/cpp-format.ts` | 浏览器缓冲区中的确定性 C++ 格式化 | 不是完整 clang-format 替代品 |
-| `src/reference-preview.tsx` | Reference 静态预览呈现 | 当前被 CLI 直接依赖，需迁移 |
 | `src/mdn-theme.css` | Reference 的 MDN 风格主题 | 保持克制、可读和响应式 |
 | `src/styles.css` | 学习平台全局样式 | 修改后跑完整 E2E |
 
 ### 3.2 `apps/server`
 
-状态：Active，路由注册 Transitional。
+状态：Active。进程入口很薄，服务端实现已下沉到 `packages/composition`。
 
 | 文件 | 责任 | 注意事项 |
 |---|---|---|
-| `src/index.ts` | 开发/生产进程入口 | 读取配置并启动 Server |
+| `src/index.ts` | 开发/生产进程入口 | 只解析配置、组装并监听 |
 | `src/e2e-index.ts` | E2E 专用入口 | 只为测试环境组合 |
-| `src/config.ts` | 环境、路径、端口和安全默认值 | 路径只解析一次 |
-| `src/composition.ts` | 生产适配器和领域模块组合 | CLI 当前也从这里复用组合 |
-| `src/server.ts` | Fastify 路由、SSE、错误与 Reference Playground | 约 900 行，建议按领域路由组拆分 |
 
 ### 3.3 `apps/cli`
 
-状态：Active，依赖方向 Transitional。
+状态：Active。仅依赖 `packages/composition` 与领域模块，不再依赖任何 app。
 
 | 文件 | 责任 | 注意事项 |
 |---|---|---|
@@ -97,7 +104,10 @@
 | `modules/reference/` | Active | Reference 目录、搜索、slug、导航与示例状态 |
 | `modules/reference-authoring/` | Active/Transitional | 16 操作作者门面、22 个工件 Schema 与主要流水线 |
 
-`reference-authoring/src/index.ts` 超过 5,000 行。已有 `generation.ts`、`run.ts`、`batch.ts`、`repair.ts`、`research.ts` 等辅助实现，但生命周期责任仍过度集中在入口文件。
+`reference-authoring/src/index.ts` 现有 994 行（原 5271 行），只做装配。`generation.ts`、`run.ts`、`batch.ts`、
+`repair.ts`、`research.ts`、`validation.ts`、`profiles.ts`、`digest.ts`、`draft.ts`、`gates.ts`
+与 `operations/generation-apply.ts` 已承载各自的生命周期；16 个操作已全部迁入 `src/operations/` 的 6 个 capability 模块
+（draft-lifecycle、generation-apply、context、repair、research-measure、run-batch）。
 
 模块下的 in-memory adapter 与测试 fixture 不是重复生产实现，它们用于证明接口可替换、失败行为可测试。重构时应保留这些测试接缝。
 
@@ -105,14 +115,16 @@
 
 | 路径 | 状态 | 当前情况 |
 |---|---|---|
-| `packages/contracts/` | Active/Transitional | 跨模块 DTO、命令、查询、事件和解析器集中在约 950 行入口中 |
+| `packages/composition/` | Active | 服务端组装与服务端实现：`config.ts`（环境→地址与路径）、`application.ts`（领域模块装配）、`server.ts`（97 行，只做安装）、`transport.ts`（origin 校验、请求体守卫、字节预算）与 `routes/`（learning / reference / local-data / jobs 四个路由组） |
+| `packages/reference-policy/` | Active | Reference 内容策略的唯一权威：语义区域、标题匹配、每种 Entry kind 的要求、修复目标标题。质量门禁、Authoring 脚手架与修复计划都消费它 |
+| `packages/reference-presentation/` | Active | Reference 呈现的共享块模型与 HTML 序列化；Web 与 CLI 共用同一套 heading id 与块语义 |
+| `packages/contracts/` | Active | 跨模块 DTO、命令、查询、事件和解析器；内部按域分为 `reference.ts`、`judge.ts`、`events.ts`，入口用 `export *` 重导出，公共导入路径不变 |
 | `packages/content-schema/` | Active | Curriculum Schema 与验证器 |
 | `packages/reference-schema/` | Active | Reference Entry Schema 与验证器 |
-| `packages/ui/` | Planned | `src/index.ts` 目前只有 `export {}`，没有生产消费者 |
 
 不要仅为了缩短文件而拆 contracts。应按稳定领域词汇在内部拆分，再从包入口重导出，保持公共 seam 不变。
 
-`packages/ui` 的下一步选择只有两种：承载真正共享的 Reference presentation，或删除空包。不要把纯 CSS 碎片和薄组件堆进去制造浅模块。
+`packages/ui` 是空壳且零消费者，已按 `docs/73` 删除；共享 Reference 呈现改由 `packages/reference-presentation` 承担。
 
 ## 6. 声明式内容
 
@@ -138,7 +150,7 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 - `quality-baseline.json`：质量 ratchet 与已知 gap 基线。
 - `compile-run-debug.html`：早期静态速查页，Legacy，不属于当前 Entry renderer。
 
-`quality-baseline.json` 当前记录 116 个受审计 Entry，`knownGaps` 为空。剩余 4 个通常是聚合或导航类 Entry；接手者应以质量脚本输出为准，不凭数量猜测遗漏。
+`quality-baseline.json` 只保存 ratchet 基线与豁免记录（`acceptedEntryVersions`、`knownGaps`、`notApplicable`），不保存受审计条目数量；当前 116/120 这个数字由 `npm run check:reference-quality` 与 `npm run report:reference` 计算得出。剩余 4 个通常是聚合或导航类 Entry；接手者应以质量脚本输出为准，不凭数量猜测遗漏。
 
 ### 6.3 `judge-private/`
 
@@ -154,7 +166,7 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 
 - `01`–`12`：当前产品和工程基线。
 - `22`–`24`、`53`：Reference 与作者工具的设计/计划。
-- `66`–`70`：架构对照、审计、文件地图、未来计划与 AI 接手。
+- `66`–`73`：架构对照、架构审计、文件地图、未来计划、AI 接手、安全审计、文档-代码冲突审计与重构方案。
 - `13`–`21`、`25`–`52`、`54`–`65`：历史交付证据。
 - `adr/`：已接受架构决策。
 - `reference/`：学习补充材料与 Reference 批次研究。
@@ -182,7 +194,7 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 | `scripts/report-reference.ts` / `npm run report:reference` | Reference 覆盖与质量报告 |
 | `scripts/verify-react-project.mjs` | Judge 使用的受控 React 项目验证 harness |
 
-`scripts/reference-content-quality.ts` 与 Authoring 模块当前都掌握部分内容质量词汇，这是最高优先级的重复策略债务。
+`scripts/reference-content-quality.ts` 与 Authoring 模块当前都掌握部分内容质量词汇，这是内容侧最高优先级的重复策略债务；按 `docs/69` 的排序，它排在安全债务收敛（P1）之后。
 
 ## 9. 早期原型目录
 

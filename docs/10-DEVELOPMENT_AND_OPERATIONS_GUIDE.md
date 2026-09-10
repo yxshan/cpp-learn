@@ -23,7 +23,7 @@ Exact versions will be recorded by `cpplearn doctor` and release manifests.
 
 ## 2. Repository workflow
 
-The implementation will use npm workspaces. Expected commands after scaffolding:
+The implementation uses npm workspaces. Current commands:
 
 ```bash
 npm install
@@ -60,11 +60,23 @@ Startup fails safely if required content or built Web assets cannot be read. The
 
 ## 4. Configuration
 
-Planned keys:
+Implemented today as environment variables:
 
 ```text
-server.host
-server.port
+CPP_LEARN_HOST               loopback host; defaults to 127.0.0.1
+CPP_LEARN_PORT               port; defaults to 4173
+CPP_LEARN_DATA_ROOT          overrides .cpp-learn/data
+CPP_LEARN_WORKSPACE_ROOT     overrides .cpp-learn/workspaces
+CPP_LEARN_REFERENCE_COMPILER Reference verification compiler
+CPP_LEARN_REFERENCE_CATALOG  explicit Reference catalog path
+CPP_LEARN_AUTHORING_ROOT     authoring draft root
+CPP_LEARN_AUTHORING_CACHE_ROOT  authoring cache root
+CPP_LEARN_API_URL            Web development proxy target
+```
+
+A dotted-key configuration file is planned but not implemented:
+
+```text
 paths.curriculum
 paths.reference
 paths.workspaces
@@ -80,9 +92,14 @@ logging.level
 
 Secrets are not expected in the base product. Environment variables are allowlisted and never forwarded wholesale to learner processes.
 
-The server accepts `CPP_LEARN_DATA_ROOT` and `CPP_LEARN_WORKSPACE_ROOT` as
-explicit storage overrides. They support controlled test and maintenance
-composition roots; omitting them retains the default learner paths. The Web
+The server package entry (`npm run dev`, `npm start`) accepts
+`CPP_LEARN_DATA_ROOT` and `CPP_LEARN_WORKSPACE_ROOT` as explicit storage
+overrides, plus `CPP_LEARN_HOST` and `CPP_LEARN_PORT` for the listen address
+(`apps/server/src/index.ts`). They support controlled test and maintenance
+composition roots; omitting them retains the default learner paths. The
+`./cpplearn serve` launcher does not read any of these four variables yet and
+hard-codes `127.0.0.1:4173`; see the
+[documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md). The Web
 development proxy accepts `CPP_LEARN_API_URL`, while production static serving
 continues to use same-origin `/api` routes.
 
@@ -96,7 +113,8 @@ system Apple Clang baseline. After changing the Reference compiler, rerun
 
 ## 5. Logging and observability
 
-- Structured JSON logs in production mode; readable logs in development.
+- Fastify/pino JSON logs today; a separate readable development formatter is
+  planned but not implemented.
 - Correlation ID on HTTP command, Judge job, Attempt, and event append.
 - Log level, Module, event name, duration, and safe outcome.
 - No source code, reflections, private inputs, or environment secrets in normal logs.
@@ -134,11 +152,7 @@ Restore verifies manifest shape, safe paths, file checksums, and event envelopes
 
 ### Projection rebuild
 
-```bash
-cpplearn doctor --rebuild-projections
-```
-
-The Learning Record exposes rebuild through its maintenance Interface and automatically rebuilds during startup. A dedicated `doctor --rebuild-projections` presentation command remains planned. Rebuild never modifies the source event log.
+The Learning Record exposes rebuild through its maintenance Interface and automatically rebuilds during startup. A dedicated `doctor --rebuild-projections` presentation command remains planned and is not available yet; rebuild never modifies the source event log.
 
 ## 7. Content authoring workflow
 

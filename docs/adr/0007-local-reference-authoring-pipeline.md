@@ -10,6 +10,12 @@ caching, review reports, and atomic publication behind `prepare`, `check`, and
 `publish`. Its first Adapter will be a CLI; a later Web Author Console will call
 the same Module rather than owning authoring rules.
 
+> Update note (2026-09-10): the decision above is unchanged, but the public
+> facade has since grown to sixteen operations as A3–A7 added context,
+> generation, research, run, batch, measurement, and bounded repair. The current
+> interface is recorded in [Detailed Design](../04-DETAILED_DESIGN.md#8-reference-authoring)
+> and [Interface Contracts](../05-INTERFACE_CONTRACTS.md).
+
 ## Considered options
 
 - Continue editing canonical files and running every full gate manually.

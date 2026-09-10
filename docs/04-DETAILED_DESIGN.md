@@ -93,7 +93,7 @@ queued → preparing → compiling → testing → analyzing → completed
 
 - 使用参数数组启动工具，不拼接 shell 命令。
 - 每个 Job 使用独立临时目录和最小环境。
-- 分别限制 stdout、stderr、执行时间与并发。
+- 合并限制 stdout 与 stderr 的总输出量，并分别限制执行时间与并发准入。
 - 超时或取消时终止进程组并清理临时目录。
 - 记录工具链指纹、source digest、flags、exit code、signal 和截断状态。
 - 编译器或运行环境缺失属于 system/toolchain 问题，不判为学习者错误。
@@ -217,7 +217,7 @@ publish 绑定 draft revision、作者输入摘要、检查报告与 canonical t
 | `exports`、`restores` | 本地数据备份 |
 | `/api/v1/reference/*` | 目录、搜索、slug、Entry 与 Playground |
 
-HTTP 适配器负责 transport 校验、状态码、origin/loopback 策略与错误映射，不拥有学习、Reference 或判题规则。当前全部注册集中在 `apps/server/src/server.ts`，未来应按领域路由组拆分。
+HTTP 适配器负责 transport 校验、状态码、origin/loopback 策略与错误映射，不拥有学习、Reference 或判题规则。当前全部注册集中在 `packages/composition/src/server.ts`，未来应按领域路由组拆分。
 
 ## 10. Web Adapter
 

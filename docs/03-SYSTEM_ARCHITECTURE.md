@@ -90,8 +90,12 @@ Reference Authoring 由维护者在命令行启动，草稿和缓存位于 `.cpp
 | Contracts | 跨进程 DTO、命令、查询、事件和解析器 | `@cpp-learn/contracts` |
 | Content Schema | Curriculum 内容验证 | JSON Schema 与验证器 |
 | Reference Schema | Reference Entry 内容验证 | JSON Schema 与验证器 |
+| Reference Policy | 语义区域、标题匹配、每种 Entry kind 的要求与修复目标 | `@cpp-learn/reference-policy` |
+| Reference Presentation | 框架无关的块模型与 HTML 序列化 | `@cpp-learn/reference-presentation` |
+| Composition | 服务端组装、监听配置与 Fastify 适配器 | `@cpp-learn/composition` |
 
-`packages/ui` 当前仅导出空对象，是计划中的接缝，不是已经使用的视觉系统。未来可用于共享 Reference 呈现；若无法形成有深度的公共接口，应删除而不是保留空抽象。
+这三个包都**只被适配器与领域模块依赖，不反向依赖任何 app**。`packages/ui` 已删除：
+它只导出空对象且零消费者，共享呈现的职责由 `reference-presentation` 承担（见 `docs/73`）。
 
 ## 6. 核心数据流
 
@@ -157,7 +161,8 @@ Playground 为非 Activity 执行。它使用独立 run identity、并发限制�
 - 内容规则属于 Schema、质量策略或领域模块，不属于 React 组件与路由处理器。
 - 跨边界数据使用版本化契约；模块内部对象不直接泄漏到 HTTP。
 
-当前存在两个已知反向依赖：CLI 通过 `@cpp-learn/server/composition` 复用组合根，并通过 `@cpp-learn/web/reference-preview` 复用 Reference 预览。前者需要澄清公共组合接口，后者应优先迁移到共享呈现模块。
+当前不存在应用之间的依赖：CLI 与 Server 都只依赖 `packages/composition` 与领域模块，
+Reference 呈现由 `packages/reference-presentation` 同时供 Web 与 CLI 使用（见 `docs/73`）。
 
 ## 9. 可靠性与安全边界
 
@@ -171,12 +176,17 @@ Playground 为非 Activity 执行。它使用独立 run identity、并发限制�
 
 ## 10. 已知架构债务
 
-1. Reference profile、质量 area、标题识别和 repair target 仍分散在多个字符串映射中。
-2. `ReferenceAuthoring` 已增长为 16 个操作，主要实现文件超过 5,000 行，工作流局部性不足。
-3. CLI 预览依赖 Web 应用包，共享呈现边界尚未形成。
-4. Fastify 注册、`App.tsx`、`LessonWorkspace.tsx` 与 contracts 单文件偏大。
-5. `packages/ui` 尚为空壳；文档历史报告仍在同一目录平铺。
-6. A3 作者效率只有确定性夹具证据，尚缺真实五条目批次测量。
+1. `ReferenceAuthoring` 已增长为 16 个操作，`index.ts` 仍有约 3900 行、16 个方法是一个
+   约 2200 行的对象字面量；22 个 Schema 仍平铺在同一目录。
+2. `dashboard/LearningApp.tsx` 仍有约 520 行，4 个并发查询与备份恢复工作流尚未抽成 hook。
+3. 文档历史报告仍在 `docs/` 根平铺。
+4. A3 作者效率只有确定性夹具证据，尚缺真实五条目批次测量。
+
+已消解：Reference 内容策略已收敛到 `packages/reference-policy` 单一权威；
+CLI 与 Web 之间、CLI 与 Server 之间已无依赖；HTTP 适配器已按领域路由组分域，
+`server.ts` 从 903 行降到 97 行；contracts 已按域内部拆分而公共导出面不变；
+Web 已按工作流分目录，`App.tsx` 从 1097 行降到 26 行、`LessonWorkspace.tsx`
+从 749 行降到 507 行（见 `docs/73` 切片 1–10）。
 
 债务的推荐顺序和验收切片见 [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)，测量证据见 [当前架构审计](67-CURRENT-ARCHITECTURE-AUDIT.md)。
 

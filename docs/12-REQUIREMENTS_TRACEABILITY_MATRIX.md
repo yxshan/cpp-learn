@@ -176,9 +176,9 @@ Stage 2 Judge, record, redaction, recovery, and backup evidence is archived in t
 | T-UI-005 | Playwright verifies formatted starter presentation, active-file Format, confirmed Reset, and buffer-only persistence messaging in the real Monaco editor | Passed |
 | T-E2E-006 | `apps/server/src/config.test.ts`, the dedicated E2E composition root, and `e2e/first-learning-loop.spec.ts` verify explicit temporary storage roots and a pristine revision-zero starter without reading or mutating default learner data | Passed |
 
-## 15. Planned Stage 6.2 evidence
+## 15. Executable Stage 6.2 evidence
 
-| Test ID | Planned executable evidence | Status |
+| Test ID | Executable evidence | Status |
 |---|---|---|
 | T-REF-001 | `packages/reference-schema/src/reference-schema.test.ts` rejects unsupported standards and schema drift; `modules/reference/src/reference.test.ts` independently covers duplicate IDs/slugs, full-catalog activation, activation duration, confined paths, and content/catalog symlink escape | Passed |
 | T-REF-002 | `modules/reference/src/reference.test.ts` independently rejects unknown relationships, invalid redirects, and category cycles; `apps/server/src/composition.test.ts` validates Activity-to-Reference integration | Passed |

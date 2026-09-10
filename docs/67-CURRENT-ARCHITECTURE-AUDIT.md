@@ -9,6 +9,13 @@
 | Prepared by | GPT-5.6 Sol |
 | Last updated | 2026-09-09 |
 
+> Layout note (2026-09-10): the measurements in §3 were taken before the
+> `docs/73` refactor. `apps/server/src/{server,composition,config}.ts` now live in
+> `packages/composition/src/`, `apps/cli` no longer depends on `apps/server` or
+> `apps/web`, and `packages/ui` has been deleted in favour of
+> `packages/reference-presentation`. Candidate A-03 is complete; the remaining
+> candidates and their paths are unchanged.
+
 ## 1. Executive verdict
 
 The project does not need a rewrite. Its top-level monorepo, declarative content,
@@ -54,15 +61,15 @@ and browser implementation of authoring rules are not justified.
 | Tracked domain module source files | 66 | Most behavior is correctly outside Adapters |
 | Curriculum files | 141 | Declarative per-Activity layout is scaling predictably |
 | Reference files | 469 | Content has become a first-class subsystem |
-| Documentation files | 109 | Navigation and lifecycle grouping now matter |
+| Documentation files | 110 | Navigation and lifecycle grouping now matter |
 | `reference-authoring/src/index.ts` | 5,271 lines | Authoring orchestration has lost locality |
-| `ReferenceAuthoring` interface | 16 operations | The documented three-operation interface has expanded substantially |
+| `ReferenceAuthoring` interface | 16 operations | The facade keeps growing because no lifecycle capability owns its workflows |
 | Authoring schemas | 22 JSON Schema files | Versioned artifacts are valuable but need grouping and ownership |
 | `apps/server/src/server.ts` | 903 lines | Several transport concerns share one implementation file |
 | `apps/web/src/App.tsx` | 1,097 lines | Navigation, loading, backup, dashboard derivation, and rendering are mixed |
 | `packages/contracts/src/index.ts` | 956 lines | A real shared seam is represented by one oversized source file |
 | `packages/ui/src/index.ts` | 1 line | The planned package is currently a shallow, unused placeholder |
-| Architecture baseline drift | `reference-content/` vs actual `reference/`; documented 3-operation Authoring interface vs actual 16 | Current design documentation no longer fully describes the implementation |
+| Architecture baseline drift | `docs/05` still lists fourteen Authoring operations while the interface has sixteen; docs 11, 53 and 67 still order content policy before the security debt that docs 69, 70 and the root README promote to P1 | Current design documentation no longer fully describes the implementation or the agreed priority order |
 
 The measurements are line and tracked-file counts, not quality scores. They are
 used only to locate places where understanding and change require excessive
@@ -161,15 +168,16 @@ provider-specific AI logic enters the Authoring module.
 
 ### A-03 — Extract shared Reference presentation
 
-**Recommendation: Strong. Dependency category: in-process.**
+**Recommendation: Strong. Dependency category: in-process. Status: DONE (see
+[Refactoring plan](73-REFACTORING-PLAN.md) slice 2).**
 
-Files:
+Files as audited:
 
 - `apps/cli/src/reference-author-preview.ts`
-- `apps/web/src/reference-preview.tsx`
+- `apps/web/src/reference-preview.tsx` (deleted)
 - `apps/web/src/ReferenceArticle.tsx`
 - `apps/web/src/reference-links.ts`
-- `packages/ui/`
+- `packages/ui/` (deleted)
 
 Problem: the CLI imports `@cpp-learn/web/reference-preview`. An Adapter therefore
 depends on another Adapter and pulls Web package knowledge into a server-side
@@ -180,13 +188,10 @@ Deepen: shared Reference presentation and static rendering move behind a
 presentation module consumed by both Web and CLI. Browser routing remains in the
 Web Adapter; filesystem output remains in the CLI Adapter.
 
-Benefits:
-
-- locality: one Reference renderer;
-- CLI no longer imports Web;
-- preview and live page stay equal;
-- renderer gets direct tests;
-- empty package earns or loses its place.
+Outcome: `packages/reference-presentation` owns a framework-free block model and
+both leaf renderers consume it, which is stronger than the original proposal —
+the two renderers share semantics rather than one importing the other. A parity
+test pins them together, and the empty `packages/ui` package is gone.
 
 ### A-04 — Partition the Fastify transport Adapter by domain
 
@@ -259,10 +264,9 @@ Files:
 Problem: 65 numbered baseline and delivery files shared the root before this
 audit, and the reading order presents every historical implementation report as
 if it were required current architecture. Research is partly grouped, but stage
-reports are not. Baseline drift is already visible: Detailed Design names
-`reference-content/` while the repository uses `reference/`, and the Authoring
-plan still illustrates a three-operation interface while the implementation has
-sixteen.
+reports are not. Priority drift is also visible: docs 11, 53 and 67 still put the
+Reference content policy first, while docs 69, 70 and the root README promote
+security-debt convergence to P1 and demote content policy to P2.
 
 Deepen: organize documents by lifecycle while retaining stable Document IDs:
 
@@ -320,8 +324,11 @@ Benefits:
 2. Add a cross-profile contract-test matrix.
 3. Keep behavior unchanged.
 
-This is the top recommendation because an actual A7 defect demonstrated the
-cost of the current duplication.
+An actual A7 defect demonstrated the cost of the current duplication, so A-01 is
+the highest-value architecture candidate in this audit. It is **not** the first
+work item overall: per [the future development plan](69-FUTURE-DEVELOPMENT-PLAN.md)
+and [the security audit](71-CURRENT-SECURITY-AUDIT.md), security-debt
+convergence (P1) is executed before this phase begins.
 
 ### Phase R1 — Prepare for the Web review Adapter
 
@@ -357,9 +364,11 @@ locality or leverage problem.
 ## 8. Decision requested
 
 Choose one candidate for a detailed design interview before implementation.
-The recommended first candidate is A-01. Its interface and physical package
-placement should be designed only after confirming whether the quality checker
-must remain a root script or become a normal workspace module.
+The recommended first architecture candidate is A-01, to be scheduled after the
+security-debt work that [the future development plan](69-FUTURE-DEVELOPMENT-PLAN.md)
+lists as P1. Its interface and physical package placement should be designed only
+after confirming whether the quality checker must remain a root script or become
+a normal workspace module.
 
 External comparison evidence is recorded in
 [External Architecture Benchmarks](66-EXTERNAL-ARCHITECTURE-BENCHMARKS.md).

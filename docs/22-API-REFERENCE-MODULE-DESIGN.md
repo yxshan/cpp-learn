@@ -41,7 +41,8 @@ reflection, Evidence policy, or learner-owned Workspace.
 - Automated import, scraping, or translation of cppreference or MDN content.
 - Remote search infrastructure or a Reference database.
 - AI-generated canonical facts or automatic publication of AI-written content.
-- Example execution until the read-only catalog is accepted.
+
+Reference Example execution (the Playground) has since been delivered; see §12.
 
 ## 3. Domain terminology
 
@@ -129,18 +130,18 @@ modules/
 packages/
   reference-schema/           Entry JSON Schema and validator
   contracts/                  versioned Reference query DTOs
-reference-content/
+reference/
   catalog.json
-  standard-library/
-    containers/
-      vector/
-        entry.json
-        content.md
-        examples/
-          basic.cpp
+  entries/
+    <entry-id>/
+      entry.json
+      content.md
+      examples/
+        *.cpp
 apps/
   server/                     HTTP Adapter and composition
-  web/src/reference/          lazy-loaded Reference Web Adapter
+  web/src/ReferenceBrowser.tsx   lazy-loaded Reference Web Adapter
+  web/src/ReferenceArticle.tsx   GFM article rendering
 ```
 
 Reference content is repository-owned release material. It is not included in
@@ -316,18 +317,21 @@ search.
 
 ## 10. HTTP and Web presentation
 
-Planned query routes:
+Query routes:
 
 ```text
-GET /api/v1/reference
-GET /api/v1/reference/search?q=vector&standard=c%2B%2B20
-GET /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
-GET /api/v1/reference/entries/:entryId
+GET  /api/v1/reference
+GET  /api/v1/reference/search?q=vector&standard=c%2B%2B20
+GET  /api/v1/reference/resolve?slug=standard-library%2Fcontainers%2Fvector
+GET  /api/v1/reference/entries/:entryId
+POST /api/v1/reference/entries/:entryId/examples/:exampleId/runs
+POST /api/v1/reference/runs/:runId/cancellations
 ```
 
-These routes are active contracts in [Interface
-Contracts](05-INTERFACE_CONTRACTS.md). Their DTOs are shared from
+All six routes are registered and active. Their DTOs are shared from
 `packages/contracts` and covered through executable Module and Fastify tests.
+The Playground run and cancellation routes are specified in
+[Interface Contracts](05-INTERFACE_CONTRACTS.md).
 
 Proposed query DTOs:
 

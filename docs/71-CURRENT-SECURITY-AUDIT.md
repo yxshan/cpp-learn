@@ -113,7 +113,7 @@ Run/Grade。代码看似普通，但可直接读取并上传宿主机文件；�
 
 **严重度：Medium；状态：Open**
 
-Reference Playground 在 `apps/server/src/server.ts` 中默认限制为一个并发运行，繁忙时
+Reference Playground 在 `packages/composition/src/server.ts` 中默认限制为一个并发运行，繁忙时
 返回 `429`。Activity Run/Grade 则直接进入 `LearningPlatform.dispatch()`；
 `activeJobs` 只保存取消控制器，没有并发阈值或队列长度上限。不同 `commandId` 可以同时
 启动多个编译/测试任务。
@@ -141,7 +141,8 @@ Judge 有每个子进程的墙钟与输出限制，但没有统一的进程数�
 
 **严重度：Medium；状态：Open**
 
-2026-09-09 的 `npm audit --omit=dev --json` 报告 1 个 Moderate、1 个 Low 依赖项。
+2026-09-09 的 `npm audit --omit=dev --json` 报告 1 个 Moderate、1 个 Low 依赖项；
+2026-09-10 复跑同一命令为 3 个（2 Low、1 Moderate），同一条依赖链的四个公告全部仍在。
 依赖链为：
 
 ```text
@@ -163,8 +164,8 @@ DOMPurify 3.4.8 落在四个公告的受影响范围内：
 暴露低于一个接收任意富文本的公网编辑器；但 Monaco 位于生产包且 DOMPurify 确实会被
 打包，不能把 Audit 结果当成误报删除。
 
-npm 给出的自动修复候选是 `monaco-editor@0.53.0`，属于 0.x 版本回退且被标记为 breaking
-change。不要直接执行 `npm audit fix --force`。
+2026-09-10 复跑时 npm 已不再给出任何自动修复候选（`No fix available`），此前记录的
+`monaco-editor@0.53.0` 回退方案不再可用。不要直接执行 `npm audit fix --force`。
 
 **建议**：
 

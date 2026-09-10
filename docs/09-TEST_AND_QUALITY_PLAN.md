@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | TQP-001 |
-| Version | 2.4 |
+| Version | 2.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-08 |
+| Last updated | 2026-09-10 |
 
 ## 1. Quality objectives
 
@@ -184,6 +184,10 @@ Reference content CI additionally validates:
   receipt-backed child-run resume, idempotent completion, complete member-state
   reporting, independent work beside blocked members, duplicate draft/run
   rejection, missing dependency and cycle rejection, and CLI JSON parity.
+- Authoring Phase A7 `T-AUTH-014` verifies that quality repair attempts are
+  bounded by a fixed three-attempt budget, stay bound to the draft revision and
+  input digest, cannot rename their way past the budget, and cannot bypass the
+  full publication gate.
 - Authoring Phase A6 `T-AUTH-A6-RESEARCH-001/002` verifies explicit bounded
   evidence ingestion, proposal-only/no-mutation behavior, mandatory human
   verification, normative-fact classification, URL and Source Ledger
@@ -249,4 +253,9 @@ S1 blocks all releases; S2 blocks the affected milestone release.
 
 ## 10. Evidence and reporting
 
-CI preserves test reports, coverage summaries, judge fixture reports, content-lint reports, and migration/rebuild checks. Coverage percentage is advisory; requirement and risk coverage are the release criteria.
+Release evidence is retained per release: test reports, judge fixture reports,
+content-lint reports, and migration/rebuild checks come from the gate commands
+recorded in the release notes. A coverage summary and CI artifact upload are
+planned requirements — the current `quality` workflow runs `npm ci` and
+`npm run check` only, and `npm test` does not enable coverage. Coverage
+percentage is advisory; requirement and risk coverage are the release criteria.

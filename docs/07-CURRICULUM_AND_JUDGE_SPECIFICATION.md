@@ -81,7 +81,7 @@ The `project` object is required only for `project-milestone` Activities. Its ID
 
 The manifest selects fixed judge capabilities. It cannot embed arbitrary shell commands.
 
-Fixed private-test inputs and expected outputs are not Activity-manifest fields. They live in the server-only `judge-private/tests.json` registry keyed by Activity ID. Catalog activation rejects private values inside `curriculum/`, rejects registry entries for unknown Activities, and validates the internally merged definition before use.
+Fixed private-test inputs and expected outputs are not Activity-manifest fields. They live in the server-only `judge-private/tests.json` registry keyed by Activity ID. Catalog activation rejects any public manifest that declares a `judge.privateTests` key, rejects registry entries for unknown Activities, and validates the internally merged definition before use.
 
 ## 5. Interactive lesson blocks
 

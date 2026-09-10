@@ -56,25 +56,31 @@ Stage 6.2 的内容扩展和质量修复证据分布在报告 25–52。它们�
 
 验收：README、架构、文件地图、未来计划与接手指南一致；`npm run check` 和生产式 E2E 通过；工作树中没有来源不明的改动。
 
-### R1：统一 Reference 内容策略
+### R1：安全债务收敛
+
+目标：按[当前安全审计](71-CURRENT-SECURITY-AUDIT.md)的证据处理已确认的安全债务，顺序与[后续开发计划 P1](69-FUTURE-DEVELOPMENT-PLAN.md#4-p1安全债务收敛)一致——先处理依赖公告（SEC-F03）、Judge 并发准入（SEC-F02）与 CI 安全门禁（SEC-F04），再更新安全基线。
+
+验收：生产依赖 Audit 不再有未接受的公告；并发压力不突破配置预算；安全 Job 能拦截受控 fixture；`npm run check` 与生产式 E2E 通过。Native Judge 的强隔离（SEC-F01）在非回环、多人或不可信代码场景下仍是发布阻断项。
+
+### R2：统一 Reference 内容策略
 
 目标：建立一个类型化的 Reference content policy，统一 Entry kind profile、semantic area、标题识别、必需事实、风险和 repairability。
 
 验收：质量检查、prepare scaffold 与 repair plan 使用同一策略；Header 等 area 不再通过独立字符串映射漏接；现有 120 个 Entry 的质量结果不回退。
 
-### R2：收敛 Reference Authoring 内部结构
+### R3：收敛 Reference Authoring 内部结构
 
 目标：按 Draft、Evidence、Generation、Repair/Batch、Validation/Publication 生命周期深化模块，保留现有 16 操作兼容门面。
 
 验收：CLI、artifact schema 与已有 fixture 兼容；主要实现不再包含多个独立变更原因；失败、恢复、CAS 和原子发布测试仍通过。
 
-### R3：修正共享呈现与应用依赖
+### R4：修正共享呈现与应用依赖
 
 目标：让 Web 与 CLI 共同依赖一个 Reference presentation 模块，移除 CLI 对 `@cpp-learn/web` 的直接依赖。
 
 验收：静态预览与在线 Reference 使用同一 renderer；浏览器路由仍只在 Web；文件输出仍只在 CLI；相关单元和 E2E 通过。
 
-### R4：完成真实作者效率验收
+### R5：完成真实作者效率验收
 
 目标：使用作者流水线完成一个相关的五条目批次，记录 active author time、machine time、cache hit、review findings 与 escaped defects。
 
@@ -82,19 +88,19 @@ Stage 6.2 的内容扩展和质量修复证据分布在报告 25–52。它们�
 
 ## 5. 中期路线
 
-### R5：按领域深化 HTTP Adapter
+### R6：按领域深化 HTTP Adapter
 
 把 Fastify 注册分为 Learning、Reference/Playground 和 Local Data 路由组。保留一个小 composition implementation，集中共享 transport policy。
 
 验收不是“文件变多”，而是一个路由组的变更不要求理解无关领域；不能把领域规则移动到 Fastify。
 
-### R6：按学习者工作流深化 Web Adapter
+### R7：按学习者工作流深化 Web Adapter
 
 把 Dashboard、Lesson Workspace、Reference 和备份恢复的状态局部化。App shell 只负责顶层导航与路由选择。
 
 验收包括 direct URL、history、dirty state、键盘操作、桌面独立滚动、390px 无横向溢出和无浏览器错误。
 
-### R7：持续扩展高质量内容
+### R8：持续扩展高质量内容
 
 先依据学习路径和搜索缺口选择条目，再按相关批次扩展。每个实质性 API 条目尽量覆盖参数、返回、错误、复杂度、生命周期/失效、常见误区、可运行示例和适当的 JS 对照。
 

@@ -3,21 +3,25 @@
 | Field | Value |
 |---|---|
 | Document ID | DATA-001 |
-| Version | 1.6 |
+| Version | 1.7 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-07 |
+| Last updated | 2026-09-10 |
 
 ## 1. Storage strategy
 
 ```text
-data/events.jsonl          append-only source of truth
-data/projections.sqlite    rebuildable query model
-data/snapshots/            immutable source snapshots
-student-workspaces/        mutable learner files
-data/exports/              explicit learner exports
-reference-content/         versioned Reference manifests, Markdown, examples
+.cpp-learn/data/events.jsonl            append-only source of truth
+.cpp-learn/data/projections.sqlite      rebuildable query model
+.cpp-learn/data/reference-verification.json  local Reference example evidence
+.cpp-learn/workspaces/                  mutable learner files
+.cpp-learn/workspaces/.snapshots/       immutable source snapshots
+reference/                              versioned Reference manifests, Markdown, examples
 ```
+
+Explicit learner exports are written to the path given on the command line
+(`cpplearn export --output PATH`) or chosen in the Web backup flow; there is no
+fixed export directory.
 
 Curriculum, Reference, and private judge data are versioned repository content,
 not learner data.
@@ -86,6 +90,18 @@ export.created
 recovery.performed
 ```
 
+The catalog above is the target event model. The events actually persisted today
+are `attempt.completed`, `hint.revealed`, `reflection.submitted`,
+`evidence.recorded`, `concept.state.changed`, `review.scheduled`,
+`review.completed`, `teacher.observation.accepted`,
+`teacher.observation.rejected`, and `recovery.performed`. The remaining names in
+this catalog — including `session.started`, `activity.*`, `workspace.*`,
+`snapshot.created`, `attempt.started`, `run.completed`, `grade.requested`,
+`grade.completed`, `project.milestone.completed`, `content.catalog.activated`,
+`projection.rebuilt`, and `export.created` — are planned and have no
+implementation yet. See the
+[documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md).
+
 ## 4. Core payloads
 
 ### Grade completed
@@ -148,7 +164,7 @@ The projection stores current state, next Review date, last independent Evidence
 ## 7. Snapshot design
 
 - Snapshot ID is derived from normalized manifest and file contents.
-- Paths are sorted and encoded with explicit lengths before hashing.
+- Paths are sorted and JSON-encoded before hashing.
 - File metadata unrelated to compilation is excluded.
 - Snapshots are immutable after creation.
 - Large generated build artifacts are excluded.
@@ -190,10 +206,10 @@ Default export excludes private judge data, build caches, process logs containin
 Reference content is immutable release input at runtime:
 
 ```text
-reference-content/catalog.json
-reference-content/<category>/<entry>/entry.json
-reference-content/<category>/<entry>/content.md
-reference-content/<category>/<entry>/examples/*.cpp
+reference/catalog.json
+reference/entries/<id>/entry.json
+reference/entries/<id>/content.md
+reference/entries/<id>/examples/*.cpp
 ```
 
 Catalog activation derives an in-memory navigation tree and search index. Those
@@ -204,7 +220,7 @@ upgrade.
 Reference data invariants:
 
 - Entry ID and active slug are unique.
-- Manifest, content, and example paths remain inside `reference-content/`.
+- Manifest, content, and example paths remain inside `reference/`.
 - Related Entry IDs resolve before Reference activation; Activity manifests own
   `referenceIds`, which resolve during cross-catalog composition validation.
 - Entry and schema versions are positive and explicit.

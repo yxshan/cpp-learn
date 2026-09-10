@@ -60,7 +60,8 @@ npm run test:e2e:production
 5. [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
 6. [当前架构审计](67-CURRENT-ARCHITECTURE-AUDIT.md)
 7. [当前安全审计](71-CURRENT-SECURITY-AUDIT.md)
-8. 与任务直接相关的 ADR 和规范
+8. [文档与代码冲突审计](72-DOC-CODE-CONFLICT-AUDIT.md)
+9. 与任务直接相关的 ADR 和规范
 
 不要把 40 多份 Implementation Report 全部放进上下文。只有当你需要追溯某个行为、验收或失败模式时，才读取对应报告。
 
@@ -212,7 +213,7 @@ npm run reference:author -- --help
 1. 哪些目录是生产内容，哪些是运行时或 Legacy？
 2. Run、Grade 与 Reference Playground 的状态语义有何不同？
 3. Reference 阅读模块与 Authoring 模块为何分开？
-4. 当前最高优先级债务为何是 content policy？
+4. 当前最高优先级债务为何是安全债务，而不是 content policy？
 5. 哪些门禁与当前任务风险相匹配？
 6. 哪些工作已实现但尚未验收？
 

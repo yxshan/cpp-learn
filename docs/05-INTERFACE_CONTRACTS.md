@@ -53,6 +53,12 @@ Session request:
 }
 ```
 
+The Track, Session, Activity-start, and Workspace-snapshot-diff routes below are
+target contract elements: no Track or Session domain type exists in
+`packages/contracts` yet, and the current Server registers only
+`GET /api/v1/activities` and `GET /api/v1/activities/:activityId` for this area.
+See the [documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md).
+
 ### C++ API Reference
 
 ```text
@@ -269,22 +275,22 @@ A Teacher Observation references an existing Attempt and the Activity's declared
 
 ```text
 id: 14
-event: judge.stage.finished
-data: {"schemaVersion":1,"jobId":"job_...","sequence":14,"stage":"compile","outcome":"pass"}
+event: judge.report.ready
+data: {"schemaVersion":1,"jobId":"job_...","sequence":14,"type":"judge.report.ready"}
 ```
 
-Event types:
+Event types emitted by the current native platform:
 
 ```text
 judge.queued
-judge.preparing
-judge.stage.started
-judge.diagnostic
-judge.stage.finished
 judge.report.ready
 judge.cancelled
 judge.system-error
 ```
+
+Finer-grained progress events (`judge.preparing`, `judge.stage.started`,
+`judge.diagnostic`, `judge.stage.finished`) remain the target contract but are not
+emitted yet; see the [documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md).
 
 Events contain safe structured diagnostics only. Private test inputs and expected outputs are forbidden fields.
 
@@ -295,10 +301,12 @@ interface JudgeReport {
   schemaVersion: 1;
   reportId: string;
   jobId: string;
+  mode: ExecutionMode;
   activity: { id: string; version: number; judgeVersion: number };
   source: { snapshotId: string; digest: string };
   toolchain: ToolchainFingerprint;
-  buildFlags: string[];
+  buildFlags?: string[];
+  seeds?: number[];
   verdict:
     | "compile_error"
     | "runtime_error"
@@ -312,13 +320,13 @@ interface JudgeReport {
     | "cancelled"
     | "automated_pass"
     | "judge_system_error";
-  stages: JudgeStageResult[];
+  stages: JudgeReportStage[];
   startedAt: string;
   completedAt: string;
 }
 ```
 
-Stage kinds additionally include `property_test`, `performance`, `configure`, `build`, and `ctest`. Generated-property stages may expose `seed`, `caseIndex`, and a reproducible generated counterexample. Performance profiles declare expected results for both scaled inputs; stages expose only their median durations and ratio. CMake reports identify `cmake/ctest` as the build system and record the inspected CMake and CTest version lines. Private fixed/performance inputs and expected outputs remain forbidden.
+Two stage shapes exist. The Module-level `JudgeStageResult` guarantees only `kind`, `outcome`, and `durationMs`, where `kind` is one of `prepare`, `compile`, `test`, `analyze`. The transport-level `JudgeReportStage.kind` is one of `compile`, `configure`, `build`, `ctest`, `test`, `public_test`, `private_test`, `property_test`, `performance`, `asan`, `ubsan`, and may additionally carry `stdout`, `stderr`, `testName`, `feedback`, `seed`, `caseIndex`, `counterexample`, `baselineDurationMs`, `scaledDurationMs`, `ratio`, and `diagnostics`. Generated-property stages may expose `seed`, `caseIndex`, and a reproducible generated counterexample. Performance profiles declare expected results for both scaled inputs; stages expose only their median durations and ratio. CMake reports identify `cmake/ctest` as the build system and record the inspected CMake and CTest version lines. Private fixed/performance inputs and expected outputs remain forbidden.
 
 ## 5. Error response
 
@@ -344,6 +352,12 @@ Suggested HTTP mapping:
 - `503`: toolchain, record storage, or optional Reference capability unavailable.
 - `500`: unexpected internal failure.
 
+The envelope above and the `422` mapping are the target shape. The current Server
+returns the platform result directly for a Workspace conflict —
+`{"schemaVersion":1,"commandId":"cmd_...","result":{"ok":false,"code":"revision_conflict"}}`
+— and never emits `422`. See the
+[documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md).
+
 ## 6. CLI contract
 
 ```text
@@ -351,10 +365,16 @@ cpplearn serve [--host 127.0.0.1] [--port N]
 cpplearn next [--minutes N] [--json]
 cpplearn check [--activity ID] [--json]
 cpplearn status [--due] [--json]
+cpplearn hint --activity ID --attempt ID --hint ID [--confirm-solution] [--json]
+cpplearn reflect --activity ID --attempt ID --prompt ID --answer TEXT [--json]
 cpplearn doctor [--json]
 cpplearn export --output PATH [--json]
 cpplearn restore --input PATH [--json]
 ```
+
+`serve --host/--port`, `status --due`, and the `422` mapping above are target
+contract elements that the current CLI and Server do not implement yet; see the
+[documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md).
 
 Exit codes:
 
@@ -364,11 +384,13 @@ Exit codes:
 - `3`: platform/toolchain unavailable.
 - `4`: unexpected internal error.
 
-`--json` writes exactly one versioned result to stdout; logs go to stderr.
+`--json` writes exactly one JSON result to stdout; logs go to stderr. Results that
+declare `schemaVersion` are versioned; the bootstrap payload returned by
+`doctor --json` does not currently carry one.
 
 ## 7. Local Reference authoring contract
 
-The non-HTTP `ReferenceAuthoring` Interface owns fourteen operations:
+The non-HTTP `ReferenceAuthoring` Interface owns sixteen operations:
 
 ```ts
 prepare({ target }): Promise<PrepareDraftResult>;
@@ -376,6 +398,8 @@ buildContext({ draftId, factGroupIds }): Promise<BuildAuthoringContextResult>;
 buildGenerationTemplate({ draftId, factGroupIds, kind, ...target }): Promise<BuildAuthoringGenerationTemplateResult>;
 advanceRun(plan: unknown): Promise<AdvanceAuthoringRunResult>;
 advanceBatch(plan: unknown): Promise<AdvanceAuthoringBatchResult>;
+advanceRepair(plan: unknown): Promise<AdvanceAuthoringRepairResult>;
+buildRepairPlan({ draftId }): Promise<BuildAuthoringRepairPlanResult>;
 proposeSourceFacts(bundle: unknown): Promise<ProposeSourceFactsResult>;
 applyGenerationBundle(bundle: unknown): Promise<ApplyGenerationBundleResult>;
 reviewGeneratedClaims({ context, claims }): Promise<ReviewGeneratedClaimsResult>;
@@ -511,7 +535,9 @@ acceptance.
 
 ## 8. Compatibility tests
 
-- Every HTTP route is tested against the shared contract schema.
+- Route responses are built from `packages/contracts` DTOs and asserted through
+  typed Fastify injection tests; only the bootstrap result currently has a
+  machine-checked JSON Schema.
 - CLI JSON output is compared with direct Learning Platform results.
 - SSE replay and final-report fallback are contract-tested.
 - Old event fixtures are loaded in migration tests before a release.

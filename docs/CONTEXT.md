@@ -1,5 +1,13 @@
 # C++ Learning Platform Context
 
+| Field | Value |
+|---|---|
+| Document ID | CONTEXT-001 |
+| Version | 1.0 |
+| Status | Baseline |
+| Owner | Project Maintainer |
+| Last updated | 2026-09-10 |
+
 The domain covers guided acquisition and verification of C++ software-engineering capability by one learner using local lessons, exercises, projects, automated judging, and AI-assisted teaching.
 
 ## Learning content

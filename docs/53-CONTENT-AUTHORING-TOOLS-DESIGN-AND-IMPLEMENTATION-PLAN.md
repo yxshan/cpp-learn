@@ -113,6 +113,8 @@ Each draft owns the following versioned artifacts:
 | `content.md` | Original project prose following the selected learning-quality profile |
 | `examples/*.cpp` | Minimal and realistic deterministic examples |
 | `report.json` | Machine-readable gate results, cache evidence, and review decisions |
+| `catalog-proposal.json` | Proposed catalog entry, relations, and slug changes emitted by `prepare` |
+| `generation/revision-<n>.json` | Generation Receipts binding each accepted generated artifact to its context and revision |
 | `repair/*.json` | Module-managed issued-attempt evidence for one digest-bound Repair Plan |
 
 Every substantive fact group must map to at least one source ID. A source record
@@ -128,10 +130,11 @@ inside the draft report even though the final page reads as one cohesive article
 
 ### Step 1: choose a coherent batch
 
-Select five to ten related Entries from the quality backlog—for example a type,
-its high-impact members, and its header. Reuse shared header, availability, and
-terminology research through linked facts while keeping operation-specific
-preconditions and invalidation claims explicit.
+Select up to five related Entries from the quality backlog—for example a type,
+its high-impact members, and its header. A schema-v1 batch plan is capped at five
+members, so a larger scope needs several batches. Reuse shared header,
+availability, and terminology research through linked facts while keeping
+operation-specific preconditions and invalidation claims explicit.
 
 ### Step 2: build the fact sheet before prose
 
@@ -143,14 +146,16 @@ spent polishing prose.
 ### Step 3: scaffold from a controlled profile
 
 `prepare` generates the correct manifest shape, headings, examples, related-link
-slots, source slots, and catalog proposal for `member`, `function`, `type`,
-`object`, `header`, or `guide`. Non-applicable sections require a reviewed reason;
-the tool does not generate filler.
+slots, source slots, and catalog proposal for `landing`, `header`, `type`,
+`object`, `function`, `member`, `concept`, or `guide`. Non-applicable sections
+require a reviewed reason; the tool does not generate filler.
 
 ### Step 4: use AI only with a context pack
 
-The context pack contains the fact sheet, project vocabulary, Entry-kind
-template, nearby accepted pages, and explicit JS-comparison rules. AI may draft
+The context pack today carries the target, Entry-kind profile, required
+headings, fact groups, sources, and policy. Project vocabulary and nearby
+accepted pages are the intended extension and are not loaded yet; see the
+[documentation and code conflict audit](72-DOC-CODE-CONFLICT-AUDIT.md). AI may draft
 original explanations, examples, questions, and mistake cases. It may not add a
 fact absent from the sheet without returning it to the `unverified` review queue.
 
@@ -211,13 +216,20 @@ The CLI is the first Adapter because it is cheap to automate and suitable for
 golden tests:
 
 ```text
-npm run reference:author -- prepare --id std-vector-insert --kind member
+npm run reference:author -- prepare --id std-vector-insert --kind member --slug standard-library/containers/std-vector-insert --title "std::vector::insert"
 npm run reference:author -- context --draft std-vector-insert --facts selection --json
 npm run reference:author -- apply-generation --input generated-section.json --json
-npm run reference:author -- check --draft std-vector-insert --changed
+npm run reference:author -- check --draft std-vector-insert
 npm run reference:author -- preview --draft std-vector-insert
 npm run reference:author -- publish --draft std-vector-insert --dry-run
 ```
+
+The full Adapter surface has thirteen subcommands. Beyond the six shown above
+there are `repair-plan`, `repair`, `research`, `batch`, `run`, `template`, and
+`measure`; run `npm run reference:author -- --help` for the current list, which
+is also enumerated in [Detailed Design](04-DETAILED_DESIGN.md#8-reference-authoring).
+`check` always evaluates the changed scope internally, so it has no `--changed`
+flag.
 
 `preview` is Adapter sugar over `check` and the generated preview artifact. The
 machine-oriented AI Adapter consumes a JSON Authoring Generation rather than
@@ -287,6 +299,8 @@ publication capability.
 
 Exit: a checked batch publishes without partial writes and passes the existing
 full gate.
+
+**Status: Accepted.** See the [Phase A2 Implementation Report](56-STAGE-6.3-PHASE-A2-CACHE-PREVIEW-ATOMIC-PUBLISH-IMPLEMENTATION-REPORT.md).
 
 Exit met: exact cache-key tests cover compiler, selected standard, profiles,
 source, input, and expected outcome; actual incremental/full graph gates agree
@@ -401,6 +415,9 @@ without weakening gates or looping indefinitely.
 Exit: a human can review and confirm generated drafts without duplicating
 authoring rules or building a general-purpose CMS.
 
+**Status: Optional, not implemented.** No Web review surface exists; it is
+developed only if a measured manual-review bottleneck justifies it.
+
 ## 10. Test and acceptance plan
 
 - `T-AUTH-001`: each Entry-kind profile scaffolds deterministic golden files.
@@ -451,9 +468,10 @@ changed-entry selection before weakening compiler coverage.
 
 ## 12. Immediate next development slice
 
-First unify the Reference content policy used by quality checks, profiles, and
-repair targeting. Then deepen the Authoring lifecycle internals and complete a
-real coherent five-Entry run for empirical Phase A3 acceptance. Evaluate A8's
+Follow the order in the [future development plan](69-FUTURE-DEVELOPMENT-PLAN.md):
+security-debt convergence (P1) first, then the Reference content policy (P2).
+After that, deepen the Authoring lifecycle internals (P3) and complete a real
+coherent five-Entry run for empirical Phase A3 acceptance (P5). Evaluate A8's
 lightweight Web review surface only after observed manual-review demand proves
 that it is the remaining bottleneck.
 

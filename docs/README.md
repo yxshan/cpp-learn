@@ -36,7 +36,7 @@
 6. [领域上下文](CONTEXT.md)
 7. 与当前任务直接相关的 ADR、规范和历史报告
 
-不需要从 01 顺序读到 67。历史报告用于追溯决策和验收，不是日常开发的必读上下文。
+不需要从 01 顺序读到 71。历史报告用于追溯决策和验收，不是日常开发的必读上下文。
 
 ## 3. 当前产品与工程基线
 
@@ -61,7 +61,7 @@
 |---|---|---|
 | [Reference 模块设计](22-API-REFERENCE-MODULE-DESIGN.md) | 阅读、搜索、导航、Playground | 当前设计基线 |
 | [内容编写指南](23-API-REFERENCE-CONTENT-AUTHORING-GUIDE.md) | 单条目内容结构与事实要求 | 编辑规范 |
-| [Reference 实施计划](24-API-REFERENCE-IMPLEMENTATION-PLAN.md) | Stage 6.2 的分期与验收 | 历史计划，主体已完成 |
+| [Reference 实施计划](24-API-REFERENCE-IMPLEMENTATION-PLAN.md) | Stage 6.2 的分期与验收 | Phase 1–4 已交付，Phase 5 延后 |
 | [作者工具设计与实施计划](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md) | CLI-first 作者流水线 | A0–A2、A4–A7 已验收；A3 实测待完成 |
 
 Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。这些文件保存当时使用的来源与批次证据，不是可以直接复制的上游正文。
@@ -92,10 +92,12 @@ Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。�
 - [外部架构对照](66-EXTERNAL-ARCHITECTURE-BENCHMARKS.md)
 - [当前架构审计](67-CURRENT-ARCHITECTURE-AUDIT.md)
 - [当前安全审计](71-CURRENT-SECURITY-AUDIT.md)
+- [文档与代码冲突审计](72-DOC-CODE-CONFLICT-AUDIT.md)
+- [重构方案与执行计划](73-REFACTORING-PLAN.md)
 - [项目文件地图与状态](68-PROJECT-FILE-MAP-AND-STATUS.md)
 - [后续开发计划](69-FUTURE-DEVELOPMENT-PLAN.md)
 
-`66`、`67` 与 `71` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
+`66`、`67`、`71`、`72` 与 `73` 为 In Review。它们提供证据和改进方向，但在实现完成或 ADR 接受前，不自动替代现有模块接口。
 
 ## 6. 历史交付证据
 

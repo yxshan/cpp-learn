@@ -105,6 +105,7 @@ npm run test:e2e:production
 3. [项目文件地图](docs/68-PROJECT-FILE-MAP-AND-STATUS.md)
 4. [后续开发计划](docs/69-FUTURE-DEVELOPMENT-PLAN.md)
 5. [AI 模型接手指南](docs/70-AI-MODEL-HANDOFF-GUIDE.md)
+6. [文档与代码冲突审计](docs/72-DOC-CODE-CONFLICT-AUDIT.md)
 
 当前最高优先级不是微服务化或建设通用 CMS，而是先处理[当前安全审计](docs/71-CURRENT-SECURITY-AUDIT.md)确认的依赖、Judge 准入与 CI 安全债务，再统一 Reference 内容策略、收敛作者工具内部结构、移除 CLI 对 Web 包的反向依赖，并完成一次真实五条目作者批次的效率验收。
 

@@ -19,11 +19,12 @@ The Reference serves a learner who knows JavaScript and is learning modern C++
 for software, Web, backend, and infrastructure development. It must remain
 precise enough for engineering use without reading like copied standardese.
 
-The planned automation, incremental checks, fact/source ledger, compiler cache,
-and Web Author Console are defined in the [Content Authoring Tools Design and
+The automation, incremental checks, fact/source ledger, compiler cache, and
+authoring CLI are defined in the [Content Authoring Tools Design and
 Implementation Plan](53-CONTENT-AUTHORING-TOOLS-DESIGN-AND-IMPLEMENTATION-PLAN.md).
-Until those phases are accepted, this guide and the existing full gates remain
-the release authority.
+Phases A0–A2 and A4–A7 are accepted and delivered; Phase A3 awaits a real
+five-Entry measurement and the optional A8 Web review is not implemented. This
+guide and the existing full gates remain the release authority.
 
 ## 2. Authoring principles
 
@@ -379,8 +380,9 @@ The first 15 Entries should exercise the full model rather than maximize count:
 - Complex member: `std::vector::push_back`.
 - Guide: choosing a sequence container.
 
-The next expansion targets 80–120 Entries across containers, algorithms,
-strings, memory, utilities, I/O, filesystem, time, and concurrency.
+The controlled 120-Entry catalog target across containers, algorithms, strings,
+memory, utilities, I/O, filesystem, time, and concurrency is complete. Further
+expansion requires a new reviewed backlog.
 
 ## 12. Coverage report
 

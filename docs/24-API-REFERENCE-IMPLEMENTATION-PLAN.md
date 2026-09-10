@@ -7,6 +7,7 @@
 | Status | Baseline |
 | Owner | Project Maintainer |
 | Last updated | 2026-09-06 |
+| Current state | Phase 1–4 delivered (Stage 6.2 Accepted); Phase 5 deferred |
 
 ## 1. Objective
 
