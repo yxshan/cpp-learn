@@ -117,10 +117,10 @@ Reference 呈现保持平铺。
 
 | 路径 | 状态 | 当前情况 |
 |---|---|---|
-| `packages/composition/` | Active | 服务端组装与服务端实现：`config.ts`（环境→地址、路径与 Judge 预算）、`application.ts`（领域模块装配）、`admission.ts`（进程内共享 Judge 并发预算与有界队列）、`server.ts`（107 行，只做安装）、`transport.ts`（origin 校验、请求体守卫、字节预算）与 `routes/`（learning / reference / local-data / jobs 四个路由组） |
+| `packages/composition/` | Active | 服务端组装与服务端实现：`config.ts`（环境→地址、路径与 Judge 预算）、`application.ts`（领域模块装配）、`admission.ts`（进程内共享 Judge 并发预算与有界队列）、`server.ts`（107 行，只做安装）、`transport.ts`（写请求授权：精确 origin、回环 `Host`、会话令牌、Fetch Metadata；响应加固头；请求体守卫与字节预算）与 `routes/`（learning / reference / local-data / jobs 四个路由组） |
 | `packages/reference-policy/` | Active | Reference 内容策略的唯一权威：语义区域、标题匹配、每种 Entry kind 的要求、修复目标标题。质量门禁、Authoring 脚手架与修复计划都消费它 |
 | `packages/reference-presentation/` | Active | Reference 呈现的共享块模型与 HTML 序列化；Web 与 CLI 共用同一套 heading id 与块语义 |
-| `packages/contracts/` | Active | 跨模块 DTO、命令、查询、事件和解析器；内部按域分为 `reference.ts`、`judge.ts`、`events.ts`，入口用 `export *` 重导出，公共导入路径不变 |
+| `packages/contracts/` | Active | 跨模块 DTO、命令、查询、事件和解析器；内部按域分为 `reference.ts`、`judge.ts`、`events.ts`、`session.ts`（本地会话 cookie 与 header 名），入口用 `export *` 重导出，公共导入路径不变 |
 | `packages/content-schema/` | Active | Curriculum Schema 与验证器 |
 | `packages/reference-schema/` | Active | Reference Entry Schema 与验证器 |
 
@@ -226,7 +226,9 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 | Judge profile | compiler fingerprint、timeout、cleanup、错误分类和 golden fixtures |
 | Judge 并发或预算 | `admission.ts`、`CPP_LEARN_JUDGE_MAX_*` 环境变量、composition server test、Playground 与 Activity 必须共用同一预算 |
 | 依赖或 Action 版本 | `npm run check:security`、豁免文件、Monaco 内联副本的重定向测试 |
-| HTTP route | contracts、origin/loopback 策略、server test、E2E |
+| HTTP route | contracts、写请求授权与响应头策略、server test、E2E |
+| 归档格式或预算 | learning-record 的 `ARCHIVE_LIMITS`、导出与恢复两侧、恶意归档测试 |
+| 进程内缓存或保留期 | learning-platform 的 `RetentionPolicy`、Learning Record 是否仍能补齐历史 |
 | Web 布局 | keyboard、history、dirty state、桌面/390px、浏览器 console |
 | 文档基线 | 本索引、相关 ADR/规范、`npm run check:docs` |
 

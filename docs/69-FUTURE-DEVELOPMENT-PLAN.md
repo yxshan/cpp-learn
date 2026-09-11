@@ -67,7 +67,14 @@
   `security/audit-exemptions.json`（带理由/责任人/到期日）。
 - 第 4 项：`SECURITY.md` 与 `docs/08` 更新；Native Judge 仍是风险接受项。
 - 仍未完成：单个被准入进程的 CPU/内存/进程数上限（需要容器或 OS 级适配器），
-  以及 `docs/71` 的 P1/P2 其余项（SEC-F01、SEC-F05、SEC-F06、SEC-F07、SEC-F08）。
+  以及 `docs/71` 的 P2 项（SEC-F01、SEC-F08 与 Authoring 示例执行环境、路径竞态）。
+
+**P1 本地产品加固随后完成（2026-09-12，证据见 `docs/71` §10.5–§10.8）**：
+
+- SEC-F05：每次启动的会话令牌、精确同源校验、回环 `Host` 校验与 Fetch Metadata。
+- SEC-F06：导出与恢复共用的归档预算，判定先于解码，拒绝时不动任何根目录。
+- SEC-F07：命令回执 LRU 与 Job 事件流的有界保留，运行中的 Job 受保护。
+- 响应加固：`nosniff`、Referrer Policy、`X-Frame-Options`，CSP 先以 Report-Only 验证。
 
 ## 5. P2：统一 Reference content policy
 

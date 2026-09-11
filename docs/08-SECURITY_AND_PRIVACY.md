@@ -3,10 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | SEC-001 |
-| Version | 1.5 |
+| Version | 1.6 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-11 |
+| Last updated | 2026-09-12 |
 
 ## 1. Security posture
 
@@ -157,15 +157,45 @@ Controls:
   only while active; duplicate active identities fail closed, and cancellation
   crosses the same origin-validated local HTTP boundary.
 
+### Response hardening
+
+Controls:
+
+- Send `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and
+  `X-Frame-Options: DENY` on every response.
+- Develop a `Content-Security-Policy` as `Content-Security-Policy-Report-Only`
+  first. `frame-ancestors` is ignored in a report-only policy, which is why
+  clickjacking is enforced through `X-Frame-Options` until the policy is
+  promoted to enforcing. Monaco's workers and Vite's asset graph are the parts
+  most likely to need a directive, so the report-only policy is validated
+  against real browser runs before it becomes enforcing.
+- Do not send HSTS: this server is plain HTTP on loopback, and HSTS would apply
+  to a host users also reach over HTTPS elsewhere.
+
 ### Local HTTP exposure
 
 Controls:
 
 - Bind to `127.0.0.1` by default.
 - Reject non-loopback binding without explicit configuration and warning.
-- Validate `Origin` for state-changing requests.
-- Add a random per-start local session token before the trust scope expands; it is not implemented in the current baseline.
+- Reject a `Host` header that is not a loopback address, so a name that resolves
+  to this machine cannot be used to reach it (DNS rebinding).
+- Require the exact served origin on state-changing requests. Same-origin is
+  derived from the request's own `Host`, so a different loopback port, a
+  `null` origin, a missing `Origin`, and a mismatched scheme are all refused.
+- Require a random per-start session token in the `x-cpp-learn-token` header.
+  The server publishes it as a readable, `SameSite=Strict` cookie on same-origin
+  responses; another origin can neither read that cookie nor attach the custom
+  header, because a custom header forces a preflight that fails without CORS.
+  The header is compared against the in-memory token, so a forged cookie
+  authorizes nothing.
+- Refuse a request that browsers label `Sec-Fetch-Site: cross-site`.
+- Keep reads available without a token; only state changes require it.
 - Do not enable permissive CORS.
+
+Another process running as the same user is not the threat this addresses: it can
+already read the Workspace directly. The token stops the browser from becoming a
+confused deputy for a page on another origin.
 
 ## 5. Privacy
 
@@ -178,6 +208,17 @@ Logs should use identifiers and summaries instead of full source. Crash reports 
 - Grade snapshots and supporting Evidence are retained by default.
 - Unreferenced Run snapshots may be compacted under a documented policy.
 - Raw worker logs have bounded retention and exclude private inputs where possible.
+- In-process caches are bounded: completed command receipts are kept
+  least-recently-used (256 by default), and only the newest event tail of the
+  most recent jobs stays replayable (64 jobs, 32 events each). Durable
+  idempotency comes from the Learning Record and durable reports from the record
+  itself, so eviction loses no history; a job that is still running keeps its
+  cancellation controller and its event tail until it settles.
+- Archive export and restore share one budget (64 MiB encoded input, 5,000
+  files, 16 MiB per entry, 128 MiB decoded total, 200,000 events, 512-character
+  paths). The size checks run before any payload is decoded, a refusal happens
+  before either storage root is touched, and an archive that export would write
+  is always one restore accepts.
 - Exports and backups are explicit Learner actions.
 - Deleting learning history requires confirmation and a recoverable backup recommendation.
 
@@ -187,7 +228,15 @@ Logs should use identifiers and summaries instead of full source. Crash reports 
 - Symlink, traversal, archive-slip, and Unicode path tests.
 - Timeout, output flood, child-process, and cancellation tests.
 - Private-data redaction tests for HTTP, SSE, logs, Teacher Packs, and exports.
-- Loopback binding and origin-validation tests.
+- Loopback binding, mutation-authorization, and response-header tests: missing,
+  `null`, cross-port and non-loopback origins, a non-loopback `Host`, a missing
+  or wrong token, and a cross-site initiator must all be refused, while the
+  served application keeps working.
+- Archive budget tests: file count, per-entry bytes, decoded total, event count,
+  path length, and encoded input size each fail closed before either root is
+  touched, leaving no staging directory behind.
+- Retention tests: receipts replay while retained, re-execute after eviction, and
+  an evicted job is still answerable from the Learning Record.
 - Event tampering and duplicate-report tests.
 - Dependency and secret scanning in CI (`npm run check:security`), with
   `npm run test:security` proving that a controlled advisory and a controlled

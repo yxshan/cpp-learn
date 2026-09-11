@@ -8,7 +8,7 @@
 | Owner | Project Maintainer |
 | Prepared by | GPT-5.6 Sol |
 | Audit date | 2026-09-09 |
-| Remediation updated | 2026-09-11 |
+| Remediation updated | 2026-09-12 |
 | Fixed point | `8f99f7e8f23d5732b88dccb2df07c9fd1a953093` |
 
 ## 1. 结论
@@ -26,13 +26,15 @@ SQL 拼接、Shell 字符串执行或 Reference 原始 HTML 注入。服务配�
 | SEC-F02 | Medium | Activity Run/Grade 没有全局并发准入和 CPU/内存上限 | 并发准入已修复（§10.1）；单进程资源上限仍开放 |
 | SEC-F03 | Medium | Monaco 的生产依赖链包含受公告影响的 DOMPurify 3.4.8 | 已修复（§10.2）；本行结论已按证据更正 |
 | SEC-F04 | Medium | CI 声明与实际不一致，未执行依赖/密钥扫描，Action 也未固定到提交 | 已修复（§10.3） |
-| SEC-F05 | Low | 本地写接口只验证回环 hostname，接受任意端口和缺失的 `Origin` | 部分控制 |
-| SEC-F06 | Low | 归档恢复没有统一的文件数、解码后字节数和 CLI 输入上限 | 部分控制 |
-| SEC-F07 | Low | 长期运行进程中的命令回执与 Job 事件没有淘汰策略 | 未修复 |
+| SEC-F05 | Low | 本地写接口只验证回环 hostname，接受任意端口和缺失的 `Origin` | 已修复（§10.5） |
+| SEC-F06 | Low | 归档恢复没有统一的文件数、解码后字节数和 CLI 输入上限 | 已修复（§10.6） |
+| SEC-F07 | Low | 长期运行进程中的命令回执与 Job 事件没有淘汰策略 | 已修复（§10.7） |
 | SEC-F08 | Low | 仓库含 Legacy 可执行文件和绕过 Judge 边界的检查脚本 | 不在生产路径，但仍可被手动执行 |
 
 此外，生产 HTTP 响应没有显式 CSP、`frame-ancestors`、`nosniff` 和 Referrer Policy。
 在本地单用户模型下将其记录为 Hardening observation，而不是单独提高总体严重度。
+该观察项已部分落地：`nosniff`、Referrer Policy 与 `X-Frame-Options` 已强制，
+CSP 以 Report-Only 形式先行验证（§10.8）。
 
 本轮 P0 的三项（SEC-F02 的并发准入、SEC-F03、SEC-F04）已完成，修复证据见 §10。
 SEC-F01 不能通过小修补消除，应在运行第三方代码、导入不可信练习或开放非回环访问
@@ -219,7 +221,7 @@ DOMPurify 公告因而不会让 PR 或 main 构建显式失败，也没有历史
 
 ### SEC-F05：本地写接口的来源验证不是完整授权
 
-**严重度：Low；状态：Partially mitigated**
+**严重度：Low；状态：已修复（§10.5）**
 
 服务只能绑定 `127.0.0.1`、`::1` 或 `localhost`，写路由也会拒绝非回环 Origin。这是有效
 控制。但 `isAllowedMutationOrigin()` 只比较 protocol 与 hostname：
@@ -243,7 +245,7 @@ Web 服务、扩展、代理错误或未来 CORS 变化会削弱这一假设。O
 
 ### SEC-F06：归档恢复资源边界不完整
 
-**严重度：Low；状态：Partially mitigated**
+**严重度：Low；状态：已修复（§10.6）**
 
 Web restore 路由有 64 MiB 请求上限，归档会验证 Schema、路径、重复项、逐文件 checksum、
 manifest checksum 和 `events.jsonl`，并先写 staging root、重建投影、再原子切换。这些是
@@ -265,7 +267,7 @@ manifest checksum 和 `events.jsonl`，并先写 staging root、重建投影、�
 
 ### SEC-F07：进程内回执和 Job 事件无淘汰策略
 
-**严重度：Low；状态：Open**
+**严重度：Low；状态：已修复（§10.7）**
 
 `LearningPlatform` 中的 `commandReceipts` 和 `retainedJobEvents` 会按每个新命令/Job 增长，
 当前没有 TTL、最大项数或持久化后淘汰策略。长期学习会缓慢增长；配合大量不同 command
@@ -352,11 +354,11 @@ Workspace、Reference 和 Authoring 已进行词法路径限制、`realpath`/`ls
 
 ### P1：本地产品加固
 
-1. SEC-F05：每次启动 session token、精确 target origin、Fetch Metadata。
-2. SEC-F06：统一归档预算并增加恶意归档测试。
-3. SEC-F07：为回执和 Job 事件设置有界保留策略。
-4. 增加 CSP Report-Only、`nosniff`、Referrer Policy 和 frame policy。
-5. 增加 `SECURITY.md` 与安全回归测试组。
+1. SEC-F05：每次启动 session token、精确 target origin、Fetch Metadata。**已完成（§10.5）**。
+2. SEC-F06：统一归档预算并增加恶意归档测试。**已完成（§10.6）**。
+3. SEC-F07：为回执和 Job 事件设置有界保留策略。**已完成（§10.7）**。
+4. 增加 CSP Report-Only、`nosniff`、Referrer Policy 和 frame policy。**已完成（§10.8）**。
+5. 增加 `SECURITY.md` 与安全回归测试组。**已完成（§10.3 与各修复的测试）**。
 
 ### P2：范围扩展门禁
 
@@ -458,7 +460,65 @@ npm run test:security
 
 ### 10.4 本次未处理
 
-SEC-F01、SEC-F05、SEC-F06、SEC-F07、SEC-F08 与 §5 的 Hardening observation 未变，
-仍按 §7 的 P1/P2 排序处理。
+SEC-F01、SEC-F08 与 §5 的其余观察项（Authoring 示例执行环境、路径竞态）未变，
+仍按 §7 的 P2 排序处理。
+
+### 10.5 SEC-F05：写请求的来源验证与会话令牌
+
+- `packages/contracts/src/session.ts` 固定 cookie 名与 header 名；服务端与浏览器必须
+  逐字一致，任一侧拼写错误都会静默关闭检查，因此它们是传输契约的一部分。
+- `packages/composition/src/transport.ts` 提供唯一的判定函数：`Host` 必须是回环地址；
+  `Origin` 必须存在、非 `null`、且等于 `http://<该请求的 Host>`（因此另一个 localhost
+  端口、https 与缺失来源都被拒绝）；`Sec-Fetch-Site: cross-site` 直接拒绝；
+  `x-cpp-learn-token` 必须与进程内令牌常量时间相等。
+- 令牌在服务启动时随机生成，并作为可读的 `SameSite=Strict` cookie 随同源 API 与 HTML
+  响应下发；浏览器读该 cookie 并在每个写请求回传 header。服务端比较的是内存中的令牌，
+  而不是 cookie，因此伪造 cookie 不能授权任何操作。
+- 关键实现细节：cookie **不能**写 `HttpOnly=false`。`HttpOnly` 是 flag 属性，浏览器一旦
+  看到该名字就把 cookie 标为 HttpOnly，`document.cookie` 随即读不到令牌，所有写请求都会
+  失败——而 curl 与单元测试都无法发现这一点，只有真实浏览器 E2E 能。
+- 依赖 Vite 代理的开发/E2E 场景要求 `changeOrigin: false`（Vite 的字符串简写会设为
+  `true` 并改写 `Host`，导致每个写请求被判为跨源）。已写入 `apps/web/vite.config.ts`。
+- CLI 不受影响：它在本进程内直接调用 Platform，不经过 HTTP。
+- 测试：`packages/composition/src/server.test.ts` 的 `[SEC-F05] mutation authorization`
+  覆盖缺失/`null`/跨端口/跨 scheme 来源、非回环 `Host`、缺失/错误/前缀令牌、跨站发起者，
+  以及同源请求可用、读取无需令牌、cookie 只下发一次且不含 `HttpOnly`；
+  `apps/web/src/session-token.test.ts` 覆盖 cookie 解析；18 个浏览器 E2E 与生产 E2E 通过。
+
+### 10.6 SEC-F06：统一的归档预算
+
+- `modules/learning-record` 新增 `ARCHIVE_LIMITS`（64 MiB 编码输入、5,000 文件、
+  16 MiB 单文件、128 MiB 解码总量、200,000 事件、512 字符路径）与
+  `decodedBase64Bytes`——按 base64 长度推算解码尺寸，**先判定后解码**，否则要防止的
+  分配已经发生。
+- `restoreFrom` 先 `stat` 输入文件再读取；`parseArchive` 逐项执行全部预算；`exportTo`
+  施加同一策略，因此导出必然可被恢复，不会写出一个自己拒绝的文件。
+- 预算可通过 `createLocalDataArchive({ limits })` 覆盖，生产默认值不变，测试因此可以用
+  极小阈值精确验证每一种拒绝，而不必构造 64 MiB 文件。
+- 测试：8 项新用例覆盖文件数、单文件、解码总量、事件数、路径长度、输入大小、拒绝后两个
+  根目录保持不变且不残留 staging，以及导出侧的文件数上限。
+
+### 10.7 SEC-F07：有界保留策略
+
+- `modules/learning-platform` 新增 `RetentionPolicy` 与 `DEFAULT_RETENTION`
+  （回执 256、Job 事件流 64、每 Job 事件 32），可由 `retention` 依赖覆盖。
+- `evictBeyondBudget` 按 Map 插入顺序淘汰，可用 `retain` 谓词保护条目；`commandReceipts`
+  命中时重新插入以刷新近期性，因此是 LRU 而非单纯 FIFO。
+- 运行中的 Job 通过 `activeJobs` 受保护：它的取消控制器与事件尾在结束前不会被淘汰。
+- 回执只是缓存：Run/Grade 的持久幂等仍由 Learning Record 中按 `commandId` 查找的
+  Attempt 提供，`job.get` 也仍从记录读取报告，因此淘汰不丢历史。
+- 测试：淘汰顺序与保护谓词、命中重放、淘汰后重新执行、以及 `jobEventStreams: 1` 时
+  旧 Job 的事件流为空但 `job.get` 仍返回报告。
+
+### 10.8 响应加固
+
+- `HARDENING_HEADERS` 对每个响应设置 `X-Content-Type-Options: nosniff`、
+  `Referrer-Policy: no-referrer`、`X-Frame-Options: DENY`，以及
+  `Content-Security-Policy-Report-Only`。
+- 保持 report-only 是有意为之：`frame-ancestors` 在 report-only 策略中不生效，因此点击
+  劫持由 `X-Frame-Options` 强制；Monaco worker 与 Vite 资源图是最可能需要额外指令的
+  部分，先在真实浏览器中验证再升级为强制策略。不发送 HSTS——服务器是回环明文 HTTP。
+- 测试：composition 服务测试断言四个响应头存在且强制 CSP 缺失；生产 E2E 在真实浏览器
+  响应上复验。
 
 本审计由 **GPT-5.6 Sol** 完成；§10 由后续修复提交维护。
