@@ -23,6 +23,25 @@ export interface ReferenceAuthorCliDependencies {
   readonly stderr: (text: string) => void;
 }
 
+/**
+ * Accept either a generation bundle or the `template` command's own JSON result.
+ *
+ * `template --json` follows the CLI-wide `{ ok, ... }` result envelope and puts the
+ * bundle under `template`, so the documented round trip — write the template to a
+ * file, then apply it — would otherwise need the file hand-edited first. The
+ * discriminator is the nested bundle fields, not the field name alone: a bundle
+ * may legitimately carry its own `template` metadata.
+ */
+export function unwrapGenerationBundle(input: unknown): unknown {
+  if (typeof input !== "object" || input === null) return input;
+  const candidate = input as Record<string, unknown>;
+  if (candidate["ok"] !== true) return input;
+  const nested = candidate["template"];
+  if (typeof nested !== "object" || nested === null) return input;
+  const bundle = nested as Record<string, unknown>;
+  return "context" in bundle && "generation" in bundle ? bundle : input;
+}
+
 const prepareUsage =
   "Usage: npm run reference:author -- prepare --id ID --kind KIND --slug SLUG --title TITLE [--reuse-from ID --reuse-facts ID[,ID...]] [--json]\n";
 const contextUsage =
@@ -40,7 +59,7 @@ const repairUsage =
 const runUsage =
   "Usage: npm run reference:author -- run --input AUTHORING_RUN.json [--json]\n";
 const applyGenerationUsage =
-  "Usage: npm run reference:author -- apply-generation --input FILE [--json]\n";
+  "Usage: npm run reference:author -- apply-generation --input FILE [--json]  (FILE is a generation bundle, or a `template --json` result)\n";
 const measureUsage =
   "Usage: npm run reference:author -- measure --batch ID --drafts ID[,ID...] --active-minutes N --machine-minutes N --gate-minutes N --baseline-active-minutes N --baseline-entries N --pre-factual-corrections N --pre-example-corrections N --post-factual-corrections N --post-example-corrections N --baseline-factual-corrections N --baseline-example-corrections N --high-risk-reviewed N [--flaky-reruns N] [--json]\n";
 const checkUsage =
@@ -342,10 +361,11 @@ export async function runReferenceAuthorCli(
       );
       return 2;
     }
-    const result = await dependencies.authoring.applyGenerationBundle(input);
+    const bundle = unwrapGenerationBundle(input);
+    const result = await dependencies.authoring.applyGenerationBundle(bundle);
     const generationKind =
-      input !== null && typeof input === "object" && "generation" in input
-        ? authoringGenerationKind(input.generation)
+      bundle !== null && typeof bundle === "object" && "generation" in bundle
+        ? authoringGenerationKind(bundle.generation)
         : "unknown";
     if (json) {
       dependencies.stdout(`${JSON.stringify(result)}\n`);
@@ -616,11 +636,26 @@ export async function runReferenceAuthorCli(
     if (revisionText === undefined) {
       const checked = await dependencies.authoring.check({ draftId });
       if (!checked.ok || checked.report.status !== "ready") {
-        if (json) dependencies.stdout(`${JSON.stringify(checked)}\n`);
-        else
+        // The check result says `ok: true` because the check itself succeeded,
+        // which would tell a JSON consumer that publication succeeded while the
+        // exit code says it did not. Report the refusal instead.
+        if (json) {
+          dependencies.stdout(
+            `${JSON.stringify(
+              checked.ok
+                ? {
+                    ok: false,
+                    code: "draft_not_ready",
+                    report: checked.report,
+                  }
+                : { ok: false, code: checked.code, issues: checked.issues },
+            )}\n`,
+          );
+        } else {
           dependencies.stderr(
             `${checked.ok ? "draft_not_ready" : checked.code}\n`,
           );
+        }
         return 1;
       }
       expectedRevision = checked.report.draftRevision;

@@ -1044,4 +1044,141 @@ describe("[T-AUTH-A1-CLI-001] Reference authoring CLI Adapter", () => {
     expect(authoring.prepare).not.toHaveBeenCalled();
     expect(stderr).toHaveBeenCalledWith(expect.stringContaining("Usage:"));
   });
+  it("[T-AUTH-A4-GENERATION-003] applies the template command's own JSON result", async () => {
+    // The documented round trip: write `template --json` to a file, then apply
+    // that file. The bundle sits under the CLI result envelope's `template`.
+    const bundle = {
+      template: { schemaVersion: 1, status: "incomplete", kind: "section" },
+      context: {
+        schemaVersion: 2,
+        draftId: "vector-insert",
+        draftRevision: 1,
+        inputDigest: "a".repeat(64),
+        factGroups: [],
+        sources: [],
+        policy: {
+          mode: "verified-facts-only",
+          allowedFactGroupIds: ["selection"],
+          requirements: [],
+        },
+        digest: "b".repeat(64),
+      },
+      expectedRevision: 1,
+      generation: {
+        schemaVersion: 1,
+        draftId: "vector-insert",
+        contextDigest: "b".repeat(64),
+        section: { heading: "什么时候使用", markdown: "…", claims: [] },
+      },
+    };
+    const applyGenerationBundle = vi.fn().mockResolvedValue({
+      ok: true,
+      workspace: { draft: { draftId: "vector-insert", revision: 2 } },
+      review: { status: "accepted" },
+      receiptPath: "generation/revision-2.json",
+    });
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["apply-generation", "--input", "template-result.json", "--json"],
+      authoring: { applyGenerationBundle } as unknown as ReferenceAuthoring,
+      readTextFile: vi
+        .fn()
+        .mockResolvedValue(JSON.stringify({ ok: true, template: bundle })),
+      stdout: vi.fn(),
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(applyGenerationBundle).toHaveBeenCalledWith(bundle);
+  });
+
+  it("leaves a bundle that merely carries template metadata untouched", async () => {
+    const bundle = {
+      template: { schemaVersion: 1, status: "incomplete", kind: "section" },
+      context: {},
+      expectedRevision: 2,
+      generation: {},
+    };
+    const applyGenerationBundle = vi.fn().mockResolvedValue({
+      ok: true,
+      workspace: { draft: { draftId: "vector-insert", revision: 3 } },
+      review: { status: "accepted" },
+      receiptPath: "generation/revision-3.json",
+    });
+
+    await runReferenceAuthorCli({
+      argv: ["apply-generation", "--input", "bundle.json", "--json"],
+      authoring: { applyGenerationBundle } as unknown as ReferenceAuthoring,
+      readTextFile: vi.fn().mockResolvedValue(JSON.stringify(bundle)),
+      stdout: vi.fn(),
+      stderr: vi.fn(),
+    });
+
+    expect(applyGenerationBundle).toHaveBeenCalledWith(bundle);
+  });
+
+  it("reports a refused publication as a failure in JSON, not a success", async () => {
+    const publish = vi.fn();
+    const report = {
+      schemaVersion: 1,
+      draftId: "std-vector-insert",
+      draftRevision: 4,
+      status: "blocked",
+      findings: [
+        {
+          severity: "hard",
+          risk: "high",
+          code: "generated-content-review-required",
+          path: "report.json/generatedSections/0/reviewStatus",
+          message: "Generated section requires explicit human review",
+        },
+      ],
+    };
+    const authoring = {
+      check: vi.fn().mockResolvedValue({ ok: true, report }),
+      publish,
+    } as unknown as ReferenceAuthoring;
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["publish", "--draft", "std-vector-insert", "--dry-run", "--json"],
+      authoring,
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(1);
+    expect(publish).not.toHaveBeenCalled();
+    const emitted = JSON.parse(String(stdout.mock.calls[0]?.[0]));
+    // The check result itself says `ok: true` because the check ran; publishing
+    // it verbatim would contradict the exit code.
+    expect(emitted).toMatchObject({ ok: false, code: "draft_not_ready" });
+    expect(emitted.report.status).toBe("blocked");
+  });
+
+  it("reports a failed check during publication as a failure in JSON", async () => {
+    const authoring = {
+      check: vi.fn().mockResolvedValue({
+        ok: false,
+        code: "draft_unreadable",
+        issues: [{ path: "/", message: "unreadable", keyword: "draft" }],
+      }),
+      publish: vi.fn(),
+    } as unknown as ReferenceAuthoring;
+    const stdout = vi.fn();
+
+    const exitCode = await runReferenceAuthorCli({
+      argv: ["publish", "--draft", "std-vector-insert", "--json"],
+      authoring,
+      stdout,
+      stderr: vi.fn(),
+    });
+
+    expect(exitCode).toBe(1);
+    expect(JSON.parse(String(stdout.mock.calls[0]?.[0]))).toMatchObject({
+      ok: false,
+      code: "draft_unreadable",
+    });
+    expect(authoring.publish).not.toHaveBeenCalled();
+  });
 });
