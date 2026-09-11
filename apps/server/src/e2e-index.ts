@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import {
   createProductionApplication,
   createProductionDataArchive,
-  createServer,
+  createProductionHttpServer,
   resolveServerAddress,
   resolveServerStoragePaths,
 } from "@cpp-learn/composition";
@@ -22,10 +22,7 @@ await rm(e2eRuntimeRoot, { recursive: true, force: true });
 await mkdir(e2eRuntimeRoot, { recursive: true });
 const application = await createProductionApplication(storagePaths);
 
-const server = createServer({
-  platform: application.platform,
-  reference: application.reference,
-  referencePlayground: application.referencePlayground,
+const server = createProductionHttpServer(application, {
   archive: createProductionDataArchive(storagePaths),
   logger: true,
   webRoot,

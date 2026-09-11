@@ -31,6 +31,7 @@ import {
 } from "@cpp-learn/workspace";
 
 import { createServer } from "./server.ts";
+import { createBoundedJudge, createJudgeAdmission } from "./admission.ts";
 
 const bootstrap: LearningBootstrapResult = {
   schemaVersion: 1,
@@ -928,6 +929,180 @@ describe("[T-CONTRACT-005] HTTP learning-loop Adapters", () => {
     );
     expect(query).toHaveBeenCalledWith({ type: "progress.get" });
     expect(query).toHaveBeenCalledWith({ type: "reviews.get", dueOnly: true });
+    await server.close();
+  });
+});
+
+describe("[SEC-F02] one host Judge budget across HTTP entry points", () => {
+  it("shares the budget between Activity Run and the Reference Playground", async () => {
+    const admission = createJudgeAdmission({ maxConcurrent: 1, maxQueued: 1 });
+    const started: string[] = [];
+    let openGate: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      openGate = resolve;
+    });
+    const report = (request: {
+      readonly jobId: string;
+      readonly mode: "run" | "grade";
+      readonly snapshot: { readonly id: string; readonly digest: string };
+    }): JudgeReport => ({
+      schemaVersion: 1,
+      reportId: `report_${request.jobId}`,
+      jobId: request.jobId,
+      mode: request.mode,
+      activity: { id: "source-to-program", version: 1, judgeVersion: 1 },
+      source: {
+        snapshotId: request.snapshot.id,
+        digest: request.snapshot.digest,
+      },
+      toolchain: { compiler: "clang", standard: "c++20" },
+      verdict: "automated_pass",
+      stages: [
+        { kind: "compile", outcome: "pass", durationMs: 1 },
+        { kind: "test", outcome: "pass", durationMs: 1 },
+      ],
+      startedAt: "2026-08-23T08:00:00.000Z",
+      completedAt: "2026-08-23T08:00:00.002Z",
+    });
+    const events: AttemptCompletedEvent[] = [];
+    const workspace = createInMemoryWorkspace([
+      {
+        activityId: "source-to-program",
+        editablePaths: ["main.cpp"],
+        starterFiles: { "main.cpp": "int main() {}\n" },
+      },
+    ]);
+    const platform = createLearningPlatform({
+      clock: () => new Date("2026-08-23T08:00:00.000Z"),
+      probes: {
+        curriculum: async () => ({ ready: true, activityCount: 1 }),
+        toolchain: async () => ({ ready: true, compiler: "clang" }),
+        record: async () => ({ ready: true }),
+      },
+      curriculum: {
+        getActivity: async () => ({
+          id: "source-to-program",
+          version: 1,
+          kind: "lesson",
+          title: "First program",
+          estimatedMinutes: 20,
+          conceptIds: ["compile-link-run"],
+          markdown: "# First program\n",
+          workspace: { editablePaths: ["main.cpp"] },
+        }),
+        getJudge: async () => ({
+          activityId: "source-to-program",
+          activityVersion: 1,
+          judgeVersion: 1,
+          expectedStdout: "",
+          timeoutMs: 2_000,
+        }),
+      },
+      workspace,
+      judge: createBoundedJudge(
+        {
+          execute: async (request) => {
+            started.push(request.jobId);
+            await gate;
+            return report(request);
+          },
+        },
+        admission,
+      ),
+      record: {
+        append: async (event) => {
+          events.push(event);
+        },
+        list: async () => events,
+      },
+    });
+    const playgroundRun = vi.fn(
+      async (request: ReferencePlaygroundRunRequest) => ({
+        schemaVersion: 1 as const,
+        runId: request.runId,
+        entryId: request.entryId,
+        exampleId: request.exampleId,
+        verdict: "success" as const,
+        stdout: "",
+        stderr: "",
+        stages: [],
+        toolchain: {
+          compiler: "clang",
+          standard: request.standard,
+          flags: ["-std=c++20"],
+        },
+      }),
+    );
+    const server = createServer({
+      platform,
+      reference: createReferenceFixture(),
+      referencePlayground: { run: playgroundRun },
+      judgeAdmission: admission,
+    });
+    const grade = (commandId: string) =>
+      server.inject({
+        method: "POST",
+        url: "/api/v1/activities/source-to-program/grades",
+        payload: { schemaVersion: 1, commandId },
+      });
+    const playground = (runIdSuffix: string) =>
+      server.inject({
+        method: "POST",
+        url: "/api/v1/reference/entries/std-vector/examples/basic/runs",
+        payload: {
+          schemaVersion: 1,
+          runId: `ref_run_00000000-0000-4000-8000-00000000000${runIdSuffix}`,
+          source: "int main() {}\n",
+        },
+      });
+
+    // An Activity Grade takes the only slot.
+    const running = grade("cmd_budget_1");
+    await vi.waitFor(() => expect(started).toEqual(["job_cmd_budget_1"]));
+
+    // The Playground must not start a second native compilation.
+    const busyPlayground = await playground("1");
+    expect(busyPlayground.statusCode).toBe(429);
+    expect(busyPlayground.headers["retry-after"]).toBe("1");
+    expect(busyPlayground.json()).toMatchObject({
+      error: { code: "playground_busy" },
+    });
+    expect(playgroundRun).not.toHaveBeenCalled();
+
+    // The wait queue is bounded: one Grade waits, the next is rejected. Wait for
+    // the first to actually join the queue so the two requests cannot race for
+    // the single waiting place.
+    const queued = grade("cmd_budget_2");
+    await vi.waitFor(() => expect(admission.queuedCount).toBe(1));
+    const overflow = await grade("cmd_budget_3");
+    expect(overflow.statusCode).toBe(429);
+    expect(overflow.headers["retry-after"]).toBe("1");
+    expect(overflow.json()).toMatchObject({ error: { code: "judge_busy" } });
+
+    // Overload must not blind the server to ordinary traffic.
+    const health = await server.inject({
+      method: "GET",
+      url: "/api/v1/health",
+    });
+    expect(health.statusCode).toBe(200);
+    const dashboard = await server.inject({
+      method: "GET",
+      url: "/api/v1/dashboard",
+    });
+    expect(dashboard.statusCode).toBe(200);
+
+    // Releasing the slot drains the queue and returns the budget to normal.
+    openGate?.();
+    await expect(running).resolves.toMatchObject({ statusCode: 200 });
+    await expect(queued).resolves.toMatchObject({ statusCode: 200 });
+    expect(started).toEqual(["job_cmd_budget_1", "job_cmd_budget_2"]);
+    expect(admission.activeCount).toBe(0);
+    expect(admission.queuedCount).toBe(0);
+
+    const acceptedPlayground = await playground("2");
+    expect(acceptedPlayground.statusCode).toBe(200);
+    expect(playgroundRun).toHaveBeenCalledTimes(1);
+
     await server.close();
   });
 });

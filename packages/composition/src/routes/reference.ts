@@ -22,11 +22,12 @@ import {
   isReferencePlaygroundCancellationBody,
   isReferencePlaygroundRunBody,
 } from "../transport.ts";
+import type { JudgeAdmission } from "../admission.ts";
 
 export interface ReferenceRouteContext {
   readonly reference: ReferenceCatalog | undefined;
   readonly referencePlayground: ReferencePlayground | undefined;
-  readonly referencePlaygroundMaxConcurrentRuns: number;
+  readonly judgeAdmission: JudgeAdmission;
   readonly readyReference: (
     reply: FastifyReply,
   ) => Promise<ReferenceCatalog | undefined>;
@@ -35,20 +36,16 @@ export interface ReferenceRouteContext {
 /**
  * Reference browsing and the Playground.
  *
- * Playground admission is bounded here and nowhere else: the counter and the
- * active-run registry are module-local so a second route group cannot start an
- * unbounded number of native compilations.
+ * Playground admission draws on the same host Judge budget as Activity
+ * Run/Grade, but never queues: an interactive editor reports busy immediately
+ * instead of holding the request open. The active-run registry stays
+ * module-local so a second route group cannot double-register a run identity.
  */
 export function registerReferenceRoutes(
   server: FastifyInstance,
   context: ReferenceRouteContext,
 ): void {
-  const {
-    referencePlayground,
-    referencePlaygroundMaxConcurrentRuns,
-    readyReference,
-  } = context;
-  let referencePlaygroundInFlight = 0;
+  const { referencePlayground, judgeAdmission, readyReference } = context;
   const activeReferencePlaygroundRuns = new Map<string, AbortController>();
 
   server.get("/api/v1/reference", async (_request, reply) => {
@@ -212,7 +209,8 @@ export function registerReferenceRoutes(
           error: { code: "playground_run_id_conflict" },
         });
       }
-      if (referencePlaygroundInFlight >= referencePlaygroundMaxConcurrentRuns) {
+      const releaseJudgeSlot = judgeAdmission.tryAcquire();
+      if (!releaseJudgeSlot) {
         return reply
           .header("Retry-After", "1")
           .code(429)
@@ -222,10 +220,9 @@ export function registerReferenceRoutes(
           });
       }
       const controller = new AbortController();
-      const snapshot = createReferencePlaygroundSnapshot(request.body.source);
-      referencePlaygroundInFlight += 1;
-      activeReferencePlaygroundRuns.set(request.body.runId, controller);
       try {
+        const snapshot = createReferencePlaygroundSnapshot(request.body.source);
+        activeReferencePlaygroundRuns.set(request.body.runId, controller);
         const reference = await readyReference(reply);
         if (!reference) return;
         const entry = await reference.getEntry(request.params.entryId);
@@ -253,7 +250,7 @@ export function registerReferenceRoutes(
         ) {
           activeReferencePlaygroundRuns.delete(request.body.runId);
         }
-        referencePlaygroundInFlight -= 1;
+        releaseJudgeSlot();
       }
     },
   );

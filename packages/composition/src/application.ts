@@ -24,6 +24,13 @@ import {
 import { createFilesystemWorkspace } from "@cpp-learn/workspace";
 
 import { createServer, type ServerDependencies } from "./server.ts";
+import {
+  DEFAULT_JUDGE_MAX_CONCURRENT,
+  DEFAULT_JUDGE_MAX_QUEUED,
+  createBoundedJudge,
+  createJudgeAdmission,
+  type JudgeAdmissionOptions,
+} from "./admission.ts";
 
 const projectRoot = fileURLToPath(new URL("../../../", import.meta.url));
 
@@ -71,6 +78,8 @@ export async function buildReferenceActivityIndex(
 export interface ProductionPlatformOptions {
   readonly dataRoot?: string;
   readonly workspaceRoot?: string;
+  /** Host Judge budget shared by Activity Run/Grade and the Playground. */
+  readonly judgeAdmission?: JudgeAdmissionOptions;
 }
 
 function productionPaths(options: ProductionPlatformOptions) {
@@ -91,6 +100,14 @@ export async function createProductionApplication(
   options: ProductionPlatformOptions = {},
 ) {
   const { dataRoot, workspaceRoot } = productionPaths(options);
+  // One budget for the whole process: the Activity Judge below and the
+  // Reference Playground returned alongside it draw on the same admission.
+  const judgeAdmission = createJudgeAdmission(
+    options.judgeAdmission ?? {
+      maxConcurrent: DEFAULT_JUDGE_MAX_CONCURRENT,
+      maxQueued: DEFAULT_JUDGE_MAX_QUEUED,
+    },
+  );
   const curriculum = createFilesystemCurriculum({
     catalogPath: join(projectRoot, "curriculum", "catalog.json"),
     privateJudgePath: join(projectRoot, "judge-private", "tests.json"),
@@ -144,15 +161,18 @@ export async function createProductionApplication(
     clock: () => new Date(),
     curriculum,
     workspace,
-    judge: createNativeJudge({
-      compiler,
-      compilerFingerprint: toolchain.compiler ?? "clang++ unavailable",
-      webFrontendHarness: join(
-        projectRoot,
-        "scripts",
-        "verify-react-project.mjs",
-      ),
-    }),
+    judge: createBoundedJudge(
+      createNativeJudge({
+        compiler,
+        compilerFingerprint: toolchain.compiler ?? "clang++ unavailable",
+        webFrontendHarness: join(
+          projectRoot,
+          "scripts",
+          "verify-react-project.mjs",
+        ),
+      }),
+      judgeAdmission,
+    ),
     record: {
       append: (event) => record.append(event),
       appendEvent: (event) => record.append(event),
@@ -172,7 +192,7 @@ export async function createProductionApplication(
     compilerFingerprint:
       referenceToolchain.compiler ?? `${referenceCompiler} unavailable`,
   });
-  return { platform, reference, referencePlayground };
+  return { platform, reference, referencePlayground, judgeAdmission };
 }
 
 type ProductionApplication = Awaited<
@@ -181,7 +201,7 @@ type ProductionApplication = Awaited<
 
 type ProductionHttpServerOptions = Omit<
   ServerDependencies,
-  "platform" | "reference"
+  "platform" | "reference" | "referencePlayground" | "judgeAdmission"
 >;
 
 export function createProductionHttpServer(
@@ -193,6 +213,7 @@ export function createProductionHttpServer(
     platform: application.platform,
     reference: application.reference,
     referencePlayground: application.referencePlayground,
+    judgeAdmission: application.judgeAdmission,
   });
 }
 

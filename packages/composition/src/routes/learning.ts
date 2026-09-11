@@ -11,6 +11,7 @@ import {
   isSaveWorkspaceBody,
   recordBody,
 } from "../transport.ts";
+import { JudgeAdmissionRejected } from "../admission.ts";
 
 export interface LearningRouteContext {
   readonly platform: LearningPlatform;
@@ -131,14 +132,32 @@ export function registerLearningRoutes(
             },
           });
         }
-        return platform.dispatch({
-          type,
-          commandId: request.body.commandId,
-          activityId: request.params.activityId,
-          ...(request.body.attemptId
-            ? { attemptId: request.body.attemptId }
-            : {}),
-        });
+        try {
+          return await platform.dispatch({
+            type,
+            commandId: request.body.commandId,
+            activityId: request.params.activityId,
+            ...(request.body.attemptId
+              ? { attemptId: request.body.attemptId }
+              : {}),
+          });
+        } catch (error) {
+          // The host Judge budget is shared with the Reference Playground, so
+          // saturation is a normal, retryable condition rather than a failure.
+          if (error instanceof JudgeAdmissionRejected) {
+            return reply
+              .header("Retry-After", "1")
+              .code(429)
+              .send({
+                schemaVersion: 1,
+                error: {
+                  code: "judge_busy",
+                  message: "Judge concurrency budget is saturated",
+                },
+              });
+          }
+          throw error;
+        }
       },
     );
   };

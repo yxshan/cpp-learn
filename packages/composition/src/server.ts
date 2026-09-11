@@ -10,12 +10,23 @@ import { registerReferenceRoutes } from "./routes/reference.ts";
 import { registerLearningRoutes } from "./routes/learning.ts";
 import { registerLocalDataRoutes } from "./routes/local-data.ts";
 import { registerJobRoutes } from "./routes/jobs.ts";
+import {
+  DEFAULT_JUDGE_MAX_CONCURRENT,
+  DEFAULT_JUDGE_MAX_QUEUED,
+  createJudgeAdmission,
+  type JudgeAdmission,
+} from "./admission.ts";
 
 export interface ServerDependencies {
   readonly platform: LearningPlatform;
   readonly reference?: ReferenceCatalog;
   readonly referencePlayground?: ReferencePlayground;
-  readonly referencePlaygroundMaxConcurrentRuns?: number;
+  /**
+   * Host Judge budget shared with Activity Run/Grade. Production assemblies
+   * always supply the instance that wraps the Judge; a server created without
+   * one gets a private budget, which bounds the Playground but not the platform.
+   */
+  readonly judgeAdmission?: JudgeAdmission;
   readonly logger?: boolean;
   readonly webRoot?: string;
   readonly archive?: {
@@ -31,13 +42,12 @@ export function createServer(
   dependencies: ServerDependencies,
 ): FastifyInstance {
   const server = Fastify({ logger: dependencies.logger ?? false });
-  const configuredPlaygroundConcurrency =
-    dependencies.referencePlaygroundMaxConcurrentRuns ?? 1;
-  const referencePlaygroundMaxConcurrentRuns =
-    Number.isInteger(configuredPlaygroundConcurrency) &&
-    configuredPlaygroundConcurrency > 0
-      ? configuredPlaygroundConcurrency
-      : 1;
+  const judgeAdmission =
+    dependencies.judgeAdmission ??
+    createJudgeAdmission({
+      maxConcurrent: DEFAULT_JUDGE_MAX_CONCURRENT,
+      maxQueued: DEFAULT_JUDGE_MAX_QUEUED,
+    });
 
   if (dependencies.webRoot) {
     void server.register(fastifyStatic, {
@@ -89,7 +99,7 @@ export function createServer(
   registerReferenceRoutes(server, {
     reference: dependencies.reference,
     referencePlayground: dependencies.referencePlayground,
-    referencePlaygroundMaxConcurrentRuns,
+    judgeAdmission,
     readyReference,
   });
 

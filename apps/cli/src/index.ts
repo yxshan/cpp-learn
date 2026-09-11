@@ -7,6 +7,7 @@ import {
   createProductionApplication,
   createProductionDataArchive,
   createProductionHttpServer,
+  resolveJudgeAdmissionOptions,
   resolveServerAddress,
   resolveServerStoragePaths,
 } from "@cpp-learn/composition";
@@ -19,7 +20,10 @@ const command = process.argv[2];
 const dataOnly = command === "export" || command === "restore";
 const application = dataOnly
   ? undefined
-  : await createProductionApplication(storagePaths);
+  : await createProductionApplication({
+      ...storagePaths,
+      judgeAdmission: resolveJudgeAdmissionOptions(process.env),
+    });
 const platform = application
   ? application.platform
   : ({
