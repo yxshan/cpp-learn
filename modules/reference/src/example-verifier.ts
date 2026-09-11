@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import type { CppStandard } from "@cpp-learn/contracts";
 import {
+  createBoundedProcessEnvironment,
   resolveReferenceCompilerStandardFlag,
   runBoundedProcess,
   type BoundedProcessResult,
@@ -76,8 +77,6 @@ export interface ReferenceExampleVerifierOptions {
   readonly standardFlag?: (standard: CppStandard) => Promise<string>;
 }
 
-const environment = { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" };
-
 export function createReferenceCompilerStandardFlagResolver(
   options: ReferenceExampleVerifierOptions,
 ): (standard: CppStandard) => Promise<string> {
@@ -107,7 +106,7 @@ export function createReferenceCompilerStandardFlagResolver(
                   cwd: root,
                   timeoutMs: 10_000,
                   maxOutputBytes: 64 * 1024,
-                  environment: { ...environment, TMPDIR: root },
+                  environment: createBoundedProcessEnvironment(root),
                 });
                 return (
                   result.exitCode === 0 &&
@@ -153,7 +152,7 @@ export function createReferenceExampleVerifier(
         cwd: root,
         timeoutMs: 10_000,
         maxOutputBytes: 64 * 1024,
-        environment: { ...environment, TMPDIR: root },
+        environment: createBoundedProcessEnvironment(root),
       });
       try {
         assertReferenceCompilationAccepted({
@@ -181,7 +180,7 @@ export function createReferenceExampleVerifier(
         cwd: root,
         timeoutMs: 2_000,
         maxOutputBytes: 64 * 1024,
-        environment: { ...environment, TMPDIR: root },
+        environment: createBoundedProcessEnvironment(root),
         ...(example.stdin === undefined ? {} : { stdin: example.stdin }),
       });
       if (

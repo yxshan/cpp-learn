@@ -118,6 +118,31 @@ export const executeProcess: ProcessExecutor = async (executable, args) =>
     });
   });
 
+/**
+ * Environment for a bounded child process.
+ *
+ * The child receives exactly this environment, so anything absent here is absent
+ * for the child too. `HOME` and `TMPDIR` point at the disposable execution root
+ * rather than the real home directory: compilers, build tools and sanitizers all
+ * consult both, and leaving them unset makes them fall back to the learner's home
+ * directory through the passwd entry, which is exactly the host state this is
+ * meant to keep out. Every entry point that runs third-party build steps — the
+ * Judge, Reference example verification and the Authoring validator — builds its
+ * environment here so the policy cannot drift between them.
+ */
+export function createBoundedProcessEnvironment(
+  root: string,
+  options: { readonly searchPath?: string } = {},
+): Readonly<Record<string, string>> {
+  return Object.freeze({
+    PATH: options.searchPath ?? "/usr/bin:/bin",
+    LANG: "C",
+    LC_ALL: "C",
+    HOME: root,
+    TMPDIR: root,
+  });
+}
+
 export const runBoundedProcess: BoundedProcessRunner = async (request) =>
   new Promise((resolve, reject) => {
     const child = spawn(request.executable, [...request.args], {
@@ -733,13 +758,9 @@ export function createNativeJudge(
         if (sources.length === 0)
           throw new Error("Snapshot has no C++ source files");
         let executablePath = join(executionRoot, "program");
-        const environment = {
-          PATH: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
-          LANG: "C",
-          LC_ALL: "C",
-          HOME: executionRoot,
-          TMPDIR: executionRoot,
-        };
+        const environment = createBoundedProcessEnvironment(executionRoot, {
+          searchPath: "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
+        });
         const cancellation = request.signal
           ? { signal: request.signal }
           : ({} as const);

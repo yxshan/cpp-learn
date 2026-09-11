@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  createBoundedProcessEnvironment,
   createNativeJudge,
   createNativeReferencePlayground,
   createNativeToolchainProbe,
@@ -63,6 +64,26 @@ describe("[T-SEC-002] bounded process isolation", () => {
     }
     if (descendantExists) process.kill(descendantPid, "SIGKILL");
     expect(descendantExists).toBe(false);
+  });
+
+  it("builds one environment policy for every bounded entry point", () => {
+    const environment = createBoundedProcessEnvironment("/tmp/execution-root");
+
+    expect(environment).toEqual({
+      PATH: "/usr/bin:/bin",
+      LANG: "C",
+      LC_ALL: "C",
+      HOME: "/tmp/execution-root",
+      TMPDIR: "/tmp/execution-root",
+    });
+    // The child receives exactly this object, so host variables must not leak in
+    // and `HOME` must never resolve to the real home directory.
+    expect(Object.isFrozen(environment)).toBe(true);
+    expect(
+      createBoundedProcessEnvironment("/root", {
+        searchPath: "/opt/homebrew/bin",
+      }).PATH,
+    ).toBe("/opt/homebrew/bin");
   });
 
   it("terminates the learner process group when the job is cancelled", async () => {

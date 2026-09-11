@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 
 import type { CppStandard } from "@cpp-learn/contracts";
-import { runBoundedProcess, type BoundedProcessRunner } from "@cpp-learn/judge";
+import {
+  createBoundedProcessEnvironment,
+  runBoundedProcess,
+  type BoundedProcessRunner,
+} from "@cpp-learn/judge";
 import {
   createReferenceCompilerStandardFlagResolver,
   createReferenceExampleVerifier,
@@ -53,7 +57,7 @@ export function createNativeAuthoringExampleValidator(
       cwd: process.cwd(),
       timeoutMs: 10_000,
       maxOutputBytes: 64 * 1024,
-      environment: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" },
+      environment: createBoundedProcessEnvironment(process.cwd()),
     }).then((result) => {
       if (
         result.exitCode !== 0 ||
