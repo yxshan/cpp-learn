@@ -39,6 +39,7 @@
 | `playwright*.config.ts` | Active | 开发式与生产式浏览器测试配置 |
 | `.github/` | Active | CI 工作流与仓库自动化 |
 | `.gitignore`、`.prettierignore` | Active | 源码边界与格式排除项 |
+| `docs/archive/legacy-prototype/` | Legacy | 早期原型归档，零运行时引用；见该目录 `README.md` |
 | `.cpp-learn/` | Generated | 本地学习、Workspace、作者草稿与缓存；被 Git 忽略 |
 | `node_modules/` | Generated | npm 安装依赖；不得手工修改或提交 |
 | `test-results/` | Generated | Playwright 运行产物；失败诊断后可删除重建 |
@@ -143,14 +144,13 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 
 ### 6.2 `reference/`
 
-状态：Active，夹有一个早期静态页面。
+状态：Active。
 
 - `catalog.json`：120 个 Entry 的激活目录，当前 catalog version 19。
 - `entries/<id>/entry.json`：Entry identity、kind、slug、关系、来源和示例 manifest。
 - `entries/<id>/content.md`：原创中文教学正文。
 - Entry 目录中的 `.cpp`：226 个本地验证示例。
 - `quality-baseline.json`：质量 ratchet 与已知 gap 基线。
-- `compile-run-debug.html`：早期静态速查页，Legacy，不属于当前 Entry renderer。
 
 `quality-baseline.json` 只保存 ratchet 基线与豁免记录（`acceptedEntryVersions`、`knownGaps`、`notApplicable`），不保存受审计条目数量；当前 116/120 这个数字由 `npm run check:reference-quality` 与 `npm run report:reference` 计算得出。剩余 4 个通常是聚合或导航类 Entry；接手者应以质量脚本输出为准，不凭数量猜测遗漏。
 
@@ -203,16 +203,23 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 
 `scripts/reference-content-quality.ts` 与 Authoring 模块当前都掌握部分内容质量词汇，这是内容侧最高优先级的重复策略债务。安全侧的 P0 债务（`docs/71` 的 SEC-F02 准入、SEC-F03、SEC-F04）已收敛，剩余安全项按该文档的 P1/P2 排序。
 
-## 9. 早期原型目录
+## 9. 早期原型目录（已归档）
 
-| 路径 | 状态 | 处理建议 |
+原型归档任务已完成，全部内容移入 `docs/archive/legacy-prototype/`，仓库根目录不再有
+`assets/`、`lessons/`、`exercises/`、`learning-records/`，生产 `reference/` 根也不再夹带
+静态页面。归档前已确认零运行时引用（全仓搜索 + 完整门禁 + 浏览器 E2E），归档说明见该目录的
+`README.md`。
+
+| 路径 | 原位置 | 处理 |
 |---|---|---|
-| `assets/course.css` | Legacy | 仅供早期静态 HTML；迁移或确认无引用后再归档 |
-| `lessons/0001-source-to-program.html` | Legacy | 第一课静态原型，不是当前课程内容 |
-| `exercises/0001-first-program/` | Legacy | 含旧可执行文件、源码和 shell 检查脚本，不是当前 Judge 输入 |
-| `learning-records/*.md` | Legacy | 早期人工学习记录，不是事件存储 |
+| `assets/course.css` | 根 `assets/` | 归档 |
+| `lessons/0001-source-to-program.html` | 根 `lessons/` | 归档 |
+| `reference/compile-run-debug.html` | 生产 `reference/` 根 | 归档，reference 根因此只剩生产内容 |
+| `learning-records/0001-existing-frontend-foundation.md` | 根 `learning-records/` | 归档 |
+| `exercises/0001-first-program/main.cpp`、`check.sh` | 根 `exercises/` | 归档；`check.sh` 已标注为非判题路径 |
+| `exercises/0001-first-program/first_program` | 同上 | **删除**（已提交的 arm64 Mach-O，来源不可审查），同目录 `.gitignore` 防止再次提交 |
 
-本轮不删除这些文件，因为删除是否影响用户保存的历史材料尚未单独确认。后续可创建一次“原型归档”任务，先证明无运行时引用，再移动到 `docs/archive/legacy-prototype/` 或删除生成二进制。
+同目录保留了原有相对结构，因此两个静态页面在归档内仍可打开。
 
 ## 10. 修改影响速查
 

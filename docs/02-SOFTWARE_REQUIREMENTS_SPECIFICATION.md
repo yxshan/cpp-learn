@@ -29,7 +29,7 @@ The system is a local single-user Web application with a CLI Adapter. It manages
 
 ### Curriculum
 
-- **FR-010** The system shall load versioned Tracks, Modules, Concepts, Activities, Projects, and Milestones from declarative content.
+- **FR-010** The system shall load versioned Activities from declarative content, together with the Projects and Milestones a `project-milestone` Activity declares and the Concepts its `conceptIds` reference. Tracks and Modules are presentation groupings over the activated Activity order, not separate declarative entities: no catalog file, schema, DTO or store defines them.
 - **FR-011** The system shall validate content schemas, stable identifiers, versions, prerequisite graphs, references, starter files, judge specifications, hints, and Evidence policies.
 - **FR-012** The system shall prevent invalid or cyclic required prerequisite graphs from entering the active catalog.
 - **FR-013** The system shall render Markdown content and an allowlist of typed interactive blocks without executing arbitrary curriculum code.

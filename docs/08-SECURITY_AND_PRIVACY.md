@@ -93,7 +93,7 @@ Controls:
 - Network Activities use loopback and dynamic ports.
 - A future container Adapter denies external network and mounts only required files.
 
-Native mode cannot guarantee filesystem confinement; UI copy must state this limitation.
+Native mode cannot guarantee filesystem confinement; UI copy must state this limitation. The boundary at which isolation becomes mandatory is recorded in [ADR-0008](../docs/adr/0008-judge-isolation-boundary.md).
 
 ### Private-test disclosure
 

@@ -44,42 +44,146 @@ Optional Tracks include advanced templates, coroutines, storage engines, RPC/dis
 ```json
 {
   "schemaVersion": 1,
-  "id": "cpp.references.01",
-  "version": 1,
+  "id": "cli-data-manager-m1",
+  "version": 2,
   "kind": "project-milestone",
-  "title": "References are not JavaScript object references",
+  "title": "Project：CLI 数据管理器 Milestone 1",
   "project": {
-    "id": "modern-cpp-cli",
-    "title": "Modern C++ CLI",
+    "id": "cli-data-manager",
+    "title": "现代 C++ CLI 数据管理器",
     "milestone": 1,
     "milestoneCount": 3,
-    "portfolioOutcome": "A reproducible CLI portfolio artifact."
+    "portfolioOutcome": "一个具备多文件模型、持久工作区与 CMake/CTest 的现代 C++ CLI 项目。"
   },
-  "estimatedMinutes": 35,
-  "conceptIds": ["cpp.references.use", "cpp.const.read"],
-  "prerequisiteIds": ["cpp.functions.basic"],
-  "content": { "lesson": "lesson.md" },
+  "estimatedMinutes": 60,
+  "conceptIds": [
+    "cpp-classes",
+    "cpp-stl-containers",
+    "cpp-multi-file"
+  ],
+  "prerequisiteIds": [
+    "cmake-testing-debugging",
+    "stl-containers-algorithms"
+  ],
+  "objectives": [
+    "建立可持续扩展的多文件 CLI 数据模型。"
+  ],
+  "victoryConditions": [
+    "读取名称和分数，并通过独立格式化函数输出 name=score。"
+  ],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ Core Guidelines: interfaces",
+      "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-interfaces"
+    },
+    {
+      "kind": "reference",
+      "title": "CMake tutorial",
+      "url": "https://cmake.org/cmake/help/latest/guide/tutorial/index.html"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/cli-data-manager-m1/lesson.md"
+  },
   "workspace": {
-    "persistenceId": "modern-cpp-cli",
-    "starter": "starter",
-    "editable": ["solution.cpp"]
+    "persistenceId": "cli-data-manager",
+    "editablePaths": [
+      "main.cpp",
+      "record.cpp",
+      "record.hpp"
+    ],
+    "starterFiles": {
+      "main.cpp": "#include \"record.hpp\"\nint main() { /* TODO */ }\n",
+      "record.hpp": "#pragma once\n#include <string>\nstruct Record { std::string name; int score; };\n",
+      "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& record) { /* TODO */ }\n"
+    }
   },
   "judge": {
-    "profile": "cpp-function",
-    "standard": "c++20",
-    "stages": ["compile", "public", "private", "asan", "ubsan", "timeout"]
+    "version": 1,
+    "expectedStdout": "alice=42\n",
+    "timeoutMs": 3000,
+    "publicTests": [
+      {
+        "name": "format record",
+        "stdin": "alice 42\n",
+        "expectedStdout": "alice=42\n"
+      }
+    ]
   },
   "evidencePolicy": {
-    "publicPass": "practiced",
-    "demonstratedRequires": ["private-pass", "reflection-pass", "independent"]
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7,
+    "teacherReviewRequired": true
   },
-  "reviewIds": ["cpp.references.review.01"]
+  "learning": {
+    "hints": [
+      {
+        "id": "to-string",
+        "title": "转换分数",
+        "kind": "nudge",
+        "content": "std::to_string 把 int 转成 string。"
+      },
+      {
+        "id": "pure-format",
+        "title": "保持格式化函数纯粹",
+        "kind": "concept",
+        "content": "只从 const Record& 构造返回字符串，不直接读写流。"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "project-boundary",
+        "prompt": "为什么把格式化逻辑从 main 分离后更容易测试和扩展？",
+        "required": true
+      }
+    ],
+    "reviewIds": [
+      "classes-and-raii-review"
+    ],
+    "teacherRubric": {
+      "id": "project-boundary-rubric",
+      "prompt": "回答应联系纯函数、稳定接口与未来输出格式扩展。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include \"record.hpp\"\n#include <iostream>\nint main() { Record r{\"alice\", 42}; std::cout << format_record(r) << '\\n'; }\n",
+      "record.hpp": "#pragma once\n#include <string>\nstruct Record { std::string name; int score; };\nstd::string format_record(const Record& record);\n",
+      "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& r) { return r.name + \"=\" + std::to_string(r.score); }\n"
+    },
+    "mutations": [
+      {
+        "id": "omit-score",
+        "files": {
+          "main.cpp": "#include \"record.hpp\"\n#include <iostream>\nint main() { Record r{\"alice\", 42}; std::cout << format_record(r) << '\\n'; }\n",
+          "record.hpp": "#pragma once\n#include <string>\nstruct Record { std::string name; int score; };\nstd::string format_record(const Record& record);\n",
+          "record.cpp": "#include \"record.hpp\"\nstd::string format_record(const Record& r) { return r.name; }\n"
+        },
+        "expectedVerdict": "public_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "project-dependencies",
+        "type": "algorithm-trace",
+        "fallback": "stdin -> main -> Record -> format_record -> stdout"
+      }
+    ],
+    "printFallback": "画出 main、Record 与 format_record 的依赖方向。"
+  }
 }
 ```
 
+
+This is `curriculum/activities/cli-data-manager-m1/activity.json` with its inline C++ shortened; the canonical shape is `packages/content-schema/src/activity.schema.json` and the canonical example is that file. Every field above is required by the schema, including `objectives`, `victoryConditions`, `sources`, `learning` and `quality`.
+
 The `project` object is required only for `project-milestone` Activities. Its ID must match `workspace.persistenceId`; every Project must declare one contiguous Milestone sequence with a stable title, count, and portfolio outcome.
 
-The manifest selects fixed judge capabilities. It cannot embed arbitrary shell commands.
+The manifest selects fixed judge capabilities through `judge.version`, `expectedStdout`, `timeoutMs`, `publicTests`, `propertyTests`, `performanceCheck`, `buildProfile` and `sanitizers`. It cannot embed arbitrary shell commands.
 
 Fixed private-test inputs and expected outputs are not Activity-manifest fields. They live in the server-only `judge-private/tests.json` registry keyed by Activity ID. Catalog activation rejects any public manifest that declares a `judge.privateTests` key, rejects registry entries for unknown Activities, and validates the internally merged definition before use.
 

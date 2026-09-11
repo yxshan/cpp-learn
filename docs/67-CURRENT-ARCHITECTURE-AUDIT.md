@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Document ID | ARCH-AUDIT-001 |
-| Version | 1.1 |
+| Version | 1.2 |
 | Status | In Review |
 | Owner | Project Maintainer |
 | Prepared by | GPT-5.6 Sol |
-| Last updated | 2026-09-09 |
+| Last updated | 2026-09-12 |
 
 > Layout note (2026-09-10): the measurements in §3 were taken before the
 > `docs/73` refactor. `apps/server/src/{server,composition,config}.ts` now live in
@@ -74,6 +74,40 @@ and browser implementation of authoring rules are not justified.
 The measurements are line and tracked-file counts, not quality scores. They are
 used only to locate places where understanding and change require excessive
 cross-file movement or one file contains several independent reasons to change.
+
+### 3.1 Refreshed measurements (2026-09-12)
+
+The table above is the fixed-point evidence of this audit and is left unchanged.
+These are the same areas measured after the `docs/73` refactor, on the commit that
+recorded `ADR-0008`. Counts are of **Git-tracked** files, and each count states its
+own filter, because the earlier "domain module source files = 66" could not be
+reproduced under any single rule (`.ts` 31, `.ts` including tests 54, `+.schema.json`
+76, all tracked 93).
+
+| Area | Filter | Count |
+|---|---|---:|
+| Application source | `apps/**/*.ts(x)`, excluding tests | 42 |
+| Application files | all tracked under `apps/` | 59 |
+| Domain module source | `modules/**/*.ts`, excluding tests | 31 |
+| Domain module files | all tracked under `modules/` | 93 |
+| Curriculum files | all tracked under `curriculum/` | 141 |
+| Reference files | all tracked under `reference/` | 468 |
+| Documentation | `docs/**/*.md` | 114 |
+| Authoring schemas | `modules/reference-authoring/**/*.schema.json` | 22 |
+| `reference-authoring/src/index.ts` | lines | 994 (was 5,271) |
+| `packages/composition/src/server.ts` | lines | 146 (was 903 in `apps/server`) |
+| `apps/web/src/App.tsx` | lines | 26 (was 1,097) |
+| `packages/contracts/src/index.ts` | lines | 495 (was 956) |
+| `packages/composition/src/transport.ts` | lines | 320, the extracted shared policy |
+| `packages/ui/` | — | deleted; `packages/reference-presentation` replaced it |
+
+The direction the audit argued for has been taken: the two files it called out as
+having lost locality are an order of magnitude smaller, and the shared transport
+policy it asked for exists. The interface count is unchanged at sixteen operations.
+
+The drift row is also resolved: `docs/05` no longer lists fourteen operations, and
+the priority order in `docs/69`, `docs/70` and the root `README.md` now agrees, with
+the security debt recorded as complete in `docs/71` §10.
 
 ## 4. Strengths to preserve
 

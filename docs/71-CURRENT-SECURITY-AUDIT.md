@@ -22,14 +22,14 @@ SQL 拼接、Shell 字符串执行或 Reference 原始 HTML 注入。服务配�
 
 | ID | 严重度 | 结论 | 当前状态 |
 |---|---|---|---|
-| SEC-F01 | High | Native Judge 可访问宿主机文件、网络和进程资源 | 已知且文档化，尚无强隔离 |
+| SEC-F01 | High | Native Judge 可访问宿主机文件、网络和进程资源 | 接受为部署边界（ADR-0008）；无强隔离 |
 | SEC-F02 | Medium | Activity Run/Grade 没有全局并发准入和 CPU/内存上限 | 并发准入已修复（§10.1）；单进程资源上限仍开放 |
 | SEC-F03 | Medium | Monaco 的生产依赖链包含受公告影响的 DOMPurify 3.4.8 | 已修复（§10.2）；本行结论已按证据更正 |
 | SEC-F04 | Medium | CI 声明与实际不一致，未执行依赖/密钥扫描，Action 也未固定到提交 | 已修复（§10.3） |
 | SEC-F05 | Low | 本地写接口只验证回环 hostname，接受任意端口和缺失的 `Origin` | 已修复（§10.5） |
 | SEC-F06 | Low | 归档恢复没有统一的文件数、解码后字节数和 CLI 输入上限 | 已修复（§10.6） |
 | SEC-F07 | Low | 长期运行进程中的命令回执与 Job 事件没有淘汰策略 | 已修复（§10.7） |
-| SEC-F08 | Low | 仓库含 Legacy 可执行文件和绕过 Judge 边界的检查脚本 | 不在生产路径，但仍可被手动执行 |
+| SEC-F08 | Low | 仓库含 Legacy 可执行文件和绕过 Judge 边界的检查脚本 | 已修复（§10.9） |
 
 此外，生产 HTTP 响应没有显式 CSP、`frame-ancestors`、`nosniff` 和 Referrer Policy。
 在本地单用户模型下将其记录为 Hardening observation，而不是单独提高总体严重度。
@@ -81,7 +81,7 @@ Git 历史密钥扫描或第三方 SAST。结论只适用于上述固定点和�
 
 ### SEC-F01：Native Judge 不是主机安全沙箱
 
-**严重度：High；状态：Known / Accepted for trusted local use**
+**严重度：High；状态：Known / Accepted for trusted local use；边界与触发条件见 [ADR-0008](adr/0008-judge-isolation-boundary.md)**
 
 `modules/judge/src/index.ts` 使用参数数组和 `shell: false`，为子进程设置临时工作目录、
 最小环境、墙钟超时、输出上限和进程组终止。这些控制能够减少命令注入、失控输出和
@@ -279,7 +279,7 @@ ID 的本地请求可形成内存型拒绝服务。
 
 ### SEC-F08：Legacy 目录包含可执行产物和无边界执行脚本
 
-**严重度：Low；状态：Open / outside production path**
+**严重度：Low；状态：已修复（§10.9）**
 
 `exercises/0001-first-program/first_program` 是已提交的 arm64 Mach-O 二进制，无法仅通过
 代码审查证明其来源；同目录 `check.sh` 直接在宿主机调用 `clang++` 并执行学习者程序，
@@ -305,12 +305,16 @@ Fastify 当前没有统一设置 CSP、`X-Content-Type-Options: nosniff`、
 Monaco worker 与 Vite 资源可能影响 CSP 规则。建议先用 `Content-Security-Policy-Report-Only`
 验证，再收敛到 production policy；本地 HTTP 不应机械添加只适用于 HTTPS 的 HSTS。
 
-### 5.2 Reference Authoring 示例执行
+### 5.2 Reference Authoring 示例执行（已修复）
 
 Reference 示例验证与作者工具复用了 bounded process，但环境只设置 `TMPDIR`，没有像
-课程 Judge 一样把 `HOME` 也指向临时根。它同样不是强沙箱。已发布仓库内容是可信输入，
-风险较低；AI 生成或外部贡献的草稿在人工审阅前不应自动执行。建议统一执行环境政策，
-并在未来接入与 SEC-F01 相同的隔离适配器。
+课程 Judge 一样把 `HOME` 也指向临时根。`HOME` 缺失时编译器会经由 passwd 条目回落到
+学习者的真实主目录，因此这不是单纯的不一致。
+
+已由 `createBoundedProcessEnvironment` 统一：Judge、Reference 示例验证与 Authoring 校验器
+共用同一政策，三处都设置 `PATH`/`LANG`/`LC_ALL` 与指向一次性根目录的 `HOME`/`TMPDIR`。
+它同样不是强沙箱。已发布仓库内容是可信输入，风险较低；AI 生成或外部贡献的草稿在人工
+审阅前不应自动执行，未来仍应接入与 SEC-F01 相同的隔离适配器。
 
 ### 5.3 路径竞态
 
@@ -520,5 +524,26 @@ SEC-F01、SEC-F08 与 §5 的其余观察项（Authoring 示例执行环境、�
   部分，先在真实浏览器中验证再升级为强制策略。不发送 HSTS——服务器是回环明文 HTTP。
 - 测试：composition 服务测试断言四个响应头存在且强制 CSP 缺失；生产 E2E 在真实浏览器
   响应上复验。
+
+### 10.9 SEC-F08：原型归档
+
+- 归档前用全仓搜索确认 `assets/`、`lessons/`、`exercises/`、`learning-records/` 与
+  `reference/compile-run-debug.html` 在 `apps/`、`modules/`、`packages/`、`scripts/`、
+  `.github/`、`curriculum/`、`reference/` 中零引用，随后完整门禁与浏览器 E2E 通过。
+- 全部移入 `docs/archive/legacy-prototype/`，保留原有相对结构，因此两个静态页面在归档内
+  仍可打开；归档自述见该目录 `README.md`。
+- 已提交的 arm64 Mach-O `exercises/0001-first-program/first_program` 从 Git 删除，同目录
+  `.gitignore` 防止重新编译的产物再次提交；`check.sh` 文件头标注它不是判题路径，并指向
+  `./cpplearn check --activity <id>`。
+- 生产 `reference/` 根不再夹带静态页面。
+
+### 10.10 其他收尾
+
+- §5.2：`createBoundedProcessEnvironment` 成为 Judge、Reference 示例验证与 Authoring
+  校验器共用的执行环境政策，三处都设置 `HOME`/`TMPDIR` 指向一次性根目录。此前 Reference
+  与 Authoring 的 `HOME` 是缺失的，这会让编译器经由 passwd 条目回落到学习者的真实主目录。
+- 原型空目录 `reference/entries/std-vector-size/`（只有空的 `examples/`）已删除。
+- SEC-F01 的处置由 [ADR-0008](adr/0008-judge-isolation-boundary.md) 固定为部署边界，
+  并写明隔离适配器的验收标准与触发条件。
 
 本审计由 **GPT-5.6 Sol** 完成；§10 由后续修复提交维护。

@@ -3,11 +3,12 @@
 | Field | Value |
 |---|---|
 | Document ID | DOC-CODE-AUDIT-001 |
-| Version | 1.0 |
+| Version | 1.1 |
 | Status | In Review |
 | Owner | Project Maintainer |
 | Audit date | 2026-09-10 |
 | Fixed point | `96f31c3` |
+| Decisions recorded | 2026-09-12（§7） |
 | Scope | `docs/` 下 110 份 Markdown、根目录 5 份说明文档、7 份 ADR，对照实际代码 |
 
 > Path note: every code path cited below is the path **at the `96f31c3` fixed
@@ -15,6 +16,11 @@
 > `apps/server/src/{server,composition,config}.ts` into
 > `packages/composition/src/`, extracted `packages/reference-presentation`, and
 > deleted `packages/ui`. Findings and severities are unaffected.
+>
+> Decisions note (2026-09-12): §7 now records the owner decisions on all seven open
+> items and what was executed. Later refactors moved the legacy prototype paths into
+> `docs/archive/legacy-prototype/` and added `ADR-0008`; the citations above still
+> point at the `96f31c3` fixed point.
 
 ## 1. 目的与判据
 
@@ -78,8 +84,8 @@
 
 | ID | 类别 | 位置 | 文档说法 | 实测 | 处置 |
 |---|---|---|---|---|---|
-| C-01 | `DOC-ERROR` | `:44-78` | "Activity manifest" 示例用 `content.lesson`、`workspace.starter/editable`、`judge.profile/standard/stages`、`evidencePolicy.publicPass/demonstratedRequires`，并缺 `objectives`/`victoryConditions`/`sources`/`learning`/`quality` | 该示例会被当前 Schema **直接拒绝**：`content` 要求 `{format,path}`、`workspace` 要求 `{editablePaths,starterFiles}`、`judge` 要求 `{version,expectedStdout,timeoutMs}`、`evidencePolicy` 要求 `{automatedPass,demonstratedRequiresReflection,demonstratedRequiresIndependent,reviewAfterDays}`，且四者均 `additionalProperties:false`；70 份真实 manifest 全部符合 Schema | 需所有者确认后修复示例 |
-| C-02 | `ARCH-GAP` | `:68-71` | 同样示例中的 `judge.profile` / `judge.stages` | 全仓零命中；真实选择机制是 `buildProfile` + `sanitizers` | 若为意图语法则补进 Schema 与 Judge |
+| C-01 | `DOC-ERROR` | `:44-78` | "Activity manifest" 示例用 `content.lesson`、`workspace.starter/editable`、`judge.profile/standard/stages`、`evidencePolicy.publicPass/demonstratedRequires`，并缺 `objectives`/`victoryConditions`/`sources`/`learning`/`quality` | 该示例会被当前 Schema **直接拒绝**：`content` 要求 `{format,path}`、`workspace` 要求 `{editablePaths,starterFiles}`、`judge` 要求 `{version,expectedStdout,timeoutMs}`、`evidencePolicy` 要求 `{automatedPass,demonstratedRequiresReflection,demonstratedRequiresIndependent,reviewAfterDays}`，且四者均 `additionalProperties:false`；70 份真实 manifest 全部符合 Schema | 已修复：示例替换为真实 manifest 并经 `validateActivity` 校验通过；按「早期残留」处理，不扩 Schema |
+| C-02 | `ARCH-GAP` | `:68-71` | 同样示例中的 `judge.profile` / `judge.stages` | 全仓零命中；真实选择机制是 `buildProfile` + `sanitizers` | 已决定为早期残留：示例已重写，不新增 `judge.profile` / `judge.stages` |
 | C-03 | `ARCH-GAP` | `:104-136` | CLI I/O 的 token/正则/浮点容差比较、Function harness(cpp-function) | 不存在 judge profile 概念；输出比较目前只有严格相等（`modules/judge/src/index.ts:1054,1091,1150`） | 保留为目标语义 |
 | C-04 | `DOC-ERROR` | `:84` | "Catalog activation rejects **private values** inside `curriculum/`" | 代码拒绝的是公开 manifest 中出现 `judge.privateTests` **键**（`modules/curriculum/src/index.ts:574-585`），不是扫描其他字段里的私有值 | 修正措辞 |
 | C-05 | `UNVERIFIED` | `:128` | "initial system Module is POSIX-compatible on the reference macOS environment and Linux" | 代码中无 OS 条件分支，进程组终止有非 POSIX 回退，默认编译器硬编码 `/usr/bin/clang++`，无 Linux 测试 | 需 Linux CI 证据或收窄措辞 |
@@ -92,11 +98,11 @@
 | D-02 | `DOC-ERROR` | `docs/68:141` | `quality-baseline.json` "当前记录 116 个受审计 Entry" | 该文件只有 `acceptedEntryVersions: {}`、`knownGaps: []`、`notApplicable: []`；116 由 `report:reference` 计算 | 改为"由质量脚本计算" |
 | D-03 | `DOC-ERROR` | `docs/71:166` | npm 自动修复候选是 `monaco-editor@0.53.0` | 2026-09-10 实测 `npm audit --omit=dev` 为 **"No fix available"**，3 vulnerabilities 仍在 | 更新为当前结论 |
 | D-04 | `DOC-ERROR` | `docs/10:63` | §4 "Planned keys" 把已实现与未实现键并列 | `server.host`/`server.port` 已由 `CPP_LEARN_HOST`/`CPP_LEARN_PORT` 实现；`judge.maxConcurrentJobs`、`retention.runSnapshotDays`、`logging.level`、`paths.*` 全仓零命中 | 拆成"已实现/未实现"两组 |
-| D-05 | `STALE-META` | `docs/67:57` | Documentation files = 109 | 实测 `docs/` 下 `.md` 已 110 份 | 更新计数 |
+| D-05 | `STALE-META` | `docs/67:57` | Documentation files = 109 | 实测 `docs/` 下 `.md` 已 110 份 | 已修复：`docs/67` §3.1 给出带过滤口径的复测（`docs/**/*.md` 现为 116 份） |
 | D-06 | `STALE-META` | `docs/12:179` | 小节标题 "Planned Stage 6.2 evidence" | Stage 6.2 已 Accepted，表内 10 项状态全为 Passed | 改标题 |
 | D-07 | `STALE-META` | `docs/24` 头部 | `Status: Baseline`（v1.20） | `docs/README.md` §4 把它列为"历史计划，主体已完成" | 统一状态标签 |
-| D-08 | `STALE-META` | `docs/29,57,58,59,60,61,62,63,64,65` 头部 | 使用了 `Accepted (independent review limitation recorded)`、`Implemented; empirical acceptance pending`、`Tracer bullet implemented; phase in progress`、`Accepted; Phase A4 complete` 等 | `docs/README.md` §8 规定状态词汇只有 `Draft`/`In Review`/`Baseline`/`Accepted`/`Superseded`/`Archived` | 收敛到规范词汇，细节移入正文 |
-| D-09 | `UNVERIFIED` | `docs/67:54` | "Tracked domain module source files = 66" | `modules/` 下 `.ts` 42、`.ts`+`.schema.json` 64、全部 tracked 81，无任何口径等于 66 | 重测并写明计数口径 |
+| D-08 | `STALE-META` | `docs/29,57,58,59,60,61,62,63,64,65` 头部 | 使用了 `Accepted (independent review limitation recorded)`、`Implemented; empirical acceptance pending`、`Tracer bullet implemented; phase in progress`、`Accepted; Phase A4 complete` 等 | `docs/README.md` §8 规定状态词汇只有 `Draft`/`In Review`/`Baseline`/`Accepted`/`Superseded`/`Archived` | 已决定：`docs/README` §8 明确该词汇只约束文档头部 `Status` 字段，表格内阶段标签不在范围内，历史报告不改写 |
+| D-09 | `UNVERIFIED` | `docs/67:54` | "Tracked domain module source files = 66" | `modules/` 下 `.ts` 42、`.ts`+`.schema.json` 64、全部 tracked 81，无任何口径等于 66 | 已修复：`docs/67` §3.1 逐项写明过滤口径；原「66」在任何单一规则下都无法复现，已替换 |
 
 ### 3.5 文档间矛盾
 
@@ -138,7 +144,7 @@
 |---|---|---|---|---|---|
 | H-01 | `ARCH-GAP` | `docs/02:49` FR-033 | Judge 支持 function-harness、expected compile-failure 等 | Activity Judge 只有 `direct`/`cmake` 两种 build profile；`JudgeSpec` 必填 `expectedStdout`，无编译失败模式；`expected-compile-failure` 只存在于 Reference 示例 | 保留需求，代码补齐 |
 | H-02 | `ARCH-GAP` | `docs/02:75` FR-063 | 原始编译/运行/Sanitizer 日志置于渐进披露控件后 | `apps/web/src/LessonWorkspace.tsx:716-745` 直接把各 stage 与原始 `stdout`/`stderr` 内联渲染，无披露控件 | 保留需求，代码补齐 |
-| H-03 | `UNVERIFIED` | `docs/02:32` FR-010 | 从声明式内容加载 versioned Tracks/Modules/Concepts | `curriculum/catalog.json` 只有 `schemaVersion` + `activityManifests`；Activity kind 只有 4 种；Concept 只是 `conceptIds` 字符串数组 | 需所有者确认是"声明式实体"还是"概念分组" |
+| H-03 | `UNVERIFIED` | `docs/02:32` FR-010 | 从声明式内容加载 versioned Tracks/Modules/Concepts | `curriculum/catalog.json` 只有 `schemaVersion` + `activityManifests`；Activity kind 只有 4 种；Concept 只是 `conceptIds` 字符串数组 | 已决定为概念分组：FR-010 已收窄，Tracks/Modules 明确为 Activity 顺序之上的呈现分组 |
 | H-04 | `STALE-META` | `docs/12:179,181` | 标题 "Planned Stage 6.2 evidence"，列头 "Planned executable evidence" | 表内 10 行状态全为 `Passed`，被引用的测试套件确实存在并通过 | 改标题与列头 |
 
 ### 3.9 安全、测试与运维（`docs/08`、`docs/09`、`docs/10`）
@@ -192,14 +198,14 @@
 |---|---|---|---|---|---|
 | K-01 | `DOC-ERROR` | `docs/04:96` | "分别限制 stdout、stderr、执行时间与并发。" | 输出是单一共享计数器同时约束两个流（`modules/judge/src/index.ts:133,153-168`）；`docs/05` 已写 "combined" | 把"分别"改为"合并" |
 | K-02 | `DOC-ERROR` | `docs/06:50-90` | 事件目录列了 16 种事件，但**没有** `attempt.completed` | `LearningRecordEvent` 联合类型含 `AttemptCompletedEvent`（`packages/contracts/src/index.ts:508,629`），且它是实际数据中的主要事件 | 补入 `attempt.completed` |
-| K-03 | `DOC-ERROR` | `docs/06:155` | "Paths are sorted and encoded with explicit lengths before hashing." | `createSnapshot` 用 `JSON.stringify` + sha256，只排序不做长度前缀（`modules/workspace/src/index.ts:123-141`）；改成长度编码会使既有 `snap_*` ID 全部失效 | 改为 "sorted and JSON-encoded" |
+| K-03 | `DOC-ERROR` | `docs/06:155` | "Paths are sorted and encoded with explicit lengths before hashing." | `createSnapshot` 用 `JSON.stringify` + sha256，只排序不做长度前缀（`modules/workspace/src/index.ts:123-141`）；改成长度编码会使既有 `snap_*` ID 全部失效 | 已修复；并决定不改为长度前缀——那会使既有 `snap_*` ID 全部失效且无收益 |
 | K-04 | `STALE-META` | `docs/06:9` | `Last updated 2026-09-07`（Version 1.6） | 1.6 实际提交于 2026-09-08 并新增 §13；工作树日期未同步 | 更新日期与版本 |
 | K-05 | `ARCH-GAP` | `docs/04:86` | 作业生命周期 `queued → preparing → compiling → testing → analyzing → completed` | 不存在该生命周期对象；实际事件只有 `judge.queued`、`judge.report.ready`、`judge.cancelled`、`judge.system-error` | 保留为目标；在 §5.1 标注 |
 | K-06 | `ARCH-GAP` | `docs/04:113` | 投影覆盖 Dashboard/Workspace revision/Projects/幂等回执等 | `LearningProjection` 只有 `attempts`、`conceptStates`、`concepts`、`evidence?`、`reviews?`；SQLite 只有 5 张表；幂等回执是进程内 `Map` | 保留为目标 |
 | K-07 | `ARCH-GAP` | `docs/04:236` | 错误必须含安全 code、correlation ID、可公开 details 与重试分类 | 实际错误体只有 `{schemaVersion,error:{code,message}}`；`correlationId`/`retryable`/`details` 在 contracts 中零命中 | 保留为目标 |
-| K-08 | `ARCH-GAP` | `docs/06:35-39` | 事件信封含 `eventType`、`correlationId`、`payload` | 实际信封是 `{schemaVersion,event:{...},checksum}`，事件对象用 `type` 且字段扁平，无 `correlationId`/`payload` | 保留为目标并显式标注 |
-| K-09 | `ARCH-GAP` | `docs/06:51-90` | 16 种事件名 | 每一个在 `modules/`/`apps/`/`packages/` 中零命中 | 保留为目标事件模型 |
-| K-10 | `ARCH-GAP` | `docs/06:98-121` | 负载结构（顶层 `activity`/`snapshot`/`reportId`/`verdict`，Evidence `source: "hidden-test"`、`difficulty`、`contentVersion`） | 实际把上述字段嵌在 `report` 内，用 `activityId` + `conceptIds`；Evidence `source` 取值是 `automated_grade\|review\|teacher_observation` | 保留为目标或对齐真实 DTO |
+| K-08 | `ARCH-GAP` | `docs/06:35-39` | 事件信封含 `eventType`、`correlationId`、`payload` | 实际信封是 `{schemaVersion,event:{...},checksum}`，事件对象用 `type` 且字段扁平，无 `correlationId`/`payload` | 已决定保持：目标事件模型与现有 DTO 的差异保留标注，不做内容级对齐 |
+| K-09 | `ARCH-GAP` | `docs/06:51-90` | 16 种事件名 | 每一个在 `modules/`/`apps/`/`packages/` 中零命中 | 已决定保持：同上 |
+| K-10 | `ARCH-GAP` | `docs/06:98-121` | 负载结构（顶层 `activity`/`snapshot`/`reportId`/`verdict`，Evidence `source: "hidden-test"`、`difficulty`、`contentVersion`） | 实际把上述字段嵌在 `report` 内，用 `activityId` + `conceptIds`；Evidence `source` 取值是 `automated_grade\|review\|teacher_observation` | 已决定保持为目标模型，保留标注 |
 | K-11 | `ARCH-GAP` | `docs/06:126-140` | "Suggested tables" 列 11 张表 | 实际 SQLite 只有 5 张：`projection_meta`、`attempts`、`concept_states`、`concept_evidence`、`review_queue`；文档写的是单数 `concept_state` | 保留为目标；命名与真实表对齐 |
 | K-12 | `ARCH-GAP` | `docs/06:142,150` | 投影行含 `last_event_id`；`concept_states` 存下次复习日期、最近独立证据、误区标签 | 只有 `concept_states` 有 `last_event_id`；真实列是 `concept_id,state,last_event_id,explanation,evidence_ids_json` | 保留为目标 |
 | K-13 | `ARCH-GAP` | `docs/06:159` | Run 快照可在期限内压缩 | 无任何 retention/compaction 代码，`retention`/`runSnapshotDays` 零命中 | 保留为目标 |
@@ -223,8 +229,8 @@
 | R-08 | `docs/` 按 product/architecture/operations/decisions/reports/research/archive 重组 | 111 份 `.md` 平铺在 `docs/` 根 |
 | R-09 | 所有 Judge 入口共享并发准入与资源预算 | Activity Run/Grade 无并发上限；`judge.maxConcurrentJobs` 零实现 |
 | R-10 | 结构化配置键（`paths.*`、`judge.*`、`retention.*`、`logging.*`） | `apps/server/src/config.ts` 只实现 host/port/dataRoot/workspaceRoot |
-| R-11 | Reference 示例执行与课程 Judge 统一执行环境政策 | Reference 侧设 `TMPDIR` 不设 `HOME` |
-| R-12 | 原型目录归档 | `assets/`、`lessons/`、`exercises/`、`learning-records/` 仍在；`exercises/0001-first-program/first_program` 是已提交的 arm64 Mach-O |
+| R-11 | Reference 示例执行与课程 Judge 统一执行环境政策 | 已修复：`createBoundedProcessEnvironment` 由 Judge、Reference 验证与 Authoring 校验器共用，三处都设 `HOME`/`TMPDIR` |
+| R-12 | 原型目录归档 | 已修复：全部移入 `docs/archive/legacy-prototype/`，arm64 可执行文件已从 Git 删除，`reference/` 根只剩生产内容 |
 | R-13 | 事件模型与 upcasting / 投影覆盖 / 保留策略 | 无 upcaster；SQLite 只有 5 张表；`retention.runSnapshotDays` 零实现 |
 | R-14 | Fastify 错误信封含 correlation ID 与重试分类 | 实际错误体只有 `{schemaVersion,error:{code,message}}` |
 | R-15 | Activity Judge 支持 expected compile-failure 与 function harness | 只有 `direct`/`cmake` build profile，输出比较只有严格相等 |
@@ -281,25 +287,22 @@ npm run format:check → All matched files use Prettier code style
 git diff --check     → clean
 ```
 
-## 7. 仍需所有者决策的事项
+## 7. 所有者决策与处置记录（2026-09-12）
 
-以下条目的处置取决于意图，未擅自改动：
+以下七项取决于意图，已于 2026-09-12 由所有者一次性决定并执行。判定原则是：**只让文档
+描述当前真实存在的结构**，除非有明确证据表明某个字段是目标设计。
 
-1. **`docs/07` §4 的 Activity manifest 示例**：该示例与 `packages/content-schema`
-   冲突（`content.lesson`、`workspace.starter/editable`、`judge.profile/stages`、
-   `evidencePolicy.publicPass`），70 份真实 manifest 与 Schema 一致。若这些字段是
-   目标语法，应补进 Schema 与 Judge（`ARCH-GAP`）；若只是早期残留，应重写示例。
-2. **`docs/02` FR-010**：Tracks/Modules/Concepts 是"声明式实体"（则是 `ARCH-GAP`），
-   还是 `conceptIds` 之上的概念分组（则只是措辞过宽）。
-3. **`docs/06` §2–§4 的事件模型**：本次按"目标模型"保留并加注；若所有者认为应改为
-   与现有 DTO 对齐，需要另开一次内容级改写。
-4. **`docs/06` §7 快照哈希**：本文按现状修正为 JSON 编码；若确实打算改成长度前缀，
-   会使既有 `snap_*` ID 全部失效，需要迁移方案。
-5. **`docs/67` §3 的 "Tracked domain module source files = 66"**：无任何计数口径可复现
-   （实测 `.ts` 42、`.ts`+`.schema.json` 64、全部 tracked 81），需重测并写明口径。
-6. **`docs/README` §8 状态词汇是否约束表格内的阶段状态**：多个文档在表格里使用
-   `Implemented, acceptance pending`、`Optional, not implemented` 等阶段标签。
-7. **`reference/entries/std-vector-size/`**：未被 `catalog.json` 引用、未被 git 跟踪的空目录，
-   需确认是否为草稿。
+| # | 事项 | 决定 | 执行结果 |
+|---:|---|---|---|
+| 1 | `docs/07` §4 的 Activity manifest 示例 | **早期残留**，不是目标语法 | 示例替换为真实 manifest（`cli-data-manager-m1`，内联 C++ 缩短），并经 `packages/content-schema` 的 `validateActivity` 校验通过；正文改为说明「规范形状是 Schema，规范示例是该文件」 |
+| 2 | `docs/02` FR-010 的 Tracks/Modules/Concepts | **概念分组**，不是声明式实体 | FR-010 收窄为「加载 Activities 及其声明的 Projects/Milestones 与被 `conceptIds` 引用的 Concepts」；Tracks/Modules 明确为呈现分组。实测 `curriculum/catalog.json` 只有 `schemaVersion` + `activityManifests`，全仓代码中 `Track` 零命中 |
+| 3 | `docs/06` §2–§4 事件模型 | **保持为目标模型并保留标注** | 不做内容级对齐；K-08/K-09/K-10 的处置保持 |
+| 4 | `docs/06` §7 快照哈希 | **保持 JSON 编码** | 文档已是 "sorted and JSON-encoded"；不改为长度前缀——那会使既有 `snap_*` ID 全部失效且无收益 |
+| 5 | `docs/67` §3 的模块源文件计数 | 重测并写明口径 | 新增 §3.1「Refreshed measurements」，逐项写明过滤口径；原「66」在任何单一规则下都无法复现，已替换 |
+| 6 | `docs/README` §8 状态词汇的作用域 | **只约束文档头部 `Status` 字段** | §8 已写明表格内的阶段标签（`Active`、`Legacy`、`Implemented, acceptance pending` 等）不属于该词汇，历史报告不改写 |
+| 7 | `reference/entries/std-vector-size/` | 空目录，删除 | 已删除（只有空的 `examples/` 子目录，Git 本就看不到） |
+
+同一次收尾还处理了两项由此带出的工作：`docs/07` 的 `judge.profile`/`judge.stages` 随之
+判定为残留（C-02），`docs/06` 的快照哈希保持现状（K-03 只改文档措辞，不改代码）。
 
 本审计由 **DeepSeek Harness Agent** 依据 2026-09-10 实测代码状态编写。

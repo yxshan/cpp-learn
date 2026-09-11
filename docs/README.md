@@ -86,6 +86,7 @@ Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。�
 - [ADR-0005：声明式课程内容](adr/0005-declarative-curriculum-content.md)
 - [ADR-0006：独立声明式 API Reference](adr/0006-separate-declarative-api-reference.md)
 - [ADR-0007：本地 CLI-first Reference 作者流水线](adr/0007-local-reference-authoring-pipeline.md)
+- [ADR-0008：Judge 隔离是部署边界](adr/0008-judge-isolation-boundary.md)
 
 当前审计与建议：
 
@@ -123,7 +124,7 @@ Reference 的研究记录位于 `docs/reference/API_REFERENCE_*_RESEARCH.md`。�
 
 ## 8. 文档维护规则
 
-- 状态使用 `Draft`、`In Review`、`Baseline`、`Accepted`、`Superseded`、`Archived`。
+- 状态使用 `Draft`、`In Review`、`Baseline`、`Accepted`、`Superseded`、`Archived`，该词汇**只约束文档头部的 `Status` 字段**。表格里的阶段标签（如 `Implemented, acceptance pending`、`Optional, not implemented`、`Active`、`Legacy`）属于各文档自己的进度词汇，不在此列，也不必改写成上述六个值。
 - 影响范围或验收的改动同步更新 SRS 与追踪矩阵。
 - 难以撤销的架构变化先新增或更新 ADR。
 - 接口变化同步更新契约、详细设计和契约测试。

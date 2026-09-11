@@ -23,9 +23,9 @@
 | 1 | 安全债务收敛 | 处理依赖公告、Judge 准入和 CI 安全门禁 | 0（已完成，见 §4） |
 | 2 | Reference content policy | 检查、模板和修复共享一个类型化政策 | 0，可与 1 分提交推进 |
 | 3 | Authoring 生命周期深化 | 16 操作兼容门面背后形成清晰内部模块 | 2 |
-| 4 | Reference presentation | CLI 不再依赖 Web app | 0，可与 3 独立 |
+| 4 | Reference presentation | CLI 不再依赖 Web app | 0（已完成） |
 | 5 | A3 真实批次测量 | 证明速度或定位真实瓶颈 | 2，建议 3 后 |
-| 6 | Server/Web 局部性 | 降低大文件的无关认知负担 | 1、4（1 已完成） |
+| 6 | Server/Web 局部性 | 降低大文件的无关认知负担 | 1、4（均已完成） |
 | 7 | 内容持续扩展 | 用稳定快速流水线补齐高价值 API | 1、2、5 |
 
 ## 3. P0：交接基线复验
@@ -166,7 +166,13 @@ npm run check
 
 完整门禁：`npm run check`。涉及预览时再跑 Reference E2E 和 production E2E。
 
-## 7. P4：共享 Reference presentation
+## 7. P4：共享 Reference presentation（已完成）
+
+`packages/reference-presentation` 已承担该接缝：Web 与 CLI 共用同一套块模型、
+heading id 与 HTML 序列化；`apps/cli` 依赖的是 `@cpp-learn/reference-presentation`，
+不再依赖 `@cpp-learn/web`；空的 `packages/ui` 已删除。在线文章与 preview 的等价性由
+`apps/web/src/reference-article.parity.test.tsx` 守护。以下为原始验收描述，保留备查。
+
 
 ### P4-1 定义呈现接缝
 
@@ -199,7 +205,17 @@ npm run check
 
 完成条件：真实批次满足既定 60–90 分钟目标且无质量回退，或产生一份可复现的瓶颈报告。后者也是有效结果，但 A3 保持未验收，直到门槛真正满足或经 ADR/计划修订。
 
-## 9. P6：Server 与 Web 局部性
+## 9. P6：Server 与 Web 局部性（已完成）
+
+- P6-1：`packages/composition/src/server.ts` 只负责安装四个 route group
+  （learning / reference / local-data / jobs），parsing、status mapping 与
+  cancellation/streaming 全部下沉；共享策略在 `transport.ts`。
+- P6-2：`App.tsx` 为 26 行；`dashboard/` 抽出 `useDashboardNavigation`、
+  `useDashboardView`、`useDashboardQueries`、`useBackupRestore` 与各 section 组件，
+  `lesson/` 抽出 `useEditorSession`、`useActivityExecution`。
+
+以下为原始验收描述，保留备查。
+
 
 ### P6-1 Server route groups
 
@@ -219,7 +235,7 @@ npm run check
 
 从课程引用缺口、搜索无结果、高频标准库使用和职业项目需求中选条目。每批五至十个主题相关 Entry，共享来源调查，但不共享未经证明的操作语义。
 
-### 9.2 最低内容质量
+### 10.2 最低内容质量
 
 实质性 type/function/member Entry 尽量覆盖：
 
@@ -235,7 +251,7 @@ npm run check
 
 Header、guide、category 等 Entry 不强塞函数字段。由类型化 policy 决定 required、recommended 和 notApplicable，避免模板完整但内容空洞。
 
-### 9.3 来源与原创
+### 10.3 来源与原创
 
 优先使用 C++ 标准草案、标准提案、实现官方文档和权威规范。cppreference 用于导航、覆盖和交叉核对，不能直接抄写或把其存储格式当项目数据模型。
 
@@ -247,11 +263,13 @@ Header、guide、category 等 Entry 不强塞函数字段。由类型化 policy 
 
 它不是 AI 开发记录页面。模型运行历史由结构化 receipt 和 batch report 提供；Web 只帮助人做风险决策。
 
-## 12. 原型归档任务
+## 12. 原型归档任务（已完成）
 
-这是低风险但非紧急的独立任务：用 `rg` 和生产构建证明根目录 `assets/`、`lessons/`、`exercises/`、`learning-records/` 以及 `reference/compile-run-debug.html` 没有当前运行时引用。
-
-确认后再决定移动到 `docs/archive/legacy-prototype/` 或删除生成二进制。该任务不得与架构重构或内容变更混在一个提交中。
+已用全仓搜索、完整门禁与浏览器 E2E 证明根目录 `assets/`、`lessons/`、`exercises/`、
+`learning-records/` 以及 `reference/compile-run-debug.html` 没有当前运行时引用，随后全部移入
+`docs/archive/legacy-prototype/`，并删除已提交的 arm64 可执行文件
+`exercises/0001-first-program/first_program`（同目录 `.gitignore` 防止再次提交）。
+归档说明见 `docs/archive/legacy-prototype/README.md`，`docs/68` §9 记录了逐项处置。
 
 ## 13. 每次交付的记录模板
 
