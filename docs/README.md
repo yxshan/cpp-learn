@@ -49,6 +49,7 @@
 | [接口契约](05-INTERFACE_CONTRACTS.md) | HTTP、命令、查询与事件 | 修改边界时核对 |
 | [数据设计](06-DATA_DESIGN.md) | 内容、工作区和学习记录 | 修改持久化时核对 |
 | [课程与判题规范](07-CURRICULUM_AND_JUDGE_SPECIFICATION.md) | Activity、Evidence 与 Judge | 课程和判题主规范 |
+| [课程总纲](75-CURRICULUM-MASTER-OUTLINE.md) | 就业门槛的能力分类、时间顺序与平台承载边界 | 内容生产前先核对归类 |
 | [安全与隐私](08-SECURITY_AND_PRIVACY.md) | 本地运行、路径与执行边界 | 安全变更必读 |
 | [测试与质量计划](09-TEST_AND_QUALITY_PLAN.md) | 分层验证和发布门禁 | 测试策略基线 |
 | [开发与运维指南](10-DEVELOPMENT_AND_OPERATIONS_GUIDE.md) | 本地命令和故障处理 | 日常操作入口 |
