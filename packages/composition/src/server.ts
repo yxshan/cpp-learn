@@ -16,6 +16,14 @@ import {
   createJudgeAdmission,
   type JudgeAdmission,
 } from "./admission.ts";
+import {
+  HARDENING_HEADERS,
+  SESSION_COOKIE_NAME,
+  createMutationGuard,
+  createSessionToken,
+  sessionCookie,
+  shouldPublishSessionCookie,
+} from "./transport.ts";
 
 export interface ServerDependencies {
   readonly platform: LearningPlatform;
@@ -27,6 +35,12 @@ export interface ServerDependencies {
    * one gets a private budget, which bounds the Playground but not the platform.
    */
   readonly judgeAdmission?: JudgeAdmission;
+  /**
+   * Session token required by every state-changing request. Generated per
+   * server when absent; supplied explicitly only by tests and embedders that
+   * must know it in advance.
+   */
+  readonly sessionToken?: string;
   readonly logger?: boolean;
   readonly webRoot?: string;
   readonly archive?: {
@@ -48,6 +62,25 @@ export function createServer(
       maxConcurrent: DEFAULT_JUDGE_MAX_CONCURRENT,
       maxQueued: DEFAULT_JUDGE_MAX_QUEUED,
     });
+  const sessionToken = dependencies.sessionToken ?? createSessionToken();
+  const authorizeMutation = createMutationGuard({ sessionToken });
+
+  // One hook owns every response header: the hardening set on all replies, and
+  // the session token on the API and HTML entries, so the application holds the
+  // value before its first mutation.
+  server.addHook("onSend", (request, reply, payload) => {
+    for (const [name, value] of Object.entries(HARDENING_HEADERS)) {
+      void reply.header(name, value);
+    }
+    const cookie = request.headers.cookie ?? "";
+    if (
+      shouldPublishSessionCookie(request.url) &&
+      !cookie.includes(`${SESSION_COOKIE_NAME}=`)
+    ) {
+      void reply.header("set-cookie", sessionCookie(sessionToken));
+    }
+    return Promise.resolve(payload);
+  });
 
   if (dependencies.webRoot) {
     void server.register(fastifyStatic, {
@@ -87,19 +120,25 @@ export function createServer(
   registerLearningRoutes(server, {
     platform: dependencies.platform,
     referenceReadiness,
+    authorizeMutation,
   });
 
-  registerJobRoutes(server, { platform: dependencies.platform });
+  registerJobRoutes(server, {
+    platform: dependencies.platform,
+    authorizeMutation,
+  });
 
   registerLocalDataRoutes(server, {
     platform: dependencies.platform,
     archive: dependencies.archive,
+    authorizeMutation,
   });
 
   registerReferenceRoutes(server, {
     reference: dependencies.reference,
     referencePlayground: dependencies.referencePlayground,
     judgeAdmission,
+    authorizeMutation,
     readyReference,
   });
 

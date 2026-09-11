@@ -2,13 +2,11 @@ import type { FastifyInstance } from "fastify";
 
 import type { LearningPlatform } from "@cpp-learn/contracts";
 
-import {
-  isAllowedMutationOrigin,
-  isExecuteActivityBody,
-} from "../transport.ts";
+import { isExecuteActivityBody, type MutationGuard } from "../transport.ts";
 
 export interface JobRouteContext {
   readonly platform: LearningPlatform;
+  readonly authorizeMutation: MutationGuard;
 }
 
 /**
@@ -22,17 +20,13 @@ export function registerJobRoutes(
   server: FastifyInstance,
   context: JobRouteContext,
 ): void {
-  const { platform } = context;
+  const { platform, authorizeMutation } = context;
 
   server.post<{ Params: { jobId: string }; Body: unknown }>(
     "/api/v1/jobs/:jobId/cancellations",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       if (!isExecuteActivityBody(request.body)) {
         return reply.code(400).send({
           schemaVersion: 1,

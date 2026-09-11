@@ -24,6 +24,8 @@ import {
   type WorkspaceSaveCommandResult,
 } from "@cpp-learn/contracts";
 
+import { SESSION_TOKEN_HEADER, sessionToken } from "./session-token.js";
+
 export type Request = (
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -48,6 +50,19 @@ export async function getBootstrap(
     throw new Error(`Bootstrap request failed with HTTP ${response.status}`);
   }
   return parseBootstrapResult(await response.json());
+}
+
+/**
+ * Headers every state-changing request must carry. The token is read at call
+ * time, after the server has published it with an earlier response.
+ */
+function mutationHeaders(): Record<string, string> {
+  const token = sessionToken();
+  return {
+    accept: "application/json",
+    "content-type": "application/json",
+    ...(token === undefined ? {} : { [SESSION_TOKEN_HEADER]: token }),
+  };
 }
 
 async function requestJson<T>(
@@ -141,10 +156,7 @@ export async function runReferenceExample(
     `/api/v1/reference/entries/${encodeURIComponent(entryId)}/examples/${encodeURIComponent(exampleId)}/runs`,
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify(body),
     },
     request,
@@ -162,10 +174,7 @@ export async function cancelReferenceRun(
     `/api/v1/reference/runs/${encodeURIComponent(runId)}/cancellations`,
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify(body),
     },
     request,
@@ -220,10 +229,7 @@ export async function saveWorkspace(
     `/api/v1/workspaces/${encodeURIComponent(activityId)}`,
     {
       method: "PATCH",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({ schemaVersion: 1, ...input }),
     },
     request,
@@ -245,10 +251,7 @@ export async function executeActivity(
     `/api/v1/activities/${encodeURIComponent(activityId)}/${mode === "run" ? "runs" : "grades"}`,
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({
         schemaVersion: 1,
         commandId,
@@ -273,10 +276,7 @@ export async function revealHint(
     `/api/v1/activities/${encodeURIComponent(activityId)}/hints`,
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({ schemaVersion: 1, ...input }),
     },
     request,
@@ -299,10 +299,7 @@ export async function submitReflection(
     `/api/v1/activities/${encodeURIComponent(activityId)}/reflections`,
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({ schemaVersion: 1, ...input }),
     },
     request,
@@ -339,10 +336,7 @@ export async function cancelJob(
     `/api/v1/jobs/${encodeURIComponent(jobId)}/cancellations`,
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({ schemaVersion: 1, commandId }),
     },
     request,
@@ -367,10 +361,7 @@ export async function exportBackup(
     "/api/v1/exports",
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({ schemaVersion: 1, commandId }),
     },
     request,
@@ -386,10 +377,7 @@ export async function restoreBackup(
     "/api/v1/restores",
     {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
+      headers: mutationHeaders(),
       body: JSON.stringify({
         schemaVersion: 1,
         commandId,

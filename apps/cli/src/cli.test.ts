@@ -492,10 +492,18 @@ describe("[T-CONTRACT-001] Web/CLI Judge equivalence", () => {
         list: async () => attempts,
       },
     });
-    const server = createServer({ platform });
+    const server = createServer({
+      platform,
+      sessionToken: "cli_test_session_token",
+    });
     const webResponse = await server.inject({
       method: "POST",
       url: "/api/v1/activities/source-to-program/grades",
+      headers: {
+        host: "127.0.0.1:4173",
+        origin: "http://127.0.0.1:4173",
+        "x-cpp-learn-token": "cli_test_session_token",
+      },
       payload: { schemaVersion: 1, commandId: "cmd_web_equivalence" },
     });
     const webResult = webResponse.json() as {

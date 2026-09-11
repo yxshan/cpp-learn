@@ -22,6 +22,7 @@ import type {
 export * from "./reference.ts";
 export * from "./judge.ts";
 export * from "./events.ts";
+export * from "./session.ts";
 export const REFERENCE_SCHEMA_VERSION = 2 as const;
 
 export interface CurriculumReadiness {

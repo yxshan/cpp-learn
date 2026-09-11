@@ -11,7 +11,11 @@ export default defineConfig({
     host: "127.0.0.1",
     port: 5173,
     proxy: {
-      "/api": apiUrl,
+      // `changeOrigin: false` keeps the browser's `Host` header, which is what
+      // lets the API server verify that a state-changing request came from the
+      // origin it is serving. Vite's string shorthand would rewrite the header
+      // to the API address and every mutation would be refused.
+      "/api": { target: apiUrl, changeOrigin: false },
     },
   },
   build: {

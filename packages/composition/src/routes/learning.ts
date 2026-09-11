@@ -6,16 +6,17 @@ import type {
 } from "@cpp-learn/contracts";
 
 import {
-  isAllowedMutationOrigin,
   isExecuteActivityBody,
   isSaveWorkspaceBody,
   recordBody,
+  type MutationGuard,
 } from "../transport.ts";
 import { JudgeAdmissionRejected } from "../admission.ts";
 
 export interface LearningRouteContext {
   readonly platform: LearningPlatform;
   readonly referenceReadiness: () => Promise<ReferenceReadiness>;
+  readonly authorizeMutation: MutationGuard;
 }
 
 /**
@@ -30,7 +31,7 @@ export function registerLearningRoutes(
   server: FastifyInstance,
   context: LearningRouteContext,
 ): void {
-  const { platform, referenceReadiness } = context;
+  const { platform, referenceReadiness, authorizeMutation } = context;
 
   server.get("/api/v1/health", async () => ({
     schemaVersion: 1,
@@ -79,12 +80,8 @@ export function registerLearningRoutes(
     Params: { activityId: string };
     Body: unknown;
   }>("/api/v1/workspaces/:activityId", async (request, reply) => {
-    if (!isAllowedMutationOrigin(request.headers.origin)) {
-      return reply.code(403).send({
-        schemaVersion: 1,
-        error: { code: "origin_rejected", message: "Origin is not loopback" },
-      });
-    }
+    const refusal = authorizeMutation(request.headers);
+    if (refusal) return reply.code(403).send(refusal);
     if (!isSaveWorkspaceBody(request.body)) {
       return reply.code(400).send({
         schemaVersion: 1,
@@ -114,15 +111,8 @@ export function registerLearningRoutes(
     server.post<{ Params: { activityId: string }; Body: unknown }>(
       path,
       async (request, reply) => {
-        if (!isAllowedMutationOrigin(request.headers.origin)) {
-          return reply.code(403).send({
-            schemaVersion: 1,
-            error: {
-              code: "origin_rejected",
-              message: "Origin is not loopback",
-            },
-          });
-        }
+        const refusal = authorizeMutation(request.headers);
+        if (refusal) return reply.code(403).send(refusal);
         if (!isExecuteActivityBody(request.body)) {
           return reply.code(400).send({
             schemaVersion: 1,
@@ -170,12 +160,8 @@ export function registerLearningRoutes(
   server.post<{ Params: { activityId: string }; Body: unknown }>(
     "/api/v1/activities/:activityId/hints",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       const body = recordBody(request.body);
       if (
         !body ||
@@ -204,12 +190,8 @@ export function registerLearningRoutes(
   server.post<{ Params: { activityId: string }; Body: unknown }>(
     "/api/v1/activities/:activityId/reflections",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       const body = recordBody(request.body);
       const answers = body?.["answers"];
       if (

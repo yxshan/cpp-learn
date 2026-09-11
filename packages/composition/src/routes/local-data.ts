@@ -8,10 +8,10 @@ import type { LearningPlatform } from "@cpp-learn/contracts";
 
 import {
   MAX_ARCHIVE_REQUEST_BYTES,
-  isAllowedMutationOrigin,
   isExecuteActivityBody,
   isRestoreBody,
   recordBody,
+  type MutationGuard,
 } from "../transport.ts";
 
 export interface LocalDataArchive {
@@ -25,6 +25,7 @@ export interface LocalDataArchive {
 export interface LocalDataRouteContext {
   readonly platform: LearningPlatform;
   readonly archive: LocalDataArchive | undefined;
+  readonly authorizeMutation: MutationGuard;
 }
 
 /**
@@ -37,17 +38,13 @@ export function registerLocalDataRoutes(
   server: FastifyInstance,
   context: LocalDataRouteContext,
 ): void {
-  const { platform, archive } = context;
+  const { platform, archive, authorizeMutation } = context;
 
   server.post<{ Body: unknown }>(
     "/api/v1/teacher-packs",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       const body = recordBody(request.body);
       if (
         !body ||
@@ -79,12 +76,8 @@ export function registerLocalDataRoutes(
   server.post<{ Body: unknown }>(
     "/api/v1/teacher-observations",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       const body = recordBody(request.body);
       if (
         !body ||
@@ -121,15 +114,8 @@ export function registerLocalDataRoutes(
     server.post<{ Body: unknown }>(
       "/api/v1/exports",
       async (request, reply) => {
-        if (!isAllowedMutationOrigin(request.headers.origin)) {
-          return reply.code(403).send({
-            schemaVersion: 1,
-            error: {
-              code: "origin_rejected",
-              message: "Origin is not loopback",
-            },
-          });
-        }
+        const refusal = authorizeMutation(request.headers);
+        if (refusal) return reply.code(403).send(refusal);
         if (!isExecuteActivityBody(request.body)) {
           return reply.code(400).send({
             schemaVersion: 1,
@@ -164,15 +150,8 @@ export function registerLocalDataRoutes(
       "/api/v1/restores",
       { bodyLimit: MAX_ARCHIVE_REQUEST_BYTES },
       async (request, reply) => {
-        if (!isAllowedMutationOrigin(request.headers.origin)) {
-          return reply.code(403).send({
-            schemaVersion: 1,
-            error: {
-              code: "origin_rejected",
-              message: "Origin is not loopback",
-            },
-          });
-        }
+        const refusal = authorizeMutation(request.headers);
+        if (refusal) return reply.code(403).send(refusal);
         if (!isRestoreBody(request.body)) {
           return reply.code(400).send({
             schemaVersion: 1,

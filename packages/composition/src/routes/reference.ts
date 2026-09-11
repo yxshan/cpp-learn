@@ -18,9 +18,9 @@ import {
   MAX_REFERENCE_PLAYGROUND_SOURCE_BYTES,
   REFERENCE_PLAYGROUND_RUN_ID,
   createReferencePlaygroundSnapshot,
-  isAllowedMutationOrigin,
   isReferencePlaygroundCancellationBody,
   isReferencePlaygroundRunBody,
+  type MutationGuard,
 } from "../transport.ts";
 import type { JudgeAdmission } from "../admission.ts";
 
@@ -28,6 +28,7 @@ export interface ReferenceRouteContext {
   readonly reference: ReferenceCatalog | undefined;
   readonly referencePlayground: ReferencePlayground | undefined;
   readonly judgeAdmission: JudgeAdmission;
+  readonly authorizeMutation: MutationGuard;
   readonly readyReference: (
     reply: FastifyReply,
   ) => Promise<ReferenceCatalog | undefined>;
@@ -45,7 +46,12 @@ export function registerReferenceRoutes(
   server: FastifyInstance,
   context: ReferenceRouteContext,
 ): void {
-  const { referencePlayground, judgeAdmission, readyReference } = context;
+  const {
+    referencePlayground,
+    judgeAdmission,
+    authorizeMutation,
+    readyReference,
+  } = context;
   const activeReferencePlaygroundRuns = new Map<string, AbortController>();
 
   server.get("/api/v1/reference", async (_request, reply) => {
@@ -176,12 +182,8 @@ export function registerReferenceRoutes(
   }>(
     "/api/v1/reference/entries/:entryId/examples/:exampleId/runs",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       if (!isReferencePlaygroundRunBody(request.body)) {
         return reply.code(400).send({
           schemaVersion: 1,
@@ -258,12 +260,8 @@ export function registerReferenceRoutes(
   server.post<{ Params: { runId: string }; Body: unknown }>(
     "/api/v1/reference/runs/:runId/cancellations",
     async (request, reply) => {
-      if (!isAllowedMutationOrigin(request.headers.origin)) {
-        return reply.code(403).send({
-          schemaVersion: 1,
-          error: { code: "origin_rejected", message: "Origin is not loopback" },
-        });
-      }
+      const refusal = authorizeMutation(request.headers);
+      if (refusal) return reply.code(403).send(refusal);
       if (
         !REFERENCE_PLAYGROUND_RUN_ID.test(request.params.runId) ||
         !isReferencePlaygroundCancellationBody(request.body)
