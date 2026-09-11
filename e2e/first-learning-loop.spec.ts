@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop", async ({
   page,
+  request,
 }) => {
   const browserErrors: string[] = [];
   page.on("pageerror", (error) => browserErrors.push(error.message));
@@ -23,7 +24,16 @@ test("[T-E2E-001/T-E2E-005] learner completes an explainable C++ learning loop",
     }),
   ).toBeVisible();
   await expect(page.getByText("阶段 06 · 职业项目路径")).toBeVisible();
-  await expect(page.getByText("70 个学习活动")).toBeVisible();
+  // Compare the rendered count with what the catalog actually activates, so
+  // growing the curriculum cannot leave this assertion behind.
+  const activated = (await (
+    await request.get("/api/v1/activities")
+  ).json()) as {
+    activities: readonly unknown[];
+  };
+  await expect(
+    page.getByText(`${activated.activities.length} 个学习活动`),
+  ).toBeVisible();
   const projects = page.locator("#projects");
   await expect(
     projects.getByRole("heading", { name: "工程项目作品集" }),

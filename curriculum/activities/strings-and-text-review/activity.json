@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "strings-and-text-review",
+  "version": 1,
+  "kind": "review",
+  "title": "复习：切分字段",
+  "estimatedMinutes": 15,
+  "conceptIds": ["cpp-strings", "cpp-stream-io"],
+  "prerequisiteIds": ["strings-and-text"],
+  "objectives": ["延迟回忆 std::string 的子串操作与字节语义。"],
+  "victoryConditions": ["按分隔符切出字段并输出其字节数，不假设字段长度。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: basic_string search",
+      "url": "https://eel.is/c++draft/string.find"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: basic_string substr",
+      "url": "https://eel.is/c++draft/string.substr"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: std::basic_string::substr",
+      "url": "https://en.cppreference.com/w/cpp/string/basic_string/substr"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/strings-and-text-review/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n\nint main()\n{\n  std::string line;\n  std::getline(std::cin, line);\n  // TODO: split on ',' and print the score field and its byte count\n}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "42\n2\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "two byte score",
+        "stdin": "alice,42\n",
+        "expectedStdout": "42\n2\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 7
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "find-the-separator",
+        "title": "先定位分隔符",
+        "kind": "nudge",
+        "content": "line.find(',') 返回下标；找不到时返回 npos，不要拿它直接当长度用。"
+      },
+      {
+        "id": "substr-from-mark",
+        "title": "从分隔符之后取子串",
+        "kind": "concept",
+        "content": "line.substr(mark + 1) 取得分隔符之后的全部内容；不传第二个参数就是到末尾。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "const auto mark=line.find(','); std::string score=line.substr(mark+1); std::cout<<score<<'\\n'<<score.size()<<'\\n';"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "no-fixed-offset",
+        "prompt": "为什么用固定的偏移量取字段在真实输入上会出错？",
+        "required": true
+      }
+    ],
+    "reviewIds": [],
+    "reviewOf": "strings-and-text",
+    "teacherRubric": {
+      "id": "no-fixed-offset-rubric",
+      "prompt": "回答应指出字段长度可变，固定偏移只对特定输入成立。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n\nint main()\n{\n  std::string line;\n  std::getline(std::cin, line);\n\n  const auto mark = line.find(',');\n  std::string score = line.substr(mark + 1);\n\n  std::cout << score << '\\n' << score.size() << '\\n';\n}\n"
+    },
+    "mutations": [
+      {
+        "id": "fixed-offset-assumes-two-byte-score",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\n\nint main()\n{\n  std::string line;\n  std::getline(std::cin, line);\n\n  std::string score = line.substr(line.size() - 2);\n\n  std::cout << score << '\\n' << score.size() << '\\n';\n}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [],
+    "printFallback": "用输入 b,7 手动追踪固定偏移方案会取到哪一段。"
+  }
+}

@@ -718,7 +718,9 @@ describe("[T-CONTENT-008] Stage 6 career-track release", () => {
     });
 
     const activities = await curriculum.listActivities();
-    expect(activities).toHaveLength(70);
+    // The exact count moves with each content batch; it is asserted so an
+    // accidental catalog shrink cannot pass unnoticed.
+    expect(activities).toHaveLength(72);
     const milestones = activities.filter(
       (activity) => activity.kind === "project-milestone",
     );

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "id": "strings-and-text",
+  "version": 1,
+  "kind": "lesson",
+  "title": "字符串与文本",
+  "estimatedMinutes": 25,
+  "conceptIds": ["cpp-strings", "cpp-stream-io"],
+  "prerequisiteIds": ["values-and-types"],
+  "objectives": ["把 std::string 当作可变的值类型使用，并区分字节数与字符数。"],
+  "victoryConditions": ["读取含空格的一行并输出其字节数与全大写副本。"],
+  "sources": [
+    {
+      "kind": "primary",
+      "title": "C++ working draft: class template basic_string",
+      "url": "https://eel.is/c++draft/basic.string"
+    },
+    {
+      "kind": "primary",
+      "title": "C++ working draft: basic_string general requirements",
+      "url": "https://eel.is/c++draft/string.require"
+    },
+    {
+      "kind": "reference",
+      "title": "cppreference: std::basic_string",
+      "url": "https://en.cppreference.com/w/cpp/string/basic_string"
+    }
+  ],
+  "content": {
+    "format": "markdown",
+    "path": "activities/strings-and-text/lesson.md"
+  },
+  "workspace": {
+    "editablePaths": ["main.cpp"],
+    "starterFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n\nint main()\n{\n  std::string line;\n  std::getline(std::cin, line);\n  // TODO: print the byte count, then an uppercase copy of the line\n}\n"
+    }
+  },
+  "judge": {
+    "version": 1,
+    "expectedStdout": "3\nCPP\n",
+    "timeoutMs": 2000,
+    "publicTests": [
+      {
+        "name": "already uppercase",
+        "stdin": "CPP\n",
+        "expectedStdout": "3\nCPP\n"
+      }
+    ]
+  },
+  "evidencePolicy": {
+    "automatedPass": true,
+    "demonstratedRequiresReflection": true,
+    "demonstratedRequiresIndependent": true,
+    "reviewAfterDays": 3
+  },
+  "learning": {
+    "hints": [
+      {
+        "id": "read-whole-line",
+        "title": "读整行而不是一个词",
+        "kind": "nudge",
+        "content": "operator>> 会在空白处停下；要读含空格的一行用 std::getline(std::cin, line)。"
+      },
+      {
+        "id": "copy-then-modify",
+        "title": "先复制再修改",
+        "kind": "concept",
+        "content": "std::string 是值类型：std::string upper = line; 得到独立副本，改 upper 不影响 line。逐字符用范围 for 按引用遍历即可就地改写。"
+      },
+      {
+        "id": "complete-solution",
+        "title": "查看完整答案",
+        "kind": "solution",
+        "content": "#include <iostream>\n#include <string>\nint main(){ std::string line; std::getline(std::cin,line); std::string upper=line; for(char& c:upper){ if(c>='a'&&c<='z') c=static_cast<char>(c-'a'+'A'); } std::cout<<line.size()<<'\\n'<<upper<<'\\n'; }"
+      }
+    ],
+    "reflections": [
+      {
+        "id": "byte-versus-character",
+        "prompt": "std::string::size() 与 JavaScript 的 String.prototype.length 分别在数什么？各自在什么输入下会给出反直觉的结果？",
+        "required": true
+      }
+    ],
+    "reviewIds": ["strings-and-text-review"],
+    "teacherRubric": {
+      "id": "byte-count-rubric",
+      "prompt": "回答应指出 C++ 数的是字节、JavaScript 数的是 UTF-16 码元，并各举一个非 ASCII 反例。"
+    }
+  },
+  "quality": {
+    "referenceFiles": {
+      "main.cpp": "#include <iostream>\n#include <string>\n\nint main()\n{\n  std::string line;\n  std::getline(std::cin, line);\n\n  std::string upper = line;\n  for (char& ch : upper) {\n    if (ch >= 'a' && ch <= 'z') {\n      ch = static_cast<char>(ch - 'a' + 'A');\n    }\n  }\n\n  std::cout << line.size() << '\\n' << upper << '\\n';\n}\n"
+    },
+    "mutations": [
+      {
+        "id": "prints-original-instead-of-uppercase",
+        "files": {
+          "main.cpp": "#include <iostream>\n#include <string>\n\nint main()\n{\n  std::string line;\n  std::getline(std::cin, line);\n\n  std::string upper = line;\n  for (char& ch : upper) {\n    if (ch >= 'a' && ch <= 'z') {\n      ch = static_cast<char>(ch - 'a' + 'A');\n    }\n  }\n\n  std::cout << line.size() << '\\n' << line << '\\n';\n}\n"
+        },
+        "expectedVerdict": "private_failure"
+      }
+    ],
+    "interactiveBlocks": [
+      {
+        "id": "string-mutability",
+        "type": "code-compare",
+        "fallback": "JavaScript: const s = \"cpp\"; s[0] = \"C\" (silently ignored) -> C++: std::string s = \"cpp\"; s[0] = 'C' (the object is modified)"
+      }
+    ],
+    "printFallback": "写出去掉大小写转换那一行会发生什么，并说明为什么公开用例仍然通过。"
+  }
+}

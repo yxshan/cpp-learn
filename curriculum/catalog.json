@@ -5,6 +5,8 @@
     "activities/source-to-program-review/activity.json",
     "activities/values-and-types/activity.json",
     "activities/values-and-types-review/activity.json",
+    "activities/strings-and-text/activity.json",
+    "activities/strings-and-text-review/activity.json",
     "activities/functions-and-scope/activity.json",
     "activities/functions-and-scope-review/activity.json",
     "activities/references-and-const/activity.json",

@@ -544,6 +544,22 @@
         "expectedStdout": "total=200 completed=2\n",
         "failureCategory": "死锁、原子顺序与内存模型 must preserve the hidden boundary without exposing its input"
       }
+    ],
+    "strings-and-text": [
+      {
+        "name": "mixed case line",
+        "stdin": "cpp learn\n",
+        "expectedStdout": "9\nCPP LEARN\n",
+        "failureCategory": "every byte of the line must be counted and uppercased"
+      }
+    ],
+    "strings-and-text-review": [
+      {
+        "name": "single byte score",
+        "stdin": "b,7\n",
+        "expectedStdout": "7\n1\n",
+        "failureCategory": "the field boundary must come from the separator, not a fixed offset"
+      }
     ]
   }
 }
