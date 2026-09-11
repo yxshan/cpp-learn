@@ -8,6 +8,7 @@ import {
   readdir,
   rename,
   rm,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import { dirname, isAbsolute, join } from "node:path";
@@ -76,6 +77,51 @@ export interface LocalDataArchiveDependencies {
   readonly dataRoot: string;
   readonly workspaceRoot: string;
   readonly clock?: () => Date;
+  /** Overrides the production `ARCHIVE_LIMITS`; used by tests and embedders. */
+  readonly limits?: Partial<ArchiveLimits>;
+}
+
+/**
+ * Bounds every archive this module produces or accepts.
+ *
+ * Export and restore share one policy so an archive that export writes can
+ * always be restored, and a hostile archive fails before either root is
+ * touched instead of after the process has allocated everything. The numbers
+ * are generous for a single learner — thousands of workspace files, not
+ * millions — and they exist to make a resource-exhaustion attempt a clean
+ * error rather than an out-of-memory crash.
+ */
+export interface ArchiveLimits {
+  /** Encoded archive document accepted from a file or request body. */
+  readonly inputBytes: number;
+  readonly files: number;
+  /** Decoded bytes for one entry. */
+  readonly fileBytes: number;
+  /** Decoded bytes across all entries. */
+  readonly totalBytes: number;
+  readonly eventLines: number;
+  readonly pathLength: number;
+}
+
+export const ARCHIVE_LIMITS: ArchiveLimits = Object.freeze({
+  inputBytes: 64 * 1024 * 1024,
+  files: 5_000,
+  fileBytes: 16 * 1024 * 1024,
+  totalBytes: 128 * 1024 * 1024,
+  eventLines: 200_000,
+  pathLength: 512,
+});
+
+/**
+ * Decoded size of a base64 payload without allocating the decoded buffer.
+ *
+ * The budget check must run before `Buffer.from(..., "base64")`, otherwise the
+ * allocation it is meant to prevent has already happened.
+ */
+export function decodedBase64Bytes(value: string): number {
+  if (value === "") return 0;
+  const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
+  return Math.floor((value.length * 3) / 4) - padding;
 }
 
 interface ArchiveFile {
@@ -735,7 +781,10 @@ async function collectArchiveFiles(
   return collected;
 }
 
-function parseArchive(value: unknown): ArchiveDocument {
+function parseArchive(
+  value: unknown,
+  limits: ArchiveLimits = ARCHIVE_LIMITS,
+): ArchiveDocument {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -754,7 +803,11 @@ function parseArchive(value: unknown): ArchiveDocument {
     throw new Error("Invalid local data archive");
   }
   const files = value.files as unknown[];
+  if (files.length > limits.files) {
+    throw new Error(`Archive exceeds the ${limits.files}-file budget`);
+  }
   const uniquePaths = new Set<string>();
+  let totalDecodedBytes = 0;
   for (const candidate of files) {
     if (
       typeof candidate !== "object" ||
@@ -774,6 +827,21 @@ function parseArchive(value: unknown): ArchiveDocument {
     const key = `${candidate.area}:${candidate.path}`;
     if (uniquePaths.has(key)) throw new Error("Duplicate archive path");
     uniquePaths.add(key);
+    if (candidate.path.length > limits.pathLength) {
+      throw new Error(
+        `Archive path exceeds the ${limits.pathLength}-character budget: ${key}`,
+      );
+    }
+    const decodedBytes = decodedBase64Bytes(candidate.content);
+    if (decodedBytes > limits.fileBytes) {
+      throw new Error(`Archive entry exceeds the per-file budget: ${key}`);
+    }
+    totalDecodedBytes += decodedBytes;
+    if (totalDecodedBytes > limits.totalBytes) {
+      throw new Error(
+        `Archive exceeds the ${limits.totalBytes}-byte decoded budget`,
+      );
+    }
     const bytes = Buffer.from(candidate.content, "base64");
     const actual = createHash("sha256").update(bytes).digest("hex");
     if (actual !== candidate.checksum) {
@@ -784,6 +852,11 @@ function parseArchive(value: unknown): ArchiveDocument {
         .toString("utf8")
         .split(/\r?\n/)
         .filter((line) => line.length > 0);
+      if (eventLines.length > limits.eventLines) {
+        throw new Error(
+          `Archive exceeds the ${limits.eventLines}-event budget`,
+        );
+      }
       eventLines.forEach((line, index) => parseStoredEvents(line, index + 1));
     }
   }
@@ -856,6 +929,7 @@ export function createLocalDataArchive(
   dependencies: LocalDataArchiveDependencies,
 ): LocalDataArchive {
   const clock = dependencies.clock ?? (() => new Date());
+  const limits: ArchiveLimits = { ...ARCHIVE_LIMITS, ...dependencies.limits };
   return {
     async exportTo(outputPath) {
       const [dataFiles, workspaceFiles] = await Promise.all([
@@ -870,10 +944,25 @@ export function createLocalDataArchive(
           () => true,
         ),
       ]);
+      const allFiles = [...dataFiles, ...workspaceFiles];
+      // An export that restore would refuse is worse than a failed export, so
+      // the same policy bounds both directions.
+      if (allFiles.length > limits.files) {
+        throw new Error(`Export exceeds the ${limits.files}-file budget`);
+      }
+      const totalDecodedBytes = allFiles.reduce(
+        (total, file) => total + decodedBase64Bytes(file.content),
+        0,
+      );
+      if (totalDecodedBytes > limits.totalBytes) {
+        throw new Error(
+          `Export exceeds the ${limits.totalBytes}-byte decoded budget`,
+        );
+      }
       const manifest: ArchiveManifest = {
         schemaVersion: SCHEMA_VERSION,
         createdAt: clock().toISOString(),
-        files: [...dataFiles, ...workspaceFiles],
+        files: allFiles,
         configuration: {},
       };
       const document: ArchiveDocument = {
@@ -896,8 +985,18 @@ export function createLocalDataArchive(
       };
     },
     async restoreFrom(inputPath) {
+      // Bound the encoded input before reading it, so an oversized file cannot
+      // be pulled into memory at all. The decoded budgets in `parseArchive`
+      // remain the backstop against a small file that expands enormously.
+      const inputSize = (await stat(inputPath)).size;
+      if (inputSize > limits.inputBytes) {
+        throw new Error(
+          `Archive input exceeds the ${limits.inputBytes}-byte budget`,
+        );
+      }
       const document = parseArchive(
         JSON.parse(await readFile(inputPath, "utf8")) as unknown,
+        limits,
       );
       const roots = {
         data: dependencies.dataRoot,

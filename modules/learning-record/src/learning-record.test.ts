@@ -687,3 +687,208 @@ describe("[T-DATA-001] explicit local backup and restore", () => {
     );
   });
 });
+
+describe("[SEC-F06] archive resource budgets", () => {
+  const createdAt = "2026-08-23T08:00:00.000Z";
+
+  function entry(
+    area: "data" | "workspaces",
+    path: string,
+    content: string,
+    checksumOverride?: string,
+  ) {
+    return {
+      area,
+      path,
+      content: Buffer.from(content, "utf8").toString("base64"),
+      checksum:
+        checksumOverride ??
+        createHash("sha256").update(Buffer.from(content, "utf8")).digest("hex"),
+    };
+  }
+
+  async function writeArchive(
+    outputPath: string,
+    files: readonly unknown[],
+  ): Promise<void> {
+    const manifest = {
+      schemaVersion: 1 as const,
+      createdAt,
+      files,
+      configuration: {},
+    };
+    await writeFile(
+      outputPath,
+      JSON.stringify({
+        ...manifest,
+        manifestChecksum: createHash("sha256")
+          .update(JSON.stringify(manifest))
+          .digest("hex"),
+      }),
+      "utf8",
+    );
+  }
+
+  async function createRoots() {
+    const root = await mkdtemp(join(tmpdir(), "cpp-learn-budget-"));
+    temporaryRoots.push(root);
+    const dataRoot = join(root, "data");
+    const workspaceRoot = join(root, "workspaces");
+    await mkdir(dataRoot, { recursive: true });
+    await mkdir(workspaceRoot, { recursive: true });
+    return { root, dataRoot, workspaceRoot, outputPath: join(root, "b.json") };
+  }
+
+  it("refuses an archive with more files than the budget", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    await writeArchive(outputPath, [
+      entry("data", "events.jsonl", ""),
+      entry("data", "a.txt", "a"),
+      entry("data", "b.txt", "b"),
+    ]);
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { files: 2 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow(
+      "Archive exceeds the 2-file budget",
+    );
+  });
+
+  it("refuses an oversized entry before decoding it", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    // A deliberately wrong checksum proves the size budget runs first: if the
+    // entry were decoded for its checksum, the failure would name the checksum.
+    await writeArchive(outputPath, [
+      entry("data", "events.jsonl", ""),
+      {
+        area: "data",
+        path: "big.bin",
+        content: "A".repeat(64),
+        checksum: "not-the-checksum",
+      },
+    ]);
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { fileBytes: 8 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow(
+      "Archive entry exceeds the per-file budget: data:big.bin",
+    );
+  });
+
+  it("refuses an archive whose decoded total exceeds the budget", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    // `events.jsonl` stays empty so the total budget, not event parsing, is the
+    // first thing to fail.
+    await writeArchive(outputPath, [
+      entry("data", "events.jsonl", ""),
+      entry("data", "first.txt", "12345678"),
+      entry("data", "second.txt", "12345678"),
+    ]);
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { totalBytes: 10 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow(
+      "Archive exceeds the 10-byte decoded budget",
+    );
+  });
+
+  it("refuses more events than the budget", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    const lines = ["", ""].map((_, index) => index).join("\n");
+    await writeArchive(outputPath, [entry("data", "events.jsonl", `${lines}`)]);
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { eventLines: 1 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow(
+      "Archive exceeds the 1-event budget",
+    );
+  });
+
+  it("refuses a path longer than the budget", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    await writeArchive(outputPath, [
+      entry("data", "events.jsonl", ""),
+      entry("data", "x".repeat(40), "x"),
+    ]);
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { pathLength: 16 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow(
+      "Archive path exceeds the 16-character budget",
+    );
+  });
+
+  it("refuses an oversized input file before reading it", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    await writeArchive(outputPath, [entry("data", "events.jsonl", "")]);
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { inputBytes: 16 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow(
+      "Archive input exceeds the 16-byte budget",
+    );
+  });
+
+  it("leaves both roots untouched and no staging behind after a refusal", async () => {
+    const { root, dataRoot, workspaceRoot, outputPath } = await createRoots();
+    await writeArchive(outputPath, [
+      entry("data", "events.jsonl", ""),
+      entry("data", "extra.txt", "payload"),
+    ]);
+    await writeFile(join(dataRoot, "events.jsonl"), "preserved\n", "utf8");
+    await writeFile(join(workspaceRoot, "main.cpp"), "preserved\n", "utf8");
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { fileBytes: 4 },
+    });
+
+    await expect(archive.restoreFrom(outputPath)).rejects.toThrow("budget");
+    await expect(
+      readFile(join(dataRoot, "events.jsonl"), "utf8"),
+    ).resolves.toBe("preserved\n");
+    await expect(
+      readFile(join(workspaceRoot, "main.cpp"), "utf8"),
+    ).resolves.toBe("preserved\n");
+    expect(await readdir(root)).not.toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^\.cpp-learn-(?:data|workspaces)-restore-/),
+      ]),
+    );
+  });
+
+  it("refuses to export more files than the budget", async () => {
+    const { dataRoot, workspaceRoot, outputPath } = await createRoots();
+    const record = createJsonlLearningRecord({ dataRoot });
+    await record.initialize();
+    await writeFile(join(workspaceRoot, "one.cpp"), "one\n", "utf8");
+    await writeFile(join(workspaceRoot, "two.cpp"), "two\n", "utf8");
+    const archive = createLocalDataArchive({
+      dataRoot,
+      workspaceRoot,
+      limits: { files: 1 },
+    });
+
+    await expect(archive.exportTo(outputPath)).rejects.toThrow(
+      "Export exceeds the 1-file budget",
+    );
+  });
+});

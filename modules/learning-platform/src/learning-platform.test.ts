@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { AttemptCompletedEvent, JudgeReport } from "@cpp-learn/contracts";
 
-import { createLearningPlatform } from "./index.js";
+import { createLearningPlatform, evictBeyondBudget } from "./index.js";
 
 const unusedJudge = {
   execute: async (): Promise<never> => {
@@ -394,5 +394,203 @@ describe("[T-JUDGE-004] running job cancellation", () => {
       attempts: [expect.objectContaining({ verdict: "cancelled" })],
       conceptStates: {},
     });
+  });
+});
+
+describe("[SEC-F07] bounded in-process retention", () => {
+  it("evicts the least recently inserted entry and protects retained ones", () => {
+    const map = new Map<string, number>([
+      ["oldest", 1],
+      ["middle", 2],
+      ["newest", 3],
+    ]);
+
+    evictBeyondBudget(map, 2);
+    expect([...map.keys()]).toEqual(["middle", "newest"]);
+
+    const protectedMap = new Map<string, number>([
+      ["keep", 1],
+      ["drop", 2],
+      ["newest", 3],
+    ]);
+    evictBeyondBudget(protectedMap, 2, (key) => key === "keep");
+    expect([...protectedMap.keys()]).toEqual(["keep", "newest"]);
+  });
+
+  it("leaves a map that already fits its budget alone", () => {
+    const map = new Map([["only", 1]]);
+    evictBeyondBudget(map, 5);
+    expect([...map.keys()]).toEqual(["only"]);
+  });
+
+  function createRetentionPlatform(retention: {
+    readonly commandReceipts?: number;
+    readonly jobEventStreams?: number;
+  }) {
+    const events: AttemptCompletedEvent[] = [];
+    const executed: string[] = [];
+    const platform = createLearningPlatform({
+      clock: () => new Date("2026-08-23T08:00:00.000Z"),
+      retention,
+      probes: {
+        curriculum: async () => ({ ready: true, activityCount: 1 }),
+        toolchain: async () => ({ ready: true, compiler: "clang" }),
+        record: async () => ({ ready: true }),
+      },
+      curriculum: {
+        getActivity: async () => undefined,
+        getJudge: async () => undefined,
+      },
+      workspace: {
+        open: async (activityId) => ({ activityId, revision: 1, files: {} }),
+        save: async () => ({ ok: true, revision: 2 }),
+        ...unusedSnapshot,
+      },
+      judge: unusedJudge,
+      record: {
+        append: async (event) => {
+          events.push(event);
+        },
+        list: async () => events,
+      },
+    });
+    return { platform, executed, events };
+  }
+
+  it("replays a receipt while it is retained", async () => {
+    const { platform } = createRetentionPlatform({});
+    const first = await platform.dispatch({
+      type: "workspace.save",
+      commandId: "cmd_replay",
+      activityId: "first-program",
+      baseRevision: 1,
+      changes: [{ path: "main.cpp", content: "int main() {}\n" }],
+    });
+    const second = await platform.dispatch({
+      type: "workspace.save",
+      commandId: "cmd_replay",
+      activityId: "first-program",
+      baseRevision: 1,
+      changes: [{ path: "main.cpp", content: "int main() {}\n" }],
+    });
+
+    // A replay returns the identical receipt rather than a fresh execution.
+    expect(second).toEqual(first);
+  });
+
+  it("re-executes a command whose receipt was evicted", async () => {
+    const { platform } = createRetentionPlatform({ commandReceipts: 1 });
+    const command = (commandId: string) =>
+      ({
+        type: "workspace.save",
+        commandId,
+        activityId: "first-program",
+        baseRevision: 1,
+        changes: [{ path: "main.cpp", content: "int main() {}\n" }],
+      }) as const;
+
+    const first = await platform.dispatch(command("cmd_oldest"));
+    await platform.dispatch(command("cmd_second"));
+    const replayed = await platform.dispatch(command("cmd_oldest"));
+
+    // The receipt is gone, so the command runs again and produces a new result
+    // object with the same shape; the durable record is what supplies
+    // idempotency for Run/Grade.
+    expect(replayed).toEqual(first);
+    expect(replayed).not.toBe(first);
+  });
+
+  it("keeps the event tail only for the configured number of jobs", async () => {
+    const events: AttemptCompletedEvent[] = [];
+    const reportFor = (mode: "run" | "grade", jobId: string): JudgeReport => ({
+      schemaVersion: 1 as const,
+      reportId: `report_${jobId}`,
+      jobId,
+      mode,
+      activity: { id: "first-program", version: 1, judgeVersion: 1 },
+      source: { snapshotId: "snap_source_1", digest: "abc123" },
+      toolchain: { compiler: "clang", standard: "c++20" },
+      verdict: "automated_pass" as const,
+      stages: [
+        { kind: "compile" as const, outcome: "pass" as const, durationMs: 10 },
+      ],
+      startedAt: "2026-08-23T08:00:00.000Z",
+      completedAt: "2026-08-23T08:00:00.012Z",
+    });
+    const platform = createLearningPlatform({
+      clock: () => new Date("2026-08-23T08:00:00.000Z"),
+      retention: { jobEventStreams: 1 },
+      probes: {
+        curriculum: async () => ({ ready: true, activityCount: 1 }),
+        toolchain: async () => ({ ready: true, compiler: "clang" }),
+        record: async () => ({ ready: true }),
+      },
+      curriculum: {
+        getActivity: async () => ({
+          id: "first-program",
+          version: 1,
+          kind: "exercise",
+          title: "First program",
+          estimatedMinutes: 20,
+          conceptIds: ["compile-link-run"],
+          markdown: "# First program\n",
+          workspace: { editablePaths: ["main.cpp"] },
+        }),
+        getJudge: async () => ({
+          activityId: "first-program",
+          activityVersion: 1,
+          judgeVersion: 1,
+          expectedStdout: "",
+          timeoutMs: 2_000,
+        }),
+      },
+      workspace: {
+        open: async (activityId) => ({ activityId, revision: 1, files: {} }),
+        save: async () => ({ ok: true, revision: 2 }),
+        snapshot: async () => ({
+          id: "snap_source_1",
+          activityId: "first-program",
+          digest: "abc123",
+        }),
+        readSnapshot: async () => ({
+          id: "snap_source_1",
+          activityId: "first-program",
+          digest: "abc123",
+          files: { "main.cpp": "int main() {}\n" },
+        }),
+      },
+      judge: { execute: async ({ mode, jobId }) => reportFor(mode, jobId) },
+      record: {
+        append: async (event) => {
+          events.push(event);
+        },
+        list: async () => events,
+      },
+    });
+    const streamOf = async (jobId: string) => {
+      const seen: string[] = [];
+      for await (const event of platform.events(jobId)) seen.push(event.type);
+      return seen;
+    };
+    const grade = (commandId: string) =>
+      platform.dispatch({
+        type: "activity.grade",
+        commandId,
+        activityId: "first-program",
+      });
+
+    await grade("cmd_job_1");
+    await grade("cmd_job_2");
+
+    await expect(streamOf("job_cmd_job_1")).resolves.toEqual([]);
+    await expect(streamOf("job_cmd_job_2")).resolves.toEqual([
+      "judge.queued",
+      "judge.report.ready",
+    ]);
+    // The evicted job is still fully answerable, because its report lives in
+    // the Learning Record rather than in the in-process cache.
+    await expect(
+      platform.query({ type: "job.get", jobId: "job_cmd_job_1" }),
+    ).resolves.toMatchObject({ report: { jobId: "job_cmd_job_1" } });
   });
 });

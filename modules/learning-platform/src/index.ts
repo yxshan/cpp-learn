@@ -55,8 +55,52 @@ export interface LearningPlatformProbes {
   record(): Promise<RecordReadiness>;
 }
 
+/**
+ * How long in-process state stays available.
+ *
+ * `commandReceipts` and `retainedJobEvents` are caches, not records: durable
+ * idempotency comes from the Learning Record and durable reports come from
+ * `record.list()`. Bounding them keeps a long-running process from growing
+ * without limit while a learner keeps issuing commands.
+ */
+export interface RetentionPolicy {
+  /** Completed command receipts kept for idempotency replay, least recently used first out. */
+  readonly commandReceipts: number;
+  /** Jobs whose event tail stays replayable to a late SSE subscriber. */
+  readonly jobEventStreams: number;
+  /** Events retained per job; only the newest tail is kept. */
+  readonly eventsPerJob: number;
+}
+
+export const DEFAULT_RETENTION: RetentionPolicy = Object.freeze({
+  commandReceipts: 256,
+  jobEventStreams: 64,
+  eventsPerJob: 32,
+});
+
+/**
+ * Evict least-recently-inserted entries until the map fits its budget.
+ *
+ * `retain` protects an entry that must survive eviction, so a burst of new
+ * commands cannot hide work that is still running.
+ */
+export function evictBeyondBudget<K, V>(
+  map: Map<K, V>,
+  limit: number,
+  retain: (key: K) => boolean = () => false,
+): void {
+  if (limit < 1) return;
+  for (const key of [...map.keys()]) {
+    if (map.size <= limit) return;
+    if (retain(key)) continue;
+    map.delete(key);
+  }
+}
+
 export interface LearningPlatformDependencies {
   readonly clock: () => Date;
+  /** Overrides `DEFAULT_RETENTION`; used by tests and long-running embedders. */
+  readonly retention?: Partial<RetentionPolicy>;
   readonly probes: LearningPlatformProbes;
   readonly curriculum: {
     getActivity(activityId: string): Promise<ActivityDetail | undefined>;
@@ -165,6 +209,29 @@ export function createLearningPlatform(
   >();
   const retainedJobEvents = new Map<string, readonly PlatformEvent[]>();
   const activeJobs = new Map<string, AbortController>();
+  const retention: RetentionPolicy = {
+    ...DEFAULT_RETENTION,
+    ...dependencies.retention,
+  };
+
+  /**
+   * A job that is still running keeps its event tail: its cancellation
+   * controller lives in `activeJobs`, and a late SSE subscriber must still be
+   * able to replay what happened. Only settled, older jobs are evicted.
+   */
+  const retainRunningJob = (jobId: string): boolean => activeJobs.has(jobId);
+
+  const retainJobEvents = (
+    jobId: string,
+    events: readonly PlatformEvent[],
+  ): void => {
+    retainedJobEvents.set(jobId, events.slice(-retention.eventsPerJob));
+    evictBeyondBudget(
+      retainedJobEvents,
+      retention.jobEventStreams,
+      retainRunningJob,
+    );
+  };
 
   const learningEvents = async (): Promise<readonly LearningRecordEvent[]> =>
     dependencies.record.events
@@ -468,6 +535,10 @@ export function createLearningPlatform(
         if (existing.fingerprint !== fingerprint) {
           throw new Error("Command identifier reused with a different payload");
         }
+        // Re-insert to refresh recency: Map iteration order is insertion order,
+        // which makes eviction least-recently-used rather than merely oldest.
+        commandReceipts.delete(command.commandId);
+        commandReceipts.set(command.commandId, existing);
         return existing.result as Promise<CommandResultFor<C>>;
       }
 
@@ -980,7 +1051,7 @@ export function createLearningPlatform(
             const jobId = `job_${command.commandId}`;
             const controller = new AbortController();
             activeJobs.set(jobId, controller);
-            retainedJobEvents.set(jobId, [
+            retainJobEvents(jobId, [
               {
                 schemaVersion: SCHEMA_VERSION,
                 jobId,
@@ -1049,7 +1120,7 @@ export function createLearningPlatform(
                   )
                 : [];
             await appendLearningEvents([event, ...derivedEvents]);
-            retainedJobEvents.set(jobId, [
+            retainJobEvents(jobId, [
               {
                 schemaVersion: SCHEMA_VERSION,
                 jobId,
@@ -1087,6 +1158,7 @@ export function createLearningPlatform(
         fingerprint,
         result: execution,
       });
+      evictBeyondBudget(commandReceipts, retention.commandReceipts);
       return execution as Promise<CommandResultFor<C>>;
     },
     async query<Q extends LearningQuery>(query: Q): Promise<QueryResultFor<Q>> {
