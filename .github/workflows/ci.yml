@@ -15,8 +15,10 @@ jobs:
     env:
       HOMEBREW_NO_AUTO_UPDATE: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Actions are pinned to commit SHAs, never to movable tags. Dependabot
+      # proposes upgrades so the pin stays current and reviewable.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -25,6 +27,29 @@ jobs:
       - name: Select Reference compiler
         run: echo "CPP_LEARN_REFERENCE_COMPILER=$(brew --prefix llvm)/bin/clang++" >> "$GITHUB_ENV"
       - name: Report Reference compiler
-        run: '"$CPP_LEARN_REFERENCE_COMPILER" --version'
+        run: |
+          "$CPP_LEARN_REFERENCE_COMPILER" --version
       - run: npm ci
       - run: npm run check
+
+  # Kept separate from the quality job so a dependency advisory, an expired
+  # exemption, or a secret finding reports its own failure instead of hiding
+  # inside a content or formatting failure.
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The secret scan walks every revision, not just the merge commit.
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Prove the gate can still fail
+        run: npm run test:security
+      - name: Production advisories, secrets, and supply-chain receipts
+        run: npm run check:security

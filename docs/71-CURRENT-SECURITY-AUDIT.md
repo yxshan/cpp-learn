@@ -8,6 +8,7 @@
 | Owner | Project Maintainer |
 | Prepared by | GPT-5.6 Sol |
 | Audit date | 2026-09-09 |
+| Remediation updated | 2026-09-11 |
 | Fixed point | `8f99f7e8f23d5732b88dccb2df07c9fd1a953093` |
 
 ## 1. 结论
@@ -22,9 +23,9 @@ SQL 拼接、Shell 字符串执行或 Reference 原始 HTML 注入。服务配�
 | ID | 严重度 | 结论 | 当前状态 |
 |---|---|---|---|
 | SEC-F01 | High | Native Judge 可访问宿主机文件、网络和进程资源 | 已知且文档化，尚无强隔离 |
-| SEC-F02 | Medium | Activity Run/Grade 没有全局并发准入和 CPU/内存上限 | 未修复 |
-| SEC-F03 | Medium | Monaco 的生产依赖链包含受公告影响的 DOMPurify 3.4.8 | 未修复 |
-| SEC-F04 | Medium | CI 声明与实际不一致，未执行依赖/密钥扫描，Action 也未固定到提交 | 未修复 |
+| SEC-F02 | Medium | Activity Run/Grade 没有全局并发准入和 CPU/内存上限 | 并发准入已修复（§10.1）；单进程资源上限仍开放 |
+| SEC-F03 | Medium | Monaco 的生产依赖链包含受公告影响的 DOMPurify 3.4.8 | 已修复（§10.2）；本行结论已按证据更正 |
+| SEC-F04 | Medium | CI 声明与实际不一致，未执行依赖/密钥扫描，Action 也未固定到提交 | 已修复（§10.3） |
 | SEC-F05 | Low | 本地写接口只验证回环 hostname，接受任意端口和缺失的 `Origin` | 部分控制 |
 | SEC-F06 | Low | 归档恢复没有统一的文件数、解码后字节数和 CLI 输入上限 | 部分控制 |
 | SEC-F07 | Low | 长期运行进程中的命令回执与 Job 事件没有淘汰策略 | 未修复 |
@@ -33,8 +34,9 @@ SQL 拼接、Shell 字符串执行或 Reference 原始 HTML 注入。服务配�
 此外，生产 HTTP 响应没有显式 CSP、`frame-ancestors`、`nosniff` 和 Referrer Policy。
 在本地单用户模型下将其记录为 Hardening observation，而不是单独提高总体严重度。
 
-当前优先级应先处理 SEC-F02、SEC-F03 和 SEC-F04；SEC-F01 不能通过小修补消除，
-应在运行第三方代码、导入不可信练习或开放非回环访问之前完成容器/虚拟机隔离。
+本轮 P0 的三项（SEC-F02 的并发准入、SEC-F03、SEC-F04）已完成，修复证据见 §10。
+SEC-F01 不能通过小修补消除，应在运行第三方代码、导入不可信练习或开放非回环访问
+之前完成容器/虚拟机隔离。
 
 ## 2. 范围与方法
 
@@ -111,7 +113,7 @@ Run/Grade。代码看似普通，但可直接读取并上传宿主机文件；�
 
 ### SEC-F02：Activity Judge 缺少全局并发准入和强资源预算
 
-**严重度：Medium；状态：Open**
+**严重度：Medium；状态：并发准入已修复（§10.1），单进程资源预算仍开放**
 
 Reference Playground 在 `packages/composition/src/server.ts` 中默认限制为一个并发运行，繁忙时
 返回 `429`。Activity Run/Grade 则直接进入 `LearningPlatform.dispatch()`；
@@ -139,7 +141,7 @@ Judge 有每个子进程的墙钟与输出限制，但没有统一的进程数�
 
 ### SEC-F03：Monaco 生产依赖链包含受影响的 DOMPurify
 
-**严重度：Medium；状态：Open**
+**严重度：Medium；状态：已修复（§10.2）；下述“被依赖链打入生产包”的判断已按证据更正**
 
 2026-09-09 的 `npm audit --omit=dev --json` 报告 1 个 Moderate、1 个 Low 依赖项；
 2026-09-10 复跑同一命令为 3 个（2 Low、1 Moderate），同一条依赖链的四个公告全部仍在。
@@ -151,6 +153,25 @@ Judge 有每个子进程的墙钟与输出限制，但没有统一的进程数�
      -> dompurify 3.4.8
 ```
 
+**事实更正（2026-09-11）**：本轮修复时对生产构建取证，发现审计原文把两件事混为
+一件。`dompurify` 确实是 `monaco-editor@0.56.0` 的**声明依赖**，但 ESM 构建并不
+导入它——只有本项目从不加载的 `dev/` AMD bundle 引用该包。真正进入
+`apps/web/dist` 的是 Monaco **内联**的同一份代码：
+`node_modules/monaco-editor/esm/vs/base/browser/dompurify/dompurify.js`
+（`DOMPurify.version = '3.4.8'`，`@license DOMPurify 3.4.8`），它与
+`node_modules/dompurify/dist/purify.es.mjs` 逐字节相同，仅差末尾的
+sourceMappingURL。因此单纯 `overrides` 升级 npm 包只会让 Audit 变绿而**不会**
+改变实际出货的代码。
+
+四个公告的修复版本（GitHub Advisory API，2026-09-11 查询）：
+
+| 公告 | 影响范围 | 修复版本 |
+|---|---|---|
+| GHSA-cmwh-pvxp-8882 | `<= 3.4.10` | 3.4.11 |
+| GHSA-vxr8-fq34-vvx9 | `< 3.4.9` | 3.4.9 |
+| GHSA-c2j3-45gr-mqc4 | `<= 3.4.11` | 3.4.12 |
+| GHSA-55q2-fjhq-7xh7 | `<= 3.4.12` | 3.4.13 |
+
 DOMPurify 3.4.8 落在四个公告的受影响范围内：
 
 - [GHSA-c2j3-45gr-mqc4](https://github.com/advisories/GHSA-c2j3-45gr-mqc4)
@@ -158,29 +179,23 @@ DOMPurify 3.4.8 落在四个公告的受影响范围内：
 - [GHSA-vxr8-fq34-vvx9](https://github.com/advisories/GHSA-vxr8-fq34-vvx9)
 - [GHSA-55q2-fjhq-7xh7](https://github.com/advisories/GHSA-55q2-fjhq-7xh7)
 
+Monaco 0.56.0 是当时的 latest，`next` 亦无更新，因此上游升级路径不存在。
 未发现应用代码调用 `DOMPurify.setConfig()`、自定义 hooks、`CUSTOM_ELEMENT_HANDLING`、
 `dangerouslySetInnerHTML` 或 `rehypeRaw`。Reference 使用 `react-markdown` 默认安全 URL
-转换，Source Schema 只接受 HTTPS。因此当前尚未证明这些公告可由本项目内容触发，实际
-暴露低于一个接收任意富文本的公网编辑器；但 Monaco 位于生产包且 DOMPurify 确实会被
-打包，不能把 Audit 结果当成误报删除。
+转换，Source Schema 只接受 HTTPS。Monaco 自身的 `domSanitize` 确实使用
+`addHook`/`removeAllHooks` 与 `RETURN_TRUSTED_TYPE`，但被净化的 HTML 来自 Monaco
+内的语言特性渲染，项目不注册任何会注入外部 HTML 的 hover 或 Markdown 提供者，
+因此没有找到可由仓库内容触发的路径。
 
 2026-09-10 复跑时 npm 已不再给出任何自动修复候选（`No fix available`），此前记录的
 `monaco-editor@0.53.0` 回退方案不再可用。不要直接执行 `npm audit fix --force`。
-
-**建议**：
-
-1. 查询 Monaco 官方支持版本中是否已升级到不受影响的 DOMPurify，再做常规升级。
-2. 若只能使用 npm `overrides`，先固定一个不在公告范围的 DOMPurify 版本，并完成 Monaco
-   编辑、诊断 hover、格式化、Reference Playground 和生产构建 E2E；不能仅看安装成功。
-3. 将 `npm audit --omit=dev` 加入 CI 的安全 Job，并制定临时豁免文件、责任人和到期日，
-   避免不可修公告永久阻塞普通质量 Job。
 
 **验收**：`npm audit --omit=dev` 不再报告这些公告；Monaco 相关组件测试和真实浏览器
 E2E 通过；生产构建中不再包含受影响版本。
 
 ### SEC-F04：CI 安全控制与规范不一致
 
-**严重度：Medium；状态：Open**
+**严重度：Medium；状态：已修复（§10.3）**
 
 `docs/08-SECURITY_AND_PRIVACY.md` 声明 CI 应执行 dependency 和 secret scanning，但
 `.github/workflows/ci.yml` 目前只有安装、`npm ci` 和 `npm run check`。本轮已存在的
@@ -328,10 +343,12 @@ Workspace、Reference 和 Authoring 已进行词法路径限制、`realpath`/`ls
 
 ### P0：下一次功能扩展前
 
-1. SEC-F03：选择并验证无公告的 Monaco/DOMPurify 依赖组合。
-2. SEC-F04：增加依赖与密钥扫描，固定 GitHub Actions SHA。
-3. SEC-F02：为所有 Judge 入口增加共享并发准入与有限队列。
+1. SEC-F03：选择并验证无公告的 Monaco/DOMPurify 依赖组合。**已完成（§10.2）**。
+2. SEC-F04：增加依赖与密钥扫描，固定 GitHub Actions SHA。**已完成（§10.3）**。
+3. SEC-F02：为所有 Judge 入口增加共享并发准入与有限队列。**并发准入已完成（§10.1）**；
+   单进程 CPU/内存/进程数预算仍待容器或 OS 级适配器。
 4. 每项修复完成后同步 `docs/08-SECURITY_AND_PRIVACY.md`，持续区分“已实现”和“未来控制”。
+   **已完成**。
 
 ### P1：本地产品加固
 
@@ -360,7 +377,7 @@ npm run test:e2e:production
 git diff --check
 ```
 
-新增安全门禁后还应提供稳定命令，例如：
+新增安全门禁已提供稳定命令（§10.3）：
 
 ```bash
 npm run check:security
@@ -377,4 +394,71 @@ npm run test:security
 - 修复完成后更新状态与证据，不直接删除 finding；保留审计轨迹。
 - 每次依赖、执行边界、导入格式、监听地址或信任模型变化后重新审计。
 
-本审计由 **GPT-5.6 Sol** 完成。
+## 10. 修复记录
+
+固定点为 `8f99f7e`；以下修复状态以本文件所述的证据为准，不删除原始 finding。
+
+### 10.1 SEC-F02：共享 Judge 准入
+
+- 新增 `packages/composition/src/admission.ts`：`createJudgeAdmission` 提供一个进程内的
+  并发预算与有界 FIFO 等待队列，`createBoundedJudge` 用该预算包装任意 `Judge`。
+- `createProductionApplication` 只创建一个准入实例，既包装 Activity Judge，又随
+  `judgeAdmission` 交给 HTTP 层，因此 CLI 与 HTTP 共用同一预算，Playground 不再单独计数
+  （`referencePlaygroundMaxConcurrentRuns` 已移除）。
+- Activity Run/Grade 排队等待，队列满时返回 `429` + `Retry-After` 与
+  `judge_busy`；Playground 使用非阻塞 `tryAcquire`，繁忙时返回既有的
+  `playground_busy`。取消不参与准入：被取消的 Job 保留队列位置，被准入后把已中止的
+  signal 交给 Judge，由 Judge fail closed，从而保证并发上限严格成立。
+- 预算可通过 `CPP_LEARN_JUDGE_MAX_CONCURRENT` 与 `CPP_LEARN_JUDGE_MAX_QUEUED` 调整，
+  默认 `1` 与 `4`；非法值在启动时抛出。
+- 测试：`packages/composition/src/admission.test.ts`（串行化、有界队列、拒绝、
+  槽位回收、重复释放不得放行两个后继）与 `server.test.ts` 的
+  `[SEC-F02] one host Judge budget across HTTP entry points`（Playground 与
+  Activity Run 共用预算、过载返回 `429`、饱和时健康检查与普通查询仍可用、释放后恢复）。
+- **仍未消除**：单个被准入进程的 CPU、地址空间与进程数上限，需要容器或 OS 级资源限制。
+  验收中“实际编译/执行进程不超过配置上限”现已由准入保证。
+
+### 10.2 SEC-F03：单一 DOMPurify 副本
+
+- 根 `package.json` 增加 `overrides: { "dompurify": "3.4.15" }`，把 npm 图中的包从
+  3.4.8 提升到修复版本（高于四个公告中最高的 3.4.13）。`package-lock.json` 仅
+  3 行变化。
+- 新增 `apps/web/vite-plugin-single-dompurify.ts`：把 Monaco 内联的
+  `esm/.../dompurify/dompurify.js` 在构建时重定向为 `dompurify` 包。两份文件默认导出
+  同名同形，且 3.4.8 时逐字节相同，因此这不是行为补丁，而是去掉重复副本——让
+  lockfile、公告库与出货 bundle 描述同一份代码。
+- 回归保护：`apps/web/vite-plugin-single-dompurify.test.ts` 读取 Monaco 的实际
+  内联副本，若 Monaco 改名或移动该文件（`readFile` 失败）或出现新的未重定向副本，
+  测试就会失败，而不是静默出货未审查的副本。
+- 证据：`npm audit --omit=dev` 与 `npm audit` 均为 `found 0 vulnerabilities`；
+  `npm ls dompurify` 为 `3.4.15 overridden`；构建产物
+  `apps/web/dist/assets/editor.api-*.js` 中已无 `3.4.8`，只含
+  `DOMPurify.version = '3.4.15'`，sourcemap 的 `sources` 指向
+  `node_modules/dompurify/dist/purify.es.mjs` 而不再是 Monaco 的内联路径。
+- 验证：单元测试全绿；`npm run test:e2e:production` 与 `npm run test:e2e`（18 spec，
+  含编辑器格式化与 Playground）通过。
+
+### 10.3 SEC-F04：CI 安全 Job、固定 SHA、密钥扫描
+
+- `.github/workflows/ci.yml` 新增独立 `security` Job（`ubuntu-latest`，与质量 Job 分离），
+  执行 `npm ci --ignore-scripts`、`npm run test:security`、`npm run check:security`。
+  两个 Action 固定到完整 commit SHA 并附 `# v4` 注释；`actions/checkout` 使用
+  `fetch-depth: 0` 以便扫描全部历史。
+- 新增 `.github/dependabot.yml`：npm 与 github-actions 每周更新，使 SHA 固定可维护。
+- 新增 `scripts/security-checks.ts`（纯判定逻辑）与 `scripts/check-security.ts`
+  （进程封装）：生产公告按 `security/audit-exemptions.json` 判定，豁免必须包含
+  `advisoryId`、`package`、`reason`、`owner`、`expiresOn`；已过期或不再匹配任何公告的
+  豁免同样失败，避免豁免永久滞留。密钥扫描覆盖工作树全部跟踪文本文件与**每一个修订**
+  新增的行，命中只打印脱敏片段；必须包含凭据形状的行使用 `security-check:allow` 标记。
+- 新增根 `SECURITY.md`：支持范围、报告渠道、Native Judge 限制、门禁命令与豁免规则。
+- 验收证据：`npm run test:security` 用受控公告与受控凭据 fixture 证明门禁确实会失败
+  （14 项测试）；`npm run check:security` 在 2.3 秒内通过——生产公告 0 项、952 个跟踪
+  文本文件无命中、140 个修订的历史扫描无命中，二进制
+  `exercises/0001-first-program/first_program`（SEC-F08）被显式列为跳过。
+
+### 10.4 本次未处理
+
+SEC-F01、SEC-F05、SEC-F06、SEC-F07、SEC-F08 与 §5 的 Hardening observation 未变，
+仍按 §7 的 P1/P2 排序处理。
+
+本审计由 **GPT-5.6 Sol** 完成；§10 由后续修复提交维护。

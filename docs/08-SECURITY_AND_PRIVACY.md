@@ -3,19 +3,21 @@
 | Field | Value |
 |---|---|
 | Document ID | SEC-001 |
-| Version | 1.4 |
+| Version | 1.5 |
 | Status | Baseline |
 | Owner | Project Maintainer |
-| Last updated | 2026-09-09 |
+| Last updated | 2026-09-11 |
 
 ## 1. Security posture
 
 The initial product is a single-user local application. The Learner and curriculum repository are trusted to a limited degree; compiled programs are treated as unreliable and potentially harmful. Native execution is risk-reduced but is not a security sandbox.
 
 The implementation status and unresolved risks at commit `8f99f7e` are recorded
-in [the current security audit](71-CURRENT-SECURITY-AUDIT.md). Controls in this
-document are requirements; the audit distinguishes controls already implemented
-from controls that remain planned.
+in [the current security audit](71-CURRENT-SECURITY-AUDIT.md), which also carries
+the remediation status of each finding. Controls in this document are
+requirements; the audit distinguishes controls already implemented from controls
+that remain planned. The reporting channel and the accepted native-execution
+risk are stated in [`SECURITY.md`](../SECURITY.md).
 
 ## 2. Protected assets
 
@@ -68,11 +70,19 @@ Controls:
 - Wall-clock timeout and process-group termination.
 - stdout/stderr byte limits.
 - A bounded queue and shared concurrency limit across every Judge entry point.
+  One `JudgeAdmission` per host process serves both Activity Run/Grade and the
+  Reference Playground; `run` waits in a bounded FIFO queue, `tryAcquire`
+  refuses instead of waiting, and saturated admission answers `429` with
+  `Retry-After`. Slots are released on success, on failure, and on cancellation.
 - Input and file-size limits.
 - Optional CPU/memory/container controls when the container Adapter is available.
 - Judge health monitoring and back-pressure.
 
-Native macOS mode currently has no shared Activity admission limit and cannot reliably prevent every fork bomb, memory exhaustion, or host read. Only trusted learner code is permitted in this mode. Reference Playground has bounded admission; Activity Run/Grade still requires the shared control described above.
+Native macOS mode has no per-process CPU, address-space, or process-count limit,
+so it cannot reliably prevent every fork bomb or memory exhaustion, and it cannot
+confine host reads. Only trusted learner code is permitted in this mode. The
+shared admission limit is implemented, but it bounds concurrent Judge work, not
+what a single admitted program may consume.
 
 ### Host filesystem or network access
 
@@ -113,7 +123,14 @@ Controls:
 
 - Commit lockfiles.
 - Review dependency changes and run vulnerability/license checks.
+- Run `npm run check:security`: production advisories fail the gate unless a
+  dated exemption in `security/audit-exemptions.json` names a reason and an
+  owner, and the tracked tree plus every revision is scanned for credentials.
+- Keep a dependency whose code ships at the reviewed version. A copy vendored
+  inside another dependency is redirected at build time, so the lockfile, the
+  advisory database, and the shipped bundle cannot disagree.
 - Pin release dependencies; do not execute package lifecycle scripts from untrusted content.
+- Pin CI Actions to full commit SHAs and let Dependabot propose the upgrades.
 - Validate curriculum schemas and reference solutions before activation.
 - Validate Reference manifests, confined content/example paths, Markdown,
   relationships, sources, and reused-material attribution before activation.
@@ -133,8 +150,9 @@ Controls:
 - Mark external source links and apply safe new-tab behavior consistently.
 - Browsing, searching, and copying are read-only and append no learning event.
 - The local Playground uses a temporary non-Activity root, a closed compiler
-  profile, source/output limits, timeout, process cleanup, and default global
-  concurrency of one. Busy requests receive bounded back-pressure rather than
+  profile, source/output limits, timeout, process cleanup, and admission drawn
+  from the same host Judge budget as Activity Run/Grade, which defaults to one
+  concurrent operation. Busy requests receive bounded back-pressure rather than
   starting another compiler. Client-created UUIDv4 run identities are registered
   only while active; duplicate active identities fail closed, and cancellation
   crosses the same origin-validated local HTTP boundary.
@@ -171,8 +189,13 @@ Logs should use identifiers and summaries instead of full source. Crash reports 
 - Private-data redaction tests for HTTP, SSE, logs, Teacher Packs, and exports.
 - Loopback binding and origin-validation tests.
 - Event tampering and duplicate-report tests.
-- Dependency and secret scanning in CI. This remains open in the current
-  implementation; see SEC-F04 in the current security audit.
+- Dependency and secret scanning in CI (`npm run check:security`), with
+  `npm run test:security` proving that a controlled advisory and a controlled
+  credential fixture both fail the gate.
+- Shared Judge admission tests: concurrent Activity Runs respect the configured
+  limit, the Playground and Activity Run draw on one budget, overload answers
+  `429` with `Retry-After`, ordinary queries keep working while saturated, and a
+  slot is released after success, failure, and cancellation.
 - Reference path, Markdown, external-link, relationship, attribution, search-
   bound, and no-learning-state-mutation tests.
 

@@ -90,9 +90,13 @@ scripts/          内容、Reference、文档和质量检查脚本
 npm run check
 npm run test:e2e
 npm run test:e2e:production
+npm run check:security
 ```
 
 `npm run check` 会检查文档链接、课程内容、Reference 结构与质量、格式、Lint、TypeScript、单元/契约测试和生产构建。只修改文档时，至少运行 `npm run check:docs` 与 Prettier 检查。
+
+`npm run check:security` 单独执行：生产依赖公告、跟踪树与全部修订的凭据扫描。它在独立
+CI Job 中运行，不占用 `npm run check` 的时间；依赖豁免规则见 [SECURITY.md](SECURITY.md)。
 
 本地 Judge 会执行学习者 C++ 代码，但当前不是强安全沙箱。服务只面向单机、单用户和回环地址，不应直接暴露到公网或运行不可信的第三方代码。
 
@@ -106,8 +110,9 @@ npm run test:e2e:production
 4. [后续开发计划](docs/69-FUTURE-DEVELOPMENT-PLAN.md)
 5. [AI 模型接手指南](docs/70-AI-MODEL-HANDOFF-GUIDE.md)
 6. [文档与代码冲突审计](docs/72-DOC-CODE-CONFLICT-AUDIT.md)
+7. [安全策略与风险接受项](SECURITY.md)
 
-当前最高优先级不是微服务化或建设通用 CMS，而是先处理[当前安全审计](docs/71-CURRENT-SECURITY-AUDIT.md)确认的依赖、Judge 准入与 CI 安全债务，再统一 Reference 内容策略、收敛作者工具内部结构、移除 CLI 对 Web 包的反向依赖，并完成一次真实五条目作者批次的效率验收。
+当前最高优先级的架构工作是统一 Reference 内容策略、收敛作者工具内部结构、移除 CLI 对 Web 包的反向依赖，并完成一次真实五条目作者批次的效率验收。[当前安全审计](docs/71-CURRENT-SECURITY-AUDIT.md)的 P0 三项（依赖公告、Judge 准入、CI 安全门禁）已修复，证据见该文档 §10；剩余安全项按其中的 P1/P2 排序，Native Judge 的强隔离仍是非回环、多人或不可信代码场景的发布阻断项。
 
 ## 文档署名
 

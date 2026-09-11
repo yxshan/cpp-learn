@@ -28,9 +28,11 @@
 | `LEARNING_PLAN.md` | Active | 预计 2027 年暑假正式学习的长期能力路线 |
 | `NOTES.md` | Active | 教学偏好与用户上下文；不是产品需求规格 |
 | `RESOURCES.md` | Active | 外部学习资源，需定期检查链接和时效 |
-| `package.json` | Active | npm workspace、工具版本与仓库级命令 |
+| `package.json` | Active | npm workspace、工具版本、仓库级命令与 `overrides`（仅用于把传递依赖保持在已修复版本） |
 | `package-lock.json` | Active | 锁定依赖；安装依赖后只提交有意变化 |
 | `cpplearn` | Active | 学习 CLI 的可执行启动脚本 |
+| `SECURITY.md` | Active | 支持范围、漏洞报告渠道、Native Judge 限制与安全门禁规则 |
+| `security/audit-exemptions.json` | Active | 生产公告豁免的唯一来源；每条含理由、责任人与到期日 |
 | `tsconfig.json` | Active | 全仓 TypeScript 项目与 path 配置 |
 | `eslint.config.js` | Active | ESLint 规则 |
 | `vitest.config.ts` | Active | 单元与契约测试配置 |
@@ -115,7 +117,7 @@ Reference 呈现保持平铺。
 
 | 路径 | 状态 | 当前情况 |
 |---|---|---|
-| `packages/composition/` | Active | 服务端组装与服务端实现：`config.ts`（环境→地址与路径）、`application.ts`（领域模块装配）、`server.ts`（97 行，只做安装）、`transport.ts`（origin 校验、请求体守卫、字节预算）与 `routes/`（learning / reference / local-data / jobs 四个路由组） |
+| `packages/composition/` | Active | 服务端组装与服务端实现：`config.ts`（环境→地址、路径与 Judge 预算）、`application.ts`（领域模块装配）、`admission.ts`（进程内共享 Judge 并发预算与有界队列）、`server.ts`（107 行，只做安装）、`transport.ts`（origin 校验、请求体守卫、字节预算）与 `routes/`（learning / reference / local-data / jobs 四个路由组） |
 | `packages/reference-policy/` | Active | Reference 内容策略的唯一权威：语义区域、标题匹配、每种 Entry kind 的要求、修复目标标题。质量门禁、Authoring 脚手架与修复计划都消费它 |
 | `packages/reference-presentation/` | Active | Reference 呈现的共享块模型与 HTML 序列化；Web 与 CLI 共用同一套 heading id 与块语义 |
 | `packages/contracts/` | Active | 跨模块 DTO、命令、查询、事件和解析器；内部按域分为 `reference.ts`、`judge.ts`、`events.ts`，入口用 `export *` 重导出，公共导入路径不变 |
@@ -192,9 +194,14 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 | `scripts/check-reference.ts` / `npm run check:reference` | Reference Schema、关系、来源与示例验证 |
 | `scripts/check-reference-quality.ts` / `npm run check:reference-quality` | 质量 profile 与 ratchet |
 | `scripts/report-reference.ts` / `npm run report:reference` | Reference 覆盖与质量报告 |
+| `scripts/security-checks.ts` | 安全门禁的纯判定逻辑：凭据模式、生产公告豁免与过期/失效判定 |
+| `scripts/check-security.ts` / `npm run check:security` | 生产公告、跟踪树与全部修订的凭据扫描；独立于质量 Job |
+| `scripts/security-checks.test.ts` / `npm run test:security` | 用受控公告与受控凭据 fixture 证明门禁会失败 |
 | `scripts/verify-react-project.mjs` | Judge 使用的受控 React 项目验证 harness |
 
-`scripts/reference-content-quality.ts` 与 Authoring 模块当前都掌握部分内容质量词汇，这是内容侧最高优先级的重复策略债务；按 `docs/69` 的排序，它排在安全债务收敛（P1）之后。
+`security/audit-exemptions.json` 是唯一的公告豁免来源，每条必须带理由、责任人和到期日。
+
+`scripts/reference-content-quality.ts` 与 Authoring 模块当前都掌握部分内容质量词汇，这是内容侧最高优先级的重复策略债务。安全侧的 P0 债务（`docs/71` 的 SEC-F02 准入、SEC-F03、SEC-F04）已收敛，剩余安全项按该文档的 P1/P2 排序。
 
 ## 9. 早期原型目录
 
@@ -217,8 +224,10 @@ Activity 内容是生产事实来源。根目录 `lessons/` 和 `exercises/` 不
 | Reference Entry | authoring check、Reference/quality scripts、浏览器渲染 |
 | Reference Schema | schema 包、loader、作者工件、现有 120 Entry |
 | Judge profile | compiler fingerprint、timeout、cleanup、错误分类和 golden fixtures |
+| Judge 并发或预算 | `admission.ts`、`CPP_LEARN_JUDGE_MAX_*` 环境变量、composition server test、Playground 与 Activity 必须共用同一预算 |
+| 依赖或 Action 版本 | `npm run check:security`、豁免文件、Monaco 内联副本的重定向测试 |
 | HTTP route | contracts、origin/loopback 策略、server test、E2E |
 | Web 布局 | keyboard、history、dirty state、桌面/390px、浏览器 console |
 | 文档基线 | 本索引、相关 ADR/规范、`npm run check:docs` |
 
-本文件由 **GPT-5.6 Sol** 根据 2026-09-09 的仓库树、接口和质量快照编写。
+本文件由 **GPT-5.6 Sol** 根据 2026-09-09 的仓库树、接口和质量快照编写；安全债务收敛后的差异见 `docs/71` §10。

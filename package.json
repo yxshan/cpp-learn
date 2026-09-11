@@ -22,6 +22,8 @@
     "check:content": "node --experimental-strip-types scripts/check-content.ts",
     "check:reference": "node --experimental-strip-types scripts/check-reference.ts",
     "check:reference-quality": "node --experimental-strip-types scripts/check-reference-quality.ts",
+    "check:security": "node --experimental-strip-types scripts/check-security.ts --history",
+    "test:security": "vitest run scripts/security-checks.test.ts",
     "report:reference": "node --experimental-strip-types scripts/report-reference.ts",
     "reference:author": "tsx apps/cli/src/reference-author.ts",
     "format": "prettier --write .",

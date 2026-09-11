@@ -20,12 +20,12 @@
 | 顺序 | 工作流 | 主要结果 | 依赖 |
 |---:|---|---|---|
 | 0 | 交接基线复验 | 新模型确认当前事实和门禁 | 无 |
-| 1 | 安全债务收敛 | 处理依赖公告、Judge 准入和 CI 安全门禁 | 0 |
+| 1 | 安全债务收敛 | 处理依赖公告、Judge 准入和 CI 安全门禁 | 0（已完成，见 §4） |
 | 2 | Reference content policy | 检查、模板和修复共享一个类型化政策 | 0，可与 1 分提交推进 |
 | 3 | Authoring 生命周期深化 | 16 操作兼容门面背后形成清晰内部模块 | 2 |
 | 4 | Reference presentation | CLI 不再依赖 Web app | 0，可与 3 独立 |
 | 5 | A3 真实批次测量 | 证明速度或定位真实瓶颈 | 2，建议 3 后 |
-| 6 | Server/Web 局部性 | 降低大文件的无关认知负担 | 1、4 |
+| 6 | Server/Web 局部性 | 降低大文件的无关认知负担 | 1、4（1 已完成） |
 | 7 | 内容持续扩展 | 用稳定快速流水线补齐高价值 API | 1、2、5 |
 
 ## 3. P0：交接基线复验
@@ -42,7 +42,7 @@
 
 完成条件：记录命令、环境和结果。若旧基线本身失败，建立独立修复切片并更新接手文档。
 
-## 4. P1：安全债务收敛
+## 4. P1：安全债务收敛（已完成）
 
 以 [当前安全审计](71-CURRENT-SECURITY-AUDIT.md) 为证据，按独立提交依次处理：
 
@@ -54,6 +54,20 @@
 完成条件：生产依赖 Audit 无未接受公告；并发压力不会突破配置预算；安全 Job 能拦截
 受控 fixture；`npm run check` 与 production E2E 通过。Native Judge 的强隔离仍是非回环、
 多人或不可信代码场景的发布阻断项。
+
+**执行结果（2026-09-11，证据见 `docs/71` §10）**：
+
+- 第 1 项：`overrides` 将 DOMPurify 提升到 3.4.15，并在构建时把 Monaco **内联**的同一份
+  副本重定向到该包。审计原文“DOMPurify 会被依赖链打入生产包”已按构建取证更正：进入
+  bundle 的一直是 Monaco 内联的副本，仅升级 npm 包不会改变出货代码。
+- 第 2 项：`packages/composition/src/admission.ts` 提供进程内共享预算，Activity
+  Run/Grade 排队、Playground 非阻塞拒绝，过载返回 `429` + `Retry-After`。
+- 第 3 项：独立 `security` CI Job、固定到 commit SHA 的两个 Action、
+  `scripts/check-security.ts`（工作树 + 全部修订的凭据扫描）与
+  `security/audit-exemptions.json`（带理由/责任人/到期日）。
+- 第 4 项：`SECURITY.md` 与 `docs/08` 更新；Native Judge 仍是风险接受项。
+- 仍未完成：单个被准入进程的 CPU/内存/进程数上限（需要容器或 OS 级适配器），
+  以及 `docs/71` 的 P1/P2 其余项（SEC-F01、SEC-F05、SEC-F06、SEC-F07、SEC-F08）。
 
 ## 5. P2：统一 Reference content policy
 
