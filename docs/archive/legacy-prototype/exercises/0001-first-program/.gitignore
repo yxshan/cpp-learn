@@ -1,0 +1,4 @@
+# The prototype predates the Judge and compiled itself in place. A build output
+# must never be committed again: it cannot be reviewed, and running it bypasses
+# every Judge control.
+first_program

@@ -1,4 +1,16 @@
 #!/bin/sh
+#
+# LEGACY PROTOTYPE — NOT A JUDGING PATH.
+#
+# This script compiles and runs the prototype program directly on the host with
+# no timeout, no output limit, no environment filtering and no process-group
+# cleanup. The supported way to run and grade an Activity is the CLI, which goes
+# through the Judge (see docs/adr/0004-native-judge-first.md):
+#
+#     ./cpplearn check --activity <activity-id>
+#
+# Kept only as the historical record of the first exercise. Do not extend it and
+# do not treat its result as Evidence.
 
 set -eu
 
